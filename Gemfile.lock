@@ -1,9 +1,13 @@
 GEM
   remote: http://rubygems.org/
   specs:
+    magma-dev-ucsf-immunoprofiler (0.1)
+      sequel
+    pg (0.18.1)
     rack (1.6.0)
     rack-protection (1.5.3)
       rack
+    sequel (4.20.0)
     sinatra (1.4.5)
       rack (~> 1.4)
       rack-protection (~> 1.4)
@@ -14,4 +18,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  magma-dev-ucsf-immunoprofiler
+  pg
   sinatra
