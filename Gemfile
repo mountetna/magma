@@ -5,3 +5,5 @@ gem 'sinatra'
 gem 'magma-dev-ucsf-immunoprofiler'
 
 gem 'pg'
+
+gem 'extlib'
