@@ -48,5 +48,11 @@ class Magma
 
   class Plan < Magma::Command
     usage "Suggest a migration based on the current model attributes"
+
+    def execute
+      Magma.instance.magma_models.each do |model|
+        model.suggest_migration
+      end
+    end
   end
 end

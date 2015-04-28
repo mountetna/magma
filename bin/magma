@@ -1,7 +1,14 @@
 #!/usr/bin/env ruby
 
 require 'magma-dev-ucsf-immunoprofiler'
+require 'yaml'
+
+db_config = YAML.load(File.read("database.yml"))
 
 magma = Magma.instance
+
+magma.connect(db_config)
+
+magma.load_models
 
 magma.run_command *ARGV

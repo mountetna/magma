@@ -1,10 +1,12 @@
 require 'sequel'
 require_relative 'magma/model'
+require_relative 'magma/migration'
 require_relative 'magma/commands'
 require 'singleton'
 
 class Magma
   include Singleton
+  attr_reader :db
   def connect config
     @db = Sequel.connect( config )
   end
@@ -14,7 +16,7 @@ class Magma
 
     # make sure your tables exist
     magma_models.each do |model|
-      raise "Missing table for #{model.name}." unless @db.table_exists? model.table_name
+      model.validate
     end
   end
 
