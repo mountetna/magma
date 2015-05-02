@@ -50,9 +50,11 @@ class Magma
     usage "Suggest a migration based on the current model attributes"
 
     def execute
+      migration = Magma::Migration.new
       Magma.instance.magma_models.each do |model|
-        model.suggest_migration
+        model.suggest_migration migration
       end
+      puts migration
     end
   end
 end
