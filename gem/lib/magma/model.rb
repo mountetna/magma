@@ -27,6 +27,11 @@ class Magma
         end
         entry
       end
+
+      def display_name
+        @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
+      end
+
       def new_entry
         entry = [ "#{@type.name} :#{@name}" ]
         if @unique
@@ -47,6 +52,19 @@ class Magma
 
       def has_attribute? name
         @attributes.has_key? name
+      end
+
+      def parent name, opts
+        many_to_one name
+        attribute "#{name}_id".to_sym, opts
+      end
+
+      def child name, opts
+        one_to_one name
+      end
+
+      def collection name, opts
+        one_to_many name
       end
 
       def identifier name, opts

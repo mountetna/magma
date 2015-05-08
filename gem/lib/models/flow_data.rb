@@ -1,3 +1,3 @@
 class FlowData < Magma::Model
-  many_to_one :sample
+  parent :sample
 end
