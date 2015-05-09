@@ -1,21 +1,24 @@
 class Sample < Magma::Model
   parent :patient
   parent :experiment
-  child :dc_stain
-    display_name: "DC Stain"
+  child :dc_stain,
+    display_name: "DC Stain",
     desc: "Stain for dendritic cells"
-  child :treg_stain
+
+  child :treg_stain,
+    display_name: "T-reg Stain",
+    desc: "Stain for regulatory T-cells"
 
   child :sort_stain,
-    display_name: "Sort Stain"
+    display_name: "Sort Stain",
     desc: "Stain for sorting cells into RNAseq compartments"
 
   child :nktb_stain,
-    display_name: "NK/T/B Stain"
+    display_name: "NK/T/B Stain",
     desc: "Stain for NK, T and B cells"
 
   collection :rna_seq, 
-    display_name: "RNASeq Experiments"
+    display_name: "RNASeq Experiments",
     desc: "RNA Seq experiments performed on this sample"
 
   identifier :sample_name, 

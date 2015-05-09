@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name = 'magma-dev-ucsf-immunoprofiler'
-  spec.version = '0.2'
+  spec.version = '0.3'
   spec.summary = 'Magma dev gem for ucsf immunoprofiler'
   spec.description = 'See summary'
   spec.email = 'Saurabh.Asthana@ucsf.edu'

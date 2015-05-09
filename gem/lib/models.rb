@@ -1,6 +1,7 @@
 require_relative 'models/patient'
 require_relative 'models/dc_stain'
-require_relative 'models/flow_data'
+require_relative 'models/experiment'
+require_relative 'models/project'
 require_relative 'models/gene_exp'
 require_relative 'models/nktb_stain'
 require_relative 'models/rnaseq_batch'

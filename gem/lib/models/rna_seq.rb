@@ -2,8 +2,8 @@
 
 class RnaSeq < Magma::Model
   parent :sample
-  parent :rnaseq_batch
-  collection :gene_exps
+  parent :rna_seq_batch
+  collection :gene_exp
   attribute :compartment, type: String, desc: "What cell type it came from"
   attribute :cell_number, type: Integer, desc: "Number of input cells"
   attribute :mass, type: Float, desc: "Mass in picograms of input sequence"
