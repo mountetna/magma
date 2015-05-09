@@ -14,3 +14,13 @@ magma.validate_models
 get '/' do
   "magma-dev"
 end
+
+post '/slow' do
+  "slow-json-bus - push some data here"
+end
+
+post '/fast' do
+  "fast-json-api - push some data here"
+end
+
+
