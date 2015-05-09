@@ -20,6 +20,10 @@ class Magma
     end
   end
 
+  def get_model name
+    Kernel.const_get name.to_s.camel_case.to_sym
+  end
+
   def magma_models
     @magma_models ||= find_descendents Magma::Model
   end
