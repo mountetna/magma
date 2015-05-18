@@ -13,4 +13,5 @@ class DcStain < Magma::Model
   attribute :dc2_count, type: Integer, desc: "Total count of DC2 dendritic cells"
   attribute :cd14_pos_tam_count, type: Integer, desc: "Total count of CD14+ tumor-associated macrophages"
   attribute :cd14_neg_tam_count, type: Integer, desc: "Total count of CD14- tumor-associated macrophages"
+  document :facs_file, desc: "FACS format file for this stain"
 end

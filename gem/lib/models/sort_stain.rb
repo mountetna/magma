@@ -10,4 +10,5 @@ class SortStain < Magma::Model
   attribute :myeloid_count, type: Integer, desc: "Total count of myeloid cells after staining"
   attribute :t_count, type: Integer, desc: "Total count of t cells after staining"
   attribute :tumor_count, type: Integer, desc: "Total count of tumors"
+  document :facs_file, desc: "FACS format file for this stain"
 end

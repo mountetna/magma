@@ -1,6 +1,8 @@
 require 'sequel'
+require_relative 'magma/attribute'
 require_relative 'magma/model'
 require_relative 'magma/migration'
+require_relative 'magma/document'
 require_relative 'magma/commands'
 require 'singleton'
 
@@ -42,6 +44,16 @@ class Magma
   def find_descendents klass
     ObjectSpace.each_object(Class).select do |k|
       k < klass
+    end
+  end
+
+  def carrier_wave_config opts
+    return unless opts
+    CarrierWave.configure do |config|
+      config.fog_credentials = opts[:credentials]
+      config.fog_directory = opts[:directory]
+      config.fog_public = false
+      config.fog_attributes = { 'Cache-Control' => "max-age=#{365 * 86400}" }
     end
   end
 end

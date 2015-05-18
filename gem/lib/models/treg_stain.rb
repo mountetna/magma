@@ -6,4 +6,5 @@ class TregStain < Magma::Model
   attribute :live_count, type: Integer, desc: "Total count of live cells after staining"
   attribute :treg_count, type: Integer, desc: "Total count of T-reg cells after staining"
   attribute :teff_count, type: Integer, desc: "Total count of T-effector cells after staining"
+  document :facs_file, desc: "FACS format file for this stain"
 end

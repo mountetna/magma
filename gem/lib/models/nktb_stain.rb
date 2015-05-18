@@ -8,4 +8,5 @@ class NktbStain < Magma::Model
   attribute :t_count, type: Integer, desc: "Total count of T-cells after staining"
   attribute :nk_count, type: Integer, desc: "Total count of NK cells after staining"
   attribute :b_count, type: Integer, desc: "Total count of B cells after staining"
+  document :facs_file, desc: "FACS format file for this stain"
 end

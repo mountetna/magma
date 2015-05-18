@@ -72,4 +72,8 @@ class Sample < Magma::Model
   attribute :post_digest_cell_count, 
     type: Integer, 
     desc: "Count of cells available after digest"
+
+  document :flojo_file,
+    display_name: "Flojo File",
+    desc: "XML file from Flojo containing all four stains for this sample."
 end

@@ -11,4 +11,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = [ 'lib' ]
   spec.add_dependency 'sequel'
   spec.add_dependency 'extlib'
+  spec.add_dependency 'carrierwave-sequel'
+  spec.add_dependency 'fog'
 end
