@@ -32,6 +32,12 @@ class Magma
     require_relative 'models'
   end
 
+  def configure opts
+    connect opts[:database]
+    validate_models
+    carrier_wave_config opts[:storage]
+  end
+
   private
   def find_descendents klass
     ObjectSpace.each_object(Class).select do |k|

@@ -28,7 +28,7 @@ EOT
         end
         str += SPC*2 + 'end' + "\n"
         str
-      end.join('')
+      end.join('').chomp
     end
   end
 end

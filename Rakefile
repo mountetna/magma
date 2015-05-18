@@ -5,7 +5,7 @@ namespace :db do
   task :migrate, [:version] do |t, args|
     require "sequel"
     Sequel.extension :migration
-    db = Sequel.connect(YAML.load(File.read("database.yml")))
+    db = Sequel.connect(YAML.load(File.read("config.yml"))[:database])
     if args[:version]
       puts "Migrating to version #{args[:version]}"
       Sequel::Migrator.run(db, "db/migrations", target: args[:version].to_i)
