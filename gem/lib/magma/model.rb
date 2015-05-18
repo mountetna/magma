@@ -1,98 +1,23 @@
 class Magma
   Model = Class.new(Sequel::Model)
   class Model
-    class Attribute
-      DISPLAY_ONLY = [ :child, :collection ]
-      attr_reader :name, :type, :desc
-      def initialize name, model, opts
-        @name = name
-        @model = model
-        @type = opts[:type]
-        @desc = opts[:desc]
-        @display_name = opts[:display_name]
-        @unique = opts[:unique]
-      end
-
-      def schema_ok?
-        display_only? || generic_schema_ok? || foreign_key_ok?
-      end
-
-      def generic_schema_ok?
-        @type.is_a?(Class) && (schema.has_key?(@name) && is_type?(schema[@name][:db_type]))
-      end
-
-      def foreign_key_ok?
-        name = "#{@name}_id".to_sym
-        @type == :foreign_key && (schema.has_key?(name) && is_type?(schema[name][:db_type]))
-      end
-
-      def display_only?
-        DISPLAY_ONLY.include? @type
-      end
-
-      def is_type? type
-        true
-      end
-
-      def add_entry
-        if @type.is_a? Class
-          add_generic_entry
-        elsif @type == :foreign_key
-          add_key_entry
-        end
-      end
-
-      def display_name
-        @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
-      end
-
-      def new_entry
-        if @type.is_a? Class
-          new_generic_entry
-        elsif @type == :foreign_key
-          new_key_entry
-        end
-      end
-
-      private
-      def new_generic_entry
-        entry = [ "#{@type.name} :#{@name}" ]
-        if @unique
-          entry.push "unique :#{@name}"
-        end
-        entry
-      end
-
-      def add_generic_entry
-        entry = [ "add_column :#{@name}, #{@type.name}" ]
-        if @unique
-          entry.push "add_unique_constraint :#{@name}"
-        end
-        entry
-      end
-
-      def new_key_entry
-        model = Magma.instance.get_model @name
-        "foreign_key :#{@name}_id, :#{model.table_name}"
-      end
-
-      def add_key_entry
-        model = Magma.instance.get_model @name
-        "add_foreign_key :#{@name}_id, :#{model.table_name}"
-      end
-
-      def schema
-        @schema ||= Hash[Magma.instance.db.schema @model.table_name]
-      end
-    end
+    plugin :timestamps, update_on_create: true
+    
     class << self
       attr_reader :identity
       def attributes
         @attributes ||= {}
       end
 
+      def display_attributes
+        attributes.select do |name|
+          attributes[name].shown?
+        end
+      end
+
       def attribute name, opts = {}
-        attributes[name] = Magma::Model::Attribute.new(name, self, opts)
+        klass = opts.delete(:attribute_class) || Magma::Attribute
+        attributes[name] = klass.new(name, self, opts)
       end
 
       def has_attribute? name
@@ -101,17 +26,22 @@ class Magma
 
       def parent name, opts = {}
         many_to_one name
-        attribute name, opts.merge(type: :foreign_key)
+        attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
       end
 
       def child name, opts = {}
         one_to_one name
-        attribute name, opts.merge(type: :child)
+        attribute name, opts.merge(attribute_class: Magma::ChildAttribute)
+      end
+
+      def document name, opts = {}
+        mount_uploader name, Magma::Document
+        attribute name, opts.merge(attribute_class: Magma::DocumentAttribute)
       end
 
       def collection name, opts = {}
-        one_to_many name
-        attribute name, opts.merge(type: :collection)
+        one_to_many name, primary_key: :id
+        attribute name, opts.merge(attribute_class: Magma::CollectionAttribute)
       end
 
       def identifier name, opts
@@ -130,6 +60,7 @@ class Magma
           suggest_table_creation mig
         end
       end
+
 
       private
       def suggest_table_creation mig
@@ -154,6 +85,15 @@ class Magma
           att.add_entry
         end.compact.flatten
       end
+    end
+    def self.inherited(subclass)
+      super
+      subclass.attribute :created_at, type: DateTime, hide: true
+      subclass.attribute :updated_at, type: DateTime, hide: true
+    end
+
+    def identifier
+      send self.class.identity
     end
   end
 end
