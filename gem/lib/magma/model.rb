@@ -106,6 +106,13 @@ class Magma
       send self.class.identity
     end
 
+    def run_loaders att, file
+      if self.class.attributes[att].loader
+        send self.class.attributes[att].loader, file
+      end
+      # run a loader on a hook from carrier_wave
+    end
+
     def to_json
       # A JSON version of this record. Each attribute reports in a fashion that is useful
       hash = {

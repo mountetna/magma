@@ -45,7 +45,7 @@ class FlowJoXml
   end
 
   def initialize file
-    @xml = Nokogiri::XML(File.read file)
+    @xml = Nokogiri::XML(file.read)
     @samples = {}
     @groups = {}
   end

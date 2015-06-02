@@ -3,7 +3,6 @@ class Sample < Magma::Model
 
   parent :patient
 
-  parent :experiment
   child :dc_stain,
     display_name: "DC Stain",
     desc: "Stain for dendritic cells"

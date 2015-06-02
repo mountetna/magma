@@ -29,7 +29,7 @@ class FlowJoLoader < Magma::Loader
   end
 
   def create_sample_records
-    names = all_tubes.map do |tube| sample_name_from(tube.tube_name) end
+    names = all_tubes.map do |tube| sample_name_from(tube.tube_name) end.uniq
     names.each do |name|
       push_record Sample, { sample_name: name, patient_id: @patient.id }
     end
@@ -58,9 +58,60 @@ class FlowJoLoader < Magma::Loader
     peripheral_dc_count: "pDCs",
   }
 
+  TREG_STAIN_MAP = {
+    total_acquired_count: "FSC-A, Time subset", 
+    #"FSC-A, FSC-W subset", #"FSC-A, FSC-H subset",
+    live_count: "live", #"CD45+",
+    treg_count: "T-regs",
+    teff_count: "T effectors"
+    #"HLADR+", #"HLADR-, #CD3e-", #"T-cells", #"CD4+", #"T effectors", #"T-regs", #"CD4-,
+    #CD8-", #"CD8+", #"CD45-"
+  }
+
+  NKTB_STAIN_MAP = {
+    total_acquired_count: "FSC-A, Time subset",
+   #"FSC-A, FSC-W subset",
+   #"FSC-A, FSC-H subset",
+   live_count: "FSC-A, <Aqua-A> subset",
+   cd45_count: "CD45+",
+   #"HLADR+",
+   b_count: "B-cells",
+   #"HLADR-, CD3e-",
+   nk_count: "NK cells",
+   t_count: "T-cells",
+   #"CD4+", #"CD4-, CD8-", #"CD8+", #"CD45-",
+  }
+
+  SORT_STAIN_MAP = {
+    total_acquired_count: "FSC-A, Time subset",
+    #"FSC-A, FSC-W subset",
+    #"FSC-A, FSC-H subset",
+    live_count: "live",
+    cd45_count: "CD45+",
+    #"lineage",
+    lineage_neg_count: "lineage -",
+    #"Q1: MHCIIÃ\u0090, CD11b+",
+    myeloid_count: "Myeloids",
+    #"Q3: MHCII+, CD11bÃ\u0090",
+    #"Q4: MHCIIÃ\u0090, CD11bÃ\u0090",
+    t_count: "T-cells",
+    #"CD45-",
+    tumor_count: "EPCAM+",
+    #"EPCAM-",
+    stroma_count: "Stroma"
+  }
+
   def create_stain_records
+    treg_stain_tubes.each do |tube|
+      push_record TregStain, stain_document_using(tube,TREG_STAIN_MAP)
+    end
+    nktb_stain_tubes.each do |tube|
+      push_record NktbStain, stain_document_using(tube,NKTB_STAIN_MAP)
+    end
+    sort_stain_tubes.each do |tube|
+      push_record SortStain, stain_document_using(tube,SORT_STAIN_MAP)
+    end
     dc_stain_tubes.each do |tube|
-      # at this point the samples must exist, and you can safely look up their links
       push_record DcStain, stain_document_using(tube,DC_STAIN_MAP)
     end
     dispatch_record_set

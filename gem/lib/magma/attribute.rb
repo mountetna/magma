@@ -1,7 +1,7 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [ :child, :collection ]
-    attr_reader :name, :type, :desc
+    attr_reader :name, :type, :desc, :loader
     def initialize name, model, opts
       @name = name
       @model = model
@@ -12,6 +12,7 @@ class Magma
       @readonly = opts[:readonly]
       @unique = opts[:unique]
       @match = opts[:match]
+      @loader = opts[:loader]
     end
 
     def json_template
