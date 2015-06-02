@@ -1,8 +1,8 @@
 # A single RNAseq experiment. Holds some gene expression data
 
 class RnaSeq < Magma::Model
+  identifier :tube_name, type: String, desc: "Name of tube containing RNA", matches: /^IPI(CRC|MEL)[0-9]+\.rna/, format_desc: "<ipinumber>.<celltype>.rna, e.g. IPICRC001.treg.rna"
   parent :sample
-  parent :rna_seq_batch
   collection :gene_exp
   attribute :compartment, type: String, desc: "What cell type it came from"
   attribute :cell_number, type: Integer, desc: "Number of input cells"

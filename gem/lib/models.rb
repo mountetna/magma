@@ -1,3 +1,4 @@
+require_relative 'models/ipi'
 require_relative 'models/patient'
 require_relative 'models/dc_stain'
 require_relative 'models/experiment'
@@ -10,3 +11,5 @@ require_relative 'models/rna_seq'
 require_relative 'models/samples'
 require_relative 'models/sort_stain'
 require_relative 'models/treg_stain'
+
+require_relative 'loaders/flow_jo'

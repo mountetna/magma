@@ -1,5 +1,8 @@
 class Sample < Magma::Model
+  identifier :sample_name, match: IPI.sample_name, type: String, desc: "Unique name for this sample"
+
   parent :patient
+
   parent :experiment
   child :dc_stain,
     display_name: "DC Stain",
@@ -21,9 +24,6 @@ class Sample < Magma::Model
     display_name: "RNASeq Experiments",
     desc: "RNA Seq experiments performed on this sample"
 
-  identifier :sample_name, 
-    type: String, 
-    desc: "Unique name for this sample"
 
   attribute :tumor_type, 
     type: String, 
@@ -72,8 +72,4 @@ class Sample < Magma::Model
   attribute :post_digest_cell_count, 
     type: Integer, 
     desc: "Count of cells available after digest"
-
-  document :flojo_file,
-    display_name: "Flojo File",
-    desc: "XML file from Flojo containing all four stains for this sample."
 end

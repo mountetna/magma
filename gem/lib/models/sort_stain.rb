@@ -1,6 +1,6 @@
 class SortStain < Magma::Model
-  parent :sample
   identifier :tube_name, type: String, desc: "Name of tube containing stain"
+  parent :sample
   attribute :total_stained_count, type: Integer, desc: "Total count of cells stained (estimate)"
   attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine"
   attribute :live_count, type: Integer, desc: "Total count of live cells after staining"

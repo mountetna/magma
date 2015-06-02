@@ -1,17 +1,18 @@
 class DcStain < Magma::Model
+  identifier :tube_name, type: String, desc: "Name of tube containing stain", matches: IPI.tube_name(:dc), format_desc: "<sample_name>.dc, e.g. IPICRC001.T1.dc"
   parent :sample
-  identifier :tube_name, type: String, desc: "Name of tube containing stain"
-  attribute :total_stained_count, type: Integer, desc: "Total count of cells stained (estimate)"
-  attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine"
-  attribute :live_count, type: Integer, desc: "Total count of live cells"
-  attribute :cd45_count, type: Integer
-  attribute :t_count, type: Integer, desc: "Total count of t cells"
-  attribute :neutrophil_count, type: Integer, desc: "Total count of neutrophils"
-  attribute :monocyte_count, type: Integer, desc: "Total count of monocytes"
-  attribute :peripheral_dc_count, type: Integer, desc: "Total count of peripheral dendritic cells"
-  attribute :dc1_count, type: Integer, desc: "Total count of DC1 dendritic cells"
-  attribute :dc2_count, type: Integer, desc: "Total count of DC2 dendritic cells"
-  attribute :cd14_pos_tam_count, type: Integer, desc: "Total count of CD14+ tumor-associated macrophages"
-  attribute :cd14_neg_tam_count, type: Integer, desc: "Total count of CD14- tumor-associated macrophages"
+  attribute :total_stained_count, type: Integer, desc: "Total count of cells stained (estimate)", default: 0
+  attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine", default: 0
+  attribute :live_count, type: Integer, desc: "Total count of live cells", default: 0
+  attribute :cd45_count, type: Integer, default: 0
+  attribute :t_count, type: Integer, desc: "Total count of t cells", default: 0
+  attribute :neutrophil_count, type: Integer, desc: "Total count of neutrophils", default: 0
+  attribute :monocyte_count, type: Integer, desc: "Total count of monocytes", default: 0
+  attribute :peripheral_dc_count, type: Integer, desc: "Total count of peripheral dendritic cells", default: 0
+  attribute :cd11c_count, type: Integer, desc: "Total count of CD11c+ cells", default: 0
+  attribute :dc1_count, type: Integer, desc: "Total count of DC1 dendritic cells", default: 0
+  attribute :dc2_count, type: Integer, desc: "Total count of DC2 dendritic cells", default: 0
+  attribute :cd14_pos_tam_count, type: Integer, desc: "Total count of CD14+ tumor-associated macrophages", default: 0
+  attribute :cd14_neg_tam_count, type: Integer, desc: "Total count of CD14- tumor-associated macrophages", default: 0
   document :facs_file, desc: "FACS format file for this stain"
 end
