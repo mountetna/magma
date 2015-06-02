@@ -61,7 +61,16 @@ class Magma
         end
       end
 
-
+      def json_template
+        # Return a json template of this thing.
+        {
+          name: name,
+          attributes: attributes.map do |name,att|
+            { name => att.json_template }
+          end.reduce(:merge),
+          identifier: identity
+        }.to_json
+      end
       private
       def suggest_table_creation mig
         mig.change "create_table(:#{table_name})", [ "primary_key :id" ] + suggest_new_attributes
@@ -86,6 +95,7 @@ class Magma
         end.compact.flatten
       end
     end
+
     def self.inherited(subclass)
       super
       subclass.attribute :created_at, type: DateTime, hide: true
@@ -94,6 +104,17 @@ class Magma
 
     def identifier
       send self.class.identity
+    end
+
+    def to_json
+      # A JSON version of this record. Each attribute reports in a fashion that is useful
+      hash = {
+        id: id
+      }
+      self.class.attributes.each do |name,att|
+        hash.update name => att.json_for(self)
+      end
+      hash.to_json
     end
   end
 end

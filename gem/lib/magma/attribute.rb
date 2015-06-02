@@ -11,6 +11,31 @@ class Magma
       @hide = opts[:hide]
       @readonly = opts[:readonly]
       @unique = opts[:unique]
+      @match = opts[:match]
+    end
+
+    def json_template
+      {
+        name: @name,
+        type: @type,
+        attribute_class: self.class.name,
+        desc: @desc,
+        display_name: display_name,
+        shown: shown?
+      }
+    end
+
+    def json_for record
+      record.send @name
+    end
+
+    def validate value, &block
+      # is it okay to set this?
+      if @match
+        if !@match.match(value)
+          yield "'#{value}' is not a properly formatted value for #{@name}"
+        end
+      end
     end
 
     def read_only?
@@ -74,11 +99,21 @@ class Magma
       model = Magma.instance.get_model @name
       "add_foreign_key :#{@name}_id, :#{model.table_name}"
     end
+
+    def json_for record
+      link = record.send(@name)
+      link ? link.identifier : nil
+    end
   end
 
   class ChildAttribute < Attribute
     def schema_ok?
       true
+    end
+
+    def json_for record
+      link = record.send(@name)
+      link ? link.identifier : nil
     end
   end
 
@@ -86,12 +121,29 @@ class Magma
     def schema_ok?
       true
     end
+
+    def json_for record
+      collection = record.send(@name)
+      collection.map &:identifier
+    end
   end
 
   class DocumentAttribute < Attribute
     def initialize name, model, opts
       super
       @type = String
+    end
+
+    def json_for record
+      document = record.send(@name)
+      if document.current_path && document.url
+        {
+          url: document.url,
+          path: File.basename(document.current_path)
+        }
+      else
+        nil
+      end
     end
   end
 end
