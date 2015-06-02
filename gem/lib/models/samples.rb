@@ -3,21 +3,21 @@ class Sample < Magma::Model
 
   parent :patient
 
-  child :dc_stain,
-    display_name: "DC Stain",
-    desc: "Stain for dendritic cells"
-
   child :treg_stain,
     display_name: "T-reg Stain",
     desc: "Stain for regulatory T-cells"
+
+  child :nktb_stain,
+    display_name: "NK/T/B Stain",
+    desc: "Stain for NK, T and B cells"
 
   child :sort_stain,
     display_name: "Sort Stain",
     desc: "Stain for sorting cells into RNAseq compartments"
 
-  child :nktb_stain,
-    display_name: "NK/T/B Stain",
-    desc: "Stain for NK, T and B cells"
+  child :dc_stain,
+    display_name: "DC Stain",
+    desc: "Stain for dendritic cells"
 
   collection :rna_seq, 
     display_name: "RNASeq Experiments",
