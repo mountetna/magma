@@ -39,6 +39,11 @@ class Magma
         attribute name, opts.merge(attribute_class: Magma::DocumentAttribute)
       end
 
+      def image name, opts = {}
+        mount_uploader name, Magma::Image
+        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
+      end
+
       def collection name, opts = {}
         one_to_many name, primary_key: :id
         attribute name, opts.merge(attribute_class: Magma::CollectionAttribute)

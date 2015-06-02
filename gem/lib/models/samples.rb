@@ -3,6 +3,9 @@ class Sample < Magma::Model
 
   parent :patient
 
+  image :headshot, display_name: "Head shot",
+    desc: "Gross picture of the sample"
+
   child :treg_stain,
     display_name: "T-reg Stain",
     desc: "Stain for regulatory T-cells"

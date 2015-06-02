@@ -147,4 +147,24 @@ class Magma
       end
     end
   end
+
+  class ImageAttribute < Attribute
+    def initialize name, model, opts
+      super
+      @type = String
+    end
+
+    def json_for record
+      document = record.send(@name)
+      if document.current_path && document.url
+        {
+          url: document.url,
+          path: File.basename(document.current_path),
+          thumb: document.thumb.url
+        }
+      else
+        nil
+      end
+    end
+  end
 end
