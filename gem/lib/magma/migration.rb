@@ -1,11 +1,12 @@
 class Magma
   class Migration
     def initialize
-      @changes = []
+      @changes = {}
     end
 
     def change key, lines
-      @changes.push [ key, lines ]
+      @changes[key] ||= []
+      @changes[key].concat lines
     end
 
     def to_s

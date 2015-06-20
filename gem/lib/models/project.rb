@@ -4,4 +4,6 @@ class Project < Magma::Model
   attribute :description, type: String
 
   collection :experiment
+
+  collection :document
 end

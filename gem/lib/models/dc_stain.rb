@@ -5,7 +5,9 @@ class DcStain < Magma::Model
   attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine", default: 0
   attribute :live_count, type: Integer, desc: "Total count of live cells", default: 0
   attribute :cd45_count, type: Integer, default: 0
-  attribute :t_count, type: Integer, desc: "Total count of t cells", default: 0
+  attribute :lineage_count, type: Integer, desc: "Total count of lineage+ cells", default: 0
+  attribute :hladr_count, type: Integer, desc: "Total count of HLADR+ cells", default: 0
+  attribute :hladr_lineage_negative_count, type: Integer, desc: "Total count of HLADR- lineage- cells", default: 0
   attribute :neutrophil_count, type: Integer, desc: "Total count of neutrophils", default: 0
   attribute :monocyte_count, type: Integer, desc: "Total count of monocytes", default: 0
   attribute :peripheral_dc_count, type: Integer, desc: "Total count of peripheral dendritic cells", default: 0

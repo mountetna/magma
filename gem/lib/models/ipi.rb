@@ -9,6 +9,10 @@ class IPI
       /(?:CRC|MEL|HNSC|KID|BRC|LUNG|LIV)/
     end
 
+    def cell_types
+      /(?:treg|myel|teff|tumor|stroma)/
+    end
+
     def sample_name
       /#{patient_name.source}\.[TN][0-9]/
     end
@@ -17,8 +21,8 @@ class IPI
       /#{sample_name.source}\.#{stain}/
     end
 
-    def rna_seq_name stain
-      /#{tube_name(stain).source}\.rna/
+    def rna_seq_name
+      /#{sample_name.source}\.rna\.#{cell_types.source}/
     end
   end
 end

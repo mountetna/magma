@@ -6,6 +6,14 @@ class Sample < Magma::Model
   image :headshot, display_name: "Head shot",
     desc: "Gross picture of the sample"
 
+  attribute :notes,
+    type: String,
+    desc: "General notes about this sample"
+
+  attribute :processed,
+    type: TrueClass,
+    desc: "Whether sample was processed or discarded"
+
   child :treg_stain,
     display_name: "T-reg Stain",
     desc: "Stain for regulatory T-cells"
@@ -29,6 +37,7 @@ class Sample < Magma::Model
 
   attribute :tumor_type, 
     type: String, 
+    options: [ "Colorectal", "Head and Neck", "Kidney", "Melanoma", "Breast", "Lung" ],
     desc: "Tumor type for this sample"
 
   attribute :weight, 
