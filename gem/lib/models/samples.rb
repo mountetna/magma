@@ -76,6 +76,14 @@ class Sample < Magma::Model
     type: DateTime, 
     desc: "Date when digest was done"
 
+  attribute :date_of_fixation,
+    type: DateTime,
+    desc: "Date when sample was fixed (FFPE)"
+
+  attribute :fixation_time,
+    type: DateTime,
+    desc: "How long the sample was fixed"
+
   attribute :date_of_extraction, 
     type: DateTime, 
     desc: "Date when sample was extracted"
