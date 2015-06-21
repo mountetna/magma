@@ -30,6 +30,9 @@ class Sample < Magma::Model
     display_name: "DC Stain",
     desc: "Stain for dendritic cells"
 
+  child :imaging,
+    desc: "Immunofluorescence imaging of this sample"
+
   collection :rna_seq, 
     display_name: "RNASeq Experiments",
     desc: "RNA Seq experiments performed on this sample"
