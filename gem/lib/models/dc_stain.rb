@@ -1,5 +1,5 @@
 class DcStain < Magma::Model
-  identifier :tube_name, type: String, desc: "Name of tube containing stain", matches: IPI.tube_name(:dc), format_desc: "<sample_name>.dc, e.g. IPICRC001.T1.dc"
+  identifier :tube_name, type: String, desc: "Name of tube containing stain", match: IPI.tube_name(:dc), format_hint: "<sample_name>.dc, e.g. IPICRC001.T1.dc"
   parent :sample
   attribute :total_stained_count, type: Integer, desc: "Total count of cells stained (estimate)", default: 0
   attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine", default: 0

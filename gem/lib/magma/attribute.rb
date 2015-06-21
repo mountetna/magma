@@ -13,6 +13,7 @@ class Magma
       @readonly = opts[:readonly]
       @unique = opts[:unique]
       @match = opts[:match]
+      @format_hint = opts[:format_hint]
       @loader = opts[:loader]
     end
 
@@ -36,7 +37,11 @@ class Magma
       # is it okay to set this?
       if @match
         if !@match.match(value)
-          yield "'#{value}' is not a properly formatted value for #{@name}"
+          error = "'#{value}' is improperly formatted."
+          if @format_hint
+            error = "'#{value}' should be like #{@format_hint}"
+          end
+          yield error
         end
       end
     end

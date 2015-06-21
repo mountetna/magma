@@ -1,5 +1,7 @@
 class SortStain < Magma::Model
-  identifier :tube_name, type: String, desc: "Name of tube containing stain"
+  identifier :tube_name, type: String, desc: "Name of tube containing stain",
+    match: IPI.tube_name(:sort),
+    format_hint: "<sample_name>.stain, e.g. IPICRC001.T1.sort"
   parent :sample
   attribute :total_stained_count, type: Integer, desc: "Total count of cells stained (estimate)"
   attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine"
