@@ -40,7 +40,7 @@ class Sample < Magma::Model
 
   attribute :tumor_type, 
     type: String, 
-    options: [ "Colorectal", "Head and Neck", "Kidney", "Melanoma", "Breast", "Lung" ],
+    options: IPI::TUMOR_TYPES.values,
     desc: "Tumor type for this sample"
 
   attribute :weight, 
