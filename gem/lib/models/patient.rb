@@ -3,6 +3,13 @@ class Patient < Magma::Model
 
   parent :experiment
 
+  image :gross_specimen,
+    desc: "Gross picture of the sample"
+
+  attribute :notes,
+    type: String,
+    desc: "General notes about this sample"
+
   collection :sample
 
   document :flojo_file, display_name: "Flojo File",
