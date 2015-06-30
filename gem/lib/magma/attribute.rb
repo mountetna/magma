@@ -54,40 +54,48 @@ class Magma
       !@hide
     end
 
-    def matches_schema_type? name=@name
-      schema.has_key?(name) && is_type?(schema[name][:db_type])
+    def matches_schema_type?
+      schema.has_key?(column_name)
     end
 
     def schema_ok?
       matches_schema_type?
     end
 
+    def schema_unchanged? 
+      schema_ok? && is_type?(schema[column_name][:db_type])
+    end
+
     def needs_column?
       true
     end
 
+    def column_name
+      @name
+    end
+
     def is_type? type
-      true
+      type.to_sym == literal_type
     end
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
     end
 
-    def add_entry
-      entry = [ "add_column :#{@name}, #{type.name}" ]
+    def entry migration, mode
+      entry = [ migration.column_entry(@name, type, mode) ]
       if @unique
-        entry.push "add_unique_constraint :#{@name}"
+        entry.push migration.unique_entry(@name,mode)
       end
       entry
     end
 
-    def new_entry
-      entry = [ "#{type.name} :#{@name}" ]
-      if @unique
-        entry.push "unique :#{@name}"
+    def literal_type
+      if @type == DateTime
+        :"timestamp without time zone"
+      else
+        Magma.instance.db.cast_type_literal(@type)
       end
-      entry
     end
 
     private
@@ -97,18 +105,18 @@ class Magma
   end
 
   class ForeignKeyAttribute < Attribute
-    def schema_ok?
-      matches_schema_type? :"#{@name}_id"
+    def column_name
+      :"#{@name}_id"
     end
 
-    def new_entry
-      model = Magma.instance.get_model @name
-      "foreign_key :#{@name}_id, :#{model.table_name}"
+    # you can't change types for keys
+    def schema_unchanged? 
+      true
     end
 
-    def add_entry
+    def entry migration, mode
       model = Magma.instance.get_model @name
-      "add_foreign_key :#{@name}_id, :#{model.table_name}"
+      migration.foreign_key_entry @name, model, mode
     end
 
     def json_for record
@@ -119,6 +127,10 @@ class Magma
 
   class ChildAttribute < Attribute
     def schema_ok?
+      true
+    end
+
+    def schema_unchanged? 
       true
     end
 
@@ -134,6 +146,10 @@ class Magma
 
   class CollectionAttribute < Attribute
     def schema_ok?
+      true
+    end
+
+    def schema_unchanged? 
       true
     end
 

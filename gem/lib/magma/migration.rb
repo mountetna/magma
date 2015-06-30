@@ -19,6 +19,14 @@ end
 EOT
     end
 
+    def suggest_migration model
+      if Magma.instance.db.table_exists? model.table_name
+        suggest_table_update model
+      else
+        suggest_table_creation model
+      end
+    end
+
     private
     SPC='  '
     def changes
@@ -30,6 +38,84 @@ EOT
         str += SPC*2 + 'end' + "\n"
         str
       end.join('').chomp
+    end
+
+    def suggest_table_creation model
+      change "create_table(:#{model.table_name})", [ "primary_key :id" ] + suggest_new_attributes(model)
+    end
+    
+    def suggest_new_attributes model
+      model.attributes.map do |name,att|
+        next unless att.needs_column?
+        att.entry self, :add
+      end.compact.flatten
+    end
+    
+    def suggest_table_update model
+      missing = suggest_missing_attributes model
+      change "alter_table(:#{model.table_name})", missing unless missing.empty?
+
+      removed = suggest_removed_attributes model
+      change "alter_table(:#{model.table_name})", removed unless removed.empty?
+
+      changed = suggest_changed_attributes model
+      change "alter_table(:#{model.table_name})", changed unless changed.empty?
+    end
+
+    def suggest_missing_attributes model
+      model.attributes.map do |name,att|
+        next if att.schema_ok?
+        att.entry self, :new
+      end.compact.flatten
+    end
+    
+    def suggest_removed_attributes model
+      model.schema.map do |name, db_opts|
+        next if model.attributes[name]
+        next if model.attributes[ name.to_s.sub(/_id$/,'').to_sym ]
+        next if db_opts[:primary_key]
+        column_entry name, nil, :drop
+      end.compact.flatten
+    end
+
+    # the attribute exists, it just has the wrong datatype.
+    def suggest_changed_attributes model
+      model.attributes.map do |name,att|
+        next if att.schema_unchanged?
+        set_column_type_entry att.column_name, att.literal_type
+      end.compact.flatten
+    end
+
+    def set_column_type_entry name, type
+      "set_column_type :#{name}, '#{type}'"
+    end
+
+    def column_entry name, type, mode
+      case mode
+      when :add
+        "add_column :#{name}, #{type.name}"
+      when :new
+        "#{type.name} :#{name}"
+      when :drop
+        "drop_column :#{name}"
+      end
+    end
+
+    def unique_entry name, mode
+      if mode
+        "add_unique_constraint :#{name}"
+      else
+        "unique :#{name}"
+      end
+    end
+
+    def foreign_key_entry name, foreign_model, mode
+      case mode
+      when :add
+        "add_foreign_key :#{name}_id, :#{model.table_name}"
+      when :new
+        "foreign_key :#{name}_id, :#{foreign_model.table_name}"
+      end
     end
   end
 end

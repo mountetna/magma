@@ -58,14 +58,6 @@ class Magma
         raise "Missing table for #{name}." unless Magma.instance.db.table_exists? table_name
       end
 
-      def suggest_migration mig
-        if Magma.instance.db.table_exists? table_name
-          suggest_table_update mig
-        else
-          suggest_table_creation mig
-        end
-      end
-
       def json_template
         # Return a json template of this thing.
         {
@@ -79,42 +71,6 @@ class Magma
 
       def schema
         @schema ||= Hash[Magma.instance.db.schema table_name]
-      end
-
-      private
-      def suggest_table_creation mig
-        mig.change "create_table(:#{table_name})", [ "primary_key :id" ] + suggest_new_attributes
-      end
-
-      def suggest_new_attributes
-        attributes.map do |name,att|
-          next unless att.needs_column?
-          att.new_entry
-        end.compact.flatten
-      end
-      
-      def suggest_table_update mig
-        missing = suggest_missing_attributes
-        mig.change "alter_table(:#{table_name})", missing unless missing.empty?
-
-        removed = suggest_removed_attributes
-        mig.change "alter_table(:#{table_name})", removed unless removed.empty?
-      end
-
-      def suggest_missing_attributes
-        attributes.map do |name,att|
-          next if att.schema_ok?
-          att.add_entry
-        end.compact.flatten
-      end
-
-      def suggest_removed_attributes
-        schema.map do |name, db_opts|
-          next if attributes[name]
-          next if attributes[ name.to_s.sub(/_id$/,'').to_sym ]
-          next if db_opts[:primary_key]
-          "drop_column :#{name}"
-        end.compact.flatten
       end
     end
 

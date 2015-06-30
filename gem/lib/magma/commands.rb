@@ -52,7 +52,7 @@ class Magma
     def execute
       migration = Magma::Migration.new
       Magma.instance.magma_models.each do |model|
-        model.suggest_migration migration
+        migration.suggest_migration model
       end
       puts migration
     end
