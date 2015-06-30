@@ -1,5 +1,5 @@
 class Patient < Magma::Model
-  identifier :ipi_number, match: IPI.match_patient_name, format_hint: "IPI<#{IPI::TUMOR_TYPES.join('|')}><NNN>, e.g. IPICRC001", type: String, desc: "Unique id for patient (anonymized)"
+  identifier :ipi_number, match: IPI.match_patient_name, format_hint: "IPI<#{IPI::TUMOR_TYPES.keys.join('|')}><NNN>, e.g. IPICRC001", type: String, desc: "Unique id for patient (anonymized)"
 
   parent :experiment
 

@@ -64,8 +64,8 @@ class Sample < Magma::Model
     desc: "Contact person who provided access to the sample"
 
   attribute :ice_time, 
-    type: DateTime, 
-    desc: "Time that the sample spent on ice before flow"
+    type: Float,
+    desc: "Time that the sample spent on ice before flow (hours)"
 
   attribute :description, 
     type: String, 
@@ -84,8 +84,8 @@ class Sample < Magma::Model
     desc: "Date when sample was fixed (FFPE)"
 
   attribute :fixation_time,
-    type: DateTime,
-    desc: "How long the sample was fixed"
+    type: Float,
+    desc: "How long the sample was fixed (minutes)"
 
   attribute :date_of_extraction, 
     type: DateTime, 
