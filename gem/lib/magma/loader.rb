@@ -27,6 +27,7 @@ class Magma
       return nil unless valid?
       return nil unless item_exists?
       return nil unless item_changed?
+      update_id!
       @document
     end
 
@@ -39,8 +40,15 @@ class Magma
       @klass.identity && @klass[@klass.identity => @document[@klass.identity]].exists?
     end
 
+    def update_id!
+      @document[:id] = item.id
+    end
+
+    def item
+      @item ||= @klass[@klass.identity => @document[@klass.identity]]
+    end
+
     def item_changed?
-      item = @klass[@klass.identity => @document[@klass.identity]]
       @document.each do |att,value|
         if att =~ /_id$/
           old_value = item.send(att.to_s.sub(/_id$/,'').to_sym)
@@ -49,7 +57,6 @@ class Magma
           old_value = item.send att.to_sym
         end
         if value.to_s != old_value.to_s
-          puts "#{att} changed from #{old_value} to #{value}"
           return true
         end
       end
@@ -97,14 +104,12 @@ class Magma
         raise Magma::LoadFailed.new(complaints) unless complaints.empty?
 
         insert_records = @records[klass].map(&:valid_new_document).compact
-        $stderr.puts "Inserting #{insert_records.size} records"
 
         update_records = @records[klass].map(&:valid_update_document).compact
-        $stderr.puts "Updating #{update_records.size} records"
 
         # Now we have a list of valid records to insert for this class, let's create them:
-        
         klass.multi_insert insert_records
+        klass.multi_update update_records
       end
       @records = {}
     end

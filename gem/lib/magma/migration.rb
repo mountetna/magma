@@ -27,6 +27,38 @@ EOT
       end
     end
 
+    def set_column_type_entry name, type
+      "set_column_type :#{name}, '#{type}'"
+    end
+
+    def column_entry name, type, mode
+      case mode
+      when :add
+        "add_column :#{name}, #{type.name}"
+      when :new
+        "#{type.name} :#{name}"
+      when :drop
+        "drop_column :#{name}"
+      end
+    end
+
+    def unique_entry name, mode
+      if mode
+        "add_unique_constraint :#{name}"
+      else
+        "unique :#{name}"
+      end
+    end
+
+    def foreign_key_entry name, foreign_model, mode
+      case mode
+      when :add
+        "add_foreign_key :#{name}_id, :#{model.table_name}"
+      when :new
+        "foreign_key :#{name}_id, :#{foreign_model.table_name}"
+      end
+    end
+
     private
     SPC='  '
     def changes
@@ -81,41 +113,10 @@ EOT
     # the attribute exists, it just has the wrong datatype.
     def suggest_changed_attributes model
       model.attributes.map do |name,att|
+        next if att.needs_column?
         next if att.schema_unchanged?
         set_column_type_entry att.column_name, att.literal_type
       end.compact.flatten
-    end
-
-    def set_column_type_entry name, type
-      "set_column_type :#{name}, '#{type}'"
-    end
-
-    def column_entry name, type, mode
-      case mode
-      when :add
-        "add_column :#{name}, #{type.name}"
-      when :new
-        "#{type.name} :#{name}"
-      when :drop
-        "drop_column :#{name}"
-      end
-    end
-
-    def unique_entry name, mode
-      if mode
-        "add_unique_constraint :#{name}"
-      else
-        "unique :#{name}"
-      end
-    end
-
-    def foreign_key_entry name, foreign_model, mode
-      case mode
-      when :add
-        "add_foreign_key :#{name}_id, :#{model.table_name}"
-      when :new
-        "foreign_key :#{name}_id, :#{foreign_model.table_name}"
-      end
     end
   end
 end
