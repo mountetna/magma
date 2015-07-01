@@ -1,8 +1,8 @@
 Sequel.migration do
   change do
     alter_table(:patients) do
-      String :gross_specimen
-      String :notes
+      add_column :gross_specimen, String
+      add_column :notes, String
     end
   end
 end

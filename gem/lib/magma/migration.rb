@@ -79,7 +79,7 @@ EOT
     def suggest_new_attributes model
       model.attributes.map do |name,att|
         next unless att.needs_column?
-        att.entry self, :add
+        att.entry self, :new
       end.compact.flatten
     end
     
@@ -97,7 +97,7 @@ EOT
     def suggest_missing_attributes model
       model.attributes.map do |name,att|
         next if att.schema_ok?
-        att.entry self, :new
+        att.entry self, :add
       end.compact.flatten
     end
     
