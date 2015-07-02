@@ -112,7 +112,7 @@ class Magma
       # run a loader on a hook from carrier_wave
     end
 
-    def json_template
+    def json_document
       # A JSON version of this record. Each attribute reports in a fashion that is useful
       hash = {
         id: id

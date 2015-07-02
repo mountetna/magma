@@ -18,6 +18,7 @@ class Patient < Magma::Model
 
   def flowjo_xml_loader file
     fl = FlowJoLoader.new
-    fl.load flojo_file.file, self
+    fl.load(flojo_file.file, self)
+    fl.dispatch
   end
 end

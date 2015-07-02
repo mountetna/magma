@@ -22,9 +22,10 @@ class FlowJoLoader < Magma::Loader
     # ensure the samples. What we actually HAVE is the tube name 
     # that was used to generate a particular stain. So, we must first go through each of the
     # possible tube names we can generate,
+  end
 
+  def dispatch
     create_sample_records
-
     create_stain_records
   end
 
@@ -37,11 +38,24 @@ class FlowJoLoader < Magma::Loader
 
     @sample_ids = Sample.where(sample_name: names).select_hash(:sample_name, :id)
   end
-
   
-
   def sample_name_from tube_name
-    tube_name.scan(IPI.sample_name).flatten.first
+    case tube_name
+    when IPI.sample_name
+      return Regexp.last_match[0]
+    when /[\W\_](?<code>[TN][0-9])/
+      return @patient.ipi_number + "." + Regexp.last_match[:code] 
+    when /TUM(?:OR)?[\W\_]*(?<num>)[0-9]/i
+      return @patient.ipi_number + ".T" + Regexp.last_match[:num] 
+    when /TUM(?:OR)?[\W\_]*/i
+      # just guess, least safe
+      return @patient.ipi_number + ".T1"
+    when /NORM(?:AL)?[\W\_]*(?<num>)[0-9]/i
+      return @patient.ipi_number + ".N" + Regexp.last_match[:num] 
+    when /NORM(?:AL)?[\W\_]*/i
+      # just guess, least safe
+      return @patient.ipi_number + ".N1"
+    end
   end
 
   DC_STAIN_MAP = {
@@ -106,26 +120,28 @@ class FlowJoLoader < Magma::Loader
 
   def create_stain_records
     treg_stain_tubes.each do |tube|
-      push_record TregStain, stain_document_using(tube,TREG_STAIN_MAP)
+      push_record TregStain, stain_document_using(tube,TREG_STAIN_MAP, :treg)
     end
     nktb_stain_tubes.each do |tube|
-      push_record NktbStain, stain_document_using(tube,NKTB_STAIN_MAP)
+      push_record NktbStain, stain_document_using(tube,NKTB_STAIN_MAP, :nktb)
     end
     sort_stain_tubes.each do |tube|
-      push_record SortStain, stain_document_using(tube,SORT_STAIN_MAP)
+      push_record SortStain, stain_document_using(tube,SORT_STAIN_MAP, :sort)
     end
     dc_stain_tubes.each do |tube|
-      push_record DcStain, stain_document_using(tube,DC_STAIN_MAP)
+      push_record DcStain, stain_document_using(tube,DC_STAIN_MAP, :dc)
     end
     dispatch_record_set
   end
 
-  def stain_document_using tube, map
+  def stain_document_using tube, map, stain
+    sample_name = sample_name_from(tube.tube_name)
+    tube_name = sample_name + "." + stain
     map.map do |name,population|
       { name => tube.populations[population] }
     end.reduce(:merge).merge(
-      tube_name: tube.tube_name,
-      sample_id: @sample_ids[ sample_name_from(tube.tube_name)]
+      tube_name: tube_name,
+      sample_id: @sample_ids[ sample_name)]
     )
   end
 

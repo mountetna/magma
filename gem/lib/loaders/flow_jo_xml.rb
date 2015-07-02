@@ -57,6 +57,4 @@ class FlowJoXml
   def group name
     @groups[name] ||= FlowJoXml::Group.new(@xml.css("GroupNode[name=\"#{name}\"]"))
   end
-
-  
 end
