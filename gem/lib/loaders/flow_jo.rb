@@ -42,19 +42,19 @@ class FlowJoLoader < Magma::Loader
   def sample_name_from tube_name
     case tube_name
     when IPI.sample_name
-      return Regexp.last_match[0]
+      return Regexp.last_match[0].to_sym
     when /[\W\_](?<code>[TN][0-9])/
-      return @patient.ipi_number + "." + Regexp.last_match[:code] 
+      return "#{@patient.ipi_number}.#{ Regexp.last_match[:code] }"
     when /TUM(?:OR)?[\W\_]*(?<num>)[0-9]/i
-      return @patient.ipi_number + ".T" + Regexp.last_match[:num] 
+      return "#{@patient.ipi_number}.T#{ Regexp.last_match[:num] }"
     when /TUM(?:OR)?[\W\_]*/i
       # just guess, least safe
-      return @patient.ipi_number + ".T1"
+      return "#{@patient.ipi_number}.T1"
     when /NORM(?:AL)?[\W\_]*(?<num>)[0-9]/i
-      return @patient.ipi_number + ".N" + Regexp.last_match[:num] 
+      return "#{@patient.ipi_number}.N#{ Regexp.last_match[:num] }"
     when /NORM(?:AL)?[\W\_]*/i
       # just guess, least safe
-      return @patient.ipi_number + ".N1"
+      return "#{@patient.ipi_number}.N1"
     end
   end
 
@@ -136,12 +136,12 @@ class FlowJoLoader < Magma::Loader
 
   def stain_document_using tube, map, stain
     sample_name = sample_name_from(tube.tube_name)
-    tube_name = sample_name + "." + stain
+    tube_name = "#{sample_name}.#{stain}"
     map.map do |name,population|
       { name => tube.populations[population] }
     end.reduce(:merge).merge(
       tube_name: tube_name,
-      sample_id: @sample_ids[ sample_name)]
+      sample_id: @sample_ids[ sample_name ]
     )
   end
 
