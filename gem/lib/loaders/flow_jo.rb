@@ -32,7 +32,7 @@ class FlowJoLoader < Magma::Loader
   def create_sample_records
     names = all_tubes.map do |tube| sample_name_from(tube.tube_name) end.uniq
     names.each do |name|
-      push_record Sample, { sample_name: name, patient_id: @patient.id }
+      push_record Sample, { sample_name: name, patient_id: @patient.id, created_at: DateTime.now, updated_at: DateTime.now }
     end
     dispatch_record_set
 
@@ -141,7 +141,9 @@ class FlowJoLoader < Magma::Loader
       { name => tube.populations[population] }
     end.reduce(:merge).merge(
       tube_name: tube_name,
-      sample_id: @sample_ids[ sample_name ]
+      sample_id: @sample_ids[ sample_name ],
+      created_at: DateTime.now,
+      updated_at: DateTime.now
     )
   end
 

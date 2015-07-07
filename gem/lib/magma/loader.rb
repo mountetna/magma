@@ -27,7 +27,7 @@ class Magma
       return nil unless valid?
       return nil unless item_exists?
       return nil unless item_changed?
-      update_id!
+      update_fixes!
       @document
     end
 
@@ -40,8 +40,10 @@ class Magma
       @klass.identity && @klass[@klass.identity => @document[@klass.identity]].exists?
     end
 
-    def update_id!
+    def update_fixes!
       @document[:id] = item.id
+      # never overwrite created_at
+      @document.delete :created_at
     end
 
     def item

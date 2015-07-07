@@ -159,7 +159,9 @@ class Magma
 
     def json_for record
       collection = record.send(@name)
-      collection.map &:identifier
+      collection.map do |l|
+        { identifier: l.identifier }
+      end
     end
   end
 
