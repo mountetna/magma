@@ -6,8 +6,12 @@ class NktbStain < Magma::Model
   attribute :total_acquired_count, type: Integer, desc: "Total count of cells acquired by flow machine", default: 0
   attribute :live_count, type: Integer, desc: "Total count of live cells after staining", default: 0
   attribute :cd45_count, type: Integer, desc: "Total count of CD45+ cells (total immune) after staining", default: 0
+  attribute :cd4_count, type: Integer, desc: "Total count of CD4+ cells after staining", default: 0
+  attribute :cd8_count, type: Integer, desc: "Total count of CD8+ cells after staining", default: 0
   attribute :t_count, type: Integer, desc: "Total count of T-cells after staining", default: 0
   attribute :nk_count, type: Integer, desc: "Total count of NK cells after staining", default: 0
   attribute :b_count, type: Integer, desc: "Total count of B cells after staining", default: 0
+  attribute :hladr_count, type: Integer, desc: "Total count of HLADR+ cells", default: 0
+  attribute :hladr_cd3e_neg_count, type: Integer, desc: "Total count of HLADR- CD3e- cells", default: 0
   document :facs_file, desc: "FACS format file for this stain"
 end

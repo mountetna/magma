@@ -79,12 +79,20 @@ class FlowJoLoader < Magma::Loader
 
   TREG_STAIN_MAP = {
     total_acquired_count: "FSC-A, Time subset", 
-    #"FSC-A, FSC-W subset", #"FSC-A, FSC-H subset",
-    live_count: "live", #"CD45+",
+    #"FSC-A, FSC-W subset", 
+    ##"FSC-A, FSC-H subset",
+    live_count: "live", 
+    cd45_count: "CD45+",
     treg_count: "T-regs",
-    teff_count: "T effectors"
-    #"HLADR+", #"HLADR-, #CD3e-", #"T-cells", #"CD4+", #"T effectors", #"T-regs", #"CD4-,
-    #CD8-", #"CD8+", #"CD45-"
+    teff_count: "T effectors",
+    hladr_count: "HLADR+",
+    cd3_neg_count: "HLADR-, CD3e-",
+    t_count: "T-cells",
+    cd4_count: "CD4+",
+    #"CD4-,
+    #CD8-", 
+    cd8_count: "CD8+", 
+    #"CD45-"
   }
 
   NKTB_STAIN_MAP = {
@@ -93,12 +101,13 @@ class FlowJoLoader < Magma::Loader
    #"FSC-A, FSC-H subset",
    live_count: "FSC-A, <Aqua-A> subset",
    cd45_count: "CD45+",
-   #"HLADR+",
+   hladr_count: "HLADR+",
    b_count: "B-cells",
-   #"HLADR-, CD3e-",
+   hladr_cd3e_neg_count: "HLADR-, CD3e-",
    nk_count: "NK cells",
    t_count: "T-cells",
-   #"CD4+", #"CD4-, CD8-", #"CD8+", #"CD45-",
+   cd4_count: "CD4+", #"CD4-, "CD8-", 
+   cd8_count: "CD8+", #"CD45-",
   }
 
   SORT_STAIN_MAP = {
@@ -107,7 +116,7 @@ class FlowJoLoader < Magma::Loader
     #"FSC-A, FSC-H subset",
     live_count: "live",
     cd45_count: "CD45+",
-    #"lineage",
+    lineage_count: "lineage",
     lineage_neg_count: "lineage -",
     #"Q1: MHCIIÃ\u0090, CD11b+",
     myeloid_count: "Myeloids",
