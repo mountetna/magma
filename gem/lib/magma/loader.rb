@@ -37,7 +37,7 @@ class Magma
 
     private
     def item_exists?
-      @klass.identity && @klass[@klass.identity => @document[@klass.identity]].exists?
+      @klass.identity && !@klass[@klass.identity => @document[@klass.identity]].nil?
     end
 
     def update_fixes!

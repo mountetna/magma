@@ -55,6 +55,8 @@ class FlowJoLoader < Magma::Loader
     when /NORM(?:AL)?[\W\_]*/i
       # just guess, least safe
       return "#{@patient.ipi_number}.N1"
+    else
+      raise Magma::LoadFailed.new([ "Could not guess sample name from tube name '#{tube_name}'"])
     end
   end
 
