@@ -75,13 +75,15 @@ class Magma
 
       def multi_update records
         return if records.empty?
+        update_columns = records.first.keys
+        return if update_columns.empty?
         db = Magma.instance.db
         db.transaction do
           update_table_name = :"bulk_update_#{table_name}"
           create_bulk_update = "CREATE TABLE #{update_table_name} AS SELECT * FROM #{table_name} WHERE 1=0;"
           update_main_table = <<-EOT
                   UPDATE #{table_name} AS dest
-                  SET #{columns.map do |column| "#{column}=src.#{column}" end.join(", ")}
+                  SET #{update_columns.map do |column| "#{column}=src.#{column}" end.join(", ")}
                   FROM #{update_table_name} AS src
                   WHERE dest.#{identity} = src.#{identity};
           EOT
