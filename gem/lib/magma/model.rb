@@ -15,6 +15,11 @@ class Magma
         end
       end
 
+      def order *columns
+        @order = columns
+        set_dataset dataset.order(*@order)
+      end
+
       def attribute name, opts = {}
         klass = opts.delete(:attribute_class) || Magma::Attribute
         attributes[name] = klass.new(name, self, opts)
@@ -52,6 +57,9 @@ class Magma
       def identifier name, opts
         attribute name, opts.merge(unique: true)
         @identity = name
+
+        # default ordering is by identifier
+        order(name) unless @order
       end
 
       def validate
