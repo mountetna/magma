@@ -12,8 +12,8 @@ class DcStain < Magma::Model
   attribute :monocyte_count, type: Integer, desc: "Total count of monocytes", default: 0
   attribute :peripheral_dc_count, type: Integer, desc: "Total count of peripheral dendritic cells", default: 0
   attribute :cd11c_count, type: Integer, desc: "Total count of CD11c+ cells", default: 0
-  attribute :dc1_count, type: Integer, desc: "Total count of DC1 dendritic cells", default: 0
-  attribute :dc2_count, type: Integer, desc: "Total count of DC2 dendritic cells", default: 0
+  attribute :dc1_count, type: Integer, desc: "Total count of DC1 dendritic cells (BDCA1+)", default: 0
+  attribute :dc2_count, type: Integer, desc: "Total count of DC2 dendritic cells (BDCA3+)", default: 0
   attribute :cd14_pos_tam_count, type: Integer, desc: "Total count of CD14+ tumor-associated macrophages", default: 0
   attribute :cd14_neg_tam_count, type: Integer, desc: "Total count of CD14- tumor-associated macrophages", default: 0
   document :facs_file, desc: "FACS format file for this stain"

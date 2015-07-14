@@ -54,6 +54,10 @@ class Magma
       !@hide
     end
 
+    def tab_column?
+      shown?
+    end
+
     def matches_schema_type?
       schema.has_key?(column_name)
     end
@@ -157,6 +161,10 @@ class Magma
       nil
     end
 
+    def tab_column?
+      nil
+    end
+
     def json_for record
       collection = record.send(@name)
       collection.map do |l|
@@ -169,6 +177,10 @@ class Magma
     def initialize name, model, opts
       super
       @type = String
+    end
+
+    def tab_column?
+      nil
     end
 
     def json_for record
@@ -188,6 +200,10 @@ class Magma
     def initialize name, model, opts
       super
       @type = String
+    end
+
+    def tab_column?
+      nil
     end
 
     def json_for record
