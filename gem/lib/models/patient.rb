@@ -10,6 +10,10 @@ class Patient < Magma::Model
     type: String,
     desc: "General notes about this sample"
 
+  attribute :received_blood,
+    type: TrueClass,
+    desc: "Was blood received for this patient?"
+
   collection :sample
 
   document :flojo_file, display_name: "Flojo File",
