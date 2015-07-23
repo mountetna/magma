@@ -60,23 +60,6 @@ class FlowJoLoader < Magma::Loader
     end
   end
 
-  DC_STAIN_MAP = {
-    total_acquired_count: "FSC-A, Time subset", #"FSC-A, FSC-W subset", "FSC-A, FSC-H subset",
-    live_count: "FSC-A, <Aqua-A> subset",
-    cd45_count: "CD45+", #"HLADR -, Lineage -",
-    neutrophil_count: "Eosinophils and Neutrophils", 
-    hladr_count: "HLADR+",
-    lineage_count: "lineage",
-    hladr_lineage_negative_count: "HLADR -, Lineage -",
-    monocyte_count: "CD16+ monocytes",
-    cd11c_count: "CD11c+",
-    dc1_count: "BDCA1+ DCs",
-    dc2_count: "BDCA3+",
-    cd14_neg_tam_count: "CD14- TAMs",
-    cd14_pos_tam_count: "CD14+ TAMs",
-    peripheral_dc_count: "pDCs",
-  }
-
   TREG_STAIN_MAP = {
     total_acquired_count: "FSC-A, Time subset", 
     #"FSC-A, FSC-W subset", 
@@ -127,6 +110,23 @@ class FlowJoLoader < Magma::Loader
     tumor_count: "EPCAM+",
     #"EPCAM-",
     stroma_count: "Stroma"
+  }
+
+  DC_STAIN_MAP = {
+    total_acquired_count: "FSC-A, Time subset", #"FSC-A, FSC-W subset", "FSC-A, FSC-H subset",
+    live_count: "FSC-A, <Aqua-A> subset",
+    cd45_count: "CD45+", #"HLADR -, Lineage -",
+    neutrophil_count: "Eosinophils and Neutrophils", 
+    hladr_count: "HLADR+",
+    lineage_count: "lineage",
+    hladr_lineage_negative_count: "HLADR -, Lineage -",
+    monocyte_count: "CD16+ monocytes",
+    cd11c_count: "CD11c+",
+    dc1_count: "BDCA1+ DCs",
+    dc2_count: "BDCA3+",
+    cd14_neg_tam_count: "CD14- TAMs",
+    cd14_pos_tam_count: "CD14+ TAMs",
+    peripheral_dc_count: "pDCs",
   }
 
   def create_stain_records

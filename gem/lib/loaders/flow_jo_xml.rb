@@ -50,11 +50,19 @@ class FlowJoXml
     @groups = {}
   end
 
+  class NameSearch
+    def named_like(node_set, att, txt)
+      node_set.find_all do |node| 
+        node[att] =~ /#{txt}/i
+      end
+    end
+  end
+
   def sample id
-    @samples[id] ||= FlowJoXml::Sample.new(@xml.css("Sample[sampleID=\"#{id}\"]"))
+    @samples[id] ||= FlowJoXml::Sample.new(@xml.css("Sample:named_like(\"sampleID\",\"#{id}\")",FlowJoXml::NameSearch.new))
   end
 
   def group name
-    @groups[name] ||= FlowJoXml::Group.new(@xml.css("GroupNode[name=\"#{name}\"]"))
+    @groups[name] ||= FlowJoXml::Group.new(@xml.css("GroupNode:named_like(\"name\",\"#{name}\")",FlowJoXml::NameSearch.new))
   end
 end
