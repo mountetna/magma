@@ -103,6 +103,12 @@ class Magma
           db.run(remove_bulk_update)
         end
       end
+
+      def update_or_create *args
+        obj = find_or_create(*args)
+        yield obj if block_given?
+        obj.save if obj
+      end
     end
 
     def self.inherited(subclass)
