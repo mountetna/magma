@@ -1,12 +1,11 @@
 class IPI
   CELL_TYPES = [ :treg, :myeloid, :teff, :tumor, :stroma ]
-  TUMOR_TYPES = { CRC: :Colorectal, MEL: :Melanoma, HNSC: :"Head and Neck", KID: :Kidney, BRC: :Breast, LUNG: :Lung, LIV: :Liver, BLAD: :Bladder, PROS: :Prostate }
+  TUMOR_TYPES = { CRC: :Colorectal, MEL: :Melanoma, HNSC: :"Head and Neck", KID: :Kidney, BRC: :Breast, LUNG: :Lung, LIV: :Liver, BLAD: :Bladder, PROS: :Prostate, PDAC: :Pancreas }
   class << self
     def patient_name
       # returns a regexp matching a valid patient name
       /^IPI#{tumor_types.source}[0-9]{3}/
     end
-
 
     def tumor_types
       match_array IPI::TUMOR_TYPES.keys
@@ -16,16 +15,20 @@ class IPI
       match_array IPI::CELL_TYPES
     end
 
+    def clinical_name
+      chain :patient_name, :clin
+    end
+
     def sample_name
-      /#{patient_name.source}\.[TN][0-9]/
+      chain :patient_name, /[TN][0-9]/
     end
 
     def tube_name stain
-      /#{sample_name.source}\.#{stain}/
+      chain :sample_name, stain
     end
 
     def rna_seq_name
-      /#{sample_name.source}\.rna\.#{cell_types.source}/
+      chain :sample_name, :rna, :cell_types
     end
 
     def method_missing sym, *args, &block
@@ -38,6 +41,23 @@ class IPI
     end
 
     private
+    def chain *regs
+      Regexp.new(regs.map do |reg|
+        case reg
+        when Symbol
+          if respond_to? reg
+            re = send reg
+            re.source
+          else
+            reg.to_s
+          end
+        when Regexp
+          reg.source
+        when String
+          reg
+        end
+      end.join('\.'))
+    end
     def match_array ary
       /(?:#{ary.join('|')})/
     end

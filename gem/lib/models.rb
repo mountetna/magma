@@ -1,5 +1,6 @@
 require_relative 'models/ipi'
 require_relative 'models/patient'
+require_relative 'models/clinical'
 require_relative 'models/dc_stain'
 require_relative 'models/experiment'
 require_relative 'models/project'
