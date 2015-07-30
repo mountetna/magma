@@ -128,6 +128,47 @@ class Magma
       # run a loader on a hook from carrier_wave
     end
 
+    # this is a generic method to easily link two records together. It figures
+    # out what to do based on the link class
+    def create_link fname, link
+      return if link.blank?
+      case self.class.attributes[fname]
+      when Magma::ForeignKeyAttribute
+        # See if you can find the appropriate model
+        foreign_model = Magma.instance.get_model fname
+        # now see if the link exists
+        if foreign_model
+          foreign_model.update_or_create(foreign_model.identity => link) do |obj|
+            self[ :"#{fname}_id" ] = obj.id
+          end
+        end
+      when Magma::ChildAttribute
+        child_model = Magma.instance.get_model fname
+        if child_model
+          child_model.update_or_create(child_model.identity => link) do |obj|
+            obj[ :"#{self.class.name.snake_case}_id" ] = self.id
+          end
+        end
+      when Magma::CollectionAttribute
+        child_model = Magma.instance.get_model fname
+        link.each do |ilink|
+          next if ilink.blank?
+          if child_model
+            child_model.update_or_create(child_model.identity => ilink) do |obj|
+              obj[ :"#{self.class.name.snake_case}_id" ] = self.id
+            end
+          end
+        end
+      end
+    end
+
+    def delete_link fname
+      case self.class.attributes[fname]
+      when Magma::ForeignKeyAttribute
+        self[ :"#{fname}_id" ] = nil
+      end
+    end
+
     def json_document
       # A JSON version of this record. Each attribute reports in a fashion that is useful
       hash = {
