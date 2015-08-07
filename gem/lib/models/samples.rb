@@ -40,7 +40,7 @@ class Sample < Magma::Model
 
   attribute :tumor_type, 
     type: String, 
-    options: IPI::TUMOR_TYPES.values,
+    match: [ "Primary", "Metastasis", "Normal" ],
     desc: "Tumor type for this sample"
 
   attribute :weight, 
