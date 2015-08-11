@@ -1,20 +1,15 @@
 class Magma
   class Attribute
+    def self.options
+      [ :type, :desc, :display_name, :hide, :readonly, :unique, :match, :format_hint, :loader ]
+    end
     DISPLAY_ONLY = [ :child, :collection ]
     attr_reader :name, :type, :desc, :loader
     def initialize name, model, opts
       @name = name
       @model = model
-      @type = opts[:type]
-      @desc = opts[:desc]
-      @display_name = opts[:display_name]
-      @options = opts[:options]
-      @hide = opts[:hide]
-      @readonly = opts[:readonly]
-      @unique = opts[:unique]
-      @match = opts[:match]
-      @format_hint = opts[:format_hint]
-      @loader = opts[:loader]
+
+      set_options opts
     end
 
     def json_template
@@ -24,7 +19,7 @@ class Magma
         attribute_class: self.class.name,
         desc: @desc,
         display_name: display_name,
-        options: @options,
+        options: @match.is_a?(Array) ? @match : nil,
         shown: shown?
       }.delete_if {|k,v| v.nil? }
     end
@@ -33,14 +28,25 @@ class Magma
       record.send @name
     end
 
-    def validate value, &block
+    def entry_for value, document
+      { @name => value }
+    end
+
+    def validate value, record, &block
       # is it okay to set this?
-      if @match
+      case @match
+      when Regexp
         if !@match.match(value)
-          error = "'#{value}' is improperly formatted."
           if @format_hint
-            error = "'#{value}' should be like #{@format_hint}"
+            error = "'#{value}' should be like #{@format_hint}."
+          else
+            error = "'#{value}' is improperly formatted."
           end
+          yield error
+        end
+      when Array
+        if !@match.include value
+          error = "'#{value}' should be one of #{@match.join(", ")}."
           yield error
         end
       end
@@ -102,121 +108,28 @@ class Magma
       end
     end
 
+    def update_link record, link
+    end
+
     private
     def schema
       @model.schema
     end
-  end
 
-  class ForeignKeyAttribute < Attribute
-    def column_name
-      :"#{@name}_id"
-    end
-
-    # you can't change types for keys
-    def schema_unchanged? 
-      true
-    end
-
-    def entry migration, mode
-      model = Magma.instance.get_model @name
-      migration.foreign_key_entry @name, model, mode
-    end
-
-    def json_for record
-      link = record.send(@name)
-      link ? link.identifier : nil
-    end
-  end
-
-  class ChildAttribute < Attribute
-    def schema_ok?
-      true
-    end
-
-    def schema_unchanged? 
-      true
-    end
-
-    def needs_column?
-      nil
-    end
-
-    def json_for record
-      link = record.send(@name)
-      link ? link.identifier : nil
-    end
-  end
-
-  class CollectionAttribute < Attribute
-    def schema_ok?
-      true
-    end
-
-    def schema_unchanged? 
-      true
-    end
-
-    def needs_column?
-      nil
-    end
-
-    def tab_column?
-      nil
-    end
-
-    def json_for record
-      collection = record.send(@name)
-      collection.map do |l|
-        { identifier: l.identifier }
-      end
-    end
-  end
-
-  class DocumentAttribute < Attribute
-    def initialize name, model, opts
-      super
-      @type = String
-    end
-
-    def tab_column?
-      nil
-    end
-
-    def json_for record
-      document = record.send(@name)
-      if document.current_path && document.url
-        {
-          url: document.url,
-          path: File.basename(document.current_path)
-        }
-      else
-        nil
-      end
-    end
-  end
-
-  class ImageAttribute < Attribute
-    def initialize name, model, opts
-      super
-      @type = String
-    end
-
-    def tab_column?
-      nil
-    end
-
-    def json_for record
-      document = record.send(@name)
-      if document.current_path && document.url
-        {
-          url: document.url,
-          path: File.basename(document.current_path),
-          thumb: document.thumb.url
-        }
-      else
-        nil
+    def set_options opts
+      opts.each do |opt,value|
+        if self.class.options.include? opt
+          instance_variable_set("@#{opt}", value)
+        end
       end
     end
   end
 end
+
+require_relative 'attributes/link'
+require_relative 'attributes/child'
+require_relative 'attributes/collection'
+require_relative 'attributes/document'
+require_relative 'attributes/foreign_key'
+require_relative 'attributes/image'
+require_relative 'attributes/table'

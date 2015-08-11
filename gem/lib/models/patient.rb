@@ -6,6 +6,8 @@ class Patient < Magma::Model
   image :gross_specimen,
     desc: "Gross picture of the sample"
 
+  link :clinical, column_type: :clinical_type_value
+
   attribute :notes,
     type: String,
     desc: "General notes about this sample"
@@ -27,5 +29,14 @@ class Patient < Magma::Model
     fl = FlowJoLoader.new
     fl.load(flojo_file.file, self)
     fl.dispatch
+  end
+
+  def self.clinical_type_value document
+    if document.respond_to? :experiment
+      name = document.experiment.name
+    else
+      name = document[:experiment]
+    end
+    :"Clinical#{name.gsub(/\s/,'')}"
   end
 end

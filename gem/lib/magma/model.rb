@@ -1,8 +1,9 @@
+Sequel::Model.plugin :timestamps, update_on_create: true
+Sequel::Model.plugin :polymorphic
+
 class Magma
   Model = Class.new(Sequel::Model)
   class Model
-    plugin :timestamps, update_on_create: true
-    
     class << self
       attr_reader :identity
       def attributes
@@ -34,6 +35,11 @@ class Magma
         attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
       end
 
+      def link name, opts = {}
+        many_to_one name, :polymorphic => opts[:column_type]
+        attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+      end
+
       def child name, opts = {}
         one_to_one name
         attribute name, opts.merge(attribute_class: Magma::ChildAttribute)
@@ -52,6 +58,11 @@ class Magma
       def collection name, opts = {}
         one_to_many name, primary_key: :id
         attribute name, opts.merge(attribute_class: Magma::CollectionAttribute)
+      end
+
+      def table name, opts = {}
+        one_to_many name, primary_key: :id
+        attribute name, opts.merge(attribute_class: Magma::TableAttribute)
       end
 
       def identifier name, opts
@@ -132,41 +143,11 @@ class Magma
     # out what to do based on the link class
     def create_link fname, link
       return if link.blank?
-      case self.class.attributes[fname]
-      when Magma::ForeignKeyAttribute
-        # See if you can find the appropriate model
-        foreign_model = Magma.instance.get_model fname
-        # now see if the link exists
-        if foreign_model
-          foreign_model.update_or_create(foreign_model.identity => link) do |obj|
-            self[ :"#{fname}_id" ] = obj.id
-          end
-        end
-      when Magma::ChildAttribute
-        child_model = Magma.instance.get_model fname
-        if child_model
-          child_model.update_or_create(child_model.identity => link) do |obj|
-            obj[ :"#{self.class.name.snake_case}_id" ] = self.id
-          end
-        end
-      when Magma::CollectionAttribute
-        child_model = Magma.instance.get_model fname
-        link.each do |ilink|
-          next if ilink.blank?
-          if child_model
-            child_model.update_or_create(child_model.identity => ilink) do |obj|
-              obj[ :"#{self.class.name.snake_case}_id" ] = self.id
-            end
-          end
-        end
-      end
+      self.class.attributes[fname].update_link self, link
     end
 
     def delete_link fname
-      case self.class.attributes[fname]
-      when Magma::ForeignKeyAttribute
-        self[ :"#{fname}_id" ] = nil
-      end
+      self.class.attributes[fname].update_link self, nil
     end
 
     def json_document

@@ -43,17 +43,35 @@ EOT
     end
 
     def unique_entry name, mode
-      if mode
+      case mode
+      when :add
         "add_unique_constraint :#{name}"
-      else
+      when :new
         "unique :#{name}"
+      end
+    end
+
+    def index_entry column, mode
+      case mode
+      when :add
+        if column.is_a? Array
+          "add_index [#{column.map{|c| ":#{c}"}.join(", ")}]"
+        else
+          "add_index :#{column}"
+        end
+      when :new
+        if column.is_a? Array
+          "index [#{column.map{|c| ":#{c}"}.join(", ")}]"
+        else
+          "index :#{column}"
+        end
       end
     end
 
     def foreign_key_entry name, foreign_model, mode
       case mode
       when :add
-        "add_foreign_key :#{name}_id, :#{model.table_name}"
+        "add_foreign_key :#{name}_id, :#{foreign_model.table_name}"
       when :new
         "foreign_key :#{name}_id, :#{foreign_model.table_name}"
       end
@@ -61,6 +79,7 @@ EOT
 
     private
     SPC='  '
+
     def changes
       @changes.map do |key,lines|
         str = SPC*2 + key + ' do' + "\n"
@@ -105,6 +124,7 @@ EOT
       model.schema.map do |name, db_opts|
         next if model.attributes[name]
         next if model.attributes[ name.to_s.sub(/_id$/,'').to_sym ]
+        next if model.attributes[ name.to_s.sub(/_type$/,'').to_sym ]
         next if db_opts[:primary_key]
         column_entry name, nil, :drop
       end.compact.flatten

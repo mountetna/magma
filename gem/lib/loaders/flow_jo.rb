@@ -35,8 +35,6 @@ class FlowJoLoader < Magma::Loader
       push_record Sample, { sample_name: name, patient_id: @patient.id, created_at: DateTime.now, updated_at: DateTime.now }
     end
     dispatch_record_set
-
-    @sample_ids = Sample.where(sample_name: names).select_hash(:sample_name, :id)
   end
   
   def sample_name_from tube_name
@@ -152,7 +150,7 @@ class FlowJoLoader < Magma::Loader
       { name => tube.populations[population] }
     end.reduce(:merge).merge(
       tube_name: tube_name,
-      sample_id: @sample_ids[ sample_name ],
+      sample: sample_name,
       created_at: DateTime.now,
       updated_at: DateTime.now
     )
