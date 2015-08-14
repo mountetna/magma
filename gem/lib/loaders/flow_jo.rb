@@ -25,14 +25,14 @@ class FlowJoLoader < Magma::Loader
   end
 
   def dispatch
-    create_sample_records
-    create_stain_records
+    create_sample_documents
+    create_population_documents
   end
 
-  def create_sample_records
+  def create_sample_documents
     names = all_tubes.map do |tube| sample_name_from(tube.tube_name) end.uniq
     names.each do |name|
-      push_record Sample, { sample_name: name, patient_id: @patient.id, created_at: DateTime.now, updated_at: DateTime.now }
+      push_record Sample, { sample_name: name, patient: @patient.ipi_number, created_at: DateTime.now, updated_at: DateTime.now }
     end
     dispatch_record_set
   end
@@ -58,102 +58,48 @@ class FlowJoLoader < Magma::Loader
     end
   end
 
-  TREG_STAIN_MAP = {
-    total_acquired_count: "FSC-A, Time subset", 
-    #"FSC-A, FSC-W subset", 
-    ##"FSC-A, FSC-H subset",
-    live_count: "live", 
-    cd45_count: "CD45+",
-    treg_count: "T-regs",
-    teff_count: "T effectors",
-    hladr_count: "HLADR+",
-    cd3_neg_count: "HLADR-, CD3e-",
-    t_count: "T-cells",
-    cd4_count: "CD4+",
-    #"CD4-,
-    #CD8-", 
-    cd8_count: "CD8+", 
-    #"CD45-"
-  }
-
-  NKTB_STAIN_MAP = {
-    total_acquired_count: "FSC-A, Time subset",
-   #"FSC-A, FSC-W subset",
-   #"FSC-A, FSC-H subset",
-   live_count: "FSC-A, <Aqua-A> subset",
-   cd45_count: "CD45+",
-   hladr_count: "HLADR+",
-   b_count: "B-cells",
-   hladr_cd3e_neg_count: "HLADR-, CD3e-",
-   nk_count: "NK cells",
-   t_count: "T-cells",
-   cd4_count: "CD4+", #"CD4-, "CD8-", 
-   cd8_count: "CD8+", #"CD45-",
-  }
-
-  SORT_STAIN_MAP = {
-    total_acquired_count: "FSC-A, Time subset",
-    #"FSC-A, FSC-W subset",
-    #"FSC-A, FSC-H subset",
-    live_count: "live",
-    cd45_count: "CD45+",
-    lineage_count: "lineage",
-    lineage_neg_count: "lineage -",
-    #"Q1: MHCIIÃ\u0090, CD11b+",
-    myeloid_count: "Myeloids",
-    #"Q3: MHCII+, CD11bÃ\u0090",
-    #"Q4: MHCIIÃ\u0090, CD11bÃ\u0090",
-    t_count: "T-cells",
-    #"CD45-",
-    tumor_count: "EPCAM+",
-    #"EPCAM-",
-    stroma_count: "Stroma"
-  }
-
-  DC_STAIN_MAP = {
-    total_acquired_count: "FSC-A, Time subset", #"FSC-A, FSC-W subset", "FSC-A, FSC-H subset",
-    live_count: "FSC-A, <Aqua-A> subset",
-    cd45_count: "CD45+", #"HLADR -, Lineage -",
-    neutrophil_count: "Eosinophils and Neutrophils", 
-    hladr_count: "HLADR+",
-    lineage_count: "lineage",
-    hladr_lineage_negative_count: "HLADR -, Lineage -",
-    monocyte_count: "CD16+ monocytes",
-    cd11c_count: "CD11c+",
-    dc1_count: "BDCA1+ DCs",
-    dc2_count: "BDCA3+",
-    cd14_neg_tam_count: "CD14- TAMs",
-    cd14_pos_tam_count: "CD14+ TAMs",
-    peripheral_dc_count: "pDCs",
-  }
-
-  def create_stain_records
+  def create_population_documents
     treg_stain_tubes.each do |tube|
-      push_record TregStain, stain_document_using(tube,TREG_STAIN_MAP, :treg)
+      create_population_document_using tube, :treg
     end
     nktb_stain_tubes.each do |tube|
-      push_record NktbStain, stain_document_using(tube,NKTB_STAIN_MAP, :nktb)
+      create_population_document_using tube, :nktb
     end
     sort_stain_tubes.each do |tube|
-      push_record SortStain, stain_document_using(tube,SORT_STAIN_MAP, :sort)
+      create_population_document_using tube, :sort
     end
     dc_stain_tubes.each do |tube|
-      push_record DcStain, stain_document_using(tube,DC_STAIN_MAP, :dc)
+      create_population_document_using tube, :dc
     end
     dispatch_record_set
   end
 
-  def stain_document_using tube, map, stain
+  def create_population_document_using tube, stain
     sample_name = sample_name_from(tube.tube_name)
     tube_name = "#{sample_name}.#{stain}"
-    map.map do |name,population|
-      { name => tube.populations[population] }
-    end.reduce(:merge).merge(
-      tube_name: tube_name,
-      sample: sample_name,
-      created_at: DateTime.now,
-      updated_at: DateTime.now
-    )
+    tube.populations.each do |pop|
+      push_record Population, {
+        stain: tube_name,
+        sample: sample_name_from(tube.tube_name),
+        temp_id: temp_id(pop),
+        population: temp_id(pop.parent),
+        name: pop.name,
+        count: pop.count,
+        created_at: DateTime.now,
+        updated_at: DateTime.now
+      }
+      pop.statistics.each do |stat|
+        push_record Mfi, {
+          temp_id: temp_id(stat),
+          population: temp_id(pop),
+          name: stat.name,
+          fluor: stat.fluor,
+          value: stat.value,
+          created_at: DateTime.now,
+          updated_at: DateTime.now
+        }
+      end
+    end
   end
 
   def all_tubes

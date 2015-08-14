@@ -37,13 +37,20 @@ class Magma
 
     def entry_for value, document
       # you need to find the foreign entity
-      if (fmodel = foreign_model(document)) && 
-          (foreign_record = fmodel[fmodel.identity => value])
-        entry = {
-          column_name => foreign_record[:id]
-        }
-        if @column_type
-          entry[ column_type_name ] = foreign_model_name(document).to_s
+      return {} if value.nil?
+      if (fmodel = foreign_model(document))
+        entry = {}
+        if value.is_a? Magma::TempId
+          entry = {
+            column_name => value.real_id
+          }
+        elsif (foreign_record = fmodel[fmodel.identity => value])
+          entry = {
+            column_name => foreign_record[:id]
+          }
+          if @column_type
+            entry[ column_type_name ] = foreign_model_name(document).to_s
+          end
         end
         entry
       else
@@ -52,10 +59,12 @@ class Magma
     end
 
     def validate link, document, &block
+      return if link.is_a? Magma::TempId
       if fmodel = foreign_model(document)
-        identity = fmodel.attributes[fmodel.identity]
-        identity.validate link, document do |error|
-          yield error
+        if identity = fmodel.attributes[fmodel.identity]
+          identity.validate(link, document) do |error|
+            yield error
+          end
         end
       else
         yield "Could not find a model of type '#{name}' to validate for #{document}"

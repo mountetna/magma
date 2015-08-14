@@ -1,10 +1,41 @@
 require 'nokogiri'
 
 class FlowJoXml
-  class Population
+  module CensorInspect
+    def inspect
+      "#<#{self.class}:0x#{object_id} #{
+        instance_variables.map do |var| 
+          next if var == :"@xml"
+          "#{var}=#{instance_variable_get(var).inspect}"
+        end.compact.join(", ")
+        }>"
+    end
+  end
+  include CensorInspect
+  class Statistic
+    include CensorInspect
     attr_reader :xml
     def initialize xml
       @xml = xml
+    end
+    def name
+      @name ||= @xml.attr('stain')
+    end
+
+    def value
+      @value ||= @xml.attr('value').to_f
+    end
+
+    def fluor
+      @fluor ||= @xml.attr('name')
+    end
+  end
+  class Population
+    include CensorInspect
+    attr_reader :xml, :parent
+    def initialize xml, parent
+      @xml = xml
+      @parent = parent
     end
 
     def name
@@ -15,11 +46,18 @@ class FlowJoXml
       @count ||= @xml.attr('count').to_i
     end
 
+    def statistics
+      @statistics ||= @xml.css('> Statistic').map do |stat|
+        Statistic.new(stat)
+      end
+    end
+
     def to_hash
       { name => count }
     end
   end
   class Sample
+    include CensorInspect
     attr_reader :xml
     def initialize xml
       @xml = xml
@@ -30,10 +68,20 @@ class FlowJoXml
     end
 
     def populations
-      @populations ||= @xml.css('Population').map{|p| Population.new(p).to_hash;}.reduce :merge
+      @populations ||= populations_for_node(@xml.css('SampleNode > Population').first)
+    end
+
+    def populations_for_node node, parent=nil
+      return [] unless node
+      pop = Population.new(node, parent)
+      children = node.css('> Population').map do |child|
+        populations_for_node(child, pop)
+      end
+      [ pop, children ].flatten
     end
   end
   class Group
+    include CensorInspect
     attr_reader :xml
     def initialize xml
       @xml = xml

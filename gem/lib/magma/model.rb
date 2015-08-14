@@ -5,9 +5,12 @@ class Magma
   Model = Class.new(Sequel::Model)
   class Model
     class << self
-      attr_reader :identity
       def attributes
         @attributes ||= {}
+      end
+
+      def identity
+        @identity || primary_key
       end
 
       def display_attributes
@@ -92,26 +95,31 @@ class Magma
         @schema ||= Hash[Magma.instance.db.schema table_name]
       end
 
-      def multi_update records
+      def multi_update records:, src_id: identity, dest_id: identity
         return if records.empty?
-        update_columns = records.first.keys
+        update_columns = records.first.keys - [ src_id ]
         return if update_columns.empty?
         db = Magma.instance.db
         db.transaction do
           update_table_name = :"bulk_update_#{table_name}"
-          create_bulk_update = "CREATE TABLE #{update_table_name} AS SELECT * FROM #{table_name} WHERE 1=0;"
+          create_bulk_update = "CREATE TEMP TABLE #{update_table_name} ON COMMIT DROP AS SELECT * FROM #{table_name} WHERE 1=0;"
+          add_src_id_column = "ALTER TABLE #{update_table_name} ADD COLUMN #{src_id} integer;"
           update_main_table = <<-EOT
                   UPDATE #{table_name} AS dest
                   SET #{update_columns.map do |column| "#{column}=src.#{column}" end.join(", ")}
                   FROM #{update_table_name} AS src
-                  WHERE dest.#{identity} = src.#{identity};
+                  WHERE dest.#{dest_id} = src.#{src_id};
           EOT
-          remove_bulk_update = "DROP TABLE #{update_table_name};"
 
+          puts create_bulk_update
           db.run(create_bulk_update)
+          unless columns.include?(src_id)
+            puts add_src_id_column
+            db.run(add_src_id_column)
+          end
           db[update_table_name].multi_insert records
+          puts update_main_table
           db.run(update_main_table)
-          db.run(remove_bulk_update)
         end
       end
 

@@ -3,6 +3,8 @@ class Sample < Magma::Model
 
   parent :patient
 
+  table :population
+
   image :headshot, display_name: "Head shot",
     desc: "Gross picture of the sample"
 

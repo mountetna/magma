@@ -22,35 +22,43 @@ class Magma
     end
 
     attr_reader :complaints
+    attr_accessor :real_id
 
-    def valid_new_entry
-      return nil unless valid?
-      return nil if record_exists?
-      entry
+    def valid_new_entry?
+      valid? && !record_exists?
     end
 
-    def valid_update_entry
-      return nil unless valid?
-      return nil unless record_exists?
-      return nil unless record_changed?
-      update_entry
+    def valid_update_entry?
+      valid? && record_exists? && record_changed?
+    end
+
+    def valid_temp_update?
+      valid? && needs_temp?
     end
 
     def valid?
       @valid
     end
 
-    private
-    def record_exists?
-      @klass.identity && !@klass[@klass.identity => @document[@klass.identity]].nil?
+    def needs_temp?
+      @needs_temp
     end
 
     def entry
       entry = @document.clone
       # replace the entry with the appropriate values for the column
       entry.map do |att,value|
+        # filter out temp ids
+        if att == :temp_id
+          value.record_entry = self
+          next
+        end
+        if value.is_a? Magma::TempId
+          @needs_temp = true
+          next
+        end
         @klass.attributes[att].entry_for value, (record||@document)
-      end.reduce :merge
+      end.compact.reduce :merge
     end
 
     def update_entry
@@ -58,6 +66,25 @@ class Magma
       # never overwrite created_at
       entry.delete :created_at
       entry
+    end
+
+    def temp_entry
+      entry = @document.clone
+      # replace the entry with the appropriate values for the column
+      entry.map do |att,value|
+        if att == :temp_id
+          { real_id: value.real_id }
+        elsif value.is_a? Magma::TempId
+          @klass.attributes[att].entry_for value, (record||@document)
+        else
+          nil
+        end
+      end.compact.reduce :merge
+    end
+
+    private
+    def record_exists?
+      @klass.identity && !@klass[@klass.identity => @document[@klass.identity]].nil?
     end
 
     def record
@@ -86,6 +113,13 @@ class Magma
         return
       end
       @document.each do |att,value|
+        if att == :temp_id
+          unless value.is_a? Magma::TempId
+            complain "temp_id should be of class Magma::TempId"
+            @valid = false
+          end
+          next
+        end
         if !@klass.attributes[att]
           complain "#{@klass.name} has no attribute '#{att}'"
           @valid = false
@@ -106,27 +140,88 @@ class Magma
     # A generic loader class
     def initialize
       @records = {}
+      @temp_id_counter = 0
     end
+
     def push_record klass, document
       @records[klass] ||= []
       @records[klass] << RecordEntry.new(klass, document)
     end
 
     def dispatch_record_set
-      @records.keys.each do |klass|
-        complaints = @records[klass].map(&:complaints).flatten
+      find_complaints
 
-        raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+      initial_insert
 
-        insert_records = @records[klass].map(&:valid_new_entry).compact
+      update_temp_ids
 
-        update_records = @records[klass].map(&:valid_update_entry).compact
-
-        # Now we have a list of valid records to insert for this class, let's create them:
-        klass.multi_insert insert_records
-        klass.multi_update update_records
-      end
       @records = {}
+    end
+
+    # this lets you give an arbitrary object (e.g. a model used in the loader) a temporary id
+    # so you can make database associations
+    def temp_id obj
+      return nil if obj.nil?
+      temp_ids[obj] ||= TempId.new(self.temp_id_counter += 1, obj)
+    end
+
+    private
+    def find_complaints
+      complaints = []
+      @records.keys.each do |klass|
+        complaints.concat @records[klass].map(&:complaints)
+      end
+      complaints.flatten!
+      raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+    end
+
+    def initial_insert
+      @inserted = []
+      puts "Attempting initial insert"
+      @records.keys.each do |klass|
+
+        insert_records = @records[klass].select(&:valid_new_entry?)
+        update_records = @records[klass].select(&:valid_update_entry?)
+
+        puts "Found #{insert_records.count} records to insert and #{update_records.count} records to update for #{klass}"
+
+        insert_ids = klass.multi_insert insert_records.map(&:entry), return: :primary_key
+
+        if insert_ids
+          insert_records.zip(insert_ids).each do |record, real_id|
+            record.real_id = real_id
+          end
+        end
+
+        klass.multi_update records: update_records.map(&:update_entry)
+      end
+    end
+
+    def update_temp_ids
+      @records.keys.each do |klass|
+        temp_records = @records[klass].select(&:valid_temp_update?)
+
+        klass.multi_update records: temp_records.map(&:temp_entry), src_id: :real_id, dest_id: :id
+      end
+    end
+
+    def temp_ids
+      @temp_ids ||= {}
+    end
+    attr_accessor :temp_id_counter
+  end
+  class TempId
+    # This marks the column as a temporary id. It needs to be replaced with a real foreign key id for the corresponding
+    # object once it is complete.
+    attr_reader :obj, :id
+    attr_accessor :record_entry
+    def initialize(id, obj)
+      @obj = obj
+      @id = id
+    end
+
+    def real_id
+      record_entry.real_id
     end
   end
 end
