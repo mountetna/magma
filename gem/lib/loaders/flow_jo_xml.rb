@@ -47,7 +47,7 @@ class FlowJoXml
     end
 
     def statistics
-      @statistics ||= @xml.css('> Statistic').map do |stat|
+      @statistics ||= @xml.css('> Subpopulations > Statistic').map do |stat|
         Statistic.new(stat)
       end
     end
@@ -68,13 +68,13 @@ class FlowJoXml
     end
 
     def populations
-      @populations ||= populations_for_node(@xml.css('SampleNode > Population').first)
+      @populations ||= populations_for_node(@xml.css('SampleNode > Subpopulations > Population').first)
     end
 
     def populations_for_node node, parent=nil
       return [] unless node
       pop = Population.new(node, parent)
-      children = node.css('> Population').map do |child|
+      children = node.css('> Subpopulations > Population').map do |child|
         populations_for_node(child, pop)
       end
       [ pop, children ].flatten
@@ -107,7 +107,10 @@ class FlowJoXml
   end
 
   def sample id
-    @samples[id] ||= FlowJoXml::Sample.new(@xml.css("Sample:named_like(\"sampleID\",\"#{id}\")",FlowJoXml::NameSearch.new))
+    match_samples = @xml.css("Sample").select do |sample|
+      !sample.css(">SampleNode:named_like(\"sampleID\",\"#{id}\")",FlowJoXml::NameSearch.new).empty?
+    end
+    @samples[id] ||= FlowJoXml::Sample.new(match_samples.first)
   end
 
   def group name

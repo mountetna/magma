@@ -26,6 +26,7 @@ class FlowJoLoader < Magma::Loader
 
   def dispatch
     create_sample_documents
+    delete_existing_populations
     create_population_documents
   end
 
@@ -35,6 +36,21 @@ class FlowJoLoader < Magma::Loader
       push_record Sample, { sample_name: name, patient: @patient.ipi_number, created_at: DateTime.now, updated_at: DateTime.now }
     end
     dispatch_record_set
+  end
+
+  def delete_existing_populations
+    # Find all populations for samples with this patient
+    mfi_ids = Mfi.join(:populations, id: :population_id)
+                 .join(:samples, id: :sample_id)
+                 .join(:patients, id: :patient_id)
+                 .where('patients.id = ?', @patient.id)
+                 .select_map(:mfis__id)
+    pop_ids = Population.join(:samples, id: :sample_id)
+                        .join(:patients, id: :patient_id)
+                        .where('patients.id = ?', @patient.id)
+                        .select_map(:populations__id)
+    Mfi.where(id: mfi_ids).delete
+    Population.where(id: pop_ids).delete
   end
   
   def sample_name_from tube_name

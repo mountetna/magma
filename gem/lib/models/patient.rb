@@ -20,7 +20,7 @@ class Patient < Magma::Model
 
   document :flojo_file, display_name: "Flojo File",
     loader: :flowjo_xml_loader,
-    desc: "XML file from Flojo containing all four stains for each sample for this patient."
+    desc: "WSP file from Flojo 10 containing all four stains for each sample for this patient."
 
   document :flow_pdf, display_name: "Flow cytometry PDF",
     desc: "PDF file summarizing populations for all four stains for each sample for this patient."

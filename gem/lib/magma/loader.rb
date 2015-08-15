@@ -107,7 +107,7 @@ class Magma
     end
 
     def check_document_validity
-      if @klass.identity && !@document[@klass.identity]
+      if @klass.identity && @klass.identity != @klass.primary_key && !@document[@klass.identity]
         complain "Missing identifier for #{@klass.name}"
         @valid = false
         return
