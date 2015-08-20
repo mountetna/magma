@@ -18,9 +18,13 @@ class Magma
 
     def json_for record
       table = record.send(@name)
-      table.map do |item|
-        item.json_document
-      end
+      child_model = Magma.instance.get_model @name
+      {
+        model: child_model.json_template,
+        records: table.map do |item|
+          item.json_document
+        end
+      }
     end
 
     def validate links, record, &block

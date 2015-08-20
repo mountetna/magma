@@ -88,7 +88,7 @@ class FlowJoXml
     end
 
     def sample_refs
-      @xml.css('SampleRef').map{|sr| sr.attr("sampleID") }
+      @xml.css('SampleRefs > SampleRef').map{|sr| sr.attr("sampleID") }
     end
   end
 
