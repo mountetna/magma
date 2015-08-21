@@ -16,6 +16,10 @@ class Patient < Magma::Model
     type: TrueClass,
     desc: "Was blood received for this patient?"
 
+  attribute :processor,
+    type: String,
+    desc: "Who received and processed the sample"
+
   collection :sample
 
   document :flojo_file, display_name: "Flojo File",
