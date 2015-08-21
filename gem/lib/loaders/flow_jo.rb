@@ -57,7 +57,7 @@ class FlowJoLoader < Magma::Loader
     case tube_name
     when IPI.sample_name
       return Regexp.last_match[0]
-    when /[\W\_](?<code>[TN][0-9])/
+    when /[\W\_](?<code>[TN][0-9])/i
       return "#{@patient.ipi_number}.#{ Regexp.last_match[:code] }"
     when /TUM(?:OR)?[\W\_]*(?<num>)[0-9]/i
       return "#{@patient.ipi_number}.T#{ Regexp.last_match[:num] }"
