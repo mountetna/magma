@@ -6,7 +6,7 @@ class Patient < Magma::Model
   image :gross_specimen,
     desc: "Gross picture of the sample"
 
-  link :clinical, column_type: :clinical_type_value
+  link :clinical
 
   attribute :notes,
     type: String,
