@@ -91,11 +91,9 @@ class FlowJoLoader < Magma::Loader
   end
 
   def create_population_document_using tube, stain
-    sample_name = sample_name_from(tube.tube_name)
-    tube_name = "#{sample_name}.#{stain}"
     tube.populations.each do |pop|
       push_record Population, {
-        stain: tube_name,
+        stain: stain,
         sample: sample_name_from(tube.tube_name),
         temp_id: temp_id(pop),
         population: temp_id(pop.parent),
