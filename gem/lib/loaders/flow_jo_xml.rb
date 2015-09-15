@@ -46,6 +46,16 @@ class FlowJoXml
       @count ||= @xml.attr('count').to_i
     end
 
+    def ancestry
+      anc = @parent
+      ancs = []
+      while anc
+        ancs.push anc.name
+        anc = anc.parent
+      end
+      ancs.join "\t"
+    end
+
     def statistics
       @statistics ||= @xml.css('> Subpopulations > Statistic').map do |stat|
         Statistic.new(stat)
