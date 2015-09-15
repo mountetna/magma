@@ -26,6 +26,10 @@ class Patient < Magma::Model
     loader: :flowjo_xml_loader,
     desc: "WSP file from Flojo 10 containing all four stains for each sample for this patient."
 
+  attribute :stain_version,
+    type: String,
+    desc: "Version of the stain panel used for processing."
+
   document :flow_pdf, display_name: "Flow cytometry PDF",
     desc: "PDF file summarizing populations for all four stains for each sample for this patient."
 
