@@ -16,4 +16,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'extlib'
   spec.add_dependency 'carrierwave-sequel'
   spec.add_dependency 'fog'
+  spec.add_dependency 'spreadsheet'
 end

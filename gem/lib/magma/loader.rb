@@ -93,15 +93,9 @@ class Magma
 
     def record_changed?
       @document.each do |att,value|
-        if att =~ /_id$/
-          old_value = record.send(att.to_s.sub(/_id$/,'').to_sym)
-          old_value = old_value ? old_value.id : nil
-        else
-          old_value = record.send att.to_sym
-        end
-        if value.to_s != old_value.to_s
-          return true
-        end
+        next if att == :temp_id
+        old_value = record.send att.to_sym
+        return true if value.to_s != old_value.to_s
       end
       nil
     end
@@ -188,6 +182,7 @@ class Magma
         insert_ids = klass.multi_insert insert_records.map(&:entry), return: :primary_key
 
         if insert_ids
+          puts "Updating temp records with real ids for #{klass}"
           insert_records.zip(insert_ids).each do |record, real_id|
             record.real_id = real_id
           end
@@ -200,7 +195,8 @@ class Magma
     def update_temp_ids
       @records.keys.each do |klass|
         temp_records = @records[klass].select(&:valid_temp_update?)
-
+        puts "Found #{temp_records.count} records to repair temp_ids for #{klass}"
+        puts temp_records.map(&:temp_entry)
         klass.multi_update records: temp_records.map(&:temp_entry), src_id: :real_id, dest_id: :id
       end
     end
