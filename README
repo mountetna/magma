@@ -1,9 +1,0 @@
-Magma is a data loader/model system. It has two components:
-
-1. A gem. The gem exposes models which allow you to consume the database and run queries. It also allows you to
-   update the schema.
-
-2. A webserver. The webserver accepts JSON posts and updates the database accordingly.
-
-Only the webserver can write to the database - the gem gives you custom loaders
-for your models, which produce JSON documents to send to the webserver.
