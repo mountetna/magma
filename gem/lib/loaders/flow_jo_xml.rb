@@ -27,7 +27,7 @@ class FlowJoXml
     end
 
     def fluor
-      @fluor ||= @xml.attr('name')
+      @fluor ||= @xml.attr('id')
     end
   end
   class Population
