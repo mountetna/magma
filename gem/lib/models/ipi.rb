@@ -1,6 +1,17 @@
 class IPI
   CELL_TYPES = [ :treg, :myeloid, :teff, :tumor, :stroma ]
-  TUMOR_TYPES = { CRC: :Colorectal, MEL: :Melanoma, HNSC: :"Head and Neck", KID: :Kidney, BRC: :Breast, LUNG: :Lung, LIV: :Liver, BLAD: :Bladder, PROS: :Prostate, PDAC: :Pancreas }
+  TUMOR_TYPES = { CRC: :Colorectal,
+                  MEL: :Melanoma,
+                  HNSC: :"Head and Neck",
+                  GYN: :Gynecologic,
+                  KID: :Kidney,
+                  BRC: :Breast,
+                  LUNG: :Lung,
+                  LIV: :Liver,
+                  BLAD: :Bladder, 
+                  PROS: :Prostate, 
+                  PDAC: :Pancreas 
+  }
   class << self
     def patient_name
       # returns a regexp matching a valid patient name
