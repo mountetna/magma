@@ -73,25 +73,14 @@ class Sample < Magma::Model
     type: String, 
     desc: "General description - how gross the sample looks"
 
-  attribute :date_of_flow, 
-    type: DateTime, 
-    desc: "Date when flow panel was run"
-
   attribute :date_of_digest, 
     type: DateTime, 
     desc: "Date when digest was done"
 
-  attribute :date_of_fixation,
-    type: DateTime,
-    desc: "Date when sample was fixed (FFPE)"
-
-  attribute :fixation_time,
-    type: Float,
-    desc: "How long the sample was fixed (minutes)"
-
   attribute :date_of_extraction, 
+    display_name: "Date of Surgery",
     type: DateTime, 
-    desc: "Date when sample was extracted"
+    desc: "Date when sample was taken out of patient"
 
   attribute :post_digest_cell_count, 
     type: Integer, 
