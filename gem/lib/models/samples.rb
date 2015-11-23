@@ -16,21 +16,17 @@ class Sample < Magma::Model
     type: TrueClass,
     desc: "Whether sample was processed or discarded"
 
-  child :treg_stain,
-    display_name: "T-reg Stain",
-    desc: "Stain for regulatory T-cells"
+  document :treg_file, 
+    desc: "FACS format file for T-reg stain"
 
-  child :nktb_stain,
-    display_name: "NK/T/B Stain",
-    desc: "Stain for NK, T and B cells"
+  document :nktb_file, 
+    desc: "FACS format file for NKTB stain"
 
-  child :sort_stain,
-    display_name: "Sort Stain",
-    desc: "Stain for sorting cells into RNAseq compartments"
+  document :sort_file, 
+    desc: "FACS format file for Sort stain"
 
-  child :dc_stain,
-    display_name: "DC Stain",
-    desc: "Stain for dendritic cells"
+  document :dc_file, 
+    desc: "FACS format file for DC stain"
 
   child :imaging,
     desc: "Immunofluorescence imaging of this sample"
