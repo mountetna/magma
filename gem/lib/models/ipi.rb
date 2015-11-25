@@ -10,7 +10,8 @@ class IPI
                   LIV: :Liver,
                   BLAD: :Bladder, 
                   PROS: :Prostate, 
-                  PDAC: :Pancreas 
+                  PDAC: :Pancreas,
+                  PNET: :Neuroendocrine 
   }
   class << self
     def patient_name
