@@ -45,7 +45,7 @@ class Magma
           yield error
         end
       when Array
-        if !@match.include? value
+        if !@match.map(&:to_s).include? value
           error = "'#{value}' should be one of #{@match.join(", ")}."
           yield error
         end
