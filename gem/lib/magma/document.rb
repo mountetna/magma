@@ -8,7 +8,7 @@ class Magma
     def filename
       file = model.send(mounted_as).file
       ext = file ? file.extension : 'dat'
-      "#{model.class.name.snake_case}-#{model.identifier}.#{ext}" if original_filename.present?
+      "#{model.class.name.snake_case}-#{mounted_as}-#{model.identifier}.#{ext}" if original_filename.present?
     end
 
     def run_loaders(file)
