@@ -11,7 +11,8 @@ class IPI
                   BLAD: :Bladder, 
                   PROS: :Prostate, 
                   PDAC: :Pancreas,
-                  PNET: :Neuroendocrine 
+                  PNET: :Neuroendocrine,
+                  GSTR: :Gastric
   }
   class << self
     def patient_name
