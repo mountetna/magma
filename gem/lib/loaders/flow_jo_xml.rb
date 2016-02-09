@@ -18,9 +18,6 @@ class FlowJoXml
     def initialize xml
       @xml = xml
     end
-    def name
-      @name ||= @xml.attr('stain')
-    end
 
     def value
       @value ||= @xml.attr('value').to_f
@@ -73,8 +70,27 @@ class FlowJoXml
       @xml = xml
     end
 
+    def keyword_value name
+      @xml.css("Keyword[name=\"#{name}\"]").map do |keyword|
+        keyword.attr("value")
+      end.first
+    end
+
+    def keyword_name value
+      @xml.css("Keyword[value=\"#{value}\"]").map do |keyword|
+        keyword.attr("name")
+      end.first
+    end
+
     def tube_name
-      @tube_name ||= @xml.css('Keyword[name="TUBE NAME"]').first.attr("value")
+      @tube_name ||= keyword_value("TUBE NAME")
+    end
+
+    def stain_for_fluor fluor
+      fluor_name = keyword_name(fluor)
+      return nil unless fluor_name
+      stain_name = fluor_name.sub(/N$/,'S')
+      keyword_value(stain_name)
     end
 
     def populations

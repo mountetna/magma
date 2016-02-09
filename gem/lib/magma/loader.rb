@@ -156,7 +156,7 @@ class Magma
     # so you can make database associations
     def temp_id obj
       return nil if obj.nil?
-      temp_ids[obj] ||= TempId.new(self.temp_id_counter += 1, obj)
+      temp_ids[obj] ||= TempId.new(new_temp_id, obj)
     end
 
     private
@@ -204,7 +204,9 @@ class Magma
     def temp_ids
       @temp_ids ||= {}
     end
-    attr_accessor :temp_id_counter
+    def new_temp_id
+      @temp_id_counter += 1
+    end
   end
   class TempId
     # This marks the column as a temporary id. It needs to be replaced with a real foreign key id for the corresponding

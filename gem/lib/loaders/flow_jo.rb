@@ -106,7 +106,7 @@ class FlowJoLoader < Magma::Loader
         push_record Mfi, {
           temp_id: temp_id(stat),
           population: temp_id(pop),
-          name: stat.name,
+          name: tube.stain_for_fluor(stat.fluor),
           fluor: stat.fluor,
           value: stat.value,
           created_at: DateTime.now,
