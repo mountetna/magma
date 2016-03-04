@@ -1,5 +1,5 @@
 class Sample < Magma::Model
-  identifier :sample_name, match: IPI.match_sample_name, format_hint: "IPICRC001.T1", type: String, desc: "Unique name for this sample"
+  identifier :sample_name, match: Proc.new { IPI.match_sample_name }, format_hint: "IPICRC001.T1", type: String, desc: "Unique name for this sample"
 
   parent :patient
 

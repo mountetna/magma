@@ -6,7 +6,7 @@
 class Clinical < Magma::Model
   collection :patient
 
-  identifier :clinical_name, match: IPI.match_clinical_name, format_hint: "IPICRC001.clin", type: String
+  identifier :clinical_name, match: Proc.new { IPI.match_clinical_name }, format_hint: "IPICRC001.clin", type: String
 
   attribute :race_ethnicity , type: String, display_name: "Race/ethnicity"
   attribute :sex, type: String, display_name: "Sex"

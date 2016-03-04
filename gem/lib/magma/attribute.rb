@@ -1,7 +1,9 @@
 class Magma
   class Attribute
     def self.options
-      [ :type, :desc, :display_name, :hide, :readonly, :unique, :match, :format_hint, :loader ]
+      [ :type, :desc, :display_name, 
+        :hide, :readonly, :unique, 
+        :match, :format_hint, :loader ]
     end
     DISPLAY_ONLY = [ :child, :collection ]
     attr_reader :name, :type, :desc, :loader
@@ -36,18 +38,12 @@ class Magma
       # is it okay to set this?
       case @match
       when Regexp
-        if !@match.match(value)
-          if @format_hint
-            error = "'#{value}' should be like #{@format_hint}."
-          else
-            error = "'#{value}' is improperly formatted."
-          end
-          yield error
-        end
+        yield format_error(value) if !@match.match(value)
+      when Proc
+        yield format_error(value) if !@match.call.match(value)
       when Array
         if !@match.map(&:to_s).include? value
-          error = "'#{value}' should be one of #{@match.join(", ")}."
-          yield error
+          yield "'#{value}' should be one of #{@match.join(", ")}."
         end
       end
     end
@@ -114,6 +110,14 @@ class Magma
     private
     def schema
       @model.schema
+    end
+
+    def format_error value
+      if @format_hint
+        "'#{value}' should be like #{@format_hint}."
+      else
+        "'#{value}' is improperly formatted."
+      end
     end
 
     def set_options opts

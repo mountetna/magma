@@ -1,19 +1,5 @@
 class IPI
   CELL_TYPES = [ :treg, :myeloid, :teff, :tumor, :stroma ]
-  TUMOR_TYPES = { CRC: :Colorectal,
-                  MEL: :Melanoma,
-                  HNSC: :"Head and Neck",
-                  GYN: :Gynecologic,
-                  KID: :Kidney,
-                  BRC: :Breast,
-                  LUNG: :Lung,
-                  LIV: :Liver,
-                  BLAD: :Bladder, 
-                  PROS: :Prostate, 
-                  PDAC: :Pancreas,
-                  PNET: :Neuroendocrine,
-                  GSTR: :Gastric
-  }
   class << self
     def patient_name
       # returns a regexp matching a valid patient name
@@ -21,7 +7,14 @@ class IPI
     end
 
     def tumor_types
-      match_array IPI::TUMOR_TYPES.keys
+      match_array tumor_short_names
+    end
+
+    def tumor_short_names
+      @tumor_short_names ||= Experiment.order
+        .distinct
+        .exclude(short_name:nil)
+        .select_map(:short_name)
     end
 
     def cell_types
