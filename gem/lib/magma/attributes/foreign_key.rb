@@ -25,7 +25,7 @@ class Magma
         entry = {
           foreign_id => value.real_id
         }
-      elsif foreign_record = link_record(value))
+      elsif foreign_record = link_record(value)
         entry = {
           foreign_id => foreign_record[:id]
         }
