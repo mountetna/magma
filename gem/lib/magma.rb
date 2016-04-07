@@ -2,6 +2,7 @@ require 'sequel'
 require_relative 'magma/attribute'
 require_relative 'magma/model'
 require_relative 'magma/migration'
+require_relative 'magma/revision'
 require_relative 'magma/document'
 require_relative 'magma/image'
 require_relative 'magma/commands'
@@ -15,15 +16,6 @@ class Magma
     @db = Sequel.connect( config )
   end
 
-  def validate_models
-    load_models
-
-    # make sure your tables exist
-    magma_models.each do |model|
-      model.validate
-    end
-  end
-
   def get_model name
     Kernel.const_get name.to_s.camel_case.to_sym
   end
@@ -32,13 +24,14 @@ class Magma
     @magma_models ||= find_descendents Magma::Model
   end
 
-  def load_models
-    require_relative 'models'
-  end
-
-  def configure opts
+  def configure opts, validate=true
     connect opts[:database]
-    validate_models
+    require_relative 'models'
+    if validate
+      magma_models.each do |model|
+        model.validate
+      end
+    end
     carrier_wave_config opts[:storage]
   end
 
