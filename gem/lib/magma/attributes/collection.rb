@@ -23,12 +23,10 @@ class Magma
       end
     end
 
-    def validate links, document, &block
-      child_model = Magma.instance.get_model @name
-      identity = child_model.attributes[child_model.identity]
+    def validate links, &block
       links.each do |link|
-        next unless link && link.size > 0
-        identity.validate link, document do |error|
+        next unless link
+        link_identity.validate link do |error|
           yield error
         end
       end

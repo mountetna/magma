@@ -18,14 +18,13 @@ class Magma
       link ? { identifier: link.identifier, model: link_model_name } : nil
     end
 
-    def entry_for value, document
+    def entry_for value
       { }
     end
 
-    def validate link, document, &block
+    def validate link, &block
       return unless link && link.size > 0
-      identity = link_model.attributes[link_model.identity]
-      identity.validate link, document do |error|
+      link_identity.validate link do |error|
         yield error
       end
     end

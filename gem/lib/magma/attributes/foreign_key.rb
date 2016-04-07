@@ -16,7 +16,7 @@ class Magma
       link ? link.identifier : nil
     end
 
-    def entry_for value, document
+    def entry_for value
       # you need to find the foreign entity
       return {} if value.nil?
       entry = {}
@@ -32,7 +32,7 @@ class Magma
       end
     end
 
-    def validate link, document, &block
+    def validate link, &block
       return if link.is_a? Magma::TempId
       if link_identity
         link_identity.validate(link) do |error|

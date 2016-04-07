@@ -30,11 +30,11 @@ class Magma
       record.send @name
     end
 
-    def entry_for value, document
+    def entry_for value
       { @name => value }
     end
 
-    def validate value, record, &block
+    def validate value, &block
       # is it okay to set this?
       case @match
       when Regexp
