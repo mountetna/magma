@@ -30,7 +30,7 @@ class Magma
       end
 
       def has_attribute? name
-        @attributes.has_key? name
+        @attributes.has_key? name.to_sym
       end
 
       def parent name, opts = {}

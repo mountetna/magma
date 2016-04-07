@@ -27,6 +27,9 @@ class Magma
       }
     end
 
+    def update record, new_value
+    end
+
     def validate links, &block
       child_model = Magma.instance.get_model @name
       identity = child_model.attributes[child_model.identity]

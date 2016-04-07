@@ -41,13 +41,13 @@ class Magma
       end
     end
 
-    def update_link record, link
+    def update record, link
       if link.nil?
-        self[ column_name ] = nil
+        record[ foreign_id ] = nil
         return
       end
 
-      link_model.update_or_create(link_model.identity => link[:identifier]) do |obj|
+      link_model.update_or_create(link_model.identity => link) do |obj|
         record[ foreign_id ] = obj.id
       end
     end

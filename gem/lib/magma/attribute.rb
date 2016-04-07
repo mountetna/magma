@@ -48,6 +48,10 @@ class Magma
       end
     end
 
+    def update record, new_value
+      record[ @name ] = new_value
+    end
+
     def read_only?
       @readonly
     end
