@@ -12,7 +12,7 @@ class Magma
       @revised_document.each do |name, new_value|
         name = name.to_sym
         next if !@model.has_attribute?(name) || new_value.blank?
-        @model.attributes[name].validate new_value, @record do |error|
+        @model.attributes[name].validate new_value do |error|
           @errors.push error
         end
       end
