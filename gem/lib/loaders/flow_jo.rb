@@ -30,6 +30,8 @@ class FlowJoLoader < Magma::Loader
     create_population_documents
   end
 
+  private
+
   def create_sample_documents
     names = all_tubes.map do |tube| sample_name_from(tube.tube_name) end.uniq
     names.each do |name|
@@ -90,14 +92,27 @@ class FlowJoLoader < Magma::Loader
     dispatch_record_set
   end
 
+  def clean_names names
+    names.split(/\t/).map do |name|
+      clean_name name
+    end.join("\t")
+  end
+
+  def clean_name name
+    name.gsub(/\s?,\s?/,',')
+        .gsub(/ki67/i,'Ki67')
+        .gsub(/foxp3/i,'FoxP3')
+        .gsub(/PD-1/,'PD1') if name
+  end
+
   def create_population_document_using tube, stain
     tube.populations.each do |pop|
       push_record Population, {
         stain: stain.to_s,
         sample: sample_name_from(tube.tube_name),
         temp_id: temp_id(pop),
-        ancestry: pop.ancestry,
-        name: pop.name,
+        ancestry: clean_names(pop.ancestry),
+        name: clean_name(pop.name),
         count: pop.count,
         created_at: DateTime.now,
         updated_at: DateTime.now
@@ -106,7 +121,7 @@ class FlowJoLoader < Magma::Loader
         push_record Mfi, {
           temp_id: temp_id(stat),
           population: temp_id(pop),
-          name: tube.stain_for_fluor(stat.fluor),
+          name: clean_name(tube.stain_for_fluor(stat.fluor)),
           fluor: stat.fluor,
           value: stat.value,
           created_at: DateTime.now,
