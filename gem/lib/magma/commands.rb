@@ -57,4 +57,14 @@ class Magma
       puts migration
     end
   end
+
+  class Load < Magma::Command
+    usage "Run data loaders on models for current dataset"
+
+    def execute *args
+      if args.empty?
+        # List available loaders
+      end
+    end
+  end
 end
