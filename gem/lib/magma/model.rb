@@ -159,7 +159,8 @@ class Magma
     end
 
     def json_document
-      # A JSON version of this record. Each attribute reports in a fashion that is useful
+      # A JSON version of this record. Each attribute reports in a fashion
+      # that is useful
       hash = {
         id: id
       }
