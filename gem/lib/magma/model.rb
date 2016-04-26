@@ -83,7 +83,7 @@ class Magma
       def json_template
         # Return a json template of this thing.
         {
-          name: name,
+          name: name.snake_case.to_sym,
           attributes: attributes.map do |name,att|
             { name => att.json_template }
           end.reduce(:merge),
@@ -147,17 +147,6 @@ class Magma
       # run a loader on a hook from carrier_wave
     end
 
-    # this is a generic method to easily link two records together. It figures
-    # out what to do based on the link class
-    def create_link fname, link
-      return if link.blank?
-      self.class.attributes[fname].update_link self, link
-    end
-
-    def delete_link fname
-      self.class.attributes[fname].update_link self, nil
-    end
-
     def json_document
       # A JSON version of this record. Each attribute reports in a fashion
       # that is useful
@@ -168,6 +157,11 @@ class Magma
         hash.update name => att.json_for(self)
       end
       hash
+    end
+
+    def child_documents
+      self.class.attributes.each do |name,att|
+      end
     end
   end
 end
