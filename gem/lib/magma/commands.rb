@@ -1,9 +1,10 @@
 require 'extlib'
 
 class Magma
-  def run_command cmd = :help, *args
+  def run_command config, cmd = :help, *args
     cmd = cmd.to_sym
     if has_command? cmd
+      all_commands[cmd].setup config
       all_commands[cmd].execute *args
     else
       all_commands[:help].execute
@@ -33,6 +34,20 @@ class Magma
       define_method :usage do
         "  #{"%-30s" % name}#{desc}"
       end
+    end
+
+    def setup config
+      load_but_dont_validate config
+    end
+
+    protected
+    def load_but_dont_validate config
+      Magma.instance.connect(config[:database])
+      Magma.instance.load_models
+    end
+
+    def load_and_validate config
+      Magma.instance.configure(config)
     end
   end
 
@@ -64,7 +79,21 @@ class Magma
     def execute *args
       if args.empty?
         # List available loaders
+        exit
       end
+
+      model = Magma.instance.get_model(args[0])
+      att = args[1].to_sym
+      raise "Could not find attribute #{att} on model #{model}" unless model.attributes[att]
+      model.all.each do |record|
+        puts record.identifier
+        next unless file = record.send(att).file
+        record.run_loaders att, file
+      end
+    end
+
+    def setup config
+      load_and_validate config
     end
   end
 end

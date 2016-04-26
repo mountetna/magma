@@ -37,9 +37,9 @@ class Patient < Magma::Model
   document :flow_pdf, display_name: "Flow cytometry PDF",
     desc: "PDF file summarizing populations for all four stains for each sample for this patient."
 
-  def flowjo_xml_loader file
+  def flowjo_xml_loader
     fl = FlowJoLoader.new
-    fl.load(flojo_file.file, self)
+    fl.load(self.flojo_file.file, self)
     fl.dispatch
   end
 

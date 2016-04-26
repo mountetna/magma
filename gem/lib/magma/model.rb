@@ -142,7 +142,7 @@ class Magma
 
     def run_loaders att, file
       if self.class.attributes[att].loader
-        send self.class.attributes[att].loader, file
+        send self.class.attributes[att].loader
       end
       # run a loader on a hook from carrier_wave
     end
