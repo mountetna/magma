@@ -5,4 +5,4 @@ require 'yaml'
 
 config = YAML.load(File.read("config.yml"))
 
-magma.run_command config, *ARGV
+Magma.instance.run_command config, *ARGV
