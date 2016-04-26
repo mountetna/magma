@@ -134,7 +134,7 @@ class FlowJoXml
 
   def sample id
     match_samples = @xml.css("Sample").select do |sample|
-      !sample.css(">SampleNode:named_like(\"sampleID\",\"#{id}\")",FlowJoXml::NameSearch.new).empty?
+      !sample.css(">SampleNode:named_like(\"sampleID\",\"^#{id}$\")",FlowJoXml::NameSearch.new).empty?
     end
     @samples[id] ||= FlowJoXml::Sample.new(match_samples.first)
   end
