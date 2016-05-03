@@ -7,6 +7,7 @@ require_relative 'magma/document'
 require_relative 'magma/image'
 require_relative 'magma/commands'
 require_relative 'magma/loader'
+require_relative 'magma/payload'
 require 'singleton'
 
 class Magma

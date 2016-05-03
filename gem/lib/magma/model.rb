@@ -76,6 +76,10 @@ class Magma
         order(name) unless @order
       end
 
+      def model_name
+        name.snake_case.to_sym
+      end
+
       def validate
         raise "Missing table for #{name}." unless Magma.instance.db.table_exists? table_name
       end
@@ -83,12 +87,19 @@ class Magma
       def json_template
         # Return a json template of this thing.
         {
-          name: name.snake_case.to_sym,
+          name: model_name, 
           attributes: attributes.map do |name,att|
             { name => att.json_template }
           end.reduce(:merge),
           identifier: identity
         }
+      end
+
+      def assoc_models
+        [ self ] + attributes.map do |name,att|
+          next unless att.is_a? Magma::TableAttribute
+          att.link_model.assoc_models
+        end.flatten.compact
       end
 
       def schema
@@ -157,6 +168,15 @@ class Magma
         hash.update name => att.json_for(self)
       end
       hash
+    end
+
+    def assoc_records
+      self.class.attributes.map do |name,att|
+        next unless att.is_a? Magma::TableAttribute
+        {
+          att.link_model => self.send(name)
+        }
+      end.compact.reduce(:merge) || {}
     end
 
     def child_documents
