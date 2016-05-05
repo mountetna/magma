@@ -23,10 +23,9 @@ class Magma
     def post!
       # update the record using this revision
       @revised_document.each do |name, new_value|
-        name = name.to_sym
         @model.attributes[name.to_sym].update @record, new_value
       end
-      @record.save
+      @record.save changed: true
 
       @record.refresh
     end

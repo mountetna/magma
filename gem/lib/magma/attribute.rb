@@ -49,7 +49,7 @@ class Magma
     end
 
     def update record, new_value
-      record[ @name ] = new_value
+      record.set({ @name => new_value })
     end
 
     def read_only?

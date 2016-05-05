@@ -45,7 +45,7 @@ class Magma
       if !new_links.empty?
         link_model.multi_insert(
           new_links.map do |link|
-           { link_model.identity => link }
+            { link_model.identity => link, self_id => record.id }
           end
         )
       end
