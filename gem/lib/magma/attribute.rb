@@ -30,11 +30,11 @@ class Magma
       record.send @name
     end
 
-    def entry_for value, document
+    def entry_for value
       { @name => value }
     end
 
-    def validate value, record, &block
+    def validate value, &block
       # is it okay to set this?
       case @match
       when Regexp
@@ -46,6 +46,10 @@ class Magma
           yield "'#{value}' should be one of #{@match.join(", ")}."
         end
       end
+    end
+
+    def update record, new_value
+      record.set({ @name => new_value })
     end
 
     def read_only?

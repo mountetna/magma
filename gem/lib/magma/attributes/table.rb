@@ -1,5 +1,6 @@
 class Magma
   class TableAttribute < Attribute
+    include Magma::Link
     def schema_ok?
       true
     end
@@ -18,21 +19,16 @@ class Magma
 
     def json_for record
       table = record.send(@name)
-      child_model = Magma.instance.get_model @name
-      {
-        model: child_model.json_template,
-        records: table.map do |item|
-          item.json_document
-        end
-      }
+      table.map &:identifier
     end
 
-    def validate links, record, &block
-      child_model = Magma.instance.get_model @name
-      identity = child_model.attributes[child_model.identity]
+    def update record, new_value
+    end
+
+    def validate links, &block
       links.each do |link|
         next unless link && link.size > 0
-        identity.validate link, record do |error|
+        link_identity.validate link do |error|
           yield error
         end
       end

@@ -57,7 +57,7 @@ class Magma
           @needs_temp = true
           next
         end
-        @klass.attributes[att].entry_for value, (record||@document)
+        @klass.attributes[att].entry_for value
       end.compact.reduce :merge
     end
 
@@ -75,7 +75,7 @@ class Magma
         if att == :temp_id
           { real_id: value.real_id }
         elsif value.is_a? Magma::TempId
-          @klass.attributes[att].entry_for value, (record||@document)
+          @klass.attributes[att].entry_for value
         else
           nil
         end
@@ -119,7 +119,7 @@ class Magma
           @valid = false
           next
         end
-        @klass.attributes[att].validate(value, @document) do |complaint|
+        @klass.attributes[att].validate(value) do |complaint|
           complain complaint
           @valid = false
         end

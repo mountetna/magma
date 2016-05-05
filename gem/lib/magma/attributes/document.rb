@@ -9,6 +9,11 @@ class Magma
       nil
     end
 
+    def update record, new_value
+      super
+      record.modified! name
+    end
+
     def json_for record
       document = record.send(@name)
       if document.current_path && document.url
