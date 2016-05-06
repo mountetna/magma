@@ -1,11 +1,31 @@
 class Magma
   class Payload
-    def initialize model, records
-      @model = model
-      @records = records
+    # The payload is ONLY responsible for retrieving
+    # information from the model and turning it into JSON. It
+    # should not retrieve any data directly (except perhaps by
+    # invoking uncomputed model associations). Ideally all of
+    # the data is loaded already when passed into the payload.
+    def initialize
       @template_payloads = {}
+    end
 
-      acquire_data
+    def add_model model, columns=nil
+      return if @template_payloads[model]
+
+      @template_payloads[model] = TemplatePayload.new(model,columns)
+      model.assoc_models.each do |assoc_model|
+        add_model assoc_model
+      end
+    end
+    
+    def add_records model, records
+      @template_payloads[model].add_records records
+
+      records.each do |record|
+        record.assoc_records.each do |model,records|
+          add_records model, records
+        end
+      end
     end
 
     attr_reader :template_payloads
@@ -13,8 +33,9 @@ class Magma
     private
 
     class TemplatePayload
-      def initialize model
+      def initialize model, columns
         @model = model
+        @columns = columns
         @records = []
       end
 
@@ -30,31 +51,6 @@ class Magma
           documents: @records.map(&:json_document)
         }
       end
-    end
-
-    def add_model model
-      @template_payloads[model] ||= TemplatePayload.new(model)
-    end
-
-    def add_records model, records
-      @template_payloads[model].add_records records
-
-      records.each do |record|
-        record.assoc_records.each do |model,records|
-          add_records model, records
-        end
-      end
-    end
-
-    def acquire_data
-      @model.assoc_models.each do |assoc_model|
-        add_model assoc_model
-      end
-
-      # at this point, I have:
-      # template_payloads for Sample, Population, Mfi
-      # I need: records for sample, populations, mfi
-      add_records @model, @records
     end
   end
 end

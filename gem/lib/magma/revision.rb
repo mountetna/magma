@@ -5,7 +5,7 @@ class Magma
       @record = @model[@model.identity => record_name]
       @revised_document = censored revised_document
     end
-    attr_reader :errors, :model, :record
+    attr_reader :errors
 
     def valid?
       @errors = []
@@ -28,6 +28,15 @@ class Magma
       @record.save changed: true
 
       @record.refresh
+    end
+
+    def payload
+      @payload ||= begin
+        payload = Magma::Payload.new
+        payload.add_model @model
+        payload.add_records @model, [ @record ]
+        payload
+      end
     end
 
     private
