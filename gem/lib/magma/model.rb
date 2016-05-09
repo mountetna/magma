@@ -13,6 +13,10 @@ class Magma
         @identity || primary_key
       end
 
+      def has_identifier?
+        @identity
+      end
+
       def display_attributes
         attributes.select do |name|
           attributes[name].shown?
