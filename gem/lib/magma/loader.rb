@@ -47,18 +47,20 @@ class Magma
     def entry
       entry = @document.clone
       # replace the entry with the appropriate values for the column
-      entry.map do |att,value|
-        # filter out temp ids
-        if att == :temp_id
-          value.record_entry = self
-          next
-        end
-        if value.is_a? Magma::TempId
-          @needs_temp = true
-          next
-        end
-        @klass.attributes[att].entry_for value
-      end.compact.reduce :merge
+      Hash[
+        entry.map do |att,value|
+          # filter out temp ids
+          if att == :temp_id
+            value.record_entry = self
+            next
+          end
+          if value.is_a? Magma::TempId
+            @needs_temp = true
+            next
+          end
+          @klass.attributes[att].entry_for value
+        end.compact
+      ]
     end
 
     def update_entry
@@ -71,15 +73,17 @@ class Magma
     def temp_entry
       entry = @document.clone
       # replace the entry with the appropriate values for the column
-      entry.map do |att,value|
-        if att == :temp_id
-          { real_id: value.real_id }
-        elsif value.is_a? Magma::TempId
-          @klass.attributes[att].entry_for value
-        else
-          nil
-        end
-      end.compact.reduce :merge
+      Hash[
+        entry.map do |att,value|
+          if att == :temp_id
+            { real_id: value.real_id }
+          elsif value.is_a? Magma::TempId
+            @klass.attributes[att].entry_for value
+          else
+            nil
+          end
+        end.compact
+      ]
     end
 
     private

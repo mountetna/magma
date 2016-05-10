@@ -92,9 +92,11 @@ class Magma
         # Return a json template of this thing.
         {
           name: model_name, 
-          attributes: attributes.map do |name,att|
-            { name => att.json_template }
-          end.reduce(:merge),
+          attributes: Hash[
+            attributes.map do |name,att|
+              [ name, att.json_template ]
+            end
+          ],
           identifier: identity
         }
       end
@@ -175,12 +177,14 @@ class Magma
     end
 
     def assoc_records
-      self.class.attributes.map do |name,att|
-        next unless att.is_a? Magma::TableAttribute
-        {
-          att.link_model => self.send(name)
-        }
-      end.compact.reduce(:merge) || {}
+      Hash[
+        self.class.attributes.map do |name,att|
+          next unless att.is_a? Magma::TableAttribute
+          [
+            att.link_model, self.send(name)
+          ]
+        end.compact
+      ]
     end
 
     def child_documents

@@ -16,10 +16,12 @@ class Magma
   end
 
   def all_commands
-    @all_commands ||= find_descendents(Magma::Command).map do |c|
-      cmd = c.new
-      { cmd.name => cmd }
-    end.reduce :merge
+    @all_commands ||= Hash[
+      find_descendents(Magma::Command).map do |c|
+        cmd = c.new
+        [ cmd.name, cmd ]
+      end
+    ]
   end
 
   class Command
