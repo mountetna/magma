@@ -15,7 +15,11 @@ class Magma
 
     def json_for record
       link = record.send(@name)
-      link ? { identifier: link.identifier, model: link_model_name } : nil
+      link ? { identifier: link.identifier, model: @name } : nil
+    end
+
+    def eager
+      @name
     end
 
     def entry_for value

@@ -44,8 +44,7 @@ class Magma
 
     protected
     def load_but_dont_validate config
-      Magma.instance.connect(config[:database])
-      Magma.instance.load_models
+      Magma.instance.configure(config,false)
     end
 
     def load_and_validate config

@@ -17,6 +17,10 @@ class Magma
       nil
     end
 
+    def eager
+      @name
+    end
+
     def json_for record
       collection = record.send(@name)
       collection.map &:identifier
