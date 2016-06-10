@@ -88,21 +88,24 @@ class Magma
         raise "Missing table for #{name}." unless Magma.instance.db.table_exists? table_name
       end
 
-      def json_template
+      def json_template attribute_names=nil
         # Return a json template of this thing.
+        attribute_names ||= attributes.keys
         {
           name: model_name, 
           attributes: Hash[
-            attributes.map do |name,att|
-              [ name, att.json_template ]
+            attribute_names.map do |name|
+              [ name, attributes[name].json_template ]
             end
           ],
           identifier: identity
         }
       end
 
-      def assoc_models
-        [ self ] + attributes.map do |name,att|
+      def assoc_models att_names=nil
+        att_names ||= attributes.keys
+        [ self ] + att_names.map do |name|
+          att ||= attributes[name]
           next unless att.is_a? Magma::TableAttribute
           att.link_model.assoc_models
         end.flatten.compact
@@ -145,6 +148,26 @@ class Magma
         yield obj if block_given?
         obj.save if obj
       end
+
+      # This method uses eager loading to pull all the data associated
+      # with a particular record
+      def retrieve identifier, att_names=nil
+        search = self.where(identity => identifier)
+        att_names ||= self.attributes.keys
+
+        eager_atts = eager_attributes(att_names)
+
+        search = search.eager(eager_atts) unless eager_atts.empty?
+
+        search.all.first
+      end
+
+      def eager_attributes att_names = nil
+        att_names ||= self.attributes.keys
+        att_names.map do |att_name|
+          attributes[att_name].eager
+        end.compact
+      end
     end
 
     def self.inherited(subclass)
@@ -164,21 +187,27 @@ class Magma
       # run a loader on a hook from carrier_wave
     end
 
-    def json_document
-      # A JSON version of this record. Each attribute reports in a fashion
+    def json_document attribute_names=nil
+      # A JSON version of this record (actually a hash). Each attribute reports in a fashion
       # that is useful
       hash = {
         id: id
       }
-      self.class.attributes.each do |name,att|
+
+      attribute_names ||= self.class.attributes.keys
+
+      attribute_names.each do |name|
+        att = self.class.attributes[name]
         hash.update name => att.json_for(self)
       end
       hash
     end
 
-    def assoc_records
+    def assoc_records att_names = nil
+      att_names ||= self.class.attributes.keys
       Hash[
-        self.class.attributes.map do |name,att|
+        att_names.map do |name|
+          att = self.class.attributes[name]
           next unless att.is_a? Magma::TableAttribute
           [
             att.link_model, self.send(name)

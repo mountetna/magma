@@ -48,6 +48,10 @@ class Magma
       end
     end
 
+    def eager
+      nil
+    end
+
     def update record, new_value
       record.set({ @name => new_value })
     end

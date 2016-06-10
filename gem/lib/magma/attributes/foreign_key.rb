@@ -7,8 +7,16 @@ class Magma
       true
     end
 
+    def column_name
+      foreign_id
+    end
+
     def entry migration, mode
       migration.foreign_key_entry @name, link_model, mode
+    end
+
+    def eager
+      @name
     end
 
     def json_for record

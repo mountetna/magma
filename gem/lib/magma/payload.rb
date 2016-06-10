@@ -9,11 +9,11 @@ class Magma
       @template_payloads = {}
     end
 
-    def add_model model, columns=nil
+    def add_model model, attributes=nil
       return if @template_payloads[model]
 
-      @template_payloads[model] = TemplatePayload.new(model,columns)
-      model.assoc_models.each do |assoc_model|
+      @template_payloads[model] = TemplatePayload.new(model,attributes)
+      model.assoc_models(attributes).each do |assoc_model|
         add_model assoc_model
       end
     end
@@ -22,24 +22,34 @@ class Magma
       @template_payloads[model].add_records records
 
       records.each do |record|
-        record.assoc_records.each do |model,records|
-          add_records model, records
+        record.assoc_records(@template_payloads[model].attributes).each do |assoc_model,assoc_records|
+          add_records assoc_model, assoc_records
         end
       end
     end
 
-    attr_reader :template_payloads
+    def to_hash &block
+      {
+        templates: Hash[
+          @template_payloads.map do |model, tp|
+            [ 
+              model.model_name, tp.to_hash(&block)
+            ]
+          end
+        ]
+      }
+    end
 
     private
 
     class TemplatePayload
-      def initialize model, columns
+      def initialize model, attributes
         @model = model
-        @columns = columns
+        @attributes = attributes
         @records = []
       end
 
-      attr_reader :records
+      attr_reader :records, :attributes
 
       def add_records records
         @records.concat records
@@ -47,8 +57,14 @@ class Magma
 
       def to_hash
         {
-          template: @model.json_template,
-          documents: @records.map(&:json_document)
+          documents: Hash[
+            @records.map do |record|
+              [
+                record.identifier, block_given? ? yield(@model, attributes, record) : record.json_document(attributes)
+              ]
+            end
+          ],
+          template: block_given? ? yield(@model, attributes) : @model.json_template(attributes)
         }
       end
     end
