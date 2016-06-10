@@ -165,8 +165,7 @@ class Magma
       def eager_attributes att_names = nil
         att_names ||= self.attributes.keys
         att_names.map do |att_name|
-          att = attributes[att_name]
-          att.eager
+          attributes[att_name].eager
         end.compact
       end
     end

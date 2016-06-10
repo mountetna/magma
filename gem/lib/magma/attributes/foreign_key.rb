@@ -15,7 +15,7 @@ class Magma
       migration.foreign_key_entry @name, link_model, mode
     end
 
-    def eager_graph
+    def eager
       @name
     end
 
