@@ -76,7 +76,7 @@ class Magma
       Hash[
         entry.map do |att,value|
           if att == :temp_id
-            { real_id: value.real_id }
+            [ :real_id, value.real_id ]
           elsif value.is_a? Magma::TempId
             @klass.attributes[att].entry_for value
           else

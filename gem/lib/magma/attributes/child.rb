@@ -23,7 +23,7 @@ class Magma
     end
 
     def entry_for value
-      { }
+      nil
     end
 
     def validate link, &block

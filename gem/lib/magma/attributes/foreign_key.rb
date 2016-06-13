@@ -26,17 +26,12 @@ class Magma
 
     def entry_for value
       # you need to find the foreign entity
-      return {} if value.nil?
-      entry = {}
+      return nil if value.nil?
 
       if value.is_a? Magma::TempId
-        entry = {
-          foreign_id => value.real_id
-        }
+        [ foreign_id, value.real_id ]
       elsif foreign_record = link_record(value)
-        entry = {
-          foreign_id => foreign_record[:id]
-        }
+        [ foreign_id, foreign_record[:id] ]
       end
     end
 

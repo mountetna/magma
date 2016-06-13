@@ -31,7 +31,7 @@ class Magma
     end
 
     def entry_for value
-      { @name => value }
+      [ @name, value ]
     end
 
     def validate value, &block
