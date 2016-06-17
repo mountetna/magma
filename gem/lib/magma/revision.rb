@@ -3,7 +3,7 @@ class Magma
     def initialize revised_document, model_name, record_name
       @model = Magma.instance.get_model model_name
       @record = @model[@model.identity => record_name]
-      @revised_document = censored revised_document
+      @revised_document = censored(revised_document || {})
     end
     attr_reader :errors
 
