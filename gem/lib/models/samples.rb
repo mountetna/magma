@@ -28,6 +28,22 @@ class Sample < Magma::Model
   document :dc_file, 
     desc: "FACS format file for DC stain"
 
+  attribute :treg_stain,
+    type: TrueClass,
+    desc: "Was the treg stain done for this sample?"
+
+  attribute :nktb_stain,
+    type: TrueClass,
+    desc: "Was the nktb stain done for this sample?"
+
+  attribute :sort_stain,
+    type: TrueClass,
+    desc: "Was the sort stain done for this sample?"
+
+  attribute :dc_stain,
+    type: TrueClass,
+    desc: "Was the dc stain done for this sample?"
+
   child :imaging,
     desc: "Immunofluorescence imaging of this sample"
 
@@ -57,26 +73,9 @@ class Sample < Magma::Model
     type: String, 
     desc: "Tumor grade"
 
-  attribute :physician, 
-    type: String, 
-    desc: "Contact person who provided access to the sample"
-
-  attribute :ice_time, 
-    type: Float,
-    desc: "Time that the sample spent on ice before digestion (hours)"
-
   attribute :description, 
     type: String, 
     desc: "General description - how gross the sample looks"
-
-  attribute :date_of_digest, 
-    type: DateTime, 
-    desc: "Date when digest was done"
-
-  attribute :date_of_extraction, 
-    display_name: "Date of Surgery",
-    type: DateTime, 
-    desc: "Date when sample was taken out of patient"
 
   attribute :post_digest_cell_count, 
     type: Integer, 
