@@ -37,6 +37,11 @@ class Patient < Magma::Model
     type: DateTime, 
     desc: "Date when sample was taken out of patient"
 
+  attribute :ffpe_frozen,
+    display_name: "FFPE/Frozen",
+    type: TrueClass,
+    desc: "Whether sample was taken from FFPE"
+
   attribute :processor,
     type: String,
     desc: "Who received and processed the sample"
