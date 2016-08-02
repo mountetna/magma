@@ -152,14 +152,13 @@ class Magma
       # This method uses eager loading to pull all the data associated
       # with a particular record
       def retrieve identifier, att_names=nil
-        search = self.where(identity => identifier)
-        att_names ||= self.attributes.keys
+        search = identifier ? self.where(identity => identifier) : self
 
         eager_atts = eager_attributes(att_names)
 
         search = search.eager(eager_atts) unless eager_atts.empty?
 
-        search.all.first
+        search.all
       end
 
       def eager_attributes att_names = nil
