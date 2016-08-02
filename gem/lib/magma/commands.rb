@@ -74,6 +74,16 @@ class Magma
     end
   end
 
+  class Console < Magma::Command
+    usage "Open a console with a connected magma instance"
+
+    def execute
+      require 'irb'
+      ARGV.clear
+      IRB.start
+    end
+  end
+
   class Load < Magma::Command
     usage "Run data loaders on models for current dataset"
 

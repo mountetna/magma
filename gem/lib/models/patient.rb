@@ -20,6 +20,23 @@ class Patient < Magma::Model
     type: TrueClass,
     desc: "Was blood received for this patient?"
 
+  attribute :ice_time, 
+    type: Float,
+    desc: "Time that the sample spent on ice before digestion (hours)"
+
+  attribute :physician, 
+    type: String, 
+    desc: "Contact person who provided access to the sample"
+
+  attribute :date_of_digest, 
+    type: DateTime, 
+    desc: "Date when digest was done"
+
+  attribute :date_of_extraction, 
+    display_name: "Date of Surgery",
+    type: DateTime, 
+    desc: "Date when sample was taken out of patient"
+
   attribute :processor,
     type: String,
     desc: "Who received and processed the sample"
