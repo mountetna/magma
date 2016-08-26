@@ -12,6 +12,7 @@ require_relative 'models/rna_seq'
 require_relative 'models/samples'
 require_relative 'models/population'
 require_relative 'models/mfi'
+require_relative 'models/channel'
 
 require_relative 'loaders/flow_jo'
 require_relative 'loaders/clinical_colorectal'

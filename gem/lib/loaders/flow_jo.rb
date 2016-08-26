@@ -25,6 +25,8 @@ class FlowJoLoader < Magma::Loader
   end
 
   def dispatch
+    delete_existing_channels
+    create_channel_documents
     create_sample_documents
     delete_existing_populations
     create_population_documents
@@ -40,6 +42,38 @@ class FlowJoLoader < Magma::Loader
     dispatch_record_set
   end
 
+  def delete_existing_channels
+    Channel.where(patient_id: @patient.id).delete
+  end
+
+  def create_channel_documents
+    # First collect the records, then make them unique.
+    channels = all_tubes.map do |tube|
+      tube.keyword_value("$PAR").to_i.times.map do |n|
+        n = n + 1
+        {
+          fluor: tube.keyword_value("$P#{n}N"),
+          antibody: tube.keyword_value("$P#{n}S"),
+          number: n,
+          patient: @patient.ipi_number
+        }
+      end
+    end.flatten.uniq
+    channels.group_by do |channel|
+      channel[:fluor]
+    end.each do |fluor, choices|
+      good_channel = choices.find do |channel|
+        channel[:antibody] && !channel[:antibody.empty?]
+      end
+      if good_channel
+        push_record Channel, good_channel
+      else
+        push_record Channel, choices.first
+      end
+    end
+    dispatch_record_set
+  end
+  
   def delete_existing_populations
     # Find all populations for samples with this patient
     mfi_ids = Mfi.join(:populations, id: :population_id)
@@ -54,7 +88,7 @@ class FlowJoLoader < Magma::Loader
     Mfi.where(id: mfi_ids).delete
     Population.where(id: pop_ids).delete
   end
-  
+
   def sample_name_from tube_name
     case tube_name
     when IPI.sample_name

@@ -99,7 +99,11 @@ class Magma
       model.all.each do |record|
         puts record.identifier
         next unless file = record.send(att).file
-        record.run_loaders att, file
+        begin
+          record.run_loaders att, file
+        rescue Magma::LoadFailed => m
+          puts m.complaints
+        end
       end
     end
 
