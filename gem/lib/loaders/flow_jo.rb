@@ -43,33 +43,44 @@ class FlowJoLoader < Magma::Loader
   end
 
   def delete_existing_channels
-    Channel.where(patient_id: @patient.id).delete
+    Channel.where(id:
+      Channel.join(:stain_panels, id: :stain_panel_id)
+        .where(patient_id: @patient.id)
+        .select_map( :channels__id)
+                 ).delete
+    StainPanel.where(patient_id: @patient.id).delete
   end
 
   def create_channel_documents
     # First collect the records, then make them unique.
-    channels = all_tubes.map do |tube|
-      tube.keyword_value("$PAR").to_i.times.map do |n|
-        n = n + 1
-        {
-          fluor: tube.keyword_value("$P#{n}N"),
-          antibody: tube.keyword_value("$P#{n}S"),
-          number: n,
-          patient: @patient.ipi_number
-        }
-      end
-    end.flatten.uniq
-    channels.group_by do |channel|
-      channel[:fluor]
-    end.each do |fluor, choices|
-      good_channel = choices.find do |channel|
-        channel[:antibody] && !channel[:antibody.empty?]
-      end
-      if good_channel
-        push_record Channel, good_channel
-      else
-        push_record Channel, choices.first
-      end
+    create_stain_document treg_stain_tubes.first, :treg
+    create_stain_document nktb_stain_tubes.first, :nktb
+    create_stain_document sort_stain_tubes.first, :sort
+    create_stain_document dc_stain_tubes.first, :dc
+  end
+
+  def create_stain_document tube, name
+    return unless tube
+    time = DateTime.now
+
+    push_record StainPanel, {
+      patient: @patient.ipi_number,
+      name: name.to_s,
+      temp_id: temp_id(tube),
+      created_at: time,
+      updated_at: time
+    }
+    tube.keyword_value("$PAR").to_i.times.map do |n|
+      # Each tube matches one stain. put a list together for each one.
+      n = n + 1
+      push_record Channel, {
+        fluor: tube.keyword_value("$P#{n}N"),
+        antibody: tube.keyword_value("$P#{n}S"),
+        number: n,
+        stain_panel: temp_id(tube),
+        created_at: time,
+        updated_at: time
+      }
     end
     dispatch_record_set
   end

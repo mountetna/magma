@@ -56,8 +56,8 @@ class Patient < Magma::Model
     type: String,
     desc: "Version of the stain panel used for processing."
 
-  table :channel,
-    desc: "List of antibody/fluor pairs used to analyze this patient."
+  table :stain_panel,
+    desc: "List of stain panels used to analyze this patient."
 
   document :flow_pdf, display_name: "Flow cytometry PDF",
     desc: "PDF file summarizing populations for all four stains for each sample for this patient."

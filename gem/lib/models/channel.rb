@@ -1,5 +1,5 @@
 class Channel < Magma::Model
-  parent :patient
+  parent :stain_panel
   order :number
 
   attribute :antibody,
