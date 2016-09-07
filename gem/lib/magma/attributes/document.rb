@@ -25,5 +25,10 @@ class Magma
         nil
       end
     end
+
+    def txt_for record
+      document = json_for(record)
+      document ? document[:url] : nil
+    end
   end
 end

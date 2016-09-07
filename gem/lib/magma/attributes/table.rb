@@ -22,11 +22,13 @@ class Magma
       table.map &:identifier
     end
 
+    def txt_for record
+      nil
+    end
     # since a table has to display the other model, we should eager load its
     # column dependencies
     def eager
-      link_atts = link_model.eager_attributes
-      link_atts.empty? ? @name : { @name => link_atts }
+      @name
     end
 
     def update record, new_value
