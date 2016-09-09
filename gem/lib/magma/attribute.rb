@@ -30,6 +30,10 @@ class Magma
       record.send @name
     end
 
+    def txt_for record
+      json_for record
+    end
+
     def entry_for value
       [ @name, value ]
     end

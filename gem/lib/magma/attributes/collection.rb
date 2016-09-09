@@ -26,6 +26,10 @@ class Magma
       collection.map &:identifier
     end
 
+    def txt_for record
+      json_for(record).join(", ")
+    end
+
     def validate links, &block
       links.each do |link|
         next unless link
