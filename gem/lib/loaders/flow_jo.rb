@@ -57,6 +57,7 @@ class FlowJoLoader < Magma::Loader
     create_stain_document nktb_stain_tubes.first, :nktb
     create_stain_document sort_stain_tubes.first, :sort
     create_stain_document dc_stain_tubes.first, :dc
+    dispatch_record_set
   end
 
   def create_stain_document tube, name
@@ -82,7 +83,6 @@ class FlowJoLoader < Magma::Loader
         updated_at: time
       }
     end
-    dispatch_record_set
   end
   
   def delete_existing_populations
