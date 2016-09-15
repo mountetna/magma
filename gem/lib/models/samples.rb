@@ -28,22 +28,6 @@ class Sample < Magma::Model
   document :dc_file, 
     desc: "FACS format file for DC stain"
 
-  attribute :treg_stain,
-    type: TrueClass,
-    desc: "Was the treg stain done for this sample?"
-
-  attribute :nktb_stain,
-    type: TrueClass,
-    desc: "Was the nktb stain done for this sample?"
-
-  attribute :sort_stain,
-    type: TrueClass,
-    desc: "Was the sort stain done for this sample?"
-
-  attribute :dc_stain,
-    type: TrueClass,
-    desc: "Was the dc stain done for this sample?"
-
   child :imaging,
     desc: "Immunofluorescence imaging of this sample"
 
