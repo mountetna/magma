@@ -1,5 +1,6 @@
 class Magma
   class Revision
+    attr_reader :model, :record
     def initialize revised_document, model_name, record_name
       @model = Magma.instance.get_model model_name
       @record = @model[@model.identity => record_name]
@@ -28,15 +29,6 @@ class Magma
       @record.save changed: true
 
       @record.refresh
-    end
-
-    def payload
-      @payload ||= begin
-        payload = Magma::Payload.new
-        payload.add_model @model
-        payload.add_records @model, [ @record ]
-        payload
-      end
     end
 
     private
