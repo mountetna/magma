@@ -28,6 +28,11 @@ class Magma
       end
     end
 
+    def add_revision revision
+      add_model revision.model
+      add_records revision.model, [ revision.record ]
+    end
+
     def to_hash &block
       {
         templates: Hash[
