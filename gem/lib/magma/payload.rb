@@ -69,7 +69,7 @@ class Magma
               ]
             end
           ],
-          template: block_given? ? yield(@model, attributes) : @model.json_template(attributes)
+          template: block_given? ? yield(@model, attributes) : @model.json_template
         }
       end
     end
