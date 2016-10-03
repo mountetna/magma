@@ -1,5 +1,6 @@
 require 'json'
 require 'rack'
+<<<<<<< HEAD
 require_relative '../magma'
 require_relative '../magma/json_body'
 require_relative '../magma/auth'
@@ -11,7 +12,6 @@ class Magma
   class Server
     class Update < Magma::Server::Controller
     end
-
     class << self
       def route path, &block
         @routes ||= {}
@@ -53,6 +53,5 @@ class Magma
     end
 
     private
-
   end
 end
