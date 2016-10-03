@@ -182,19 +182,16 @@ class Magma
     end
 
     def json_document attribute_names=nil
-      # A JSON version of this record (actually a hash). Each attribute reports in a fashion
-      # that is useful
-      hash = {
-        id: id
-      }
-
-      attribute_names ||= self.class.attributes.keys
-
-      attribute_names.each do |name|
-        att = self.class.attributes[name]
-        hash.update name => att.json_for(self)
-      end
-      hash
+      # A JSON version of this record (actually a hash). Each attribute
+      # reports in its own fashion
+      Hash[
+        (attribute_names || self.class.attributes.keys).map do |name|
+          [ name, self.class.attributes[name].json_for(self) ]
+        end
+      ].update(
+        # always ensure some sort of identifier
+        self.class.identity => identifier
+      )
     end
 
     def assoc_records att_names = nil
