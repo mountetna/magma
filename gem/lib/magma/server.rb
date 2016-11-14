@@ -1,6 +1,5 @@
 require 'json'
 require 'rack'
-<<<<<<< HEAD
 require_relative '../magma'
 require_relative '../magma/json_body'
 require_relative '../magma/auth'
