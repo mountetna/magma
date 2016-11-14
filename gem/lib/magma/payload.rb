@@ -33,12 +33,12 @@ class Magma
       add_records revision.model, [ revision.record ]
     end
 
-    def to_hash &block
+    def to_hash
       {
         templates: Hash[
           @template_payloads.map do |model, tp|
             [ 
-              model.model_name, tp.to_hash(&block)
+              model.model_name, tp.to_hash
             ]
           end
         ]
@@ -65,11 +65,13 @@ class Magma
           documents: Hash[
             @records.map do |record|
               [
-                record.identifier, block_given? ? yield(@model, attributes, record) : record.json_document(attributes)
+                record.identifier, record.json_document(
+                  @attributes
+                )
               ]
             end
           ],
-          template: block_given? ? yield(@model, attributes) : @model.json_template
+          template: @model.json_template
         }
       end
     end

@@ -54,49 +54,51 @@ describe Magma::Server::Controller do
   end
 end
 
-module Fakes
-  def self.request(params)
-    request = double("rack::request")
-    allow(request).to receive(:env).and_return(
-      "rack.request.json" => params
-    )
-    request
-  end
-end
-
 describe Magma::Server::Retrieve do
-  it "should require a model_name" do
-    request = Fakes.request(
-      "record_names" => ["some_record"],
-      "model_name" => nil
-    )
-    c = Magma::Server::Retrieve.new(request)
+  before :each do
+    @request = double("rack::request")
+  end
 
-    expect(c.response.first).to eq(422)
+  it "should require a model_name" do
+    allow(@request).to receive(:env).and_return(
+      "rack.request.json" => {
+        "record_names" => ["some_record"],
+        "model_name" => nil
+      }
+    )
+    retrieve = Magma::Server::Retrieve.new(@request)
+
+    expect(retrieve.response.first).to eq(422)
   end
   it "should require record_names" do
-    request = Fakes.request(
-      "record_names" => nil,
-      "model_name" => "some_model"
+    allow(@request).to receive(:env).and_return(
+      "rack.request.json" => {
+        "record_names" => nil,
+        "model_name" => "some_model"
+      }
     )
-    c = Magma::Server::Retrieve.new(request)
+    retrieve = Magma::Server::Retrieve.new(@request)
 
-    expect(c.response.first).to eq(422)
+    expect(retrieve.response.first).to eq(422)
   end
   it "attempts to retrieve records" do
     retrieval = double("magma::retrieval")
-    allow(retrieval).to receive(:to_json).and_return({})
+    allow(retrieval).to receive(:perform)
+    allow(retrieval).to receive(:success?).and_return(true)
+    allow(retrieval).to receive(:payload)
     allow(Magma::Retrieval).to receive(:new).and_return(retrieval)
 
-    request = Fakes.request(
-      "record_names" => ["some_record"],
-      "model_name" => "some_model"
+    allow(@request).to receive(:env).and_return(
+      "rack.request.json" => {
+        "record_names" => ["some_record"],
+        "model_name" => "some_model"
+      }
     )
 
-    c = Magma::Server::Retrieve.new(request)
-    response = c.response
+    retrieve = Magma::Server::Retrieve.new(@request)
+    response = retrieve.response
 
-    expect(retrieval).to have_received(:to_json)
+    expect(retrieval).to have_received(:payload)
     expect(response.first).to eq(200)
   end
 end
