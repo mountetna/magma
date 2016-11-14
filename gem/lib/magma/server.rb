@@ -25,11 +25,9 @@ class Magma
 
       def failure status, msg
         @response.status = status
-        @response.write msg
+        @response.write msg.to_json
         @response.finish
       end
-
-      
     end
 
     class Retrieve < Magma::Server::Controller
@@ -37,19 +35,18 @@ class Magma
       def response
         @params = @request.env['rack.request.json']
 
-        if @params["model_name"].nil?
-          return failure(422, "No model name given")
+        retrieval = Magma::Retrieval.new(
+          model_name: @params["model_name"],
+          record_names: @params["record_names"],
+          attribute_names: @params["attributes"],
+          collapse_tables: @params["collapse_tables"]
+        )
+        retrieval.perform
+        if retrieval.success?
+          success retrieval.payload.to_hash
+        else
+          return failure(422, errors: retrieval.errors)
         end
-
-        if @params["record_names"].nil?
-          return failure(422, "No record names given")
-        end
-
-        retrieval = Magma::Retrieval.new(model_name: @params["model_name"],
-                                     record_names: @params["record_names"],
-                                     attributes: @params["attributes"],
-                                     collapse_tables: @params["collapse_tables"])
-        success retrieval
       end
     end
 
