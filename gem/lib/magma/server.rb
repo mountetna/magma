@@ -1,7 +1,9 @@
 require 'json'
 require 'rack'
-require 'pry'
 require_relative '../magma'
+require_relative '../magma/json_body'
+require_relative '../magma/auth'
+require_relative '../magma/ip_auth'
 
 class Magma
   class Server
@@ -94,47 +96,6 @@ class Magma
         return instance_eval(&self.class.routes[@request.path])
       end
       [ 404, {}, ["There is no such path #{@request.path}"] ]
-    end
-  end
-
-  class JsonBody
-    def initialize app
-      @app = app
-    end
-    def call(env)
-      if env['CONTENT_TYPE'] =~ %r{application/json}i
-        body = env['rack.input'].read
-        if body =~ %r/^\s*\{/
-          env.update(
-            'rack.request.json' => JSON.parse(body)
-          )
-        end
-      end
-      @app.call(env)
-    end
-  end
-  class Auth
-    def initialize server
-      @server = server
-    end
-
-    def call(env)
-      request = Rack::Request.new(env)
-      # this guy will authenticate the entire request
-      # or bail if it fails
-
-      if valid_request?(request)
-        @server.call(env)
-      else
-        [ 401, {}, [ "Unauthorized" ] ]
-      end
-    end
-
-    def valid_request? request
-      # refuse non-SSL connections
-      return false if request.scheme != "http"
-
-      true
     end
   end
 end
