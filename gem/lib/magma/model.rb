@@ -43,7 +43,7 @@ class Magma
       end
 
       def link name, opts = {}
-        many_to_one name, :polymorphic => opts[:column_type]
+        many_to_one name, class: (opts[:link_model] || name).to_s.camel_case.to_sym
         attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
       end
 

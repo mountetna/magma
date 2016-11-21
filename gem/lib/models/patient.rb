@@ -52,6 +52,8 @@ class Patient < Magma::Model
     loader: :flowjo_xml_loader,
     desc: "WSP file from Flojo 10 containing all four stains for each sample for this patient."
 
+  link :reference_patient, link_model: :patient
+
   attribute :stain_version,
     type: String,
     desc: "Version of the stain panel used for processing."
