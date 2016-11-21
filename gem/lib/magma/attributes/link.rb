@@ -1,7 +1,7 @@
 class Magma
   module Link
     def link_model
-      Magma.instance.get_model(@name)
+      Magma.instance.get_model(@link_model || @name)
     end
 
     def foreign_id

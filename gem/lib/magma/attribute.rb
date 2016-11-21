@@ -3,7 +3,9 @@ class Magma
     def self.options
       [ :type, :desc, :display_name, 
         :hide, :readonly, :unique, 
-        :match, :format_hint, :loader ]
+        :match, :format_hint, :loader,
+        :link_model
+      ]
     end
     DISPLAY_ONLY = [ :child, :collection ]
     attr_reader :name, :type, :desc, :loader
@@ -17,6 +19,7 @@ class Magma
     def json_template
       {
         name: @name,
+        model_name: @link_model || @name,
         type: @type.nil? ? @type : @type.name,
         attribute_class: self.class.name,
         desc: @desc,
