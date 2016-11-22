@@ -58,6 +58,11 @@ class Patient < Magma::Model
     type: String,
     desc: "Version of the stain panel used for processing."
 
+  attribute :sop_version,
+    type: String,
+    match: [ "SOP1", "SOP2", "SOP3" ],
+    desc: "Version of SOP used for processing."
+
   table :stain_panel,
     desc: "List of stain panels used to analyze this patient."
 
