@@ -1,4 +1,5 @@
 require 'sequel'
+require_relative 'magma/client'
 require_relative 'magma/attribute'
 require_relative 'magma/model'
 require_relative 'magma/migration'
@@ -26,31 +27,44 @@ class Magma
     @magma_models ||= find_descendents Magma::Model
   end
 
-  def configure opts, validate=true
-    connect opts[:database]
+  def configure opts
+    @config = opts
+  end
+
+  def config type
+    @config[type]
+  end
+
+  def load_models
+    connect(config :database)
     require_relative 'models'
-    if validate
-      magma_models.each do |model|
-        model.validate
-      end
+    magma_models.each do |model|
+      model.validate
     end
-    carrier_wave_config opts[:storage]
+    carrier_wave_init
+  end
+
+  def persist_connection
+    db.extension :connection_validator
+    db.pool.connection_validation_timeout = -1
   end
 
   private
-  def find_descendents klass
-    ObjectSpace.each_object(Class).select do |k|
-      k < klass
-    end
-  end
 
-  def carrier_wave_config opts
+  def carrier_wave_init
+    opts = config(:storage)
     return unless opts
     CarrierWave.configure do |config|
       config.fog_credentials = opts[:credentials]
       config.fog_directory = opts[:directory]
       config.fog_public = false
       config.fog_attributes = { 'Cache-Control' => "max-age=#{365 * 86400}" }
+    end
+  end
+
+  def find_descendents klass
+    ObjectSpace.each_object(Class).select do |k|
+      k < klass
     end
   end
 end
