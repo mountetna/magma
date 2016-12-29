@@ -41,7 +41,6 @@ class Magma
     end
 
     def to_hash
-<<<<<<< HEAD
       # Magma has three interfaces, all of which should return the same type of payload, for
       # ease of consumption
       # There are three TYPES of information magma might return:
