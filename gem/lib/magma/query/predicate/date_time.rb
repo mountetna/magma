@@ -10,7 +10,6 @@ class Magma
           @operand
         )
       end
-
       filters.concat super
     end
 

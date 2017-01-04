@@ -1,6 +1,5 @@
 require_relative 'controller'
 require_relative '../query/data_table'
-
 class Magma
   class Server
     class Query < Magma::Server::Controller
