@@ -8,9 +8,12 @@ class Magma
       @child_predicate = get_child
     end
 
-    def extract table
+    def extract table, identity
       table.map do |row|
-        row[column_name]
+        [
+          row[identity],
+          row[column_name]
+        ]
       end
     end
 
