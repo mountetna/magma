@@ -10,21 +10,29 @@ class DataTable
     @order = query_json["order"]
   end
 
-  def rows
-    row_question = Magma::Question.new(@row_query + [ "::all", "::identifier" ])
-    row_ids = row_question.answer
-    Hash[
+  def columns
+    @columns ||= Hash[
       @column_queries.map do |column_name, column|
-        query = Magma::Question.new([ @row_query.first, [ "::identifier", "::in", row_ids ], "::all" ] + column)
-        [ column_name, query.to_sql ]
+        query = Magma::Question.new([ @row_query.first, [ "::identifier", "::in", row_names ], "::all" ] + column)
+        [ column_name, Hash[query.answer] ]
       end
     ]
   end
 
+  def rows
+    row_names.map do |row_name|
+      columns.map do |column_name, results|
+        results[row_name]
+      end
+    end
+  end
+
+  def col_names
+    @column_queries.keys
+  end
+
   def row_names
-    predicates = @row_query + [ "::all", "::identifier" ]
-    model = ModelListPredicate.new(*predicates)
-    []
+    @row_names ||= row_question.answer.flatten.uniq
   end
 
   def to_matrix
@@ -32,12 +40,19 @@ class DataTable
     # you need to name your samples
     name: @name,
     matrix: {
-      col_names: [],
-      row_names: [],
+      col_names: col_names,
+      row_names: row_names,
       rows: rows
     }
   }
   end
+
+  private
+
+  def row_question
+    @row_question ||= Magma::Question.new(@row_query + [ "::all", "::identifier" ])
+  end
+
 end
 
 class Magma

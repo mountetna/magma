@@ -28,15 +28,20 @@ class Magma
     end
     class Select
     end
-    def initialize predicates
+    def initialize predicates, options = {}
       @start_predicate = ModelListPredicate.new(*predicates)
       @model = @start_predicate.model
+      @options = options
     end
 
     def answer
       table = to_table
 
-      @start_predicate.extract(table)
+      @start_predicate.extract(table, identity)
+    end
+
+    def identity
+      :"#{@model.table_name}__#{@model.identity}"
     end
 
     def to_sql
@@ -49,7 +54,8 @@ class Magma
       filters.each do |filter|
         query = filter.apply(query)
       end
-      query = query.select( *@start_predicate.select.uniq )
+      selects = (@start_predicate.select + [ :"#{identity}___#{identity}" ]).uniq
+      query = query.select( *selects )
 
       query.sql
     end
