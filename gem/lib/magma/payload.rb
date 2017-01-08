@@ -7,6 +7,7 @@ class Magma
     # the data is loaded already when passed into the payload.
     def initialize
       @models = {}
+      @tables = []
     end
 
     def add_model model, attributes=nil
@@ -26,6 +27,10 @@ class Magma
           add_records assoc_model, assoc_records
         end
       end
+    end
+
+    def add_data data
+      @tables.push data
     end
 
     def add_revision revision
@@ -64,13 +69,27 @@ class Magma
       #   }
       # }
       #
-      Hash[
-        @models.map do |model, model_payload|
-          [
-            model.model_name, model_payload.to_hash
+      response = {}
+
+      if !@models.empty?
+        response.update(
+          models: Hash[
+            @models.map do |model, model_payload|
+              [
+                model.model_name, model_payload.to_hash
+              ]
+            end
           ]
-        end
-      ]
+        )
+      end
+
+      if !@tables.empty?
+        response.update(
+          tables: @tables.map(&:to_matrix)
+        )
+      end
+
+      response
     end
 
     private

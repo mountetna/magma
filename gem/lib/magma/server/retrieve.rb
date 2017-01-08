@@ -3,8 +3,9 @@ require_relative 'controller'
 class Magma
   class Server
     class Retrieve < Magma::Server::Controller
-      # Okay, now we have an actual request, let's see what it looks like.
       def response
+        perform
+
         if success?
           success @payload.to_hash
         else
