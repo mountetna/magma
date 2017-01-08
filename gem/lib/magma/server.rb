@@ -40,11 +40,7 @@ class Magma
 
     route '/retrieve' do
       # Connect to the database and get some data
-      retrieve = Magma::Server::Retrieve.new(@request)
-
-      retrieve.perform
-        
-      retrieve.response
+      Magma::Server::Retrieve.new(@request).response
     end
 
     route '/update' do
