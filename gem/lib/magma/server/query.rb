@@ -6,7 +6,7 @@ class Magma
     class Query < Magma::Server::Controller
       def response
         @payload = Magma::Payload.new
-        @data_tables = @params["queries"].map do |query_json|
+        (@params["queries"] || []).each do |query_json|
           @payload.add_data(Magma::DataTable.new(query_json))
         end
 

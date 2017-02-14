@@ -56,11 +56,11 @@ class Magma
         case @attribute
         when Magma::ForeignKeyAttribute
           filters.push Magma::Question::Filter.new(
-            "? IS NOT NULL", "#{@model.table_name}__#{@attribute.foreign_id}"
+            "\"#{@model.table_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
           )
         else
           filters.push Magma::Question::Filter.new(
-            "? IS NOT NULL", @attribute.name
+            "\"#{@model.table_name}\".\"#{@attribute.name}\" IS NOT NULL"
           )
         end
       end
