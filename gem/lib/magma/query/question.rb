@@ -44,6 +44,10 @@ class Magma
       :"#{@model.table_name}__#{@model.identity}"
     end
 
+    def type
+      @start_predicate.reduced_type
+    end
+
     def to_sql
       query = @model.order(@model.identity)
       joins = @start_predicate.join.uniq
