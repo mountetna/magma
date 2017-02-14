@@ -1,5 +1,35 @@
 require_relative 'controller'
 
+# In general, you Retrieve with a request like this:
+# {
+#   model_name: "model",
+#   record_names: [ "record1", "record2" ],
+#   attribute_names: [ "att_a", "att_b" ]
+# }
+#
+# Some special cases:
+#
+# This will pull all attributes for the requested records
+# {
+#   model_name: "model",
+#   record_names: [ "record1", "record2" ],
+#   attribute_names: "all"
+# }
+#
+# This will pull all records for the given model
+# {
+#   model_name: "model",
+#   record_names: "all",
+#   attribute_names: ...
+# }
+#
+# This will pull all identifiers for all models and records
+# {
+#   model_name: "all",
+#   record_names: "all",
+#   attribute_names: "identifier"
+# }
+
 class Magma
   class Server
     class Retrieve < Magma::Server::Controller
@@ -12,13 +42,13 @@ class Magma
           return failure(422, errors: @errors)
         end
       end
- 
+
       def initialize request
         super request
 
         @model_name =  @params["model_name"]
         @record_names = @params["record_names"]
-        @attribute_names = (@params["attributes"] || []).map(&:to_sym)
+        @attribute_names = @params["attribute_names"].is_a?(Array) ? @params["attribute_names"].map(&:to_sym) : @params["attribute_names"]
         @collapse_tables =  @params["collapse_tables"]
 
         @errors = []
@@ -27,22 +57,40 @@ class Magma
       def perform
         return error('No model name given') if @model_name.nil?
         return error('No record names given') if @record_names.nil?
-
-        @model = Magma.instance.get_model @model_name
-        
-        @attributes = @model.attributes.values.select do |att|
-          get_attribute?(att) || show_table_attribute?(att)
-        end.map(&:name)
-
-        records = @model.eager(
-          @attributes.map(&:eager).compact
-        ).where(
-          @model.identity => @record_names
-        ).all
+        return error('Improperly formed record names') unless (@record_names.is_a?(Array) && @record_names.all?{|name| name.is_a?(String)}) || @record_names == "all"
+        return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
 
         @payload = Magma::Payload.new
-        @payload.add_model(@model, @attributes)
-        @payload.add_records( @model, records)
+
+        if @model_name == "all"
+          Magma.instance.magma_models.each do |model|
+            next if @attribute_names == "identifier" && !model.has_identifier?
+            retrieve_model(model)
+          end
+        else
+          retrieve_model(Magma.instance.get_model @model_name)
+        end
+      end
+
+      def retrieve_model model
+        time = Time.now
+        @attributes = model.attributes.values.select do |att|
+          get_attribute?(att,model) || show_table_attribute?(att)
+        end
+
+        records = model.eager(
+          @attributes.map(&:eager).compact
+        )
+        if @record_names.is_a?(Array)
+          records = records.where(
+            model.identity => @record_names
+          )
+        end
+        records = records.all
+
+        @payload.add_model(model, @attributes.map(&:name))
+        @payload.add_records( model, records)
+        puts "Retrieving #{model.name} took #{Time.now - time} seconds"
       end
 
       private
@@ -63,13 +111,11 @@ class Magma
         end
       end
 
-      def get_attribute? att
-        if @attribute_names.empty?
-          nil
-        else
-          @attribute_names.include? att.name
-        end
+      def get_attribute? att, model
+        @attribute_names == "all" ||
+          (@attribute_names == "identifier" && model.identity == att.name) ||
+          (@attribute_names.is_a?(Array) && @attribute_names.include?(att.name))
       end
-    end     
+    end
   end
 end

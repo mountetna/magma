@@ -44,11 +44,12 @@ class Magma
 
     protected
     def load_but_dont_validate config
-      Magma.instance.configure(config,false)
+      Magma.instance.configure config
     end
 
     def load_and_validate config
-      Magma.instance.configure(config)
+      Magma.instance.configure config
+      Magma.instance.load_models
     end
   end
 
@@ -81,6 +82,10 @@ class Magma
       require 'irb'
       ARGV.clear
       IRB.start
+    end
+
+    def setup config
+      load_and_validate config
     end
   end
 

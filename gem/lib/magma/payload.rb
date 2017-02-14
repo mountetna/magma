@@ -10,11 +10,13 @@ class Magma
       @tables = []
     end
 
-    def add_model model, attributes=nil
+    def add_model model, attribute_names=nil
       return if @models[model]
 
-      @models[model] = ModelPayload.new(model,attributes)
-      model.assoc_models(attributes).each do |assoc_model|
+      @models[model] = ModelPayload.new(model,attribute_names)
+
+      model.assoc_models(attribute_names).each do |assoc_model|
+        puts "Adding assoc_model #{assoc_model} for #{attribute_names}"
         add_model assoc_model
       end
     end
@@ -23,7 +25,7 @@ class Magma
       @models[model].add_records records
 
       records.each do |record|
-        record.assoc_records(@models[model].attributes).each do |assoc_model,assoc_records|
+        record.assoc_records(@models[model].attribute_names).each do |assoc_model,assoc_records|
           add_records assoc_model, assoc_records
         end
       end
@@ -95,13 +97,13 @@ class Magma
     private
 
     class ModelPayload
-      def initialize model, attributes
+      def initialize model, attribute_names
         @model = model
-        @attributes = attributes
+        @attribute_names = attribute_names
         @records = []
       end
 
-      attr_reader :records, :attributes
+      attr_reader :records, :attribute_names
 
       def add_records records
         @records.concat records
@@ -113,7 +115,7 @@ class Magma
             @records.map do |record|
               [
                 record.identifier, record.json_document(
-                  @attributes
+                  @attribute_names
                 )
               ]
             end
