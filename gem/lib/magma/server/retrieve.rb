@@ -42,6 +42,7 @@ class Magma
           return failure(422, errors: @errors)
         end
       end
+
       def initialize request
         super request
 
