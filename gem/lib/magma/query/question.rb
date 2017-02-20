@@ -13,8 +13,24 @@ class Magma
       def apply query
         query.join(
           @table1,
-          :"#{@table1}__#{@table1_id}" => :"#{@table2}__#{@table2_id}"
+          table1_column => table2_column
         )
+      end
+
+      def table1_column
+          :"#{@table1}__#{@table1_id}" 
+      end
+
+      def table2_column
+          :"#{@table2}__#{@table2_id}"
+      end
+
+      def hash
+        table1_column.hash + table2_column.hash
+      end
+
+      def eql? other
+        table1_column == other.table1_column && table2_column == other.table2_column
       end
     end
     class Filter
@@ -25,8 +41,6 @@ class Magma
       def apply query
         query.where(*@arguments)
       end
-    end
-    class Select
     end
     def initialize predicates, options = {}
       @start_predicate = ModelListPredicate.new(*predicates)
