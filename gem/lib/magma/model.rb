@@ -107,7 +107,7 @@ class Magma
         att_names.map do |name|
           att = attributes[name]
           next unless att && att.is_a?(Magma::TableAttribute)
-          att.link_model.assoc_models
+          att.link_model
         end.flatten.compact
       end
 
