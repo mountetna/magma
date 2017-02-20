@@ -16,8 +16,7 @@ class Magma
       @models[model] = ModelPayload.new(model,attribute_names)
 
       model.assoc_models(attribute_names).each do |assoc_model|
-        puts "Adding assoc_model #{assoc_model} for #{attribute_names}"
-        add_model assoc_model
+        @models[assoc_model] = ModelPayload.new(model,nil)
       end
     end
     
@@ -26,7 +25,7 @@ class Magma
 
       records.each do |record|
         record.assoc_records(@models[model].attribute_names).each do |assoc_model,assoc_records|
-          add_records assoc_model, assoc_records
+          @models[assoc_model].add_records assoc_records
         end
       end
     end
