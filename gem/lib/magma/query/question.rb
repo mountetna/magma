@@ -43,7 +43,7 @@ class Magma
       end
     end
     def initialize predicates, options = {}
-      @start_predicate = ModelListPredicate.new(*predicates)
+      @start_predicate = ModelPredicate.new(*predicates)
       @model = @start_predicate.model
       @options = options
     end

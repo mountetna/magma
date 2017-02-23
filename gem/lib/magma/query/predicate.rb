@@ -44,11 +44,11 @@ class Magma
   end
 end
 
+require_relative 'predicate/model'
+require_relative 'predicate/record'
 require_relative 'predicate/column'
-require_relative 'predicate/model_list'
 require_relative 'predicate/boolean'
 require_relative 'predicate/date_time'
 require_relative 'predicate/file'
-require_relative 'predicate/model'
 require_relative 'predicate/number'
 require_relative 'predicate/string'
