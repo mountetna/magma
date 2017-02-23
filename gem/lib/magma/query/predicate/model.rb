@@ -1,114 +1,78 @@
 class Magma
   class ModelPredicate < Magma::Predicate
-  # This object takes several arguments:
-  #   1) It can accept any of its attributes as arguments
-  #      Here are the Magma attribute types:
-  #        ChildAttribute - this returns another Model predicate
-  #        CollectionAttribute
-  #        TableAttribute - these both return a ModelList predicate
-  #        DocumentAttribute - this returns a Document predicate
-  #        ImageAttribute - this returns a Image predicate
-  #        ForeignKey - this returns a Model predicate
-  #        Attribute - this, depending on its type, can have different results
-  #          If the type is a String, you get a String predicate
-  #          If the type is an Integer or Float you get a Number predicate
-  #          if the type is a DateTime you get a DateTime predicate
-  #          if the type is a Boolean you get a Boolean predicate
-  #   2) ::has
-  #   3) ::identifier
+    # Model predicate - this is what the query will start with, probably
+    #
+    # "sample"
+    #
+    # This is a request for all objects of type "sample", so it's return type should be:
+    #   [ Sample ]
+    # 
+
+    # This object takes several arguments:
+    #   1) It can accept an arbitrary list of filters, which are
+    #      in the form of lists, e.g.:
+    #
+    #      [ "patient", "experiment", "name", "::equals", "Colorectal" ]
+    #      [ "patient", "clinical", "parameter", [ "name", "::equals", "Gender" ], "::first", "value", "::equals", "Male" ]
+    #
+    #      Each one of these filters must reduce to a Boolean, or else it is
+    #      invalid.  They must come first.
+    #
+    #   2) It can be reduced by a list operator. The list operators are:
+    #      ::any - a Boolean that returns true if the list is non-zero
+    #      ::first - returns the first item in the list, namely a Model
+    #      ::all - returns every item in the list, represented by a Model
+    #      ::count - returns the number of items in the list
+
     attr_reader :model
 
-    def initialize model, argument, *predicates
-      @model = model
-      @argument = argument
+    def initialize model, *predicates
+      @model = model.is_a?(Magma::Model) ? model : Magma.instance.get_model(model)
+      @filters = []
+
+      while predicates.first.is_a?(Array)
+        filter = RecordPredicate.new(@model, *predicates.shift)
+        raise "Filter #{filter} does not reduce to TrueClass #{filter.argument} #{filter.reduced_type}!" unless filter.reduced_type == TrueClass
+        @filters.push filter
+      end
+
       @predicates = predicates
       @child_predicate = get_child
     end
 
-    def join 
+    def join
       joins = []
-      if @argument !~ /^::/
-        case @attribute
-        when Magma::ForeignKeyAttribute
-          joins.push Magma::Question::Join.new(
-            @attribute.link_model.table_name, 
-            :id,
-            @model.table_name, 
-            @attribute.foreign_id
-          )
-        when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
-          joins.push Magma::Question::Join.new(
-            @attribute.link_model.table_name,
-            @attribute.self_id,
-            @model.table_name,
-            :id
-          )
-        end
+      @filters.each do |filter|
+        joins.concat filter.join
       end
-
       joins.concat super
     end
 
-    def filter
-      filters = []
-      case @argument
-      when "::has"
-        case @attribute
-        when Magma::ForeignKeyAttribute
-          filters.push Magma::Question::Filter.new(
-            "\"#{@model.table_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
-          )
-        else
-          filters.push Magma::Question::Filter.new(
-            "\"#{@model.table_name}\".\"#{@attribute.name}\" IS NOT NULL"
-          )
-        end
+    def filter 
+      collection = []
+      @filters.each do |filter|
+        collection.concat filter.filter
       end
-      filters.concat super
+      collection.concat super
     end
 
     private
 
     def get_child
-      if @argument == "::has"
-        attribute_name = @predicates.shift
-        @attribute = validate_attribute(attribute_name)
+      @argument = @predicates.shift
+
+      invalid_argument! unless @argument
+
+      case @argument
+      when "::any"
         return terminal(TrueClass)
+      when "::first", "::all"
+        return RecordPredicate.new(@model, *@predicates)
+      when "::count"
+        return terminal(Integer)
       else
-        attribute_name = @argument == "::identifier" ? @model.identity : @argument
-        @attribute = validate_attribute(attribute_name)
-        return get_attribute_child
+        invalid_argument! @argument
       end
-    end
-
-    def get_attribute_child
-      case @attribute
-      when Magma::ChildAttribute, Magma::ForeignKeyAttribute
-        return Magma::ModelPredicate.new(@attribute.link_model, *@predicates)
-      when Magma::TableAttribute, Magma::CollectionAttribute
-        return Magma::ModelListPredicate.new(@attribute.link_model, *@predicates)
-      when Magma::DocumentAttribute, Magma::ImageAttribute
-        return Magma::FilePredicate.new(@model, @attribute.name, *@predicates)
-      else
-        case @attribute.type.name
-        when "String"
-          return Magma::StringPredicate.new(@model, @attribute.name, *@predicates)
-        when "Integer", "Float"
-          return Magma::NumberPredicate.new(@model, @attribute.name, *@predicates)
-        when "DateTime"
-          return Magma::DateTimePredicate.new(@model, @attribute.name, *@predicates)
-        else
-          invalid_argument! attribute_name
-        end
-      end
-    end
-
-    private
-
-    def validate_attribute attribute_name
-      raise "No attribute given!" unless attribute_name
-      raise "There is no such attribute #{attribute_name} on #{@model.name}!" unless @model.has_attribute? attribute_name
-      return @model.attributes[attribute_name.to_sym]
     end
   end
 end
