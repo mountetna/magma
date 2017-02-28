@@ -13,6 +13,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'sequel_polymorphic', '>= 0.2.2'
   spec.add_dependency 'mini_magick'
   spec.add_dependency 'germ'
+  spec.add_dependency 'net-http-persistent'
   spec.add_dependency 'extlib'
   spec.add_dependency 'carrierwave-sequel'
   spec.add_dependency 'fog'
