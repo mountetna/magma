@@ -1,4 +1,12 @@
+require 'net/http/persistent'
+
 class Magma
+  class ClientError < StandardError
+    attr_reader :status
+    def initialize status
+      @status = status
+    end
+  end
   class Client
     def initialize
       config = Magma.instance.config(:client)
@@ -11,27 +19,30 @@ class Magma
       return [ response.code.to_i, response.body ]
     end
 
-    def query params
-      response = json_post 'query', params
-      return [ response.code.to_i, response.body ]
+    def query question
+      response = json_post 'query', { query: question }
+      status = response.code.to_i
+      if status > 300
+        raise Magma::ClientError.new(status), response
+      end
+      return [ status, response.body ]
     end
 
     private
 
+    def persistent_connection
+      @http ||= Net::HTTP::Persistent.new
+    end
+
     def json_post endpoint, params
       uri = URI::HTTPS.build host: @host, path: "/#{endpoint}"
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      http.verify_mode = OpenSSL::SSL::VERIFY_NONE
-
-      http.post(
+      post = Net::HTTP::Post.new(
         uri.path,
-        params.to_json,
-        {
-          "Content-Type" => "application/json",
-          "Accept" => "application/json"
-        }
+        "Content-Type" => "application/json",
+        "Accept" => "application/json"
       )
+      post.body = params.to_json
+      persistent_connection.request uri, post
     end
   end
 end

@@ -32,7 +32,7 @@ class Magma
 
       while predicates.first.is_a?(Array)
         filter = RecordPredicate.new(@model, *predicates.shift)
-        raise "Filter #{filter} does not reduce to TrueClass #{filter.argument} #{filter.reduced_type}!" unless filter.reduced_type == TrueClass
+        raise ArgumentError, "Filter #{filter} does not reduce to TrueClass #{filter.argument} #{filter.reduced_type}!" unless filter.reduced_type == TrueClass
         @filters.push filter
       end
 

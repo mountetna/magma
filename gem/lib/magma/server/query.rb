@@ -5,12 +5,12 @@ class Magma
   class Server
     class Query < Magma::Server::Controller
       def response
-        @payload = Magma::Payload.new
-        (@params["queries"] || []).each do |query_json|
-          @payload.add_data(Magma::DataTable.new(query_json))
+        begin
+          question = Magma::Question.new @params["query"]
+          success answer: question.answer, type: question.type
+        rescue ArgumentError => e
+          failure 422, e.message
         end
-
-        success @payload.to_hash
       end
     end
   end

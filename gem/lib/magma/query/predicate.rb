@@ -33,12 +33,12 @@ class Magma
     end
 
     def invalid_argument! argument
-      raise "Expected an argument to #{self}" if argument.nil?
-      raise "#{argument} is not a valid argument to #{self}"
+      raise ArgumentError, "Expected an argument to #{self}" if argument.nil?
+      raise ArgumentError, "#{argument} is not a valid argument to #{self}"
     end
 
     def terminal value
-      raise "Trailing arguments after terminal value!" unless @predicates.empty?
+      raise ArgumentError, "Trailing arguments after terminal value!" unless @predicates.empty?
       value
     end
   end

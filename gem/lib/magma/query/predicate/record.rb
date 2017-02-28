@@ -106,8 +106,8 @@ class Magma
     private
 
     def validate_attribute attribute_name
-      raise "No attribute given!" unless attribute_name
-      raise "There is no such attribute #{attribute_name} on #{@model.name}!" unless @model.has_attribute? attribute_name
+      raise ArgumentError, "No attribute given!" unless attribute_name
+      raise ArgumentError, "There is no such attribute #{attribute_name} on #{@model.name}!" unless @model.has_attribute? attribute_name
       return @model.attributes[attribute_name.to_sym]
     end
   end
