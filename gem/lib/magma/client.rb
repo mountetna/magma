@@ -7,7 +7,9 @@ class Magma
       @status = status
     end
   end
+
   class Client
+    include Singleton
     def initialize
       config = Magma.instance.config(:client)
       raise "Magma Client configuration is missing." unless config
