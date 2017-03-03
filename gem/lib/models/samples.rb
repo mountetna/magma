@@ -31,8 +31,14 @@ class Sample < Magma::Model
   child :imaging,
     desc: "Immunofluorescence imaging of this sample"
 
-  image :he_stain, display_name: "H&E staining",
-    desc: "Flat image of H&E stain"
+  image :he_low, display_name: "H&E Low Magnification",
+    desc: "Flat image of H&E stain at low magnification"
+
+  image :he_high, display_name: "H&E High Magnification",
+    desc: "Flat image of H&E stain at high magnification"
+
+  document :he_zstack, display_name: "H&E stain ZStack",
+    desc: "Z-stack (Zeiss CZI) of H&E stain"
 
   collection :rna_seq, 
     display_name: "RNASeq Experiments",
