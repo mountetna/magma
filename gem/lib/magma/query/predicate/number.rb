@@ -1,17 +1,17 @@
 class Magma
   class NumberPredicate < Magma::ColumnPredicate
-    def filter 
-      filters = []
+    def constraint 
       case @argument
       when "::<=", "::<", "::>", "::>=", "::="
-        filters.push Magma::Question::Filter.new(
-          "? #{@argument.sub(/::/,'')} ?",
-          "#{@model.table_name}__#{@attribute_name}",
-          @operand
-        )
+        return [
+          Magma::Question::Constraint.new(
+            "? #{@argument.sub(/::/,'')} ?",
+            "#{@model.table_name}__#{@attribute_name}",
+            @operand
+          )
+        ]
       end
-
-      filters.concat super
+      super
     end
 
     private

@@ -1,36 +1,36 @@
 class Magma
   class Predicate
-    attr_reader :child_predicate, :argument
+    attr_reader :argument
 
     def reduced_type
-      if @child_predicate.is_a?(Predicate)
-        @child_predicate.reduced_type
+      if child_predicate.is_a?(Predicate)
+        child_predicate.reduced_type
       else
-        @child_predicate
+        child_predicate
       end
     end
 
-    def join
-      predicate_collect :join
+    def child_predicate
+      @child_predicate
     end
 
-    def filter
-      predicate_collect :filter
+    def join
+      []
+    end
+
+    def constraint
+      []
     end
 
     def select
-      predicate_collect :select
+      []
     end
 
     def extract table, identity
-      @child_predicate.is_a?(Predicate) ? @child_predicate.extract(table, identity) : table
+      table
     end
 
     private
-
-    def predicate_collect type
-      @child_predicate.is_a?(Predicate) ? @child_predicate.send(type) : []
-    end
 
     def invalid_argument! argument
       raise ArgumentError, "Expected an argument to #{self}" if argument.nil?
@@ -39,7 +39,7 @@ class Magma
 
     def terminal value
       raise ArgumentError, "Trailing arguments after terminal value!" unless @predicates.empty?
-      value
+      Magma::TerminalPredicate.new(value)
     end
   end
 end
@@ -52,3 +52,4 @@ require_relative 'predicate/date_time'
 require_relative 'predicate/file'
 require_relative 'predicate/number'
 require_relative 'predicate/string'
+require_relative 'predicate/terminal'

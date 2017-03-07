@@ -26,45 +26,50 @@ class Magma
     end
 
     def join 
-      joins = []
       if @argument !~ /^::/
         case @attribute
         when Magma::ForeignKeyAttribute
-          joins.push Magma::Question::Join.new(
-            @attribute.link_model.table_name, 
-            :id,
-            @model.table_name, 
-            @attribute.foreign_id
-          )
+          return [
+            Magma::Question::Join.new(
+              @attribute.link_model.table_name, 
+              :id,
+              @model.table_name, 
+              @attribute.foreign_id
+            )
+          ]
         when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
-          joins.push Magma::Question::Join.new(
-            @attribute.link_model.table_name,
-            @attribute.self_id,
-            @model.table_name,
-            :id
-          )
+          return [
+            Magma::Question::Join.new(
+              @attribute.link_model.table_name,
+              @attribute.self_id,
+              @model.table_name,
+              :id
+            )
+          ]
         end
       end
-
-      joins.concat super
+      super
     end
 
-    def filter
-      filters = []
+    def constraint
       case @argument
       when "::has"
         case @attribute
         when Magma::ForeignKeyAttribute
-          filters.push Magma::Question::Filter.new(
-            "\"#{@model.table_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
-          )
+          return [
+            Magma::Question::Constraint.new(
+              "\"#{@model.table_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
+            )
+          ]
         else
-          filters.push Magma::Question::Filter.new(
-            "\"#{@model.table_name}\".\"#{@attribute.name}\" IS NOT NULL"
-          )
+          return [
+            Magma::Question::Constraint.new(
+              "\"#{@model.table_name}\".\"#{@attribute.name}\" IS NOT NULL"
+            )
+          ]
         end
       end
-      filters.concat super
+      super
     end
 
     private

@@ -33,15 +33,26 @@ class Magma
         table1_column == other.table1_column && table2_column == other.table2_column
       end
     end
-    class Filter
+
+    class Constraint
+      attr_reader :conditions
       def initialize *args
-        @arguments = args
+        @conditions = args
       end
 
       def apply query
-        query.where(*@arguments)
+        query.where(*@conditions)
+      end
+
+      def hash
+        @conditions.hash
+      end
+
+      def eql? other
+        @conditions == other.conditions
       end
     end
+
     def initialize predicates, options = {}
       @start_predicate = ModelPredicate.new(*predicates)
       @model = @start_predicate.model
@@ -51,7 +62,26 @@ class Magma
     def answer
       table = to_table
 
-      @start_predicate.extract(table, identity)
+      predicates.each do |predicate|
+        table = predicate.extract(table, identity)
+      end
+      table
+    end
+
+    def model
+      @start_predicate.model
+    end
+
+    def predicates
+      @predicates ||= begin
+        predicates = []
+        predicate = @start_predicate
+        while predicate
+          predicates << predicate
+          predicate = predicate.respond_to?(:child_predicate) ? predicate.child_predicate : nil
+        end
+        predicates
+      end
     end
 
     def identity
@@ -64,21 +94,27 @@ class Magma
 
     def to_sql
       query = @model.order(@model.identity)
-      joins = @start_predicate.join.uniq
-      joins.each do |join|
+
+      predicate_collect(:join).uniq.each do |join|
         query = join.apply(query)
       end
-      filters = @start_predicate.filter.uniq
-      filters.each do |filter|
-        query = filter.apply(query)
+
+      predicate_collect(:constraint).uniq.each do |constraint|
+        query = constraint.apply(query)
       end
-      selects = (@start_predicate.select + [ :"#{identity}___#{identity}" ]).uniq
-      query = query.select( *selects )
+
+      query = query.select( 
+        *(predicate_collect(:select) + [ :"#{identity}___#{identity}" ]).uniq
+      )
 
       query.sql
     end
 
     private
+
+    def predicate_collect type
+      predicates.map(&type).inject(&:+) || []
+    end
 
     def to_table
       Magma.instance.db[

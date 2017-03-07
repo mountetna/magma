@@ -1,15 +1,16 @@
 class Magma
   class StringPredicate < Magma::ColumnPredicate
-    def filter 
-      filters = []
+    def constraint 
       case @argument
       when "::matches", "::equals", "::in"
-        filters.push Magma::Question::Filter.new(
-          :"#{@model.table_name}__#{@attribute_name}" => @operand
-        )
+        return [
+          Magma::Question::Constraint.new(
+            :"#{@model.table_name}__#{@attribute_name}" => @operand
+          )
+        ]
       end
 
-      filters.concat super
+      super
     end
 
     private

@@ -41,19 +41,11 @@ class Magma
     end
 
     def join
-      joins = []
-      @filters.each do |filter|
-        joins.concat filter.join
-      end
-      joins.concat super
+      @filters.map(&:join).inject(&:+) || []
     end
 
-    def filter 
-      collection = []
-      @filters.each do |filter|
-        collection.concat filter.filter
-      end
-      collection.concat super
+    def constraint 
+      @filters.map(&:constraint).inject(&:+) || []
     end
 
     private

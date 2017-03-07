@@ -1,4 +1,5 @@
 require 'net/http/persistent'
+require 'singleton'
 
 class Magma
   class ClientError < StandardError
