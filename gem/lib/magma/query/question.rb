@@ -33,7 +33,6 @@ class Magma
         table1_column == other.table1_column && table2_column == other.table2_column
       end
     end
-
     class Constraint
       attr_reader :conditions
       def initialize *args
