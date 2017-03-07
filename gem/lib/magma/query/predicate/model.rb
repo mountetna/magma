@@ -41,14 +41,58 @@ class Magma
     end
 
     def join
-      @filters.map(&:join).inject(&:+) || []
+      @filters.map do |filter|
+        filter.flatten.map(&:join).inject(&:+) || []
+      end.inject(&:+) || []
+    end
+
+    def select
+      [ :"#{identity}___#{identity}" ]
     end
 
     def constraint 
-      @filters.map(&:constraint).inject(&:+) || []
+      @filters.map do |filter|
+        filter.flatten.map(&:constraint).inject(&:+) || []
+      end.inject(&:+) || []
+    end
+
+    def extract table, return_identity
+
+      case @argument
+      when "::first"
+        super(
+          table.group_by do |row|
+            row[identity]
+          end.first.last,
+          return_identity
+        )
+      when "::all"
+        table.group_by do |row|
+          row[identity]
+        end.map do |identity,rows|
+          super(rows, return_identity)
+        end.inject(&:+)
+      else
+        invalid_argument! @argument
+      end
+    end
+
+    def to_hash
+      super.merge(
+        model: model,
+        filters: @filters.map do |filter|
+          filter.flatten.map do |pred|
+            pred.to_hash
+          end
+        end
+      )
     end
 
     private
+
+    def identity
+      :"#{@model.table_name}__#{@model.identity}"
+    end
 
     def get_child
       @argument = @predicates.shift
@@ -56,12 +100,8 @@ class Magma
       invalid_argument! unless @argument
 
       case @argument
-      when "::any"
-        return terminal(TrueClass)
       when "::first", "::all"
         return RecordPredicate.new(@model, *@predicates)
-      when "::count"
-        return terminal(Integer)
       else
         invalid_argument! @argument
       end

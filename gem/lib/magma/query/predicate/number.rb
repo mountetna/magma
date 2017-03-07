@@ -6,7 +6,7 @@ class Magma
         return [
           Magma::Question::Constraint.new(
             "? #{@argument.sub(/::/,'')} ?",
-            "#{@model.table_name}__#{@attribute_name}",
+            :"#{@model.table_name}__#{@attribute_name}",
             @operand
           )
         ]

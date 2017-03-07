@@ -51,6 +51,12 @@ class Magma
       super
     end
 
+    def to_hash
+      super.merge(
+        model: model
+      )
+    end
+
     def constraint
       case @argument
       when "::has"

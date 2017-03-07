@@ -17,6 +17,10 @@ class Magma
         )
       end
 
+      def to_s
+        { table1_column => table2_column }.to_s
+      end
+
       def table1_column
           :"#{@table1}__#{@table1_id}" 
       end
@@ -43,6 +47,10 @@ class Magma
         query.where(*@conditions)
       end
 
+      def to_s
+        @conditions.to_s
+      end
+
       def hash
         @conditions.hash
       end
@@ -61,10 +69,7 @@ class Magma
     def answer
       table = to_table
 
-      predicates.each do |predicate|
-        table = predicate.extract(table, identity)
-      end
-      table
+      @start_predicate.extract(table,identity)
     end
 
     def model
@@ -72,15 +77,7 @@ class Magma
     end
 
     def predicates
-      @predicates ||= begin
-        predicates = []
-        predicate = @start_predicate
-        while predicate
-          predicates << predicate
-          predicate = predicate.respond_to?(:child_predicate) ? predicate.child_predicate : nil
-        end
-        predicates
-      end
+      @predicates ||= @start_predicate.flatten
     end
 
     def identity
@@ -89,6 +86,12 @@ class Magma
 
     def type
       @start_predicate.reduced_type
+    end
+
+    def to_predicates
+      predicates.map do |pred|
+        pred.to_hash
+      end
     end
 
     def to_sql
@@ -109,17 +112,17 @@ class Magma
       query.sql
     end
 
+    def to_table
+      Magma.instance.db[
+        to_sql
+      ].all
+    end
     private
 
     def predicate_collect type
       predicates.map(&type).inject(&:+) || []
     end
 
-    def to_table
-      Magma.instance.db[
-        to_sql
-      ].all
-    end
 
   end
 end

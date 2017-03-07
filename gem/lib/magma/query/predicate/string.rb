@@ -13,6 +13,12 @@ class Magma
       super
     end
 
+    def to_hash
+      super.merge(
+        operand: @operand
+      )
+    end
+
     private
 
     def get_child

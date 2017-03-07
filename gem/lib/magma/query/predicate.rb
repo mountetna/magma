@@ -27,7 +27,27 @@ class Magma
     end
 
     def extract table, identity
-      table
+      @child_predicate.is_a?(Predicate) ? @child_predicate.extract(table, identity) : table
+    end
+
+    def to_hash
+      {
+        type: self.class.name,
+        argument: argument,
+        join: join,
+        constraint: constraint,
+        select: select
+      }
+    end
+
+    def flatten
+      predicates = []
+      predicate = self
+      while predicate
+        predicates << predicate
+        predicate = predicate.respond_to?(:child_predicate) ? predicate.child_predicate : nil
+      end
+      predicates
     end
 
     private
