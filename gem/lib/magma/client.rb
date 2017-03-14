@@ -3,9 +3,10 @@ require 'singleton'
 
 class Magma
   class ClientError < StandardError
-    attr_reader :status
-    def initialize status
+    attr_reader :status, :body
+    def initialize status, body
       @status = status
+      @body = body
     end
   end
 
@@ -26,7 +27,7 @@ class Magma
       response = json_post 'query', { query: question }
       status = response.code.to_i
       if status > 300
-        raise Magma::ClientError.new(status), response
+        raise Magma::ClientError.new(status, query: question), response
       end
       return [ status, response.body ]
     end
