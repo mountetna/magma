@@ -94,6 +94,8 @@ class Magma
 
     def get_attribute_child
       case @attribute
+      when :id
+        return Magma::NumberPredicate.new(@model, @attribute, *@predicates)
       when Magma::ChildAttribute, Magma::ForeignKeyAttribute
         return Magma::RecordPredicate.new(@attribute.link_model, *@predicates)
       when Magma::TableAttribute, Magma::CollectionAttribute
@@ -118,7 +120,8 @@ class Magma
 
     def validate_attribute attribute_name
       raise ArgumentError, "No attribute given!" unless attribute_name
-      raise ArgumentError, "There is no such attribute #{attribute_name} on #{@model.name}!" unless @model.has_attribute? attribute_name
+      raise ArgumentError, "There is no such attribute #{attribute_name} on #{@model.name}!" unless @model.has_attribute?(attribute_name) || (@argument == "::identifier" && attribute_name == :id)
+      return :id if attribute_name == :id
       return @model.attributes[attribute_name.to_sym]
     end
   end

@@ -7,7 +7,7 @@ class Magma
       def response
         begin
           question = Magma::Question.new @params["query"]
-          success answer: question.answer, type: question.type
+          success 'application/json', { answer: question.answer, type: question.type }.to_json
         rescue ArgumentError => e
           failure 422, e.message
         end

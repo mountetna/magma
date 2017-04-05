@@ -171,34 +171,46 @@ class Magma
     end
 
     def identifier
-      send self.class.identity
+      send model.identity
     end
 
     def run_loaders att, file
-      if self.class.attributes[att].loader
-        send self.class.attributes[att].loader
+      if model.attributes[att].loader
+        send model.attributes[att].loader
       end
       # run a loader on a hook from carrier_wave
+    end
+
+    def model
+      self.class
     end
 
     def json_document attribute_names=nil
       # A JSON version of this record (actually a hash). Each attribute
       # reports in its own fashion
       Hash[
-        (attribute_names || self.class.attributes.keys).map do |name|
-          [ name, self.class.attributes[name].json_for(self) ]
+        (attribute_names || model.attributes.keys).map do |name|
+          [ name, json_for(name)  ]
         end
       ].update(
         # always ensure some sort of identifier
-        self.class.identity => identifier
+        model.identity => identifier
       )
     end
 
+    def json_for att_name
+      model.attributes[att_name].json_for(self)
+    end
+
+    def txt_for att_name
+      model.attributes[att_name].txt_for(self)
+    end
+
     def assoc_records att_names = nil
-      att_names ||= self.class.attributes.keys
+      att_names ||= model.attributes.keys
       Hash[
         att_names.map do |name|
-          att = self.class.attributes[name]
+          att = model.attributes[name]
           next unless att.is_a? Magma::TableAttribute
           [
             att.link_model, self.send(name)
@@ -208,7 +220,7 @@ class Magma
     end
 
     def child_documents
-      self.class.attributes.each do |name,att|
+      model.attributes.each do |name,att|
       end
     end
   end

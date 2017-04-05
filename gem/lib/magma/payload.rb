@@ -1,3 +1,5 @@
+require 'csv'
+
 class Magma
   class Payload
     # The payload is ONLY responsible for retrieving
@@ -7,7 +9,6 @@ class Magma
     # the data is loaded already when passed into the payload.
     def initialize
       @models = {}
-      @tables = []
     end
 
     def add_model model, attribute_names=nil
@@ -30,46 +31,12 @@ class Magma
       end
     end
 
-    def add_data data
-      @tables.push data
-    end
-
     def add_revision revision
       add_model revision.model
       add_records revision.model, [ revision.record ]
     end
 
     def to_hash
-      # Magma has three interfaces, all of which should return the same type of payload, for
-      # ease of consumption
-      # There are three TYPES of information magma might return:
-      # 1. Template
-      # 2. Document
-      # 3. Matrix
-      #
-      # Each of these belong to a project. The expected layout, then:
-      # {
-      #   projects: {
-      #     project_name1: {
-      #       models: {
-      #         model_name1: {
-      #           template: {},
-      #           documents: {
-      #             record_name1: {},
-      #             ...
-      #           },
-      #           matrices: {
-      #             record_name1: {
-      #               matrix_name1: {}
-      #             }
-      #           }
-      #         }
-      #       }
-      #     },
-      #     ...
-      #   }
-      # }
-      #
       response = {}
 
       if !@models.empty?
@@ -83,14 +50,12 @@ class Magma
           ]
         )
       end
-
-      if !@tables.empty?
-        response.update(
-          tables: @tables.map(&:to_matrix)
-        )
-      end
-
       response
+    end
+
+    def to_tsv
+      # there should only be one model
+      @models.first.last.to_tsv
     end
 
     private
@@ -121,6 +86,26 @@ class Magma
           ],
           template: @model.json_template
         }
+      end
+
+      def to_tsv
+        attributes = @attribute_names.select do |att_name| 
+          @model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute)
+        end
+        attributes.unshift @model.identity unless attributes.include?(@model.identity)
+
+        CSV.generate(col_sep: "\t") do |csv|
+          csv << attributes
+          @records.each do |record|
+            csv << attributes.map do |att_name|
+              if att_name == :id
+                record[att_name]
+              else
+                record.txt_for att_name
+              end
+            end
+          end
+        end
       end
     end
   end

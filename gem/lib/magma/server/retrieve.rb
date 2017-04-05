@@ -37,7 +37,12 @@ class Magma
         perform
 
         if success?
-          success @payload.to_hash
+          case @format
+          when "tsv"
+            success 'text/tsv', @payload.to_tsv
+          else
+            success 'application/json', @payload.to_hash.to_json
+          end
         else
           return failure(422, errors: @errors)
         end
@@ -50,6 +55,7 @@ class Magma
         @record_names = @params["record_names"]
         @attribute_names = @params["attribute_names"].is_a?(Array) ? @params["attribute_names"].map(&:to_sym) : @params["attribute_names"]
         @collapse_tables =  @params["collapse_tables"]
+        @format = @params["format"] || "json"
 
         @errors = []
       end
@@ -57,8 +63,9 @@ class Magma
       def perform
         return error('No model name given') if @model_name.nil?
         return error('No record names given') if @record_names.nil?
-        return error('Improperly formed record names') unless (@record_names.is_a?(Array) && @record_names.all?{|name| name.is_a?(String)}) || @record_names == "all"
+        return error('Improperly formed record names') unless valid_record_names?
         return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
+        return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
 
         @payload = Magma::Payload.new
 
@@ -94,6 +101,13 @@ class Magma
       end
 
       private
+
+      def valid_record_names?
+        @record_names.is_a?(Array) && 
+          (@record_names.all?{|name| name.is_a?(String)} ||
+           @record_names.all?{|name| name.is_a?(Fixnum)}) || 
+          @record_names == "all"
+      end
 
       def success?
         @errors && @errors.empty?

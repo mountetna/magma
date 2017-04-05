@@ -13,9 +13,9 @@ class Magma
 
       private
 
-      def success msg
-        @response['Content-Type'] = 'application/json'
-        @response.write msg.to_json
+      def success content_type, msg
+        @response['Content-Type'] = content_type
+        @response.write msg
         @response.finish
       end
 
