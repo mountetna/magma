@@ -4,7 +4,8 @@ class Magma
       def initialize request
         @request = request
         @response = Rack::Response.new
-        @params = @request.env['rack.request.json']
+        @params = @request.env['rack.request.params']
+        @errors = []
       end
 
       def response
@@ -23,6 +24,18 @@ class Magma
         @response.status = status
         @response.write msg.to_json
         @response.finish
+      end
+
+      def success?
+        @errors.empty?
+      end
+
+      def error msg
+        if msg.is_a?(Array)
+          @errors.concat msg
+        else
+          @errors.push msg
+        end
       end
     end
   end

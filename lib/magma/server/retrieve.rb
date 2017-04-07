@@ -44,7 +44,7 @@ class Magma
             success 'application/json', @payload.to_hash.to_json
           end
         else
-          return failure(422, errors: @errors)
+          failure(422, errors: @errors)
         end
       end
 
@@ -56,8 +56,6 @@ class Magma
         @attribute_names = @params["attribute_names"].is_a?(Array) ? @params["attribute_names"].map(&:to_sym) : @params["attribute_names"]
         @collapse_tables =  @params["collapse_tables"]
         @format = @params["format"] || "json"
-
-        @errors = []
       end
 
       def perform
@@ -109,13 +107,6 @@ class Magma
           @record_names == "all"
       end
 
-      def success?
-        @errors && @errors.empty?
-      end
-
-      def error msg
-        @errors.push msg
-      end
 
       def show_table_attribute? att
         if @collapse_tables

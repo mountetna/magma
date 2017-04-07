@@ -1,5 +1,4 @@
 Sequel::Model.plugin :timestamps, update_on_create: true
-Sequel::Model.plugin :polymorphic
 
 class Magma
   Model = Class.new(Sequel::Model)
