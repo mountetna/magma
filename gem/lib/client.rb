@@ -27,7 +27,7 @@ class Magma
       response = json_post 'query', { query: question }
       status = response.code.to_i
       if status > 300
-        raise Magma::ClientError.new(status, query: question), response
+        raise Magma::ClientError.new(status, query: question), response.body
       end
       return [ status, response.body ]
     end
