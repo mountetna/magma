@@ -69,7 +69,7 @@ class Magma
     def answer
       table = to_table
 
-      @start_predicate.extract(table,identity)
+      @start_predicate.extract(table)
     end
 
     def model
@@ -105,8 +105,8 @@ class Magma
         query = constraint.apply(query)
       end
 
-      query = query.select( 
-        *(predicate_collect(:select) + [ :"#{identity}___#{identity}" ]).uniq
+      query = query.select(
+        *([ :"#{identity}___#{identity}" ] + predicate_collect(:select)).uniq
       )
 
       query.sql

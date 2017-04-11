@@ -56,21 +56,19 @@ class Magma
       end.inject(&:+) || []
     end
 
-    def extract table, return_identity
-
+    def extract table
       case @argument
       when "::first"
         super(
           table.group_by do |row|
-            row[identity]
-          end.first.last,
-          return_identity
+            row.first.last
+          end.first.last
         )
       when "::all"
         table.group_by do |row|
-          row[identity]
+          row.first.last
         end.map do |identity,rows|
-          super(rows, return_identity)
+          super(rows)
         end.inject(&:+)
       else
         invalid_argument! @argument

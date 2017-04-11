@@ -1,0 +1,50 @@
+class Magma
+  class MetricsPredicate < Magma::Predicate
+    def initialize model, *predicates
+      @model = model
+      @predicates = predicates
+      @child_predicate = get_child
+    end
+
+    def extract table
+      records = Hash[
+        @model.where(
+          @model.identity => table.map do |row|
+            row.first.last
+          end
+        ).map do |record|
+          [ record.identifier, record ]
+        end
+      ]
+
+      table.map do |row|
+        [
+          row.first.last,
+          metrics_for(records[row.first.last])
+        ]
+      end
+    end
+
+    def metrics_for record
+      Hash[
+        @model.metrics.map do |metric|
+          [ metric.metric_name,  metric.new(record).to_hash ]
+        end
+      ]
+    end
+
+    def select
+      @argument.nil? ? [ :"#{column_name}___#{column_name}" ] : []
+    end
+
+    private
+
+    def get_child
+      terminal(Hash)
+    end
+
+    def column_name
+      :"#{@model.table_name}__#{@model.identity}"
+    end
+  end
+end

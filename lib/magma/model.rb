@@ -161,6 +161,12 @@ class Magma
 
         search
       end
+
+      def metrics
+        constants.map{|c| const_get(c)}.select do |c|
+          c.is_a?(Class) && c < Magma::Metric
+        end
+      end
     end
 
     def self.inherited(subclass)
@@ -216,11 +222,6 @@ class Magma
           ]
         end.compact
       ]
-    end
-
-    def child_documents
-      model.attributes.each do |name,att|
-      end
     end
   end
 end

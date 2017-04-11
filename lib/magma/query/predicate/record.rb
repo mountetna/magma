@@ -85,6 +85,8 @@ class Magma
         attribute_name = @predicates.shift
         @attribute = validate_attribute(attribute_name)
         return terminal(TrueClass)
+      elsif @argument == "::metrics"
+        return Magma::MetricsPredicate.new(@model, *@predicates)
       else
         attribute_name = @argument == "::identifier" ? @model.identity : @argument
         @attribute = validate_attribute(attribute_name)
