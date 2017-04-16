@@ -1,14 +1,14 @@
 source 'http://rubygems.org'
 
+ruby '2.2.2'
+
 gem 'rack'
 gem 'pg'
 gem 'sequel'
 gem 'mini_magick'
 gem 'germ'
-gem 'net-http-persistent'
 gem 'extlib'
 gem 'carrierwave-sequel'
 gem 'activesupport', '>= 4.2.6'
 gem 'fog'
 gem 'spreadsheet'
-gem 'pry'
