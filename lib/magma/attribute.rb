@@ -20,11 +20,14 @@ class Magma
       {
         name: @name,
         model_name: @link_model || @name,
-        type: @type.nil? ? @type : @type.name,
+        type: @type.nil? ? nil : @type.name,
         attribute_class: self.class.name,
         desc: @desc,
         display_name: display_name,
         options: @match.is_a?(Array) ? @match : nil,
+        match: @match.is_a?(Regexp) ? @match.source : nil,
+        format_hint: @format_hint,
+        read_only: read_only?,
         shown: shown?
       }.delete_if {|k,v| v.nil? }
     end

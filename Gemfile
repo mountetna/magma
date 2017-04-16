@@ -1,7 +1,14 @@
 source 'http://rubygems.org'
 
-gem 'sinatra'
+ruby '2.2.2'
 
-gem 'magma-dev-ucsf-immunoprofiler'
-
+gem 'rack'
 gem 'pg'
+gem 'sequel'
+gem 'mini_magick'
+gem 'germ'
+gem 'extlib'
+gem 'carrierwave-sequel'
+gem 'activesupport', '>= 4.2.6'
+gem 'fog'
+gem 'spreadsheet'

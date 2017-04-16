@@ -1,5 +1,13 @@
-require 'sinatra'
+require_relative 'lib/magma/server'
+require_relative 'lib/magma'
+require 'yaml'
+require 'logger'
 
-require File.expand_path '../magma-app.rb', __FILE__
+logger = Logger.new("log/error.log")
 
-run Sinatra::Application
+use Rack::CommonLogger, logger
+use Magma::IpAuth
+use Magma::ParseBody
+use Rack::ShowExceptions
+
+run Magma::Server.new(YAML.load File.read("config.yml"))
