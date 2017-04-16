@@ -1,7 +1,8 @@
 class Magma
   class ColumnPredicate < Magma::Predicate
-    def initialize model, attribute_name, argument=nil, *predicates
+    def initialize model, alias_name, attribute_name, argument=nil, *predicates
       @model = model
+      @alias_name = alias_name
       @attribute_name = attribute_name
       @argument = argument
       @predicates = predicates
@@ -19,7 +20,7 @@ class Magma
     protected
 
     def column_name
-      :"#{@model.table_name}__#{@attribute_name}"
+      :"#{alias_name}__#{@attribute_name}"
     end
   end
 end

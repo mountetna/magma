@@ -18,8 +18,9 @@ class Magma
   #   3) ::identifier
     attr_reader :model
 
-    def initialize model, argument, *predicates
+    def initialize model, alias_name, argument, *predicates
       @model = model
+      @alias_name = alias_name
       @argument = argument
       @predicates = predicates
       @child_predicate = get_child
@@ -31,18 +32,22 @@ class Magma
         when Magma::ForeignKeyAttribute
           return [
             Magma::Question::Join.new(
-              @attribute.link_model.table_name, 
+              @child_predicate.table_name,
+              @child_predicate.alias_name,
               :id,
-              @model.table_name, 
+              table_name,
+              alias_name,
               @attribute.foreign_id
             )
           ]
         when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
           return [
             Magma::Question::Join.new(
-              @attribute.link_model.table_name,
+              @child_predicate.table_name,
+              @child_predicate.alias_name,
               @attribute.self_id,
-              @model.table_name,
+              table_name,
+              alias_name,
               :id
             )
           ]
@@ -64,13 +69,13 @@ class Magma
         when Magma::ForeignKeyAttribute
           return [
             Magma::Question::Constraint.new(
-              "\"#{@model.table_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
+              "\"#{alias_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
             )
           ]
         else
           return [
             Magma::Question::Constraint.new(
-              "\"#{@model.table_name}\".\"#{@attribute.name}\" IS NOT NULL"
+              "\"#{alias_name}\".\"#{@attribute.name}\" IS NOT NULL"
             )
           ]
         end
@@ -86,7 +91,7 @@ class Magma
         @attribute = validate_attribute(attribute_name)
         return terminal(TrueClass)
       elsif @argument == "::metrics"
-        return Magma::MetricsPredicate.new(@model, *@predicates)
+        return Magma::MetricsPredicate.new(@model, alias_name, *@predicates)
       else
         attribute_name = @argument == "::identifier" ? @model.identity : @argument
         @attribute = validate_attribute(attribute_name)
@@ -97,21 +102,21 @@ class Magma
     def get_attribute_child
       case @attribute
       when :id
-        return Magma::NumberPredicate.new(@model, @attribute, *@predicates)
+        return Magma::NumberPredicate.new(@model, alias_name, @attribute, *@predicates)
       when Magma::ChildAttribute, Magma::ForeignKeyAttribute
-        return Magma::RecordPredicate.new(@attribute.link_model, *@predicates)
+        return Magma::RecordPredicate.new(@attribute.link_model, nil, *@predicates)
       when Magma::TableAttribute, Magma::CollectionAttribute
         return Magma::ModelPredicate.new(@attribute.link_model, *@predicates)
       when Magma::DocumentAttribute, Magma::ImageAttribute
-        return Magma::FilePredicate.new(@model, @attribute.name, *@predicates)
+        return Magma::FilePredicate.new(@model, alias_name, @attribute.name, *@predicates)
       else
         case @attribute.type.name
         when "String"
-          return Magma::StringPredicate.new(@model, @attribute.name, *@predicates)
+          return Magma::StringPredicate.new(@model, alias_name, @attribute.name, *@predicates)
         when "Integer", "Float"
-          return Magma::NumberPredicate.new(@model, @attribute.name, *@predicates)
+          return Magma::NumberPredicate.new(@model, alias_name, @attribute.name, *@predicates)
         when "DateTime"
-          return Magma::DateTimePredicate.new(@model, @attribute.name, *@predicates)
+          return Magma::DateTimePredicate.new(@model, alias_name, @attribute.name, *@predicates)
         else
           invalid_argument! attribute_name
         end

@@ -1,11 +1,8 @@
 class Magma
-  class FilePredicate < Magma::Predicate
-    def initialize model, attribute_name, argument, *predicates
-      @model = model
-      @attribute_name = attribute_name
-      @argument = argument
-      @predicates = predicates
-      @child_predicate = get_child
+  class FilePredicate < Magma::ColumnPredicate
+
+    def select
+      [ :"#{column_name}___#{column_name}" ]
     end
 
     private

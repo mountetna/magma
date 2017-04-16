@@ -5,7 +5,7 @@ class Magma
       when "::matches", "::equals", "::in"
         return [
           Magma::Question::Constraint.new(
-            :"#{@model.table_name}__#{@attribute_name}" => @operand
+            :"#{alias_name}__#{@attribute_name}" => @operand
           )
         ]
       end

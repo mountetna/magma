@@ -50,11 +50,19 @@ class Magma
       predicates
     end
 
+    def table_name
+      @model.table_name if @model
+    end
+
+    def alias_name
+      @alias_name ||= 10.times.map{ (97+rand(26)).chr }.join
+    end
+
     private
 
     def invalid_argument! argument
-      raise ArgumentError, "Expected an argument to #{self}" if argument.nil?
-      raise ArgumentError, "#{argument} is not a valid argument to #{self}"
+      raise ArgumentError, "Expected an argument to #{self.class.name}" if argument.nil?
+      raise ArgumentError, "#{argument} is not a valid argument to #{self.class.name}"
     end
 
     def terminal value

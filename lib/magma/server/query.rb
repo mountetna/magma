@@ -10,6 +10,7 @@ class Magma
           question = Magma::Question.new @params["query"]
           success 'application/json', { answer: question.answer, type: question.type }.to_json
         rescue ArgumentError => e
+          puts e.backtrace
           failure 422, e.message
         end
       end

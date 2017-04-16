@@ -3,16 +3,17 @@ require_relative 'predicate'
 class Magma
   class Question
     class Join
-      def initialize t1, t1_id, t2, t2_id
+      def initialize t1, t1_alias, t1_id, t2, t2_alias, t2_id
         @table1 = t1.to_sym
+        @table1_alias = t1_alias.to_sym
         @table1_id = t1_id.to_sym
-        @table2 = t2.to_sym
+        @table2_alias = t2_alias.to_sym
         @table2_id = t2_id.to_sym
       end
 
       def apply query
         query.join(
-          @table1,
+          :"#{@table1}___#{@table1_alias}",
           table1_column => table2_column
         )
       end
@@ -22,11 +23,11 @@ class Magma
       end
 
       def table1_column
-          :"#{@table1}__#{@table1_id}" 
+          :"#{@table1_alias}__#{@table1_id}" 
       end
 
       def table2_column
-          :"#{@table2}__#{@table2_id}"
+          :"#{@table2_alias}__#{@table2_id}"
       end
 
       def hash
@@ -81,7 +82,7 @@ class Magma
     end
 
     def identity
-      :"#{@model.table_name}__#{@model.identity}"
+      :"#{@start_predicate.alias_name}__#{@model.identity}"
     end
 
     def type
@@ -95,7 +96,9 @@ class Magma
     end
 
     def to_sql
-      query = @model.order(@model.identity)
+      query = @model.from(
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
+      ).order(@model.identity)
 
       predicate_collect(:join).uniq.each do |join|
         query = join.apply(query)
@@ -106,7 +109,7 @@ class Magma
       end
 
       query = query.select(
-        *([ :"#{identity}___#{identity}" ] + predicate_collect(:select)).uniq
+        *(predicate_collect(:select)).uniq
       )
 
       query.sql

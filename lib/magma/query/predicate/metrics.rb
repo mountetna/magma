@@ -1,7 +1,8 @@
 class Magma
   class MetricsPredicate < Magma::Predicate
-    def initialize model, *predicates
+    def initialize model, alias_name, *predicates
       @model = model
+      @alias_name = alias_name
       @predicates = predicates
       @child_predicate = get_child
     end
@@ -39,7 +40,7 @@ class Magma
     end
 
     def column_name
-      :"#{@model.table_name}__#{@model.identity}"
+      :"#{alias_name}__#{@model.identity}"
     end
   end
 end

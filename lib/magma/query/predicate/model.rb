@@ -31,8 +31,8 @@ class Magma
       @filters = []
 
       while predicates.first.is_a?(Array)
-        filter = RecordPredicate.new(@model, *predicates.shift)
-        raise ArgumentError, "Filter #{filter} does not reduce to TrueClass #{filter.argument} #{filter.reduced_type}!" unless filter.reduced_type == TrueClass
+        filter = RecordPredicate.new(@model, alias_name, *predicates.shift)
+        raise ArgumentError, "Filter #{filter} does not reduce to Boolean #{filter.argument} #{filter.reduced_type}!" unless filter.reduced_type == TrueClass
         @filters.push filter
       end
 
@@ -98,7 +98,7 @@ class Magma
     private
 
     def identity
-      :"#{@model.table_name}__#{@model.identity}"
+      :"#{alias_name}__#{@model.identity}"
     end
 
     def get_child
@@ -108,7 +108,7 @@ class Magma
 
       case @argument
       when "::first", "::all"
-        return RecordPredicate.new(@model, *@predicates)
+        return RecordPredicate.new(@model, alias_name, *@predicates)
       else
         invalid_argument! @argument
       end
