@@ -137,7 +137,7 @@ class Magma
     def to_sql
       query = @model.from(
         Sequel.as(@model.table_name, @start_predicate.alias_name)
-      ).order(@model.identity)
+      ).order(@start_predicate.identity)
 
       predicate_collect(:join).uniq.each do |join|
         query = join.apply(query)
