@@ -1,5 +1,7 @@
 class Magma
   class ColumnPredicate < Magma::Predicate
+    # This Predicate returns an actual attribute value of some kind - a number, integer, etc.,
+    # or else a test on that value (number > 2, etc.)
     def initialize model, alias_name, attribute_name, argument=nil, *predicates
       @model = model
       @alias_name = alias_name

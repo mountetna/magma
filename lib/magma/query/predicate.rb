@@ -1,3 +1,7 @@
+# This is the base class for parsing a query (Question). Each argument in the
+# question is a Predicate, starting with a ModelPredicate and ending with a
+# TerminalPredicate. Each predicate determines what are the correct following
+# arguments and validates accordingly.
 class Magma
   class Predicate
     attr_reader :argument

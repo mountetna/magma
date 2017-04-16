@@ -1,5 +1,44 @@
 require_relative 'predicate'
 
+# A query for a piece of data. Each question is a path through the data
+# hierarchy/schema/graph or whatever you want to call it. The basic idea is
+# that a query begins at some model and ends at a data column (string, number,
+# etc.). Along the way it transits through a list of relationships between
+# models, e.g.:
+#
+# "sample" -> "patient" -> "experiment" -> "name"
+#
+# Links in this chain are attribute names - for example, the "sample" model has
+# an attribute "patient" which links it to the "patient" model. If we traverse
+# through another model, we must continue traversing through the graph until we
+# arrive at a data column ("name"), at which point our query ends. Then we have
+# connected a model ("sample") to a piece of associated data ("name" from a
+# corresponding "experiment")
+#
+# This would suffice to detail a query, except that some links between models
+# are one-to-many relationships. Also, the first item in our query will always
+# be a model - a collection of records. In these cases we have two options:
+# 1) Collect all or some of these relationships and return a list.
+# 2) Return a single item from the list
+#
+# In both of these cases, we will want to filter the list down.
+# A filter is another path through the graph, starting from the model we want
+# to filter and ending in a boolean value. E.g.:
+#
+# "sample" -> "patient" -> "experiment" -> "name"
+#
+# Here "sample" is a list, so we can filter it on another criterion. A simple
+# filter might be on one of "sample"'s own attributes, let's say "sample_name"
+#
+# "sample" -> "sample_name" -> "::matches" -> "Sample[4-5]"
+#
+# Data columns allow various boolean tests; in this case, we are using a 'match'
+# criterion and a regular expression on the 'sample_name' string column.
+#
+# Putting these together gives us a full query:
+#
+# [ "sample", [ "sample_name", "::matches", "Sample[4-5]" ], "::all", "patient", "experiment", "name" ]
+
 class Magma
   class Question
     class Join
