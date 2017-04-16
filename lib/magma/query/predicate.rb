@@ -26,8 +26,8 @@ class Magma
       []
     end
 
-    def extract table
-      @child_predicate.is_a?(Predicate) ? @child_predicate.extract(table) : table
+    def extract table, identity
+      @child_predicate.is_a?(Predicate) ? @child_predicate.extract(table, identity) : table
     end
 
     def to_hash

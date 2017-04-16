@@ -56,20 +56,29 @@ class Magma
       end.inject(&:+) || []
     end
 
-    def extract table
+    def extract table, return_identity
       case @argument
       when "::first"
+        # after me there might be either a column OR another model
+        # it is up to the model to construct a list or return a single
+        # item as it sees fit
+        # 
+        # '::all' returns a list of identifier-value pairs for
+        # all identifiers for THIS model
+        #
+        # '::first' returns a SINGLE value - no identifier required
         super(
           table.group_by do |row|
-            row.first.last
-          end.first.last
+            row[identity]
+          end.first.last,
+          identity
         )
       when "::all"
         table.group_by do |row|
-          row.first.last
-        end.map do |identity,rows|
-          super(rows)
-        end.inject(&:+)
+          row[identity]
+        end.map do |identifier,rows|
+          [ identifier, super(rows, identity) ]
+        end
       else
         invalid_argument! @argument
       end

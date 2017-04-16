@@ -6,23 +6,18 @@ class Magma
       @child_predicate = get_child
     end
 
-    def extract table
+    def extract table, identity
       records = Hash[
         @model.where(
           @model.identity => table.map do |row|
-            row.first.last
+            row[identity]
           end
         ).map do |record|
           [ record.identifier, record ]
         end
       ]
 
-      table.map do |row|
-        [
-          row.first.last,
-          metrics_for(records[row.first.last])
-        ]
-      end
+      metrics_for( records[ table.first[identity] ] )
     end
 
     def metrics_for record

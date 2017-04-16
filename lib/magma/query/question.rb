@@ -69,7 +69,7 @@ class Magma
     def answer
       table = to_table
 
-      @start_predicate.extract(table)
+      @start_predicate.extract(table, identity)
     end
 
     def model
