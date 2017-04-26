@@ -38,6 +38,5 @@ class RnaSeq < Magma::Model
   # fragmentation stats
   attribute :median_3prime_bias, type: Float, desc: "Median 3-prime bias score" # this comes from picard
   attribute :median_cv_coverage, type: Float, desc: "Median coefficient of variance for coverage"
-  attribute :transcript_histogram, type: :jsonb, desc: "Histogram of read counts along normalized transcript" # this comes from picard
   attribute :eisenberg_score, type: Integer, desc: "Number of Eisenberg housekeeping genes with normal expression" # 0-10 pre-calculated from data
 end

@@ -10,4 +10,4 @@ use Magma::IpAuth
 use Magma::ParseBody
 use Rack::ShowExceptions
 
-run Magma::Server.new(YAML.load File.read('config.yml'))
+run Magma::Server.new(YAML.load(File.read('config.yml')), logger)

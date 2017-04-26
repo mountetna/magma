@@ -34,11 +34,13 @@ class Magma
     @config[type]
   end
 
-  def load_models
+  def load_models validate=true
     connect(config :database)
     require_relative 'models'
-    magma_models.each do |model|
-      model.validate
+    if validate
+      magma_models.each do |model|
+        model.validate
+      end
     end
     carrier_wave_init
   end

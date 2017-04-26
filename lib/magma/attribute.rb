@@ -2,7 +2,7 @@ class Magma
   class Attribute
     def self.options
       [ :type, :desc, :display_name, 
-        :hide, :readonly, :unique, 
+        :hide, :readonly, :unique, :index,
         :match, :format_hint, :loader,
         :link_model
       ]
@@ -110,6 +110,9 @@ class Magma
       entry = [ migration.column_entry(@name, type, mode) ]
       if @unique
         entry.push migration.unique_entry(@name,mode)
+      end
+      if @index
+        entry.push migration.index_entry(@name, mode)
       end
       entry
     end

@@ -34,7 +34,7 @@ EOT
     def column_entry name, type, mode
       case mode
       when :add
-        "add_column :#{name}, #{type.name}"
+        "add_column :#{name}, #{type}"
       when :new
         "#{type.name} :#{name}"
       when :drop

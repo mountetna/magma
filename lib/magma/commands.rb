@@ -45,11 +45,12 @@ class Magma
     protected
     def load_but_dont_validate config
       Magma.instance.configure config
+      Magma.instance.load_models false
     end
 
     def load_and_validate config
       Magma.instance.configure config
-      Magma.instance.load_models
+      Magma.instance.load_models true
     end
   end
 
