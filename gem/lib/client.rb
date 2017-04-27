@@ -59,7 +59,11 @@ class Magma
     private
 
     def persistent_connection
-      @http ||= Net::HTTP::Persistent.new
+      @http ||= begin
+                  http = Net::HTTP::Persistent.new
+                  http.read_timeout = 3600
+                  http
+                end
     end
 
     def json_post endpoint, params
