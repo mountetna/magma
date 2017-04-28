@@ -12,7 +12,10 @@ class Magma
     end
 
     def entry migration, mode
-      migration.foreign_key_entry @name, link_model, mode
+      [
+        migration.foreign_key_entry(@name, link_model, mode),
+        migration.index_entry(@name, mode)
+      ]
     end
 
     def eager
