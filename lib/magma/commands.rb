@@ -94,22 +94,28 @@ class Magma
     usage "Run data loaders on models for current dataset"
 
     def execute *args
+      loaders = Magma.instance.find_descendents(Magma::Loader)
+
       if args.empty?
         # List available loaders
+        puts "Available loaders:"
+        loaders.each do |loader|
+          puts "%30s  %s" % [ loader.loader_name, loader.description ]
+        end
         exit
       end
 
-      model = Magma.instance.get_model(args[0])
-      att = args[1].to_sym
-      raise "Could not find attribute #{att} on model #{model}" unless model.attributes[att]
-      model.all.each do |record|
-        puts record.identifier
-        next unless file = record.send(att).file
-        begin
-          record.run_loaders att, file
-        rescue Magma::LoadFailed => m
-          puts m.complaints
-        end
+      loader = loaders.find do |l| l.loader_name == args[0] end
+
+      raise "Could not find a loader named #{args[0]}" unless loader
+
+      loader = loader.new
+      loader.load(*args[1..-1])
+      begin
+        loader.dispatch
+      rescue Magma::LoadFailed => e
+        puts "Load failed with these complaints:"
+        puts e.complaints
       end
     end
 

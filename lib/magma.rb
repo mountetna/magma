@@ -19,7 +19,13 @@ class Magma
   end
 
   def get_model name
-    Kernel.const_get name.to_s.camel_case.to_sym
+    begin
+      model = Kernel.const_get name.to_s.camel_case.to_sym
+      raise NameError unless model < Magma::Model
+      model
+    rescue NameError => e
+      raise NameError, "Could not find Magma::Model #{name}"
+    end
   end
 
   def magma_models
@@ -50,6 +56,12 @@ class Magma
     db.pool.connection_validation_timeout = -1
   end
 
+  def find_descendents klass
+    ObjectSpace.each_object(Class).select do |k|
+      k < klass
+    end
+  end
+
   private
 
   def carrier_wave_init
@@ -60,12 +72,6 @@ class Magma
       config.fog_directory = opts[:directory]
       config.fog_public = false
       config.fog_attributes = { 'Cache-Control' => "max-age=#{365 * 86400}" }
-    end
-  end
-
-  def find_descendents klass
-    ObjectSpace.each_object(Class).select do |k|
-      k < klass
     end
   end
 end
