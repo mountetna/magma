@@ -87,6 +87,10 @@ class Magma
         raise "Missing table for #{name}." unless Magma.instance.db.table_exists? table_name
       end
 
+      def migration
+        Magma::Migration.create(self)
+      end
+
       def json_template attribute_names=nil
         # Return a json template of this thing.
         attribute_names ||= attributes.keys

@@ -78,16 +78,12 @@ class Magma
       shown?
     end
 
-    def matches_schema_type?
+    def schema_ok?
       schema.has_key?(column_name)
     end
 
-    def schema_ok?
-      matches_schema_type?
-    end
-
     def schema_unchanged? 
-      schema_ok? && is_type?(schema[column_name][:db_type])
+      schema[column_name][:db_type].to_sym == literal_type
     end
 
     def needs_column?
@@ -98,23 +94,17 @@ class Magma
       @name
     end
 
-    def is_type? type
-      type.to_sym == literal_type
-    end
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
     end
 
-    def entry migration, mode
-      entry = [ migration.column_entry(@name, type, mode) ]
-      if @unique
-        entry.push migration.unique_entry(@name,mode)
-      end
-      if @index
-        entry.push migration.index_entry(@name, mode)
-      end
-      entry
+    def migration(mig)
+      [ 
+        mig.column_entry(@name, type),
+        @unique && mig.unique_entry(@name),
+        @index && mig.index_entry(@name)
+      ].compact
     end
 
     def literal_type

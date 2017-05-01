@@ -2,7 +2,6 @@ class Magma
   class ForeignKeyAttribute < Attribute
     include Magma::Link
 
-    # you can't change types for keys
     def schema_unchanged? 
       true
     end
@@ -11,10 +10,10 @@ class Magma
       foreign_id
     end
 
-    def entry migration, mode
+    def migration mig
       [
-        migration.foreign_key_entry(@name, link_model, mode),
-        migration.index_entry(@name, mode)
+        mig.foreign_key_entry(@name, link_model),
+        mig.index_entry(@name)
       ]
     end
 
