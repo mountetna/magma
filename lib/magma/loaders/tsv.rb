@@ -12,9 +12,24 @@ class TSVLoader < Magma::Loader
   end
 
   def dispatch
-    @table.each do |row|
-      push_record @model, Hash[@header.zip(row)]
-    end
+    create_self_records
+
     dispatch_record_set
+  end
+
+  private
+
+  def create_self_records
+    now = DateTime.now
+
+    @table.each do |row|
+      push_record(
+        @model, 
+        Hash[@header.zip(row)].merge(
+          created_at: now,
+          updated_at: now
+        )
+      )
+    end
   end
 end
