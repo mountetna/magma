@@ -19,17 +19,19 @@ class Magma
       attr_reader :routes
     end
 
-    def initialize config
+    def initialize config, logger
       Magma.instance.configure config
 
       Magma.instance.load_models
 
       Magma.instance.persist_connection
+
+      Magma.instance.db.loggers << logger
     end
 
     def call(env)
       @request = Rack::Request.new env
-      
+
       if self.class.routes.has_key? @request.path
         return instance_eval(&self.class.routes[@request.path])
       end

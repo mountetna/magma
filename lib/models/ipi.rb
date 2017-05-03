@@ -1,5 +1,6 @@
 class IPI
-  CELL_TYPES = [ :treg, :myeloid, :teff, :tumor, :stroma ]
+  CELL_TYPES = [ :treg, :myeloid, :teff, :tumor, :stroma, :tcell,
+                 :cd45neg, :epcam, :immune, :live, :other ]
   class << self
     def patient_name
       # returns a regexp matching a valid patient name

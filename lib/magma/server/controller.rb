@@ -6,6 +6,11 @@ class Magma
         @response = Rack::Response.new
         @params = @request.env['rack.request.params']
         @errors = []
+        @logger = @request.env['rack.errors']
+      end
+
+      def log(line)
+        @logger.write "#{Time.now.strftime("%d/%b/%Y %H:%M:%S")} #{line}\n"
       end
 
       def response

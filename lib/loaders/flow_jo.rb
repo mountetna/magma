@@ -1,6 +1,8 @@
 require_relative 'flow_jo_xml'
 
 class FlowJoLoader < Magma::Loader
+  description "Create population and mfi records from a FlowJo workspace (.WSP) file"
+
   def load file, patient
     # The flow jo file collects all of the stain gatings and counts for a set of tumor samples
     # from a single patient.
@@ -87,17 +89,22 @@ class FlowJoLoader < Magma::Loader
   
   def delete_existing_populations
     # Find all populations for samples with this patient
+    puts "Attempting to delete existing populations"
     mfi_ids = Mfi.join(:populations, id: :population_id)
                  .join(:samples, id: :sample_id)
                  .join(:patients, id: :patient_id)
                  .where('patients.id = ?', @patient.id)
                  .select_map(:mfis__id)
+    puts "Got MFI ids #{mfi_ids.count}"
     pop_ids = Population.join(:samples, id: :sample_id)
                         .join(:patients, id: :patient_id)
                         .where('patients.id = ?', @patient.id)
                         .select_map(:populations__id)
+    puts "Got Population ids #{pop_ids.count}"
     Mfi.where(id: mfi_ids).delete
+    puts "Deleted mfi."
     Population.where(id: pop_ids).delete
+    puts "Deleted population."
   end
 
   def sample_name_from tube_name
@@ -122,6 +129,7 @@ class FlowJoLoader < Magma::Loader
   end
 
   def create_population_documents
+    puts "Creating population records"
     treg_stain_tubes.each do |tube|
       create_population_document_using tube, :treg
     end
@@ -134,13 +142,8 @@ class FlowJoLoader < Magma::Loader
     dc_stain_tubes.each do |tube|
       create_population_document_using tube, :dc
     end
+    puts "Attempting to load populations"
     dispatch_record_set
-  end
-
-  def clean_names names
-    names.split(/\t/).map do |name|
-      clean_name name
-    end.join("\t")
   end
 
   def clean_name name
@@ -151,16 +154,19 @@ class FlowJoLoader < Magma::Loader
   end
 
   def create_population_document_using tube, stain
+    puts "Creating population #{tube} #{stain}"
+    time = DateTime.now
+    sample_name = sample_name_from(tube.tube_name)
     tube.populations.each do |pop|
       push_record Population, {
         stain: stain.to_s,
-        sample: sample_name_from(tube.tube_name),
+        sample: sample_name,
         temp_id: temp_id(pop),
-        ancestry: clean_names(pop.ancestry),
+        ancestry: pop.ancestry.map{|name| clean_name(name)}.join("\t"),
         name: clean_name(pop.name),
         count: pop.count,
-        created_at: DateTime.now,
-        updated_at: DateTime.now
+        created_at: time,
+        updated_at: time
       }
       pop.statistics.each do |stat|
         push_record Mfi, {
@@ -169,8 +175,8 @@ class FlowJoLoader < Magma::Loader
           name: clean_name(tube.stain_for_fluor(stat.fluor)),
           fluor: stat.fluor,
           value: stat.value,
-          created_at: DateTime.now,
-          updated_at: DateTime.now
+          created_at: time,
+          updated_at: time
         }
       end
     end
