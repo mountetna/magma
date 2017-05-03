@@ -1,5 +1,6 @@
 require 'fog'
 require 'carrierwave/sequel'
+require 'carrierwave/storage/fog'
 class Magma
   class Document  < CarrierWave::Uploader::Base
     storage :fog
