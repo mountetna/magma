@@ -53,8 +53,8 @@ class Magma
       end.compact.flatten
     end
 
-    def foreign_key_entry name, foreign_model
-      "foreign_key :#{name}_id, :#{foreign_model.table_name}"
+    def foreign_key_entry column_name, foreign_table
+      "foreign_key :#{column_name}, :#{foreign_table}"
     end
 
     def column_entry name, type
@@ -84,8 +84,8 @@ class Magma
       change("alter_table(:#{model.table_name})", changed_attributes) unless changed_attributes.empty?
     end
 
-    def foreign_key_entry name, foreign_model
-      "add_foreign_key :#{name}_id, :#{foreign_model.table_name}"
+    def foreign_key_entry column_name, foreign_table
+      "add_foreign_key :#{column_name}, :#{foreign_table}"
     end
 
     def column_type_entry name, type
