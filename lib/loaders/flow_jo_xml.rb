@@ -44,13 +44,7 @@ class FlowJoXml
     end
 
     def ancestry
-      anc = @parent
-      ancs = []
-      while anc
-        ancs.push anc.name
-        anc = anc.parent
-      end
-      ancs.join "\t"
+      @ancestry ||= @parent ? [ @parent.name ] + @parent.ancestry : []
     end
 
     def statistics
@@ -68,6 +62,7 @@ class FlowJoXml
     attr_reader :xml
     def initialize xml
       @xml = xml
+      @stains = {}
     end
 
     def keyword_value name
@@ -87,10 +82,10 @@ class FlowJoXml
     end
 
     def stain_for_fluor fluor
-      fluor_name = keyword_name(fluor)
-      return nil unless fluor_name
-      stain_name = fluor_name.sub(/N$/,'S')
-      keyword_value(stain_name)
+      @stains[fluor] ||= begin
+        fluor_name = keyword_name(fluor)
+        keyword_value(fluor_name.sub(/N$/,'S')) if fluor_name
+      end
     end
 
     def populations

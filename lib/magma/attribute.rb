@@ -2,7 +2,7 @@ class Magma
   class Attribute
     def self.options
       [ :type, :desc, :display_name, 
-        :hide, :readonly, :unique, 
+        :hide, :readonly, :unique, :index,
         :match, :format_hint, :loader,
         :link_model
       ]
@@ -53,7 +53,7 @@ class Magma
         yield format_error(value) if !@match.call.match(value)
       when Array
         if !@match.map(&:to_s).include? value
-          yield "'#{value}' should be one of #{@match.join(", ")}."
+          yield "On #{@name}, '#{value}' should be one of #{@match.join(", ")}."
         end
       end
     end
@@ -78,16 +78,12 @@ class Magma
       shown?
     end
 
-    def matches_schema_type?
+    def schema_ok?
       schema.has_key?(column_name)
     end
 
-    def schema_ok?
-      matches_schema_type?
-    end
-
     def schema_unchanged? 
-      schema_ok? && is_type?(schema[column_name][:db_type])
+      schema[column_name][:db_type].to_sym == literal_type
     end
 
     def needs_column?
@@ -98,20 +94,17 @@ class Magma
       @name
     end
 
-    def is_type? type
-      type.to_sym == literal_type
-    end
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
     end
 
-    def entry migration, mode
-      entry = [ migration.column_entry(@name, type, mode) ]
-      if @unique
-        entry.push migration.unique_entry(@name,mode)
-      end
-      entry
+    def migration(mig)
+      [ 
+        mig.column_entry(@name, type),
+        @unique && mig.unique_entry(@name),
+        @index && mig.index_entry(@name)
+      ].compact
     end
 
     def literal_type
@@ -132,9 +125,9 @@ class Magma
 
     def format_error value
       if @format_hint
-        "'#{value}' should be like #{@format_hint}."
+        "On #{@name}, '#{value}' should be like '#{@format_hint}'."
       else
-        "'#{value}' is improperly formatted."
+        "On #{@name}, '#{value}' is improperly formatted."
       end
     end
 

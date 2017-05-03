@@ -10,4 +10,6 @@ class Project < Magma::Model
   collection :experiment
 
   collection :document
+
+  collection :rna_seq_plate
 end

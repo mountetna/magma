@@ -11,6 +11,7 @@ class Magma
       @complaints = complaints
     end
   end
+
   class RecordEntry
     def initialize klass, document
       @document = document
@@ -134,8 +135,19 @@ class Magma
       @complaints << plaint
     end
   end
+
   class Loader
     # A generic loader class
+    class << self
+      def description desc=nil
+        @description ||= desc
+      end
+
+      def loader_name
+        name.snake_case.sub(/_loader$/,'')
+      end
+    end
+
     def initialize
       @records = {}
       @temp_id_counter = 0
@@ -164,6 +176,7 @@ class Magma
     end
 
     private
+
     def find_complaints
       complaints = []
       @records.keys.each do |klass|
@@ -200,7 +213,6 @@ class Magma
       @records.keys.each do |klass|
         temp_records = @records[klass].select(&:valid_temp_update?)
         puts "Found #{temp_records.count} records to repair temp_ids for #{klass}"
-        puts temp_records.map(&:temp_entry)
         klass.multi_update records: temp_records.map(&:temp_entry), src_id: :real_id, dest_id: :id
       end
     end
@@ -212,6 +224,7 @@ class Magma
       @temp_id_counter += 1
     end
   end
+
   class TempId
     # This marks the column as a temporary id. It needs to be replaced with a real foreign key id for the corresponding
     # object once it is complete.
@@ -227,3 +240,5 @@ class Magma
     end
   end
 end
+
+require_relative './loaders/tsv'

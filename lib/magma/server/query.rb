@@ -11,7 +11,7 @@ class Magma
           success 'application/json', { answer: question.answer, type: question.type }.to_json
         rescue ArgumentError => e
           puts e.backtrace
-          failure 422, e.message
+          failure 422, errors: [ e.message ]
         end
       end
     end

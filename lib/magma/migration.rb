@@ -1,6 +1,16 @@
 class Magma
+
   class Migration
-    def initialize
+    def self.create model
+      if Magma.instance.db.table_exists? model.table_name
+        return Magma::UpdateMigration.new(model)
+      else
+        return Magma::CreateMigration.new(model)
+      end
+    end
+
+    def initialize model
+      @model = model
       @changes = {}
     end
 
@@ -9,78 +19,11 @@ class Magma
       @changes[key].concat lines
     end
 
+    def empty?
+      @changes.empty?
+    end
+
     def to_s
-      <<EOT
-Sequel.migration do
-  change do
-#{changes}
-  end
-end
-EOT
-    end
-
-    def suggest_migration model
-      if Magma.instance.db.table_exists? model.table_name
-        suggest_table_update model
-      else
-        suggest_table_creation model
-      end
-    end
-
-    def set_column_type_entry name, type
-      "set_column_type :#{name}, '#{type}'"
-    end
-
-    def column_entry name, type, mode
-      case mode
-      when :add
-        "add_column :#{name}, #{type.name}"
-      when :new
-        "#{type.name} :#{name}"
-      when :drop
-        "drop_column :#{name}"
-      end
-    end
-
-    def unique_entry name, mode
-      case mode
-      when :add
-        "add_unique_constraint :#{name}"
-      when :new
-        "unique :#{name}"
-      end
-    end
-
-    def index_entry column, mode
-      case mode
-      when :add
-        if column.is_a? Array
-          "add_index [#{column.map{|c| ":#{c}"}.join(", ")}]"
-        else
-          "add_index :#{column}"
-        end
-      when :new
-        if column.is_a? Array
-          "index [#{column.map{|c| ":#{c}"}.join(", ")}]"
-        else
-          "index :#{column}"
-        end
-      end
-    end
-
-    def foreign_key_entry name, foreign_model, mode
-      case mode
-      when :add
-        "add_foreign_key :#{name}_id, :#{foreign_model.table_name}"
-      when :new
-        "foreign_key :#{name}_id, :#{foreign_model.table_name}"
-      end
-    end
-
-    private
-    SPC='  '
-
-    def changes
       @changes.map do |key,lines|
         str = SPC*2 + key + ' do' + "\n"
         lines.each do |line|
@@ -91,51 +34,110 @@ EOT
       end.join('').chomp
     end
 
-    def suggest_table_creation model
-      change "create_table(:#{model.table_name})", [ "primary_key :id" ] + suggest_new_attributes(model)
+    private
+
+    SPC='  '
+
+  end
+  class CreateMigration < Migration
+    def initialize model
+      super
+      change("create_table(:#{model.table_name})",
+        [ "primary_key :id" ] + new_attributes)
     end
-    
-    def suggest_new_attributes model
-      model.attributes.map do |name,att|
+
+    def new_attributes
+      @model.attributes.map do |name,att|
         next unless att.needs_column?
-        att.entry self, :new
+        att.migration(self)
       end.compact.flatten
     end
-    
-    def suggest_table_update model
-      missing = suggest_missing_attributes model
-      change "alter_table(:#{model.table_name})", missing unless missing.empty?
 
-      removed = suggest_removed_attributes model
-      change "alter_table(:#{model.table_name})", removed unless removed.empty?
-
-      changed = suggest_changed_attributes model
-      change "alter_table(:#{model.table_name})", changed unless changed.empty?
+    def foreign_key_entry column_name, foreign_table
+      "foreign_key :#{column_name}, :#{foreign_table}"
     end
 
-    def suggest_missing_attributes model
-      model.attributes.map do |name,att|
+    def column_entry name, type
+      "#{type.name} :#{name}"
+    end
+
+    def unique_entry name
+      "unique :#{name}"
+    end
+
+    def index_entry column
+      if column.is_a? Array
+        "index [#{column.map{|c| ":#{c}"}.join(", ")}]"
+      else
+        "index :#{column}"
+      end
+    end
+  end
+
+  class UpdateMigration < Migration
+    def initialize model
+      super
+      change("alter_table(:#{model.table_name})", missing_attributes) unless missing_attributes.empty?
+
+      change("alter_table(:#{model.table_name})", removed_attributes) unless removed_attributes.empty?
+
+      change("alter_table(:#{model.table_name})", changed_attributes) unless changed_attributes.empty?
+    end
+
+    def foreign_key_entry column_name, foreign_table
+      "add_foreign_key :#{column_name}, :#{foreign_table}"
+    end
+
+    def column_type_entry name, type
+      "set_column_type :#{name}, #{type}"
+    end
+
+    def column_entry name, type
+      "add_column :#{name}, #{type}"
+    end
+
+    def remove_column_entry name
+      "drop_column :#{name}"
+    end
+
+    def unique_entry name
+      "add_unique_constraint :#{name}"
+    end
+
+    def index_entry column
+      if column.is_a? Array
+        "add_index [#{column.map{|c| ":#{c}"}.join(", ")}]"
+      else
+        "add_index :#{column}"
+      end
+    end
+
+    private 
+
+    def missing_attributes
+      @model.attributes.map do |name,att|
         next if att.schema_ok?
-        att.entry self, :add
-      end.compact.flatten
-    end
-    
-    def suggest_removed_attributes model
-      model.schema.map do |name, db_opts|
-        next if model.attributes[name]
-        next if model.attributes[ name.to_s.sub(/_id$/,'').to_sym ]
-        next if model.attributes[ name.to_s.sub(/_type$/,'').to_sym ]
-        next if db_opts[:primary_key]
-        column_entry name, nil, :drop
+        att.migration(self)
       end.compact.flatten
     end
 
-    # the attribute exists, it just has the wrong datatype.
-    def suggest_changed_attributes model
-      model.attributes.map do |name,att|
-        next if att.needs_column?
+    def changed_attributes
+      @model.attributes.map do |name,att|
+        next unless att.schema_ok?
+        next unless att.needs_column?
         next if att.schema_unchanged?
-        set_column_type_entry att.column_name, att.literal_type
+        column_type_entry(att.column_name, 
+                          att.type)
+      end.compact.flatten
+    end
+
+    def removed_attributes
+      @model.schema.map do |name, db_opts|
+        next if @model.attributes[name]
+        next if @model.attributes[ name.to_s.sub(/_id$/,'').to_sym ]
+        next if @model.attributes[ name.to_s.sub(/_type$/,'').to_sym ]
+        next if db_opts[:primary_key]
+        remove_column_entry(name)
       end.compact.flatten
     end
   end
