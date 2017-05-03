@@ -27,13 +27,13 @@ class RnaSeq < Magma::Model
   attribute :mapped_count, type: Integer, desc: "Count of mapped reads"
 
   # composition information from picard
-  attribute :intergenic_count, type: Integer, desc: "Count of intergenic reads" # comes from picard + bwa_picard
-  attribute :introns_count, type: Integer, desc: "Count of intronic reads" # picard + bwa_picard
-  attribute :utr_count, type: Integer, desc: "Count of reads in UTRs (including non-coding RNA)" # this comes from picard
-  attribute :coding_count, type: Integer, desc: "Count of all protein-coding reads, excluding chrM" # this comes from picard
-  attribute :mt_coding_count, type: Integer, desc: "Count of MT protein-coding reads" # comes from counting reads on chrM or summing gexp table
-  attribute :rrna_count, type: Integer, desc: "Count of all reads aligning to cytoplasmic rRNA"
-  attribute :mt_rrna_count, type: Integer, desc: "Count of all reads aligning to MT-rRNA" # this comes from the soak step
+  attribute :intergenic_count, type: Float, desc: "Count of intergenic reads" # comes from picard + bwa_picard
+  attribute :introns_count, type: Float, desc: "Count of intronic reads" # picard + bwa_picard
+  attribute :utr_count, type: Float, desc: "Count of reads in UTRs (including non-coding RNA)" # this comes from picard
+  attribute :coding_count, type: Float, desc: "Count of all protein-coding reads, excluding chrM" # this comes from picard
+  attribute :mt_coding_count, type: Float, desc: "Count of MT protein-coding reads" # comes from counting reads on chrM or summing gexp table
+  attribute :rrna_count, type: Float, desc: "Count of all reads aligning to cytoplasmic rRNA"
+  attribute :mt_rrna_count, type: Float, desc: "Count of all reads aligning to MT-rRNA" # this comes from the soak step
 
   # fragmentation stats
   attribute :median_3prime_bias, type: Float, desc: "Median 3-prime bias score" # this comes from picard
