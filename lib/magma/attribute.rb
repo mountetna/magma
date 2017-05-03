@@ -53,7 +53,7 @@ class Magma
         yield format_error(value) if !@match.call.match(value)
       when Array
         if !@match.map(&:to_s).include? value
-          yield "'#{value}' should be one of #{@match.join(", ")}."
+          yield "On #{@name}, '#{value}' should be one of #{@match.join(", ")}."
         end
       end
     end
@@ -125,9 +125,9 @@ class Magma
 
     def format_error value
       if @format_hint
-        "'#{value}' should be like #{@format_hint}."
+        "On #{@name}, '#{value}' should be like '#{@format_hint}'."
       else
-        "'#{value}' is improperly formatted."
+        "On #{@name}, '#{value}' is improperly formatted."
       end
     end
 

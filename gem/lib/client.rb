@@ -20,6 +20,10 @@ class Magma
 
     def retrieve params
       response = json_post 'retrieve', params
+      status = response.code.to_i
+      if status > 300
+        raise Magma::ClientError.new(status, errors: errors(response))
+      end
       return [ response.code.to_i, response.body ]
     end
 
@@ -27,7 +31,7 @@ class Magma
       response = json_post 'query', { query: question }
       status = response.code.to_i
       if status > 300
-        raise Magma::ClientError.new(status, query: question), response.body
+        raise Magma::ClientError.new(status, query: question, errors: errors(response))
       end
       return [ status, response.body ]
     end
@@ -51,7 +55,7 @@ class Magma
       response = multipart_post 'update', content
       status = response.code.to_i
       if status > 300
-        raise Magma::ClientError.new(status, update: revisions), response
+        raise Magma::ClientError.new(status, update: revisions, errors: errors(response))
       end
       return [ status, response.body ]
     end
@@ -85,6 +89,10 @@ class Magma
       )
       post.body = body
       persistent_connection.request uri, post
+    end
+
+    def errors response
+      JSON.parse(response.body)["errors"]
     end
   end
 end
