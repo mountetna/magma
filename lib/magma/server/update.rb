@@ -20,7 +20,7 @@ class Magma
             begin
               revision.post!
             rescue Magma::LoadFailed => m
-              logger.info m.complaints
+              log m.complaints
               @errors.concat m.complaints
               next
             end
