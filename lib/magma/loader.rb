@@ -65,7 +65,7 @@ class Magma
     end
 
     def update_entry
-      entry[:id] = record.id
+      entry[:id] = @model.identifier_id[@document[@model.identity]]
       # never overwrite created_at
       entry.delete :created_at
       entry
