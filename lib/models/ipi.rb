@@ -35,7 +35,7 @@ class IPI
     end
 
     def rna_seq_name
-      chain :sample_name, :rna, :cell_types
+      chain :sample_name, :rna, /\w+/
     end
 
     def match sym, *args

@@ -89,7 +89,7 @@ class Magma
 
     private
     def record_exists?
-      @model.has_identifier? && @model.identifier_id(@document[@model.identity])
+      @model.has_identifier? && @model.identifier_id[@document[@model.identity]]
     end
 
     def check_document_validity
