@@ -12,7 +12,7 @@ class IPI
     end
 
     def tumor_short_names
-      Experiment.dataset.order
+      @tumor_short_names ||= Experiment.dataset.order
         .distinct
         .exclude(short_name:nil)
         .select_map(:short_name)
@@ -38,13 +38,8 @@ class IPI
       chain :sample_name, :rna, :cell_types
     end
 
-    def method_missing sym, *args, &block
-      sym.to_s.match(/^match_(?<prop>.*)$/) do |m|
-        if respond_to?(m[:prop])
-          return terminate(send(m[:prop], *args))
-        end
-      end
-      super
+    def match sym, *args
+      /#{ send(sym, *args).source }$/
     end
 
     private
@@ -67,10 +62,6 @@ class IPI
     end
     def match_array ary
       /(?:#{ary.join('|')})/
-    end
-
-    def terminate match
-      /#{match.source}$/
     end
   end
 end

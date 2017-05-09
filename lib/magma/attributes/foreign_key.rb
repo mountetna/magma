@@ -32,17 +32,15 @@ class Magma
 
       if value.is_a? Magma::TempId
         [ foreign_id, value.real_id ]
-      elsif foreign_record = link_record(value)
-        [ foreign_id, foreign_record[:id] ]
+      elsif link_model.identifier_id[value]
+        [ foreign_id, link_model.identifier_id[value] ]
       end
     end
 
-    def validate link, &block
+    def validate link
       return if link.is_a? Magma::TempId
       if link_identity
-        link_identity.validate(link) do |error|
-          yield error
-        end
+        link_identity.validate(link)
       end
     end
 

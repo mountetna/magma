@@ -12,9 +12,16 @@ class TSVLoader < Magma::Loader
   end
 
   def dispatch
-    create_self_records
+    inserts = 0
+    @insert_size = 100_000
+    until @table.empty?
+      puts "#{DateTime.now} Inserting #{inserts * @insert_size + 1} to #{(inserts+1) * @insert_size}"
+      create_self_records
 
-    dispatch_record_set
+      puts "#{DateTime.now} Dispatching..."
+      dispatch_record_set
+      inserts += 1
+    end
   end
 
   private
@@ -22,7 +29,9 @@ class TSVLoader < Magma::Loader
   def create_self_records
     now = DateTime.now
 
-    @table.each do |row|
+    rows = @table.shift(@insert_size)
+
+    rows.each do |row|
       push_record(
         @model, 
         Hash[@header.zip(row)].merge(
