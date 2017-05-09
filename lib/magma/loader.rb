@@ -13,9 +13,9 @@ class Magma
   end
 
   class RecordEntry
-    def initialize klass, document
+    def initialize model, document
       @document = document
-      @klass = klass
+      @model = model
       @complaints = []
       @valid = true
 
@@ -30,7 +30,7 @@ class Magma
     end
 
     def valid_update_entry?
-      valid? && record_exists? && record_changed?
+      valid? && record_exists?
     end
 
     def valid_temp_update?
@@ -59,7 +59,7 @@ class Magma
             @needs_temp = true
             next
           end
-          @klass.attributes[att].entry_for value
+          @model.attributes[att].entry_for value
         end.compact
       ]
     end
@@ -79,7 +79,7 @@ class Magma
           if att == :temp_id
             [ :real_id, value.real_id ]
           elsif value.is_a? Magma::TempId
-            @klass.attributes[att].entry_for value
+            @model.attributes[att].entry_for value
           else
             nil
           end
@@ -89,25 +89,12 @@ class Magma
 
     private
     def record_exists?
-      @klass.identity && !@klass[@klass.identity => @document[@klass.identity]].nil?
-    end
-
-    def record
-      @record ||= @klass[@klass.identity => @document[@klass.identity]]
-    end
-
-    def record_changed?
-      @document.each do |att,value|
-        next if att == :temp_id
-        old_value = record.send att.to_sym
-        return true if value.to_s != old_value.to_s
-      end
-      nil
+      @model.has_identifier? && @model.identifier_id(@document[@model.identity])
     end
 
     def check_document_validity
-      if @klass.identity && @klass.identity != @klass.primary_key && !@document[@klass.identity]
-        complain "Missing identifier for #{@klass.name}"
+      if @model.has_identifier? && !@document[@model.identity]
+        complain "Missing identifier for #{@model.name}"
         @valid = false
         return
       end
@@ -119,12 +106,12 @@ class Magma
           end
           next
         end
-        if !@klass.attributes[att]
-          complain "#{@klass.name} has no attribute '#{att}'"
+        if !@model.attributes[att]
+          complain "#{@model.name} has no attribute '#{att}'"
           @valid = false
           next
         end
-        @klass.attributes[att].validate(value) do |complaint|
+        @model.attributes[att].validate(value) do |complaint|
           complain complaint
           @valid = false
         end
@@ -153,9 +140,9 @@ class Magma
       @temp_id_counter = 0
     end
 
-    def push_record klass, document
-      @records[klass] ||= []
-      @records[klass] << RecordEntry.new(klass, document)
+    def push_record model, document
+      @records[model] ||= []
+      @records[model] << RecordEntry.new(model, document)
     end
 
     def dispatch_record_set
@@ -179,8 +166,8 @@ class Magma
 
     def find_complaints
       complaints = []
-      @records.keys.each do |klass|
-        complaints.concat @records[klass].map(&:complaints)
+      @records.keys.each do |model|
+        complaints.concat @records[model].map(&:complaints)
       end
       complaints.flatten!
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
@@ -189,31 +176,35 @@ class Magma
     def initial_insert
       @inserted = []
       puts "Attempting initial insert"
-      @records.keys.each do |klass|
+      @records.keys.each do |model|
 
-        insert_records = @records[klass].select(&:valid_new_entry?)
-        update_records = @records[klass].select(&:valid_update_entry?)
+        insert_records = @records[model].select(&:valid_new_entry?)
+        update_records = @records[model].select(&:valid_update_entry?)
 
-        puts "Found #{insert_records.count} records to insert and #{update_records.count} records to update for #{klass}"
+        puts "Found #{insert_records.count} records to insert and #{update_records.count} records to update for #{model}"
 
-        insert_ids = klass.multi_insert insert_records.map(&:entry), return: :primary_key
+        entries = insert_records.map(&:entry)
+
+        puts "#{DateTime.now} Generated entries..."
+
+        insert_ids = model.multi_insert entries, return: :primary_key
 
         if insert_ids
-          puts "Updating temp records with real ids for #{klass}"
+          puts "Updating temp records with real ids for #{model}"
           insert_records.zip(insert_ids).each do |record, real_id|
             record.real_id = real_id
           end
         end
 
-        klass.multi_update records: update_records.map(&:update_entry)
+        model.multi_update records: update_records.map(&:update_entry)
       end
     end
 
     def update_temp_ids
-      @records.keys.each do |klass|
-        temp_records = @records[klass].select(&:valid_temp_update?)
-        puts "Found #{temp_records.count} records to repair temp_ids for #{klass}"
-        klass.multi_update records: temp_records.map(&:temp_entry), src_id: :real_id, dest_id: :id
+      @records.keys.each do |model|
+        temp_records = @records[model].select(&:valid_temp_update?)
+        puts "Found #{temp_records.count} records to repair temp_ids for #{model}"
+        model.multi_update records: temp_records.map(&:temp_entry), src_id: :real_id, dest_id: :id
       end
     end
 

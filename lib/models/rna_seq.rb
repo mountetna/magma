@@ -2,7 +2,7 @@
 
 class RnaSeq < Magma::Model
   identifier :tube_name, type: String, desc: "Name of tube containing RNA", 
-    match: Proc.new { IPI.match_rna_seq_name }, 
+    match: Proc.new { IPI.match(:rna_seq_name) }, 
     format_hint: "<sample_name>.rna.<type>, e.g. IPICRC001.T1.rna.myeloid"
 
   parent :sample

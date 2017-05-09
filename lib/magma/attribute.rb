@@ -44,16 +44,17 @@ class Magma
       [ @name, value ]
     end
 
-    def validate value, &block
-      # is it okay to set this?
-      case @match
+    def match
+      @computed_match ||= @match.is_a?(Proc) ? @match.call : @match
+    end
+
+    def validate value
+      case match
       when Regexp
-        yield format_error(value) if !@match.match(value)
-      when Proc
-        yield format_error(value) if !@match.call.match(value)
+        yield format_error(value) if !match.match(value)
       when Array
-        if !@match.map(&:to_s).include? value
-          yield "On #{@name}, '#{value}' should be one of #{@match.join(", ")}."
+        if !match.map(&:to_s).include? value
+          yield "On #{@name}, '#{value}' should be one of #{match.join(", ")}."
         end
       end
     end

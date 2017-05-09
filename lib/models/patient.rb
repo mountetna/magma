@@ -1,7 +1,7 @@
 class Patient < Magma::Model
   identifier :ipi_number, 
     type: String, 
-    match: Proc.new { IPI.match_patient_name }, 
+    match: Proc.new { IPI.match(:patient_name) }, 
     format_hint: "IPI<short_name><NNN>, e.g. IPICRC001",
     desc: "Unique id for patient (anonymized)"
 

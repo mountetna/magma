@@ -171,6 +171,10 @@ class Magma
           c.is_a?(Class) && c < Magma::Metric
         end
       end
+
+      def identifier_id
+        @identifier_id ||= Hash[self.select_map([identity, :id])]
+      end
     end
 
     def self.inherited(subclass)
