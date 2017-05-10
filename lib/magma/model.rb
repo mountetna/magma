@@ -175,6 +175,11 @@ class Magma
       def identifier_id
         @identifier_id ||= Hash[self.select_map([identity, :id])]
       end
+
+      def clear_cache
+        @identifier_id = nil
+        attributes.values.each &:clear_cache
+      end
     end
 
     def self.inherited(subclass)

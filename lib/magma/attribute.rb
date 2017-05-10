@@ -119,6 +119,10 @@ class Magma
     def update_link record, link
     end
 
+    def clear_cache
+      @computed_match = nil
+    end
+
     private
     def schema
       @model.schema

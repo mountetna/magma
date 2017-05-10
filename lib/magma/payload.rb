@@ -32,7 +32,12 @@ class Magma
     end
 
     def add_revision revision
+      # we have made a revision to this model,
+      # clear its cached values
+      revision.model.clear_cache
+
       add_model revision.model
+
       add_records revision.model, [ revision.record ]
     end
 

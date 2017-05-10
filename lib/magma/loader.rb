@@ -12,6 +12,12 @@ class Magma
     end
   end
 
+  class RecordSet < Array
+    def initialize(model)
+      model.clear_cache
+    end
+  end
+
   class RecordEntry
     def initialize model, document
       @document = document
@@ -65,7 +71,7 @@ class Magma
     end
 
     def update_entry
-      entry[:id] = record.id
+      entry[:id] = @model.identifier_id[@document[@model.identity]]
       # never overwrite created_at
       entry.delete :created_at
       entry
@@ -141,7 +147,7 @@ class Magma
     end
 
     def push_record model, document
-      @records[model] ||= []
+      @records[model] ||= RecordSet.new(model)
       @records[model] << RecordEntry.new(model, document)
     end
 

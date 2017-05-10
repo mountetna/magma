@@ -12,7 +12,7 @@ class IPI
     end
 
     def tumor_short_names
-      @tumor_short_names ||= Experiment.dataset.order
+      Experiment.dataset.order
         .distinct
         .exclude(short_name:nil)
         .select_map(:short_name)
