@@ -40,12 +40,12 @@ class Magma
     @config[type]
   end
 
-  def load_models validate=true
+  def load_models check_tables=true
     connect(config :database)
     require_relative 'models'
-    if validate
+    if check_tables
       magma_models.each do |model|
-        model.validate
+        raise "Missing table for #{model}." unless model.has_table?
       end
     end
     carrier_wave_init

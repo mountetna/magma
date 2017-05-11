@@ -83,8 +83,8 @@ class Magma
         name.snake_case.to_sym
       end
 
-      def validate
-        raise "Missing table for #{name}." unless Magma.instance.db.table_exists? table_name
+      def has_table?
+        Magma.instance.db.table_exists? table_name
       end
 
       def migration
