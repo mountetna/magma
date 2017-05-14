@@ -30,15 +30,6 @@ class Magma
       json_for(record).join(", ")
     end
 
-    def validate links, &block
-      links.each do |link|
-        next unless link
-        link_identity.validate link do |error|
-          yield error
-        end
-      end
-    end
-
     def update record, new_ids
       old_links = record.send(@name)
 
@@ -64,6 +55,20 @@ class Magma
 
       if !removed_links.empty?
         link_records( removed_links ).update( self_id => nil )
+      end
+    end
+    class Validation < Magma::BaseAttributeValidation
+      def validate(value)
+        unless value.is_a?(Array)
+          yield "#{value} is not an Array."
+          return
+        end
+        value.each do |link|
+          next unless link
+          @validator.validate(@attribute.link_model, @attribute.link_model.identity, link) do |error|
+            yield error
+          end
+        end
       end
     end
   end

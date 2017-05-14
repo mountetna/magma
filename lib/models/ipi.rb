@@ -35,7 +35,12 @@ class IPI
     end
 
     def rna_seq_name
-      chain :sample_name, :rna, /\w+/
+      match_array(
+        [
+          chain(:sample_name, :rna, /\w+/),
+        /^Control_UHR.Plate\d+$/
+        ]
+      )
     end
 
     def match sym, *args

@@ -21,7 +21,9 @@ class Magma
     def retrieve params
       response = json_post 'retrieve', params
       status = response.code.to_i
-      if status > 300
+      if status >= 500
+        raise Magma::ClientError.new(status, errors: [ "A Magma server error occurred." ])
+      elsif status >= 400
         raise Magma::ClientError.new(status, errors: errors(response))
       end
       return [ response.code.to_i, response.body ]
@@ -30,7 +32,9 @@ class Magma
     def query question
       response = json_post 'query', { query: question }
       status = response.code.to_i
-      if status > 300
+      if status >= 500
+        raise Magma::ClientError.new(status, query: question, errors: [ "A Magma server error occurred." ])
+      elsif status >= 400
         raise Magma::ClientError.new(status, query: question, errors: errors(response))
       end
       return [ status, response.body ]
@@ -54,7 +58,9 @@ class Magma
       end
       response = multipart_post 'update', content
       status = response.code.to_i
-      if status > 300
+      if status >= 500
+        raise Magma::ClientError.new(status, errors: [ "A Magma server error occurred." ])
+      elsif status >= 400
         raise Magma::ClientError.new(status, update: revisions, errors: errors(response))
       end
       return [ status, response.body ]

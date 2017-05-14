@@ -26,24 +26,6 @@ class Magma
       link ? link.identifier : nil
     end
 
-    def entry_for value
-      # you need to find the foreign entity
-      return nil if value.nil?
-
-      if value.is_a? Magma::TempId
-        [ foreign_id, value.real_id ]
-      elsif link_model.identifier_id[value]
-        [ foreign_id, link_model.identifier_id[value] ]
-      end
-    end
-
-    def validate link
-      return if link.is_a? Magma::TempId
-      if link_identity
-        link_identity.validate(link)
-      end
-    end
-
     def update record, link
       if link.nil?
         record[ foreign_id ] = nil
@@ -52,6 +34,27 @@ class Magma
 
       link_model.update_or_create(link_model.identity => link) do |obj|
         record[ foreign_id ] = obj.id
+      end
+    end
+    class Entry < Magma::BaseAttributeEntry
+      def entry value
+        return nil if value.nil?
+
+        if value.is_a? Magma::TempId
+          [ @attribute.foreign_id, value.real_id ]
+        elsif @attribute.link_identity
+          [ @attribute.foreign_id, @loader.identifier_id(@attribute.link_model, value) ]
+        end
+      end
+    end
+    class Validation < Magma::BaseAttributeValidation
+      def validate(value)
+        return if value.is_a?(Magma::TempId) || value.nil?
+        if @attribute.link_identity
+          @validator.validate(@attribute.link_model, @attribute.link_model.identity, value) do |error|
+            yield error
+          end
+        end
       end
     end
   end

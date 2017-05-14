@@ -1,21 +1,18 @@
 class Magma
   class Revision
     attr_reader :model, :record
-    def initialize revised_document, model_name, record_name
+    def initialize(revised_document, model_name, record_name, validator)
       @model = Magma.instance.get_model model_name
       @record = @model[@model.identity => record_name]
       @revised_document = censored(revised_document || {})
+      @validator = validator
     end
     attr_reader :errors
 
     def valid?
       @errors = []
-      @revised_document.each do |name, new_value|
-        name = name.to_sym
-        next if !@model.has_attribute?(name) || new_value.blank?
-        @model.attributes[name].validate new_value do |error|
-          @errors.push error
-        end
+      @validator.model_validation(@model).validate(@revised_document) do |error|
+        @errors.push error
       end
 
       @errors.empty?
