@@ -83,8 +83,8 @@ class Magma
         name.snake_case.to_sym
       end
 
-      def validate
-        raise "Missing table for #{name}." unless Magma.instance.db.table_exists? table_name
+      def has_table?
+        Magma.instance.db.table_exists? table_name
       end
 
       def migration
@@ -170,10 +170,6 @@ class Magma
         constants.map{|c| const_get(c)}.select do |c|
           c.is_a?(Class) && c < Magma::Metric
         end
-      end
-
-      def identifier_id
-        @identifier_id ||= Hash[self.select_map([identity, :id])]
       end
     end
 

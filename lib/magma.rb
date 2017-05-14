@@ -1,12 +1,13 @@
 require 'sequel'
+require_relative 'magma/validation'
+require_relative 'magma/loader'
+require_relative 'magma/migration'
 require_relative 'magma/attribute'
 require_relative 'magma/model'
-require_relative 'magma/migration'
 require_relative 'magma/revision'
 require_relative 'magma/document'
 require_relative 'magma/image'
 require_relative 'magma/commands'
-require_relative 'magma/loader'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
 require 'singleton'
@@ -40,12 +41,12 @@ class Magma
     @config[type]
   end
 
-  def load_models validate=true
+  def load_models check_tables=true
     connect(config :database)
     require_relative 'models'
-    if validate
+    if check_tables
       magma_models.each do |model|
-        model.validate
+        raise "Missing table for #{model}." unless model.has_table?
       end
     end
     carrier_wave_init

@@ -33,6 +33,7 @@ class Magma
 
     def add_revision revision
       add_model revision.model
+
       add_records revision.model, [ revision.record ]
     end
 

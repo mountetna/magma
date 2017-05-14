@@ -39,16 +39,16 @@ class Magma
     end
 
     def setup config
-      load_but_dont_validate config
+      load_but_dont_check_tables config
     end
 
     protected
-    def load_but_dont_validate config
+    def load_but_dont_check_tables config
       Magma.instance.configure config
       Magma.instance.load_models false
     end
 
-    def load_and_validate config
+    def load_and_check_tables config
       Magma.instance.configure config
       Magma.instance.load_models true
     end
@@ -88,7 +88,7 @@ EOT
     end
 
     def setup config
-      load_and_validate config
+      load_and_check_tables config
     end
   end
 
@@ -122,7 +122,7 @@ EOT
     end
 
     def setup config
-      load_and_validate config
+      load_and_check_tables config
     end
   end
 end

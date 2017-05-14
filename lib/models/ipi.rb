@@ -12,7 +12,7 @@ class IPI
     end
 
     def tumor_short_names
-      @tumor_short_names ||= Experiment.dataset.order
+      Experiment.dataset.order
         .distinct
         .exclude(short_name:nil)
         .select_map(:short_name)
@@ -35,7 +35,12 @@ class IPI
     end
 
     def rna_seq_name
-      chain :sample_name, :rna, /\w+/
+      match_array(
+        [
+          chain(:sample_name, :rna, /\w+/),
+        /^Control_UHR.Plate\d+$/
+        ]
+      )
     end
 
     def match sym, *args

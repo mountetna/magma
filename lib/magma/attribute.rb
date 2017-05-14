@@ -8,7 +8,7 @@ class Magma
       ]
     end
     DISPLAY_ONLY = [ :child, :collection ]
-    attr_reader :name, :type, :desc, :loader
+    attr_reader :name, :type, :desc, :loader, :match, :format_hint
     def initialize name, model, opts
       @name = name
       @model = model
@@ -38,25 +38,6 @@ class Magma
 
     def txt_for record
       json_for record
-    end
-
-    def entry_for value
-      [ @name, value ]
-    end
-
-    def match
-      @computed_match ||= @match.is_a?(Proc) ? @match.call : @match
-    end
-
-    def validate value
-      case match
-      when Regexp
-        yield format_error(value) if !match.match(value)
-      when Array
-        if !match.map(&:to_s).include? value
-          yield "On #{@name}, '#{value}' should be one of #{match.join(", ")}."
-        end
-      end
     end
 
     def eager
@@ -119,17 +100,17 @@ class Magma
     def update_link record, link
     end
 
+    def validation
+      self.class.const_defined?(:Validation) ? self.class.const_get(:Validation) : Magma::BaseAttributeValidation
+    end
+
+    def entry
+      self.class.const_defined?(:Entry) ? self.class.const_get(:Entry) : Magma::BaseAttributeEntry
+    end
+
     private
     def schema
       @model.schema
-    end
-
-    def format_error value
-      if @format_hint
-        "On #{@name}, '#{value}' should be like '#{@format_hint}'."
-      else
-        "On #{@name}, '#{value}' is improperly formatted."
-      end
     end
 
     def set_options opts
@@ -139,7 +120,40 @@ class Magma
         end
       end
     end
+    class Validation < Magma::BaseAttributeValidation
+      def validate(value)
+        case match
+        when Regexp
+          yield format_error(value) if !match.match(value)
+        when Array
+          if !match.map(&:to_s).include? value
+            yield "On #{@attribute.name}, '#{value}' should be one of #{match.join(", ")}."
+          end
+        end
+      end
+
+      private
+
+      def match
+        @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
+      end
+
+      def format_error(value)
+        if @attribute.format_hint
+          "On #{@attribute.name}, '#{value}' should be like '#{@attribute.format_hint}'."
+        else
+          "On #{@attribute.name}, '#{value}' is improperly formatted."
+        end
+      end
+    end
+    class Entry < Magma::BaseAttributeEntry
+      def entry(value)
+        [ @attribute.name, value ]
+      end
+    end
   end
+
+
 end
 
 require_relative 'attributes/link'

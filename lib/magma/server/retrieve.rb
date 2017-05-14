@@ -51,11 +51,11 @@ class Magma
       def initialize request
         super request
 
-        @model_name =  @params["model_name"]
-        @record_names = @params["record_names"]
-        @attribute_names = @params["attribute_names"].is_a?(Array) ? @params["attribute_names"].map(&:to_sym) : @params["attribute_names"]
-        @collapse_tables =  @params["collapse_tables"]
-        @format = @params["format"] || "json"
+        @model_name =  @params[:model_name]
+        @record_names = @params[:record_names]
+        @attribute_names = @params[:attribute_names].is_a?(Array) ? @params[:attribute_names].map(&:to_sym) : @params[:attribute_names]
+        @collapse_tables =  @params[:collapse_tables]
+        @format = @params[:format] || "json"
       end
 
       def perform

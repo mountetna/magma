@@ -7,7 +7,7 @@ class Magma
     class Query < Magma::Server::Controller
       def response
         begin
-          question = Magma::Question.new @params["query"]
+          question = Magma::Question.new @params[:query]
           success 'application/json', { answer: question.answer, type: question.type }.to_json
         rescue ArgumentError => e
           puts e.backtrace
