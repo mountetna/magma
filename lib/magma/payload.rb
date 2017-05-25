@@ -15,20 +15,10 @@ class Magma
       return if @models[model]
 
       @models[model] = ModelPayload.new(model,attribute_names)
-
-      model.assoc_models(attribute_names).each do |assoc_model|
-        @models[assoc_model] = ModelPayload.new(assoc_model,nil)
-      end
     end
     
     def add_records model, records
       @models[model].add_records records
-
-      records.each do |record|
-        record.assoc_records(@models[model].attribute_names).each do |assoc_model,assoc_records|
-          @models[assoc_model].add_records assoc_records
-        end
-      end
     end
 
     def add_revision revision

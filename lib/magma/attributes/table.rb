@@ -25,8 +25,7 @@ class Magma
     def txt_for record
       nil
     end
-    # since a table has to display the other model, we should eager load its
-    # column dependencies
+
     def eager
       @name
     end
