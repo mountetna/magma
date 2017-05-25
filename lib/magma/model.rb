@@ -214,18 +214,5 @@ class Magma
     def txt_for att_name
       model.attributes[att_name].txt_for(self)
     end
-
-    def assoc_records att_names = nil
-      att_names ||= model.attributes.keys
-      Hash[
-        att_names.map do |name|
-          att = model.attributes[name]
-          next unless att.is_a? Magma::TableAttribute
-          [
-            att.link_model, self.send(name)
-          ]
-        end.compact
-      ]
-    end
   end
 end

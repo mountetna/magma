@@ -54,7 +54,7 @@ class Magma
         @model_name =  @params[:model_name]
         @record_names = @params[:record_names]
         @attribute_names = @params[:attribute_names].is_a?(Array) ? @params[:attribute_names].map(&:to_sym) : @params[:attribute_names]
-        @collapse_tables =  @params[:collapse_tables]
+        @collapse_tables =  @params[:collapse_tables] || @params[:format] == "tsv"
         @format = @params[:format] || "json"
       end
 
@@ -80,21 +80,40 @@ class Magma
       def retrieve_model model
         time = Time.now
         @attributes = model.attributes.values.select do |att|
-          get_attribute?(att,model) || show_table_attribute?(att)
+          get_attribute?(att,model)
         end
 
-        records = model.eager(
-          @attributes.map(&:eager).compact
-        )
+        records = model.eager(@attributes.map(&:eager).compact)
+
         if @record_names.is_a?(Array)
           records = records.where(
             model.identity => @record_names
           )
         end
+
+        # later: replace this with a pure-SQL version
+        # that returns a hash for this record
         records = records.all
 
         @payload.add_model(model, @attributes.map(&:name))
         @payload.add_records( model, records)
+
+        # add the records for any table attributes
+        if !@collapse_tables
+          @attributes.each do |att|
+            next unless att.is_a?(Magma::TableAttribute)
+
+            link_model = att.link_model
+            link_model_attribute_names = link_model.attributes.select do |att_name, att|
+              att.shown? && !att.is_a?(Magma::TableAttribute)
+            end.map(&:first)
+
+            @payload.add_model(link_model, link_model_attribute_names)
+            records.each do |record|
+              @payload.add_records(link_model, record.send(att.name))
+            end
+          end
+        end
         puts "Retrieving #{model.name} took #{Time.now - time} seconds"
       end
 
@@ -108,15 +127,8 @@ class Magma
       end
 
 
-      def show_table_attribute? att
-        if @collapse_tables
-          att.is_a?(Magma::TableAttribute) ? nil : true
-        else
-          nil
-        end
-      end
-
       def get_attribute? att, model
+        return false if @collapse_tables && att.is_a?(Magma::TableAttribute)
         @attribute_names == "all" ||
           (@attribute_names == "identifier" && model.identity == att.name) ||
           (@attribute_names.is_a?(Array) && @attribute_names.include?(att.name))
