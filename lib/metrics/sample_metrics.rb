@@ -42,7 +42,7 @@ class Sample < Magma::Model
     def test
       @missing_files = []
 
-      [ "treg", "nktb", "sort", "dc" ].each do |stain|
+      [ "treg", "nktb", "sort", "dc", "innate" ].each do |stain|
         check_file stain
       end
 

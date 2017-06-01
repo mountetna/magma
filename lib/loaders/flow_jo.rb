@@ -59,6 +59,7 @@ class FlowJoLoader < Magma::Loader
     create_stain_document nktb_stain_tubes.first, :nktb
     create_stain_document sort_stain_tubes.first, :sort
     create_stain_document dc_stain_tubes.first, :dc
+    create_stain_document innate_stain_tubes.first, :innate
     dispatch_record_set
   end
 
@@ -142,6 +143,9 @@ class FlowJoLoader < Magma::Loader
     dc_stain_tubes.each do |tube|
       create_population_document_using tube, :dc
     end
+    innate_stain_tubes.each do |tube|
+      create_population_document_using tube, :innate
+    end
     puts "Attempting to load populations"
     dispatch_record_set
   end
@@ -187,7 +191,8 @@ class FlowJoLoader < Magma::Loader
     (treg_stain_tubes + 
       nktb_stain_tubes +
       sort_stain_tubes +
-      dc_stain_tubes).uniq
+      dc_stain_tubes +
+      innate_stain_tubes).uniq
   end
 
   def treg_stain_tubes
@@ -204,5 +209,9 @@ class FlowJoLoader < Magma::Loader
 
   def dc_stain_tubes
     @flow_jo.group("stain 4").sample_refs.map{|sr| @flow_jo.sample(sr)}
+  end
+
+  def innate_stain_tubes
+    @flow_jo.group("stain 5").sample_refs.map{|sr| @flow_jo.sample(sr)}
   end
 end

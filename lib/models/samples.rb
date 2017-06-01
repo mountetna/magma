@@ -28,6 +28,9 @@ class Sample < Magma::Model
   document :dc_file, 
     desc: "FACS format file for DC stain"
 
+  document :innate_file, 
+    desc: "FACS format file for Innate stain"
+
   child :imaging,
     desc: "Immunofluorescence imaging of this sample"
 
