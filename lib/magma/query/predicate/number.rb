@@ -10,6 +10,12 @@ class Magma
             @operand
           )
         ]
+      when "::in"
+        return [
+          Magma::Question::Constraint.new(
+            :"#{alias_name}__#{@attribute_name}" => @operand
+          )
+        ]
       end
       super
     end
@@ -22,6 +28,10 @@ class Magma
         operand = @predicates.shift
         invalid_argument! operand unless operand.respond_to? :to_f
         @operand = operand.to_f
+        return terminal(TrueClass)
+      when "::in"
+        @operand = @predicates.shift
+        invalid_argument! @operand unless @operand && @operand.is_a?(Array)
         return terminal(TrueClass)
       when nil
         return terminal(Numeric)
