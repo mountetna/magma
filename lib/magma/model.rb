@@ -37,6 +37,7 @@ class Magma
       end
 
       def parent name, opts = {}
+        @parent = name
         many_to_one name
         attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
       end
@@ -101,8 +102,9 @@ class Magma
               [ name, attributes[name].json_template ]
             end
           ],
-          identifier: identity
-        }
+          identifier: identity,
+          parent: @parent
+        }.delete_if {|k,v| v.nil? }
       end
 
       def assoc_models att_names=nil

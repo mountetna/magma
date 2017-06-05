@@ -19,7 +19,7 @@ class Magma
     def json_template
       {
         name: @name,
-        model_name: @link_model || @name,
+        model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: @type.nil? ? nil : @type.name,
         attribute_class: self.class.name,
         desc: @desc,
