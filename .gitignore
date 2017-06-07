@@ -1,4 +1,7 @@
 /.bundle
+/public
+/uploads
+/coverage
 /tmp
 /log/*
 database.yml

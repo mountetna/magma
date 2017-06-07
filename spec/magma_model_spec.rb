@@ -1,8 +1,7 @@
 require_relative '../lib/magma'
 require 'yaml'
 
-db_config = YAML.load File.read("../../config.yml")
-Magma.instance.connect db_config[:database]
+load_magma
 
 describe Magma::Model do
   describe ".validate" do
