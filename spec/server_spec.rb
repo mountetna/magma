@@ -1,3 +1,5 @@
+load_magma
+
 describe 'Magma::Server' do
   include Rack::Test::Methods
 

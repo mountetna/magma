@@ -1,3 +1,7 @@
+require_relative '../lib/magma/server/retrieve'
+
+load_magma
+
 describe Magma::Server::Retrieve do
   include Rack::Test::Methods
 
