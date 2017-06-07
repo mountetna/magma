@@ -1,4 +1,6 @@
-require_relative '../lib/magma/retrieval'
+require_relative '../lib/magma/server/retrieve'
+
+load_magma
 
 # This helper manages the retrieval of a bunch of records.
 # It returns a Payload
@@ -18,11 +20,11 @@ require_relative '../lib/magma/retrieval'
 #
 #
 
-describe Magma::Retrieval do
+describe Magma::Server::Retrieve do
   describe "#initialize" do
     it "complains without inputs" do
       expect {
-        Magma::Retrieval.new()
+        Magma::Server::Retrieve.new()
       }.to raise_error(ArgumentError)
     end
   end
