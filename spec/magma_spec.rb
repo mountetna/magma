@@ -1,8 +1,6 @@
 require_relative '../lib/magma'
 require 'yaml'
 
-load_magma
-
 describe Magma do
   describe ".connect" do
     it "creates a Sequel database connection" do

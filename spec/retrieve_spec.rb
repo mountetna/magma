@@ -1,7 +1,5 @@
 require_relative '../lib/magma/server/retrieve'
 
-load_magma
-
 # This helper manages the retrieval of a bunch of records.
 # It returns a Payload
 #
