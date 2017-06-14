@@ -1,8 +1,6 @@
 require_relative '../lib/magma'
 require 'yaml'
 
-load_magma
-
 describe Magma::Model do
   describe ".validate" do
     it "ensures the table exists" do
