@@ -1,8 +1,6 @@
 require_relative '../lib/magma'
 require 'yaml'
 
-load_magma
-
 describe Magma::Attribute do
   describe ".json_template" do
     it "returns a json template describing the attribute" do
