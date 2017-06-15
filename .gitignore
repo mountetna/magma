@@ -3,6 +3,7 @@
 /uploads
 /coverage
 /tmp
+/test
 /log/*
 database.yml
 config.yml
