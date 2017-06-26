@@ -20,11 +20,7 @@ class Magma
       Magma.instance.tap do |magma|
         magma.configure config
 
-        if ENV['RACK_ENV'] == 'test'
-          magma.connect(magma.config :test_database)
-        else
-          magma.load_models
-        end
+        magma.load_models
 
         magma.persist_connection
 

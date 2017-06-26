@@ -6,5 +6,6 @@ class Labor < Magma::Model
   child :monster
 
   attribute :number, type: Integer
-  attribute :completed, type: Boolean
+  attribute :completed, type: TrueClass
+  table :prize
 end
