@@ -1,0 +1,75 @@
+# Project setup
+
+To add projects to magma, simply create a new folder in the /projects directory
+with your project name:
+
+    projects/my_project
+
+For magma to load this project you must add this project to the project_path
+for your environment in /config.yml
+
+    :test:
+      :project_path: ./projects/my_project
+
+## Environments
+
+To specify your environment for any of the below commands, merely set the MAGMA_ENV environment
+variable, e.g.:
+
+    $ MAGMA_ENV=test bin/magma plan
+    $ MAGMA_ENV=production rake db:migrate
+
+The default environment is 'development'
+
+## Creating models
+
+Within this projects folder you may create a 'models' folder:
+
+    projects/my_project/models
+
+with your project models defined (ideally one per .rb):
+
+    projects/my_project/models/my_model.rb
+
+## Creating migrations
+
+Once you have defined some models, you will probably want to create some
+database migrations for them. You can use the magma 'plan' command to help
+you do this:
+
+    $ bin/magma plan
+
+This will output a Sequel migration that you can save to a migration.  **NOTE**
+that magma will generate a plan for ALL projects on the project_path in
+config.yml - you almost certainly do not want to do this, so restrict your project_path
+appropriately when planning, e.g.:
+
+    :production:
+      :project_path: ./projects/my_project
+
+and not:
+
+    :production:
+      :project_path: ./projects/my_project ./projects/my_other_project
+
+### Saving a migration
+
+First you should make a migrations folder for your project:
+
+    projects/my_project/migrations
+
+Then save the output from 'plan' to a migration.rb:
+
+    $ bin/magma plan > projects/my_project/migrations/01_my_first_migration.rb
+
+## Running migrations
+
+Once you have setup your migrations, you can run them just by typing:
+
+    $ rake db:migrate
+
+## Creating loaders
+
+If you write custom data loaders for your project, they should also go into your project directory:
+
+    project/my_project/loaders

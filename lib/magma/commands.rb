@@ -1,4 +1,5 @@
 require 'extlib'
+require 'date'
 
 class Magma
   def run_command config, cmd = :help, *args
@@ -75,6 +76,17 @@ Sequel.migration do
   end
 end
 EOT
+    end
+  end
+
+  class Timestamp < Magma::Command
+    usage "Generate a current timestamp (for use with 'magma plan')"
+
+    def execute
+      puts DateTime.now.strftime('%Y%m%d%H%M%S')
+    end
+
+    def setup config
     end
   end
 
