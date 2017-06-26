@@ -88,4 +88,3 @@ Then save the output from 'plan' to a migration.rb:
 Once you have setup your migrations, you can run them just by typing:
 
     $ rake db:migrate
-
