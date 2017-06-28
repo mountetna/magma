@@ -126,10 +126,18 @@ end
 
 FactoryGirl.define do
   factory :labor do
-    to_create { |i| i.save } 
+    to_create(&:save)
     sequence(:name) { |n| "labor#{n}" }
     sequence(:number) {|n| n+1 }
     sequence(:completed) {|n| [ 2, 5 ].include?(number) ? false : true }
+  end
+
+  factory :monster do
+    to_create(&:save)
+  end
+
+  factory :prize do
+    to_create(&:save)
   end
 end
 
