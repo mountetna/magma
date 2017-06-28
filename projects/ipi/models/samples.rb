@@ -77,6 +77,3 @@ class Sample < Magma::Model
     type: Integer, 
     desc: "Count of cells available after digest"
 end
-
-require_relative '../metrics/sample_metrics'
-

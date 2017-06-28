@@ -31,6 +31,27 @@ with your project models defined (ideally one per .rb):
 
     projects/my_project/models/my_model.rb
 
+## Creating loaders
+
+If you write custom data loaders for your project, they should also go into your project directory:
+
+    project/my_project/loaders
+
+## Creating metrics
+
+If you write data metrics for your project, they should also go into your project directory:
+
+    project/my_project/metrics
+
+## Requirement order
+
+If you need to explicitly specify the order of loading of these items or
+otherwise want to setup requirements, you can create a requirements.rb which should
+explicitly require files using require_relative; otherwise magma will attempt
+to require all files in models/, metrics/ and loaders/ in arbitrary order.
+
+    projects/my_project/requirements.rb
+
 ## Creating migrations
 
 Once you have defined some models, you will probably want to create some
@@ -68,8 +89,3 @@ Once you have setup your migrations, you can run them just by typing:
 
     $ rake db:migrate
 
-## Creating loaders
-
-If you write custom data loaders for your project, they should also go into your project directory:
-
-    project/my_project/loaders

@@ -1,0 +1,4 @@
+project	name	monster	number	completed
+	Augean Stables		5	false
+	Cretan Bull		7	true
+	Stymphalian Birds		6	true
