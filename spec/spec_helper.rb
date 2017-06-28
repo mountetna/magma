@@ -165,16 +165,3 @@ def json_post endpoint, hash
     }
   )
 end
-
-FactoryGirl.define do
-  factory :labor do
-    to_create { |i| i.save } 
-    sequence(:name) { |n| "labor#{n}" }
-    sequence(:number) {|n| n+1 }
-    sequence(:completed) {|n| [ 2, 5 ].include?(number) ? false : true }
-  end
-end
-
-def fixture name
-  File.join(File.dirname(__FILE__),"fixtures/#{name}.txt")
-end

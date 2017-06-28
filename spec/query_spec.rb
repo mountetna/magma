@@ -102,5 +102,4 @@ describe Magma::Server::Update do
     json = JSON.parse(last_response.body)
     expect(json["answer"].length).to eq(3)
   end
-
 end

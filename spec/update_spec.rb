@@ -41,7 +41,7 @@ describe Magma::Server::Update do
   it "fails on validation checks" do
     # The actual validation is defined in spec/labors/models/monster.rb,
     # not sure how to move it here
-    lion = create(:monster, name: "Nemean Lion", species: "hydra")
+    lion = create(:monster, name: "Nemean Lion", species: "lion")
     post(
       '/update',
       {
@@ -59,6 +59,6 @@ describe Magma::Server::Update do
     )
     lion.refresh
     expect(last_response.status).to eq(422)
-    expect(lion.species).to eq('hydra')
+    expect(lion.species).to eq('lion')
   end
 end

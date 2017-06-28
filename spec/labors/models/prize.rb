@@ -1,6 +1,6 @@
 class Prize < Magma::Model
   parent :labor
 
-  attribute :name, type: String
+  identifier :name, type: String
   attribute :worth, type: Integer
 end
