@@ -114,7 +114,6 @@ class Magma
             end
           end
         end
-        puts "Retrieving #{model.name} took #{Time.now - time} seconds"
       end
 
       private

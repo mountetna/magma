@@ -45,8 +45,18 @@ class Magma
 
   def load_models check_tables=true
     connect(config :db)
-    config(:project_path).split(/\s+/).each do |model_dir|
-      Dir.glob(File.join(File.dirname(__FILE__), "../#{model_dir}/models", '**', '*.rb'), &method(:require))
+    if config(:storage)
+      require_relative 'magma/document'
+      require_relative 'magma/image'
+    end
+    config(:project_path).split(/\s+/).each do |project_dir|
+      base_file = File.join(File.dirname(__FILE__), '..', project_dir, 'requirements.rb')
+      if File.exists?(base_file)
+        require base_file 
+      else
+        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'models', '**', '*.rb'), &method(:require))
+        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'loaders', '**', '*.rb'), &method(:require))
+      end
     end
     if check_tables
       magma_models.each do |model|
@@ -72,8 +82,6 @@ class Magma
   def carrier_wave_init
     opts = config(:storage)
     return unless opts
-    require_relative 'magma/document'
-    require_relative 'magma/image'
     CarrierWave.tmp_path = '/tmp'
     CarrierWave.configure do |config|
       config.fog_credentials = opts[:credentials]
