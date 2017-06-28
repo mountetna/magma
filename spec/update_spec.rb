@@ -5,18 +5,48 @@ describe Magma::Server::Update do
     OUTER_APP
   end
 
-  it "posts content to an endpoint" do
+  it "can update content" do
+    lion = create(:monster, name: "Nemean Lion", species: "hydra")
     post(
-      '/retrieve',
+      '/update',
       {
-        model_name: "labor",
-        record_names: [],
-        attribute_names: []
+        revisions: {
+          "monster" => {
+            "Nemean Lion" => {
+              species: "lion"
+            }
+          }
+        }
       }.to_json,
       {
         'CONTENT_TYPE' => 'application/json'
       }
     )
-    expect(last_response).to be_ok
+    lion.refresh
+    expect(lion.species).to eq('lion')
+  end
+
+  it "fails on validation checks" do
+    # The actual validation is defined in spec/labors/models/monster.rb,
+    # not sure how to move it here
+    lion = create(:monster, name: "Nemean Lion", species: "hydra")
+    post(
+      '/update',
+      {
+        revisions: {
+          "monster" => {
+            "Nemean Lion" => {
+              species: "Lion"
+            }
+          }
+        }
+      }.to_json,
+      {
+        'CONTENT_TYPE' => 'application/json'
+      }
+    )
+    lion.refresh
+    expect(last_response.status).to eq(422)
+    expect(lion.species).to eq('hydra')
   end
 end
