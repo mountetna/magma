@@ -83,8 +83,6 @@ class Magma
   def carrier_wave_init
     opts = config(:storage)
     return unless opts
-    require_relative 'magma/document'
-    require_relative 'magma/image'
     CarrierWave.tmp_path = '/tmp'
     CarrierWave.configure do |config|
       config.fog_credentials = opts[:credentials]
