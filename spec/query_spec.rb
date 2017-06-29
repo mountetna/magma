@@ -92,14 +92,6 @@ describe Magma::Server::Update do
     end
   end
 
-  it "can post a basic query" do
-    create_list(:labor, 3)
-
-    query(
-      [ 'labor', '::all', '::identifier' ]
-    )
-  end
-
   context "Magma::NumberPredicate" do
     before(:each) do
       lion = create(:labor, name: "Nemean Lion", number: 1, completed: true)
