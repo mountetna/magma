@@ -139,8 +139,22 @@ FactoryGirl.define do
   factory :prize do
     to_create(&:save)
   end
+
+  factory :project do
+    to_create(&:save)
+  end
 end
 
 def fixture name
   File.join(File.dirname(__FILE__),"fixtures/#{name}.txt")
+end
+
+def json_post endpoint, hash
+  post(
+    "/#{endpoint}",
+    hash.to_json,
+    {
+      'CONTENT_TYPE' => 'application/json'
+    }
+  )
 end

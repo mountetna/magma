@@ -154,20 +154,6 @@ class Magma
         obj.save if obj
       end
 
-      # This method makes a query which uses eager loading to pull all the data
-      # associated with a particular record
-      def retrieve identifier = nil, attributes = nil
-        search = identifier ? self.where(identity => identifier) : self.dataset
-
-        eager_atts = self.attributes.values.select do |att|
-          block_given? ? yield(att) : true
-        end.map(&:eager).compact
-
-        search = search.eager(eager_atts) unless eager_atts.empty?
-
-        search
-      end
-
       def metrics
         constants.map{|c| const_get(c)}.select do |c|
           c.is_a?(Class) && c < Magma::Metric
