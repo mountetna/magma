@@ -1,4 +1,5 @@
 require_relative 'controller'
+require 'pry'
 
 # In general, you Retrieve with a request like this:
 # {
@@ -124,7 +125,6 @@ class Magma
            @record_names.all?{|name| name.is_a?(Fixnum)}) || 
           @record_names == "all"
       end
-
 
       def get_attribute? att, model
         return false if @collapse_tables && att.is_a?(Magma::TableAttribute)

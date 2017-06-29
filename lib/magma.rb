@@ -56,6 +56,7 @@ class Magma
       else
         Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'models', '**', '*.rb'), &method(:require))
         Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'loaders', '**', '*.rb'), &method(:require))
+        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'metrics', '**', '*.rb'), &method(:require))
       end
     end
     if check_tables
