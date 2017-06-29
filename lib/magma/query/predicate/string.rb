@@ -5,7 +5,7 @@ class Magma
       when "::matches", "::equals", "::in"
         return [
           Magma::Question::Constraint.new(
-            :"#{alias_name}__#{@attribute_name}" => @operand
+            Sequel.qualify(alias_name, @attribute_name) => @operand
           )
         ]
       end

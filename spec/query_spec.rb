@@ -1,4 +1,3 @@
-require 'pry'
 describe Magma::Server::Update do
   include Rack::Test::Methods
 
