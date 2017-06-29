@@ -16,6 +16,20 @@ describe Magma::Loader do
     expect(Labor.count).to eq(3)
   end
 
+  it "bulk-updates records" do
+    lion = create(:labor, name: "Nemean Lion", number: 1, completed: false)
+    hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
+
+    loader = Magma::Loader.new
+    loader.push_record(Labor, name: "Nemean Lion", number: 1, completed: true)
+    loader.push_record(Labor, name: "Augean Stables", number: 5, completed: false)
+
+    loader.dispatch_record_set
+    lion.refresh
+
+    expect(Labor.count).to eq(3)
+    expect(lion.completed).to eq(true)
+  end
   it "validates records" do
     loader = Magma::Loader.new
     loader.push_record(Monster, name: "Nemean Lion", species: "Lion")

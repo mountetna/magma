@@ -5,25 +5,37 @@ describe Magma::Server::Update do
     OUTER_APP
   end
 
+  def update revisions
+    json_post(:update, revisions: revisions)
+  end
+
   it "can update content" do
     lion = create(:monster, name: "Nemean Lion", species: "hydra")
-    post(
-      '/update',
-      {
-        revisions: {
-          "monster" => {
-            "Nemean Lion" => {
-              species: "lion"
-            }
-          }
+    update(
+      "monster" => {
+        "Nemean Lion" => {
+          species: "lion"
         }
-      }.to_json,
-      {
-        'CONTENT_TYPE' => 'application/json'
       }
     )
     lion.refresh
     expect(lion.species).to eq('lion')
+  end
+
+  it 'can update a collection' do
+    project = create(:project, name: "The Two Labors of Hercules")
+    update(
+      "project" => {
+        "The Two Labors of Hercules" => {
+          labor: [
+            "Nemean Lion",
+            "Lernean Hydra"
+          ]
+        }
+      }
+    )
+
+    expect(Labor.count).to be(2)
   end
 
   it "fails on validation checks" do
