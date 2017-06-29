@@ -112,10 +112,6 @@ class Magma
       @start_predicate.extract(table, identity)
     end
 
-    def model
-      @start_predicate.model
-    end
-
     def predicates
       @predicates ||= @start_predicate.flatten
     end

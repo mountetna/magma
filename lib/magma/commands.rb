@@ -65,6 +65,32 @@ class Magma
     end
   end
 
+  class Migrate < Magma::Command
+    usage "Run migrations for the current environment"
+    
+    def execute version=nil
+      Sequel.extension :migration
+      db = Magma.instance.db
+
+      Magma.instance.config(:project_path).split(/\s+/).each do |project_dir|
+        table = "schema_info_#{project_dir.gsub(/[^\w]+/,'_').sub(/^_/,'').sub(/_$/,'')}"
+        if version
+          puts "Migrating to version #{version}"
+          Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table, target: version.to_i)
+        else
+          puts "Migrating to latest"
+          Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table)
+        end
+      end
+    end
+
+    def setup config
+      Magma.instance.configure(config)
+      Magma.instance.connect(Magma.instance.config :db)
+    end
+
+  end
+
   class Plan < Magma::Command
     usage "Suggest a migration based on the current model attributes"
 

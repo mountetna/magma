@@ -30,7 +30,7 @@ class Magma
     end
 
     def select
-      @argument.nil? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
+      @argument.nil? ? [ Sequel[alias_name][@model.identity].as(column_name) ] : []
     end
 
     private
@@ -40,7 +40,7 @@ class Magma
     end
 
     def column_name
-      :"#{alias_name}_#{@attribute_name}"
+      :"#{alias_name}_#{@model.identity}"
     end
   end
 end

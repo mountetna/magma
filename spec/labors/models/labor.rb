@@ -7,5 +7,6 @@ class Labor < Magma::Model
 
   attribute :number, type: Integer
   attribute :completed, type: TrueClass
+  attribute :year, type: DateTime
   table :prize
 end
