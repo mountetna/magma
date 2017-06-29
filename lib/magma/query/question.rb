@@ -52,7 +52,7 @@ class Magma
 
       def apply query
         query.join(
-          :"#{@table1}___#{@table1_alias}",
+          Sequel.identifier(@table1).as(@table1_alias),
           table1_column => table2_column
         )
       end
@@ -62,11 +62,11 @@ class Magma
       end
 
       def table1_column
-          :"#{@table1_alias}__#{@table1_id}" 
+        Sequel.qualify(@table1_alias, @table1_id)
       end
 
       def table2_column
-          :"#{@table2_alias}__#{@table2_id}"
+        Sequel.qualify(@table2_alias, @table2_id)
       end
 
       def hash
@@ -121,7 +121,7 @@ class Magma
     end
 
     def identity
-      :"#{@start_predicate.alias_name}__#{@model.identity}"
+      Sequel.qualify(@start_predicate.alias_name, @model.identity)
     end
 
     def type

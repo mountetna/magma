@@ -59,7 +59,7 @@ class Magma
     end
 
     def alias_name
-      @alias_name ||= 10.times.map{ (97+rand(26)).chr }.join
+      @alias_name ||= 10.times.map{ (97+rand(26)).chr }.join.to_sym
     end
 
     private
