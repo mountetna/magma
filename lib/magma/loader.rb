@@ -203,6 +203,10 @@ class Magma
 
       update_temp_ids
 
+      reset
+    end
+
+    def reset
       @records = {}
       @validator = Magma::Validator.new
       GC.start
