@@ -30,10 +30,22 @@ describe Magma::Loader do
     expect(Labor.count).to eq(3)
     expect(lion.completed).to eq(true)
   end
+
   it "validates records" do
     loader = Magma::Loader.new
     loader.push_record(Monster, name: "Nemean Lion", species: "Lion")
 
-    expect { loader.dispatch_record_set}.to raise_error(Magma::LoadFailed)
+    expect { loader.dispatch_record_set }.to raise_error(Magma::LoadFailed)
+  end
+
+  it "creates associations" do
+    loader = Magma::Loader.new
+    loader.push_record(Labor, temp_id: loader.temp_id(:lion), name: "Nemean Lion")
+    loader.push_record(Prize, temp_id: loader.temp_id(:hide), labor: loader.temp_id(:lion), name: "hide")
+
+    loader.dispatch_record_set
+    lion = Labor[name: "Nemean Lion"]
+
+    expect(lion.prize.first.name).to eq("hide")
   end
 end

@@ -107,15 +107,6 @@ class Magma
         }.delete_if {|k,v| v.nil? }
       end
 
-      def assoc_models att_names=nil
-        att_names ||= attributes.keys
-        att_names.map do |name|
-          att = attributes[name]
-          next unless att && att.is_a?(Magma::TableAttribute)
-          att.link_model
-        end.flatten.compact
-      end
-
       def schema
         @schema ||= Hash[Magma.instance.db.schema table_name]
       end
