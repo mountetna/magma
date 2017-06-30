@@ -30,6 +30,7 @@ describe Magma::Loader do
     expect(Labor.count).to eq(3)
     expect(lion.completed).to eq(true)
   end
+
   it "validates records" do
     loader = Magma::Loader.new
     loader.push_record(Monster, name: "Nemean Lion", species: "Lion")
