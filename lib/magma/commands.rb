@@ -2,17 +2,17 @@ require 'extlib'
 require 'date'
 
 class Magma
-  def run_command config, cmd = :help, *args
+  def run_command(config, cmd = :help, *args)
     cmd = cmd.to_sym
-    if has_command? cmd
-      all_commands[cmd].setup config
-      all_commands[cmd].execute *args
+    if has_command?(cmd)
+      all_commands[cmd].setup(config)
+      all_commands[cmd].execute(*args)
     else
       all_commands[:help].execute
     end
   end
 
-  def has_command? cmd
+  def has_command?(cmd)
     all_commands[cmd]
   end
 
@@ -26,39 +26,45 @@ class Magma
   end
 
   class Command
+    class << self
+      def usage(desc)
+        define_method :usage do
+          "  #{"%-30s" % name}#{desc}"
+        end
+      end
+    end
+
     def name
       self.class.name.snake_case.split(/::/).last.to_sym
     end
 
+    # To be overridden during inheritance.
     def execute
     end
 
-    def self.usage desc
-      define_method :usage do
-        "  #{"%-30s" % name}#{desc}"
-      end
-    end
-
-    def setup config
-      load_but_dont_check_tables config
+    # To be overridden during inheritance.
+    def setup(config)
+      load_but_dont_check_tables(config)
     end
 
     protected
-    def load_but_dont_check_tables config
-      Magma.instance.configure config
-      Magma.instance.load_models false
+
+    def load_but_dont_check_tables(config)
+      Magma.instance.configure(config)
+      Magma.instance.load_models(false)
     end
 
-    def load_and_check_tables config
-      Magma.instance.configure config
-      Magma.instance.load_models true
+    def load_and_check_tables(config)
+      Magma.instance.configure(config)
+      Magma.instance.load_models(true)
     end
   end
 
   class Help < Magma::Command
-    usage "List this help"
+    usage 'List this help'
+
     def execute
-      puts "Commands:"
+      puts 'Commands:'
       Magma.instance.all_commands.each do |name,cmd|
         puts cmd.usage
       end
@@ -66,10 +72,10 @@ class Magma
   end
 
   class Migrate < Magma::Command
-    usage "Run migrations for the current environment"
+    usage 'Run migrations for the current environment'
     
-    def execute version=nil
-      Sequel.extension :migration
+    def execute(version=nil)
+      Sequel.extension(:migration)
       db = Magma.instance.db
 
       Magma.instance.config(:project_path).split(/\s+/).each do |project_dir|
@@ -84,15 +90,14 @@ class Magma
       end
     end
 
-    def setup config
+    def setup(config)
       Magma.instance.configure(config)
-      Magma.instance.connect(Magma.instance.config :db)
+      Magma.instance.connect(Magma.instance.config(:db))
     end
-
   end
 
   class Plan < Magma::Command
-    usage "Suggest a migration based on the current model attributes"
+    usage 'Suggest a migration based on the current model attributes'
 
     def execute
       puts <<EOT
@@ -106,18 +111,18 @@ EOT
   end
 
   class Timestamp < Magma::Command
-    usage "Generate a current timestamp (for use with 'magma plan')"
+    usage 'Generate a current timestamp (for use with \'Magma plan\')'
 
     def execute
       puts DateTime.now.strftime('%Y%m%d%H%M%S')
     end
 
-    def setup config
+    def setup(config)
     end
   end
 
   class Console < Magma::Command
-    usage "Open a console with a connected magma instance"
+    usage 'Open a console with a connected magma instance.'
 
     def execute
       require 'irb'
@@ -125,20 +130,20 @@ EOT
       IRB.start
     end
 
-    def setup config
-      load_and_check_tables config
+    def setup(config)
+      load_and_check_tables(config)
     end
   end
 
   class Load < Magma::Command
-    usage "Run data loaders on models for current dataset"
+    usage 'Run data loaders on models for current dataset.'
 
-    def execute *args
+    def execute(*args)
       loaders = Magma.instance.find_descendents(Magma::Loader)
 
       if args.empty?
         # List available loaders
-        puts "Available loaders:"
+        puts 'Available loaders:'
         loaders.each do |loader|
           puts "%30s  %s" % [ loader.loader_name, loader.description ]
         end
@@ -159,8 +164,8 @@ EOT
       end
     end
 
-    def setup config
-      load_and_check_tables config
+    def setup(config)
+      load_and_check_tables(config)
     end
   end
 end
