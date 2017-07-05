@@ -11,20 +11,29 @@ class Magma
     end
 
     def extract table, identity
-      table
+      @column_predicates.map do |pred|
+        pred.extract(table,identity)
+      end
+    end
+
+    def join
+      s = @column_predicates.map do |pred|
+        pred.flatten.map(&:join).inject(&:+)
+      end.inject(&:+)
+      s
     end
 
     def select
-      []
+      @column_predicates.map do |pred|
+        pred.flatten.map(&:select).inject(&:+)
+      end.inject(&:+)
     end
 
     private
 
     def get_child
       raise ArgumentError, "Column vector cannot be empty!" if @columns.empty?
-      raise ArgumentError, "Column vector must have column names!" unless @columns.all?{|c| c.is_a?(Array) && c.length == 2}
-      raise ArgumentError, "No duplicate column names!" unless @columns.map(&:first).uniq.length == @columns.length
-      @column_predicates = @columns.map do |column_name, column_query|
+      @column_predicates = @columns.map do |column_query|
         # now, we merely map this to a record predicate. Handy!
         RecordPredicate.new(@model, @alias_name, *column_query)
       end

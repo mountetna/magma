@@ -119,6 +119,8 @@ class Magma
           return Magma::NumberPredicate.new(@model, alias_name, @attribute.name, *@predicates)
         when "DateTime"
           return Magma::DateTimePredicate.new(@model, alias_name, @attribute.name, *@predicates)
+        when "TrueClass"
+          return Magma::BooleanPredicate.new(@model, alias_name, @attribute.name, *@predicates)
         else
           invalid_argument! @attribute.name
         end
