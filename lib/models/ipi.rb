@@ -38,7 +38,7 @@ class IPI
       match_array(
         [
           chain(:sample_name, :rna, /\w+/),
-        /^Control_UHR.Plate\d+$/
+        /^Control_(UHR|Jurkat).Plate\d+$/
         ]
       )
     end
