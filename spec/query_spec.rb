@@ -1,3 +1,4 @@
+require 'pry'
 describe Magma::Server::Update do
   include Rack::Test::Methods
 
@@ -134,5 +135,30 @@ describe Magma::Server::Update do
 
     json = json_body(last_response.body)
     expect(json[:answer].length).to eq(3)
+  end
+
+  it "can return an arrayed result" do
+    hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
+    stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
+
+    poison = create(:prize, labor: hydra, name: "poison", worth: 5)
+    poop = create(:prize, labor: stables, name: "poop", worth: 0)
+
+    query(
+      [ 'labor', '::all', 
+        [
+          [ 'name', [ '::identifier' ] ],
+          [ 'number', [ 'number' ] ],
+          [ 'completed', [ 'completed' ] ],
+          [ 'prize', [ 'prize', '::first', 'name' ] ],
+          [ 'worth', [ 'prize', '::first', 'worth' ] ],
+        ]
+      ]
+    )
+
+    json = JSON.parse(last_response.body)
+    puts json["errors"] if json["errors"]
+    binding.pry
+    expect(json["answer"].length).to eq(2)
   end
 end

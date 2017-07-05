@@ -54,15 +54,16 @@ describe Magma::Server::Retrieve do
 
   it 'can retrieve a TSV of data from the endpoint' do
     labor_list = create_list(:labor, 3)
+    required_atts = ["name", "number", "completed"]
     retrieve(
       model_name: 'labor',
       record_names: 'all',
-      attribute_names: 'all',
+      attribute_names: required_atts,
       format: 'tsv',
       project_name: 'labors'
     )
-    # strong assumption about how columns should be ordered, may
-    # be inappropriate for this test - unavoidable?
-    expect(last_response.body.split(/\n/).length).to eq(4)
+    header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+    expect(header).to eq(required_atts)
   end
 end

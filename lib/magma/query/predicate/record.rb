@@ -92,6 +92,8 @@ class Magma
         return terminal(TrueClass)
       elsif @argument == "::metrics"
         return Magma::MetricsPredicate.new(@model, alias_name, *@predicates)
+      elsif @argument.is_a?(Array)
+        return Magma::VectorPredicate.new(@model, alias_name, @argument, *@predicates)
       else
         attribute_name = @argument == "::identifier" ? @model.identity : @argument
         @attribute = validate_attribute(attribute_name)
@@ -118,7 +120,7 @@ class Magma
         when "DateTime"
           return Magma::DateTimePredicate.new(@model, alias_name, @attribute.name, *@predicates)
         else
-          invalid_argument! attribute_name
+          invalid_argument! @attribute.name
         end
       end
     end
