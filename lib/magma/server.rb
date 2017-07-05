@@ -17,13 +17,15 @@ class Magma
     end
 
     def initialize config, logger
-      Magma.instance.configure config
+      Magma.instance.tap do |magma|
+        magma.configure config
 
-      Magma.instance.load_models
+        magma.load_models
 
-      Magma.instance.persist_connection
+        magma.persist_connection
 
-      Magma.instance.db.loggers << logger
+        magma.db.loggers << logger
+      end
     end
 
     def call(env)
@@ -47,6 +49,10 @@ class Magma
 
     route '/query' do
       Magma::Server::Query.new(@request).response
+    end
+
+    route '/' do
+      [ 200, {}, "::magma::" ]
     end
 
     private

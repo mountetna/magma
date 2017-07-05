@@ -114,7 +114,6 @@ class Magma
             end
           end
         end
-        puts "Retrieving #{model.name} took #{Time.now - time} seconds"
       end
 
       private
@@ -125,7 +124,6 @@ class Magma
            @record_names.all?{|name| name.is_a?(Fixnum)}) || 
           @record_names == "all"
       end
-
 
       def get_attribute? att, model
         return false if @collapse_tables && att.is_a?(Magma::TableAttribute)

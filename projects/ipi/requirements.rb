@@ -16,5 +16,7 @@ require_relative 'models/mfi'
 require_relative 'models/stain_panel'
 require_relative 'models/channel'
 
+require_relative 'metrics/sample_metrics'
+
 require_relative 'loaders/flow_jo'
 require_relative 'loaders/clinical_colorectal'

@@ -107,15 +107,6 @@ class Magma
         }.delete_if {|k,v| v.nil? }
       end
 
-      def assoc_models att_names=nil
-        att_names ||= attributes.keys
-        att_names.map do |name|
-          att = attributes[name]
-          next unless att && att.is_a?(Magma::TableAttribute)
-          att.link_model
-        end.flatten.compact
-      end
-
       def schema
         @schema ||= Hash[Magma.instance.db.schema table_name]
       end
@@ -152,20 +143,6 @@ class Magma
         obj = find_or_create(*args)
         yield obj if block_given?
         obj.save if obj
-      end
-
-      # This method makes a query which uses eager loading to pull all the data
-      # associated with a particular record
-      def retrieve identifier = nil, attributes = nil
-        search = identifier ? self.where(identity => identifier) : self.dataset
-
-        eager_atts = self.attributes.values.select do |att|
-          block_given? ? yield(att) : true
-        end.map(&:eager).compact
-
-        search = search.eager(eager_atts) unless eager_atts.empty?
-
-        search
       end
 
       def metrics

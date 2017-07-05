@@ -1,9 +1,6 @@
 require_relative '../lib/magma'
 require 'yaml'
 
-db_config = YAML.load File.read("../../config.yml")
-Magma.instance.connect db_config[:database]
-
 describe Magma::Attribute do
   describe ".json_template" do
     it "returns a json template describing the attribute" do

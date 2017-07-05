@@ -13,3 +13,6 @@ gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'fog'
 gem 'spreadsheet'
+gem 'simplecov'
+gem 'rack-test', require: "rack/test"
+gem 'factory_girl'
