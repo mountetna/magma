@@ -5,8 +5,6 @@ require_relative 'magma/migration'
 require_relative 'magma/attribute'
 require_relative 'magma/model'
 require_relative 'magma/revision'
-require_relative 'magma/document'
-require_relative 'magma/image'
 require_relative 'magma/commands'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
@@ -15,8 +13,8 @@ require 'singleton'
 class Magma
   include Singleton
   attr_reader :db
-  def connect config
-    @db = Sequel.connect( config )
+  def connect db_config
+    @db = Sequel.connect( db_config )
   end
 
   def get_model name
@@ -38,12 +36,29 @@ class Magma
   end
 
   def config type
-    @config[type]
+    @config[environment][type]
+  end
+
+  def environment
+    (ENV["MAGMA_ENV"] || :development).to_sym
   end
 
   def load_models check_tables=true
-    connect(config :database)
-    require_relative 'models'
+    connect(config :db)
+    if config(:storage)
+      require_relative 'magma/document'
+      require_relative 'magma/image'
+    end
+    config(:project_path).split(/\s+/).each do |project_dir|
+      base_file = File.join(File.dirname(__FILE__), '..', project_dir, 'requirements.rb')
+      if File.exists?(base_file)
+        require base_file 
+      else
+        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'models', '**', '*.rb'), &method(:require))
+        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'loaders', '**', '*.rb'), &method(:require))
+        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'metrics', '**', '*.rb'), &method(:require))
+      end
+    end
     if check_tables
       magma_models.each do |model|
         raise "Missing table for #{model}." unless model.has_table?

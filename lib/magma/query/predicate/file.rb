@@ -2,7 +2,7 @@ class Magma
   class FilePredicate < Magma::ColumnPredicate
 
     def select
-      [ :"#{column_name}___#{column_name}" ]
+      [ Sequel[alias_name][@attribute_name].as(column_name) ]
     end
 
     private

@@ -1,6 +1,11 @@
 /.bundle
+/public
+/uploads
+/coverage
 /tmp
+/test
 /log/*
+/spec/examples.txt
 database.yml
 config.yml
 *.gem

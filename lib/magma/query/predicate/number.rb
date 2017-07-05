@@ -5,15 +5,17 @@ class Magma
       when "::<=", "::<", "::>", "::>=", "::="
         return [
           Magma::Question::Constraint.new(
-            "? #{@argument.sub(/::/,'')} ?",
-            :"#{alias_name}__#{@attribute_name}",
-            @operand
+            Sequel.lit(
+              "? #{@argument.sub(/::/,'')} ?",
+              Sequel.qualify(alias_name, @attribute_name),
+              @operand
+            )
           )
         ]
       when "::in"
         return [
           Magma::Question::Constraint.new(
-            :"#{alias_name}__#{@attribute_name}" => @operand
+            Sequel.qualify(alias_name, @attribute_name) => @operand
           )
         ]
       end

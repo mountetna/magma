@@ -16,13 +16,13 @@ class Magma
     end
 
     def select
-      @argument.nil? ? [ :"#{column_name}___#{column_name}" ] : []
+      @argument.nil? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
     end
 
     protected
 
     def column_name
-      :"#{alias_name}__#{@attribute_name}"
+      :"#{alias_name}_#{@attribute_name}"
     end
   end
 end
