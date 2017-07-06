@@ -7,7 +7,7 @@ require 'rack/test'
 SimpleCov.start
 
 ENV['MAGMA_ENV'] = 'test'
-OUTER_APP = Rack::Builder.parse_file("config.ru").first
+OUTER_APP = Rack::Builder.parse_file('config.ru').first
 
 def load_magma
   db_config = YAML.load( File.read(File.expand_path("../config.yml", File.dirname(__FILE__))))
@@ -132,22 +132,22 @@ RSpec.configure do |config|
 end
 
 FactoryGirl.define do
-  factory :labor do
+  factory :labor, class: Labors::Labor do
     to_create(&:save)
     sequence(:name) { |n| "labor#{n}" }
-    sequence(:number) {|n| n+1 }
-    sequence(:completed) {|n| [ 2, 5 ].include?(number) ? false : true }
+    sequence(:number) { |n| n+1 }
+    sequence(:completed) { |n| [2, 5].include?(number) ? false : true }
   end
 
-  factory :monster do
+  factory :monster, class: Labors::Monster do
     to_create(&:save)
   end
 
-  factory :prize do
+  factory :prize, class: Labors::Prize do
     to_create(&:save)
   end
 
-  factory :project do
+  factory :project, class: Labors::Project do
     to_create(&:save)
   end
 end
