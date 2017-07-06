@@ -1,6 +1,6 @@
 class Magma
   class ImageAttribute < Attribute
-    def initialize name, model, opts
+    def initialize(project, name, model, opts)
       super
       @type = String
     end
@@ -9,12 +9,12 @@ class Magma
       nil
     end
 
-    def update record, new_value
+    def update(record, new_value)
       super
-      record.modified! name
+      record.modified!(name)
     end
 
-    def json_for record
+    def json_for(record)
       document = record.send(@name)
       if document.current_path && document.url
         {
@@ -27,7 +27,7 @@ class Magma
       end
     end
     
-    def txt_for record
+    def txt_for(record)
       document = json_for(record)
       document ? document[:url] : nil
     end
