@@ -1,4 +1,3 @@
-require 'pry'
 require_relative 'controller'
 
 # In general, you Retrieve with a request like this:
@@ -146,7 +145,6 @@ class Magma
         # 2 is probably expensive.
         # 1 requires composition here, which is probably mostly fine except for
         # a few attribute classes like tables and collections
-        binding.pry
         records = Magma::Question.new(query).answer.map do |name, row|
           Hash[ attribute_names.zip(row) ].update( model.identity => name )
         end
