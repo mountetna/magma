@@ -1,20 +1,22 @@
 class Magma
-
   class Migration
-    def self.create model
-      if Magma.instance.db.table_exists? model.table_name
-        return Magma::UpdateMigration.new(model)
-      else
-        return Magma::CreateMigration.new(model)
+    class << self
+      def create(model)
+        puts model.table_name
+        if Magma.instance.db.table_exists?(model.table_name)
+          return Magma::UpdateMigration.new(model)
+        else
+          return Magma::CreateMigration.new(model)
+        end
       end
     end
 
-    def initialize model
+    def initialize(model)
       @model = model
       @changes = {}
     end
 
-    def change key, lines
+    def change(key, lines)
       @changes[key] ||= []
       @changes[key].concat lines
     end
@@ -40,10 +42,10 @@ class Magma
 
   end
   class CreateMigration < Migration
-    def initialize model
+    def initialize(model)
       super
-      change("create_table(:#{model.table_name})",
-        [ "primary_key :id" ] + new_attributes)
+      tlb_nm = "create_table(:#{model.table_name})"
+      change(tlb_nm, ['primary_key :id']+new_attributes)
     end
 
     def new_attributes
