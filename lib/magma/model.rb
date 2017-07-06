@@ -117,32 +117,73 @@ class Magma
       end
 
       # This function is too bulky, it needs to be refactored into smaller
-      # pieces and inlcude comments.
+      # pieces.
       def multi_update(records:, src_id: identity, dest_id: identity)
+
         return if records.empty?
-        update_columns = records.first.keys - [ src_id ]
+
+        # Get the name of the columns to update for the record.
+        update_columns = records.first.keys - [src_id]
         return if update_columns.empty?
+
+        # Get a handle to the DB.
         db = Magma.instance.db
+
         db.transaction do
-          update_table_name = :"bulk_update_#{table_name}"
-          create_bulk_update = "CREATE TEMP TABLE #{update_table_name} ON COMMIT DROP AS SELECT * FROM #{table_name} WHERE 1=0;"
-          add_src_id_column = "ALTER TABLE #{update_table_name} ADD COLUMN #{src_id} integer;"
-          update_main_table = <<-EOT
-                  UPDATE #{table_name} AS dest
-                  SET #{update_columns.map do |column| "#{column}=src.#{column}" end.join(", ")}
-                  FROM #{update_table_name} AS src
-                  WHERE dest.#{dest_id} = src.#{src_id};
+
+          # This is the name of the temporary table into which we drop all of
+          # our update data into. We have to remove the double underscore since
+          # it is interpeted by Sequel as namespacing/schema.
+          tmp_tbl_nm = table_name.to_s.sub!('__', '_')
+          tmp_tbl_nm = :"bulk_update_#{tmp_tbl_nm}"
+
+          # This is the name of our table. We convert the '__' to '.' so we can
+          # properly namespace/schema the appropriate table. (A Sequel model 
+          # corresponds to a table).
+          tbl_nm = table_name.to_s.sub!('__', '.').to_sym
+
+          # Create a temporary database and drop when done, also copy the source
+          # table structure (by Sequel model) onto the temp table.
+          tmp_tbl_qry = <<-EOT
+            CREATE TEMP TABLE #{tmp_tbl_nm}
+            ON COMMIT DROP
+            AS SELECT * FROM #{tbl_nm} WHERE 1=0;
           EOT
 
-          puts create_bulk_update
-          db.run(create_bulk_update)
+          puts tmp_tbl_qry
+          db.run(tmp_tbl_qry)
+
+          # In the event of foreign keys we create another column in our
+          # temporary table for matching later.
+          tmp_tbl_qry = <<-EOT
+            ALTER TABLE #{tmp_tbl_nm}
+            ADD COLUMN #{src_id} integer;
+          EOT
+
           unless columns.include?(src_id)
-            puts add_src_id_column
-            db.run(add_src_id_column)
+            puts tmp_tbl_qry
+            db.run(tmp_tbl_qry)
           end
-          db[update_table_name].multi_insert records
-          puts update_main_table
-          db.run(update_main_table)
+
+          # Insert the records into the temporary DB.
+          db[tmp_tbl_nm].multi_insert(records)
+
+          # Generate the column name mapping from the temporary database to the 
+          # permanent one.
+          column_alias = update_columns.map do |column| 
+            "#{column}=src.#{column}"
+          end.join(', ')
+
+          # Move the data from the temporary database into the permanent one.
+          # This should also destroy the temporary database.
+          tbl_qry = <<-EOT
+            UPDATE #{tbl_nm} AS dest
+            SET #{column_alias}
+            FROM #{tmp_tbl_nm} AS src
+            WHERE dest.#{dest_id} = src.#{src_id};
+          EOT
+
+          db.run(tbl_qry)
         end
       end
 
