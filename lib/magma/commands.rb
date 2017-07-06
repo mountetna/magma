@@ -72,7 +72,7 @@ class Magma
   end
 
   class Migrate < Magma::Command
-    usage 'Run migrations for the current environment'
+    usage 'Run migrations for the current environment.'
     
     def execute(version=nil)
       Sequel.extension(:migration)
@@ -84,7 +84,7 @@ class Magma
           puts "Migrating to version #{version}"
           Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table, target: version.to_i)
         else
-          puts "Migrating to latest"
+          puts 'Migrating to latest'
           Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table)
         end
       end
@@ -96,8 +96,17 @@ class Magma
     end
   end
 
+  # When building migrations from scratch this command does not output
+  # an order that respects foreign key constraints. i.e. The order in which the
+  # migration creates tries to create the tables is out of whack and causes 
+  # error messages that tables are required but do not exist. Most of the time 
+  # this is not an issue (because we are only doing slight modifications), but
+  # when we do a new migration of an established database errors do arise.
+  # Presently we are manually reorgaizing the initial migration (putting the
+  # the table creation in the correct order), but we should add logic here so
+  # we do not have to in the future.
   class Plan < Magma::Command
-    usage 'Suggest a migration based on the current model attributes'
+    usage 'Suggest a migration based on the current model attributes.'
 
     def execute
       puts <<EOT
@@ -111,7 +120,7 @@ EOT
   end
 
   class Timestamp < Magma::Command
-    usage 'Generate a current timestamp (for use with \'Magma plan\')'
+    usage 'Generate a current timestamp (for use with \'Magma plan\').'
 
     def execute
       puts DateTime.now.strftime('%Y%m%d%H%M%S')

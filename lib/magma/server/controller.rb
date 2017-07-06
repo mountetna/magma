@@ -1,12 +1,14 @@
 class Magma
   class Server
     class Controller
-      def initialize request
+      def initialize(request)
         @request = request
         @response = Rack::Response.new
         @params = @request.env['rack.request.params']
+        @user = @request['user_info']
         @errors = []
         @logger = @request.env['rack.errors']
+        @project_name = @params[:project_name]
       end
 
       def log(line)
@@ -14,18 +16,18 @@ class Magma
       end
 
       def response
-        [ 501, {}, [ "This controller is not implemented." ] ]
+        [501, {}, ['This controller is not implemented.']]
       end
 
       private
 
-      def success content_type, msg
+      def success(content_type, msg)
         @response['Content-Type'] = content_type
         @response.write msg
         @response.finish
       end
 
-      def failure status, msg
+      def failure(status, msg)
         @response.status = status
         @response.write msg.to_json
         @response.finish
@@ -35,7 +37,7 @@ class Magma
         @errors.empty?
       end
 
-      def error msg
+      def error(msg)
         if msg.is_a?(Array)
           @errors.concat msg
         else
