@@ -50,10 +50,10 @@ class Magma
         @table2_id = t2_id.to_sym
       end
 
-      def apply(query)
-        query.join(
-          Sequel.as(@table1, @table1_alias),
-          {table1_column=> table2_column}
+      def apply query
+        query.left_outer_join(
+          Sequel.identifier(@table1).as(@table1_alias),
+          table1_column => table2_column
         )
       end
 

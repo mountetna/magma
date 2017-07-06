@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'controller'
 
 # In general, you Retrieve with a request like this:
@@ -47,19 +48,18 @@ class Magma
       end
 
       def response
-        # Check the input.
-        check_params
-        return failure(422, errors: @errors) unless success?
+        validate
 
-        # Run the db query.
-        perform
-
-        # Format the output.
-        case @format
-        when 'tsv'
-          return success('text/tsv', @payload.to_tsv)
+        if success?
+          perform
+          case @format
+          when "tsv"
+            success 'text/tsv', @payload.to_tsv
+          else
+            success 'application/json', @payload.to_hash.to_json
+          end
         else
-          return success('application/json', @payload.to_hash.to_json)
+          return failure(422, errors: @errors) unless success?
         end
       end
 
@@ -78,8 +78,18 @@ class Magma
         end
       end
 
+      private
+
+      def validate
+        return error('No model name given') if @model_name.nil?
+        return error('No record names given') if @record_names.nil?
+        return error('Improperly formed record names') unless valid_record_names?
+        return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
+        return error('Cannot retrieve by record name for all models') if @model_name == "all" && @record_names.is_a?(Array)
+        return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
+      end
+
       def perform
-        # Set up the return object.
         @payload = Magma::Payload.new
 
         # Pull the data.
@@ -98,55 +108,65 @@ class Magma
 
       def retrieve_model(model)
         time = Time.now
-
         # Extract the attributes from the model.
-        @attributes = model.attributes.values.select do |att|
+        attributes = model.attributes.values.select do |att|
           get_attribute?(att,model)
         end
+        attribute_names = attributes.map(&:name)
 
-        # Extract the attributes that need to be 'eager'-ly loaded and then
-        # eagerly load the attributes referenced in a separate db table.
-        records = model.eager(@attributes.map(&:eager).compact)
+        @payload.add_model(model, attribute_names)
 
-        # If there are multiple records being requested then extract the records
-        # that match.
+        return if attributes.empty?
+
+        query = [ model.model_name.to_s ]
         if @record_names.is_a?(Array)
-          records = records.where({model.identity=> @record_names})
+          query.push [ '::identifier', '::in', @record_names ]
         end
-
-        # TODO: Replace this with a pure-SQL version that returns a hash for 
-        # this record.
-        #
-        # Pull the records.
-        records = records.all
-
-        @payload.add_model(model, @attributes.map(&:name))
-        @payload.add_records( model, records)
-
-        pull_table_data(records)
-
-        puts("Retrieving #{model.name} took #{Time.now - time} seconds")
-      end
-
-      private
-
-      # Add the records for any table attributes.
-      def pull_table_data(records)
-        if !@collapse_tables
-          @attributes.each do |att|
-            next unless att.is_a?(Magma::TableAttribute)
-
-            link_model = att.link_model
-            link_model_attribute_names = link_model.attributes.select do |att_name, att|
-              att.shown? && !att.is_a?(Magma::TableAttribute)
-            end.map(&:first)
-
-            @payload.add_model(link_model, link_model_attribute_names)
-            records.each do |record|
-              @payload.add_records(link_model, record.send(att.name))
+        query.push('::all')
+        query.push(
+          attributes.map do |att|
+            case att
+            when Magma::CollectionAttribute, Magma::TableAttribute
+              [ att.name.to_s, '::all', '::identifier' ]
+            when Magma::ForeignKeyAttribute, Magma::ChildAttribute
+              [ att.name.to_s, '::identifier' ]
+            else
+              [ att.name.to_s ]
             end
           end
+        )
+
+        # These records are not Sequel instances as the payload
+        # expects - the payload to_hash method will fall apart here.
+        # Our options are:
+        # 1) compose the record here as a hash and merely make the payload a
+        # thin shell
+        # 2) Wrap the record in a class that quacks like a Sequel instance
+        #
+        # 2 is probably expensive.
+        # 1 requires composition here, which is probably mostly fine except for
+        # a few attribute classes like tables and collections
+        binding.pry
+        records = Magma::Question.new(query).answer.map do |name, row|
+          Hash[ attribute_names.zip(row) ].update( model.identity => name )
         end
+
+        puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
+
+        @payload.add_records( model, records )
+
+        # add the records for any table attributes
+        # This requires a secondary query.
+        if !@collapse_tables
+          attributes.each do |att|
+            next unless att.is_a?(Magma::TableAttribute)
+
+            retrieve_table_attribute(model, att)
+          end
+        end
+      end
+
+      def retrieve_table_attribute(model, attribute)
       end
 
       def valid_record_names?

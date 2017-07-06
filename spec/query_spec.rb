@@ -149,7 +149,7 @@ describe Magma::Server::Update do
         [
           [ 'number' ],
           [ 'completed' ],
-          [ 'prize', '::all', 'name' ],
+          [ 'prize', '::first', 'name' ],
           [ 'prize', '::first', 'worth' ],
         ]
       ]
@@ -157,6 +157,10 @@ describe Magma::Server::Update do
 
     json = JSON.parse(last_response.body)
     puts json["errors"] if json["errors"]
-    expect(json["answer"]).to eq([["Augean Stables", [5, false, "poop", 0]], ["Lernean Hydra", [2, false, "poison", 5]]])
+    expect(json["answer"]).to eq([
+      ["Augean Stables", [5, false, "poop", 0]],
+      ["Lernean Hydra", [2, false, "poison", 5]],
+      ["Nemean Lion", [1, true, nil, nil]]
+    ])
   end
 end
