@@ -33,72 +33,105 @@ require_relative 'controller'
 class Magma
   class Server
     class Retrieve < Magma::Server::Controller
-      def response
-        perform
+      def initialize(request)
+        super(request)
+        @model_name =  @params[:model_name]
+        @record_names = @params[:record_names]
+        @collapse_tables =@params[:collapse_tables] || @params[:format] == 'tsv'
+        @format = @params[:format] || 'json'
 
-        if success?
-          case @format
-          when "tsv"
-            success 'text/tsv', @payload.to_tsv
-          else
-            success 'application/json', @payload.to_hash.to_json
-          end
-        else
-          failure(422, errors: @errors)
+        @attribute_names = @params[:attribute_names]
+        if @params[:attribute_names].is_a?(Array)
+          @attribute_names = @params[:attribute_names].map(&:to_sym)
         end
       end
 
-      def initialize request
-        super request
+      def response
+        # Check the input.
+        check_params
+        failure(422, errors: @errors) unless success?
 
-        @model_name =  @params[:model_name]
-        @record_names = @params[:record_names]
-        @attribute_names = @params[:attribute_names].is_a?(Array) ? @params[:attribute_names].map(&:to_sym) : @params[:attribute_names]
-        @collapse_tables =  @params[:collapse_tables] || @params[:format] == "tsv"
-        @format = @params[:format] || "json"
+        # Run the db query.
+        perform
+
+        # Format the output.
+        case @format
+        when 'tsv'
+          success('text/tsv', @payload.to_tsv)
+        else
+          success('application/json', @payload.to_hash.to_json)
+        end
+      end
+
+      def check_params
+        error('No model name given') if @model_name.nil?
+        error('No record names given') if @record_names.nil?
+        error('Improperly formed record names') unless valid_record_names?
+
+        unless(@attribute_names.is_a?(Array) || @attribute_names == 'all' ||
+          @attribute_names == 'identifier')
+          error('Improperly formed attribute names') 
+        end
+
+        if @model_name == 'all' && @format == 'tsv'
+          error('Cannot retrieve several models in tsv format') 
+        end
       end
 
       def perform
-        return error('No model name given') if @model_name.nil?
-        return error('No record names given') if @record_names.nil?
-        return error('Improperly formed record names') unless valid_record_names?
-        return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
-        return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
-
+        # Set up the return object.
         @payload = Magma::Payload.new
 
-        if @model_name == "all"
+        # Pull the data.
+        if @model_name == 'all'
           Magma.instance.magma_models.each do |model|
-            next if @attribute_names == "identifier" && !model.has_identifier?
+            next if @attribute_names == 'identifier' && !model.has_identifier?
             retrieve_model(model)
           end
         else
-          retrieve_model(Magma.instance.get_model @model_name)
+
+          # The '@project_name' is set in Magma::Server::Controller and should
+          # have been passed in via the client as a param.
+          retrieve_model(Magma.instance.get_model(project_name, @model_name))
         end
       end
 
-      def retrieve_model model
+      def retrieve_model(model)
         time = Time.now
+
+        # Extract the attributes from the model.
         @attributes = model.attributes.values.select do |att|
           get_attribute?(att,model)
         end
 
+        # Extract the attributes that need to be 'eager'-ly loaded and then
+        # eagerly load the attributes referenced in a separate db table.
         records = model.eager(@attributes.map(&:eager).compact)
 
+        # If there are multiple records being requested then extract the records
+        # that match.
         if @record_names.is_a?(Array)
-          records = records.where(
-            model.identity => @record_names
-          )
+          records = records.where({model.identity=> @record_names})
         end
 
-        # later: replace this with a pure-SQL version
-        # that returns a hash for this record
+        # TODO: Replace this with a pure-SQL version that returns a hash for 
+        # this record.
+        #
+        # Pull the records.
         records = records.all
 
         @payload.add_model(model, @attributes.map(&:name))
         @payload.add_records( model, records)
 
-        # add the records for any table attributes
+        pull_table_data(records)
+
+        puts("Retrieving #{model.name} took #{Time.now - time} seconds")
+      end
+
+      private
+
+      # Add the records for any table attributes.
+      def pull_table_data(records)
         if !@collapse_tables
           @attributes.each do |att|
             next unless att.is_a?(Magma::TableAttribute)
@@ -116,8 +149,6 @@ class Magma
         end
       end
 
-      private
-
       def valid_record_names?
         @record_names.is_a?(Array) && 
           (@record_names.all?{|name| name.is_a?(String)} ||
@@ -125,7 +156,7 @@ class Magma
           @record_names == "all"
       end
 
-      def get_attribute? att, model
+      def get_attribute?(att, model)
         return false if @collapse_tables && att.is_a?(Magma::TableAttribute)
         @attribute_names == "all" ||
           (@attribute_names == "identifier" && model.identity == att.name) ||
