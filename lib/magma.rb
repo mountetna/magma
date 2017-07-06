@@ -39,7 +39,7 @@ class Magma
   end
 
   def magma_models
-    @magma_models ||= find_descendents Magma::Model
+    @magma_models ||= find_descendents(Magma::Model)
   end
 
   def configure(opts)
