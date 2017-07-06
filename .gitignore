@@ -10,3 +10,5 @@ database.yml
 config.yml
 *.gem
 *.swp
+
+/projects/ipi
