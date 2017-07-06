@@ -1,12 +1,14 @@
-class Labor < Magma::Model
-  parent :project
+module Labors
+  class Labor < Magma::Model
+    parent :project
 
-  identifier :name, type: String
+    identifier :name, type: String
 
-  child :monster
+    child :monster
 
-  attribute :number, type: Integer
-  attribute :completed, type: TrueClass
-  attribute :year, type: DateTime
-  table :prize
+    attribute :number, type: Integer
+    attribute :completed, type: TrueClass
+    attribute :year, type: DateTime
+    table :prize
+  end
 end

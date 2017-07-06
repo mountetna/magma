@@ -1,6 +1,8 @@
-class Prize < Magma::Model
-  parent :labor
+module Labors
+  class Prize < Magma::Model
+    parent :labor
 
-  attribute :name, type: String
-  attribute :worth, type: Integer
+    attribute :name, type: String
+    attribute :worth, type: Integer
+  end
 end
