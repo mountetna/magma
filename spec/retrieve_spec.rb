@@ -1,3 +1,4 @@
+require 'pry'
 describe Magma::Server::Retrieve do
   include Rack::Test::Methods
 
@@ -34,7 +35,17 @@ describe Magma::Server::Retrieve do
     expect(last_response).to(be_ok)
   end
 
-  it 'retrieves records by name' do
+  it "complains if there are record names for all models" do
+    retrieve(
+      model_name: "all",
+      record_names: [ "record1", "record2" ],
+      attribute_names: []
+    )
+
+    expect(last_response.status).to eq(422)
+  end
+
+  it "retrieves records by name" do
     labors = create_list(:labor,3)
 
     names = labors.map(&:name).map(&:to_sym)
