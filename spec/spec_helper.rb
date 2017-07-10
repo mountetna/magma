@@ -152,16 +152,10 @@ FactoryGirl.define do
   end
 end
 
-def fixture name
-  File.join(File.dirname(__FILE__),"fixtures/#{name}.txt")
+def fixture(name)
+  File.join(File.dirname(__FILE__), "fixtures/#{name}.txt")
 end
 
-def json_post endpoint, hash
-  post(
-    "/#{endpoint}",
-    hash.to_json,
-    {
-      'CONTENT_TYPE' => 'application/json'
-    }
-  )
+def json_post(endpoint, hash)
+  post("/#{endpoint}", hash.to_json, {'CONTENT_TYPE'=> 'application/json'})
 end
