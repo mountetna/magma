@@ -23,13 +23,13 @@ class Magma
 
       def success(content_type, msg)
         @response['Content-Type'] = content_type
-        @response.write msg
+        @response.write(msg)
         @response.finish
       end
 
       def failure(status, msg)
         @response.status = status
-        @response.write msg.to_json
+        @response.write(msg.to_json)
         @response.finish
       end
 
@@ -39,9 +39,9 @@ class Magma
 
       def error(msg)
         if msg.is_a?(Array)
-          @errors.concat msg
+          @errors.concat(msg)
         else
-          @errors.push msg
+          @errors.push(msg)
         end
       end
     end
