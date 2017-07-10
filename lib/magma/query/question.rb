@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'predicate'
 
 # A query for a piece of data. Each question is a path through the data
@@ -42,7 +43,7 @@ require_relative 'predicate'
 class Magma
   class Question
     class Join
-      def initialize t1, t1_alias, t1_id, t2, t2_alias, t2_id
+      def initialize(t1, t1_alias, t1_id, t2, t2_alias, t2_id)
         @table1 = t1.to_sym
         @table1_alias = t1_alias.to_sym
         @table1_id = t1_id.to_sym
@@ -50,15 +51,15 @@ class Magma
         @table2_id = t2_id.to_sym
       end
 
-      def apply query
+      def apply(query)
         query.join(
-          Sequel.identifier(@table1).as(@table1_alias),
-          table1_column => table2_column
+          Sequel.as(@table1, @table1_alias),
+          {table1_column=> table2_column}
         )
       end
 
       def to_s
-        { table1_column => table2_column }.to_s
+        {table1_column=> table2_column}.to_s
       end
 
       def table1_column
@@ -73,17 +74,19 @@ class Magma
         table1_column.hash + table2_column.hash
       end
 
-      def eql? other
+      def eql?(other)
         table1_column == other.table1_column && table2_column == other.table2_column
       end
     end
+
     class Constraint
       attr_reader :conditions
-      def initialize *args
+
+      def initialize(*args)
         @conditions = args
       end
 
-      def apply query
+      def apply(query)
         query.where(*@conditions)
       end
 
@@ -95,13 +98,14 @@ class Magma
         @conditions.hash
       end
 
-      def eql? other
+      def eql?(other)
         @conditions == other.conditions
       end
     end
 
-    def initialize predicates, options = {}
-      @start_predicate = ModelPredicate.new(*predicates)
+    def initialize(project_name, predicates, options = {})
+      model = Magma.instance.get_model(project_name, predicates.shift)
+      @start_predicate = ModelPredicate.new(model, *predicates)
       @model = @start_predicate.model
       @options = options
     end
@@ -131,14 +135,17 @@ class Magma
     end
 
     def to_sql
+
       query = @model.from(
         Sequel.as(@model.table_name, @start_predicate.alias_name)
       ).order(@start_predicate.identity)
 
+      # Apply joins to the query. 
       predicate_collect(:join).uniq.each do |join|
         query = join.apply(query)
       end
 
+      # Apply the contraints to the query. 
       predicate_collect(:constraint).uniq.each do |constraint|
         query = constraint.apply(query)
       end
@@ -151,17 +158,15 @@ class Magma
     end
 
     def to_table
-      Magma.instance.db[
-        to_sql
-      ].all
+      Magma.instance.db[to_sql].all
     end
+
     private
 
-    def predicate_collect type
+    # This function will loop and apply 'joins', 'constraints' and 'selects' to
+    # the sql query being built up.
+    def predicate_collect(type)
       predicates.map(&type).inject(&:+) || []
     end
-
-
   end
 end
-
