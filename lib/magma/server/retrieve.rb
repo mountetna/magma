@@ -49,7 +49,7 @@ class Magma
       def response
         # Check the input.
         check_params
-        failure(422, errors: @errors) unless success?
+        return failure(422, errors: @errors) unless success?
 
         # Run the db query.
         perform
@@ -57,9 +57,9 @@ class Magma
         # Format the output.
         case @format
         when 'tsv'
-          success('text/tsv', @payload.to_tsv)
+          return success('text/tsv', @payload.to_tsv)
         else
-          success('application/json', @payload.to_hash.to_json)
+          return success('application/json', @payload.to_hash.to_json)
         end
       end
 
@@ -92,7 +92,7 @@ class Magma
 
           # The '@project_name' is set in Magma::Server::Controller and should
           # have been passed in via the client as a param.
-          retrieve_model(Magma.instance.get_model(project_name, @model_name))
+          retrieve_model(Magma.instance.get_model(@project_name, @model_name))
         end
       end
 
