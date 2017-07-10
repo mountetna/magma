@@ -8,22 +8,20 @@ require_relative '../magma/server/update'
 class Magma
   class Server
     class << self
-      def route path, &block
+      attr_reader :routes
+
+      def route(path, &block)
         @routes ||= {}
 
         @routes[path] = block
       end
-      attr_reader :routes
     end
 
-    def initialize config, logger
+    def initialize(config, logger)
       Magma.instance.tap do |magma|
-        magma.configure config
-
+        magma.configure(config)
         magma.load_models
-
         magma.persist_connection
-
         magma.db.loggers << logger
       end
     end
@@ -35,11 +33,11 @@ class Magma
         return instance_eval(&self.class.routes[@request.path])
       end
 
-      [ 404, {}, ["There is no such path #{@request.path}"] ]
+      [404, {}, ["There is no such path #{@request.path}"]]
     end
 
+    # Connect to the database and get some data.
     route '/retrieve' do
-      # Connect to the database and get some data
       Magma::Server::Retrieve.new(@request).response
     end
 
@@ -52,9 +50,7 @@ class Magma
     end
 
     route '/' do
-      [ 200, {}, "::magma::" ]
+      [200, {}, '::magma::']
     end
-
-    private
   end
 end

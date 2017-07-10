@@ -90,7 +90,7 @@ class Magma
       end
 
       def has_table?
-        Magma.instance.db.table_exists? table_name
+        Magma.instance.db.table_exists?(table_name)
       end
 
       def migration
@@ -113,7 +113,7 @@ class Magma
       end
 
       def schema
-        @schema ||= Hash[Magma.instance.db.schema table_name]
+        @schema ||= Hash[Magma.instance.db.schema(table_name)]
       end
 
       # This function is too bulky, it needs to be refactored into smaller
