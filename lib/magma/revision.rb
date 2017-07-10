@@ -1,8 +1,8 @@
 class Magma
   class Revision
     attr_reader :model, :record
-    def initialize(revised_document, model_name, record_name, validator)
-      @model = Magma.instance.get_model model_name
+    def initialize(project_name, model_name, record_name, revised_document, validator)
+      @model = Magma.instance.get_model(project_name, model_name)
       @record = @model[@model.identity => record_name]
       @revised_document = censored(revised_document || {})
       @validator = validator

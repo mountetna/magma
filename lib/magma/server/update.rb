@@ -6,9 +6,10 @@ class Magma
       def response
         payload = Magma::Payload.new
         validator = Magma::Validator.new
+
         revisions = @params[:revisions].map do |model_name, model_revisions|
           model_revisions.map do |record_name, revision_data|
-            Magma::Revision.new(revision_data, model_name.to_s, record_name.to_s, validator)
+            Magma::Revision.new(@project_name, model_name.to_s, record_name.to_s, revision_data, validator)
           end
         end.flatten
 
