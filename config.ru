@@ -12,6 +12,6 @@ use Rack::CommonLogger, logger
 use Magma::ParseBody
 use Rack::ShowExceptions
 use Magma::SymbolizeParams
-use Magma::Auth, YAML.load(File.read('config.yml'))
+#use Magma::Auth, YAML.load(File.read('config.yml'))
 
 run Magma::Server.new(YAML.load(File.read('config.yml')), logger)
