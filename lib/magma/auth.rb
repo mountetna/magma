@@ -7,7 +7,8 @@ require 'net/http'
 
 class Magma
   class AuthError < StandardError
-    attr_reader(:status, :body)
+    attr_reader :status, :body
+
     def initialize(status, body)
       @status = status
       @body = body
@@ -47,6 +48,11 @@ class Magma
     end
 
     def pre_janus_check
+      # Check for the params.
+      if @params == nil
+        raise_err(400, {errors: ['No parameters.']})
+      end
+
       # Check for the token.
       if @params[:token].nil?
         raise_err(400, {errors: ['Invalid login.']})
@@ -54,7 +60,7 @@ class Magma
 
       # Check for the project name.
       if @params[:project_name].nil?
-        raise_err(400, {errors: ['No project']})
+        raise_err(400, {errors: ['No project.']})
       end
 
       # Check for the app key.
@@ -97,12 +103,12 @@ class Magma
 
         # If something went wrong with the janus server...
         if status >= 400
-          raise_err(status, {errors: ['A Janus server error occurred.']})
+          return send_err(status, {errors: ['A Janus server error occurred.']})
         end
 
         return response
       rescue
-        raise_err(500, {errors: ['A Janus connection error occurred.']})
+        return send_err(500, {errors: ['A Janus connection error occurred.']})
       end
     end
 

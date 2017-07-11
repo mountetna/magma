@@ -50,7 +50,10 @@ class Magma
     end
 
     route '/' do
-      [200, {}, '::magma::']
+      response = Rack::Response.new
+      response.write('Magma On.')
+      response.status = 200
+      response.finish
     end
   end
 end
