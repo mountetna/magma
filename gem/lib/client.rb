@@ -41,7 +41,7 @@ class Magma
       end
 
       # Everything worked out great.
-      return [status, response.body]
+      return response
     end
 
     # This 'query' end point is used to fetch data by graph query
@@ -58,8 +58,7 @@ class Magma
         raise Magma::ClientError.new(status, {query: question, errors: parse_error(response)})
       end
 
-      # Everything worked out great.
-      return [status, response.body]
+      return response
     end
 
     # Post revisions to Magma records
@@ -96,8 +95,7 @@ class Magma
         raise Magma::ClientError.new(status, {update: revisions, errors: parse_error(response)})
       end
 
-      # Everything worked out great.
-      return [status, response.body]
+      return response
     end
 
     private

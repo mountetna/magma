@@ -1,4 +1,5 @@
 require_relative 'controller'
+require_relative '../retrieval'
 
 # In general, you Retrieve with a request like this:
 # {
@@ -35,10 +36,11 @@ class Magma
     class Retrieve < Magma::Server::Controller
       def initialize(request)
         super(request)
-        @model_name =  @params[:model_name]
+        @model_name = @params[:model_name]
         @record_names = @params[:record_names]
-        @collapse_tables =@params[:collapse_tables] || @params[:format] == 'tsv'
-        @format = @params[:format] || 'json'
+        @collapse_tables = @params[:collapse_tables] || @params[:format] == "tsv"
+        @filter = @params[:filter]
+        @format = @params[:format] || "json"
 
         @attribute_names = @params[:attribute_names]
         if @params[:attribute_names].is_a?(Array)
@@ -58,22 +60,7 @@ class Magma
             success 'application/json', @payload.to_hash.to_json
           end
         else
-          return failure(422, errors: @errors) unless success?
-        end
-      end
-
-      def check_params
-        error('No model name given') if @model_name.nil?
-        error('No record names given') if @record_names.nil?
-        error('Improperly formed record names') unless valid_record_names?
-
-        unless(@attribute_names.is_a?(Array) || @attribute_names == 'all' ||
-          @attribute_names == 'identifier')
-          error('Improperly formed attribute names') 
-        end
-
-        if @model_name == 'all' && @format == 'tsv'
-          error('Cannot retrieve several models in tsv format') 
+          return failure(422, errors: @errors)
         end
       end
 
@@ -105,35 +92,28 @@ class Magma
         end
       end
 
+<<<<<<< HEAD
       def retrieve_model(model)
         time = Time.now
         # Extract the attributes from the model.
+=======
+
+      def retrieve_model model
+>>>>>>> wip filtering via retrieval
         attributes = model.attributes.values.select do |att|
           get_attribute?(att,model)
         end
-        attribute_names = attributes.map(&:name)
-
-        @payload.add_model(model, attribute_names)
-
         return if attributes.empty?
 
-        query = [ model.model_name.to_s ]
-        if @record_names.is_a?(Array)
-          query.push [ '::identifier', '::in', @record_names ]
-        end
-        query.push('::all')
-        query.push(
-          attributes.map do |att|
-            case att
-            when Magma::CollectionAttribute, Magma::TableAttribute
-              [ att.name.to_s, '::all', '::identifier' ]
-            when Magma::ForeignKeyAttribute, Magma::ChildAttribute
-              [ att.name.to_s, '::identifier' ]
-            else
-              [ att.name.to_s ]
-            end
-          end
+        retrieval = Magma::Retrieval.new(
+          model,
+          @record_names,
+          attributes, 
+          @filter,
+          @page,
+          @page_size
         )
+        @payload.add_model(model, retrieval.attribute_names)
 
         # These records are not Sequel instances as the payload
         # expects - the payload to_hash method will fall apart here.
@@ -145,10 +125,8 @@ class Magma
         # 2 is probably expensive.
         # 1 requires composition here, which is probably mostly fine except for
         # a few attribute classes like tables and collections
-        records = Magma::Question.new(query).answer.map do |name, row|
-          Hash[ attribute_names.zip(row) ].update( model.identity => name )
-        end
-
+        time = Time.now
+        records = retrieval.records
         puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
 
         @payload.add_records( model, records )
@@ -177,7 +155,7 @@ class Magma
       def get_attribute?(att, model)
         return false if @collapse_tables && att.is_a?(Magma::TableAttribute)
         @attribute_names == "all" ||
-          (@attribute_names == "identifier" && model.identity == att.name) ||
+          (model.identity == att.name) ||
           (@attribute_names.is_a?(Array) && @attribute_names.include?(att.name))
       end
     end

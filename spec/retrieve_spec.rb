@@ -77,4 +77,34 @@ describe Magma::Server::Retrieve do
 
     expect(header).to eq(required_atts)
   end
+
+  it "can use a filter" do
+    lion = create(:labor, name: "Nemean Lion", number: 1, completed: true)
+    hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
+    stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
+    retrieve(
+      model_name: "labor",
+      record_names: "all",
+      attribute_names: "all",
+      filter: "name~L"
+    )
+
+    json = JSON.parse(last_response.body)
+    expect(json["models"]["labor"]["documents"].count).to be(2)
+  end
+
+  it "can page results" do
+    labor_list = create_list(:labor, 6)
+
+    retrieve(
+      model_name: "labor",
+      record_names: "all",
+      attribute_names: "all",
+      page_size: 3,
+      page: 1
+    )
+
+    json = JSON.parse(last_response.body)
+    expect(json["models"]["labor"]["documents"].count).to be(3)
+  end
 end
