@@ -84,33 +84,30 @@ class Magma
       content << [ 'token', token ]
       content << [ 'project_name', project_name ]
 
-      # Send the update data.
-      response = multipart_post('update', content)
-      status = response.code.to_i
-
-      # If something went wrong with the magma server...
-      if status >= 500
-        raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
-      elsif status >= 400
-        raise Magma::ClientError.new(status, {update: revisions, errors: parse_error(response)})
+      multipart_post('update', content) do |response|
+        status = response.code.to_i
+        if status >= 500
+          raise Magma::ClientError.new(status, errors: [ "A Magma server error occurred." ])
+        elsif status >= 400
+          raise Magma::ClientError.new(status, update: revisions, errors: errors(response))
+        end
+        return response
       end
-
-      return response
     end
 
     private
 
-    def json_post(endpoint, params)
-      post(endpoint, 'application/json', params.to_json)
+    def json_post(endpoint, params, &block)
+      post(endpoint, "application/json", params.to_json, &block)
     end
 
-    def multipart_post(endpoint, content)
+    def multipart_post endpoint, content, &block
       uri = URI("#{@host}/#{endpoint}")
-      multipart = Net::HTTP::Post::Multipart.new(uri.path, content)
-      persistent_connection.request(uri, multipart)
+      multipart = Net::HTTP::Post::Multipart.new uri.path, content
+      persistent_connection.request(uri, multipart, &block)
     end
 
-    def post(endpoint, content_type, body)
+    def post endpoint, content_type, body, &block
       uri = URI("#{@host}/#{endpoint}")
       post = Net::HTTP::Post.new(
         uri.path,
@@ -118,7 +115,7 @@ class Magma
         'Accept'=> 'application/json'
       )
       post.body = body
-      persistent_connection.request(uri, post)
+      persistent_connection.request(uri, post, &block)
     end
 
     def persistent_connection

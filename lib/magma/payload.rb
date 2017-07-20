@@ -21,6 +21,10 @@ class Magma
       @models[model].add_records records
     end
 
+    def reset model
+      @models[model].reset
+    end
+
     def add_revision revision
       add_model revision.model
 
@@ -49,6 +53,10 @@ class Magma
       @models.first.last.to_tsv
     end
 
+    def tsv_header
+      @models.first.last.tsv_header
+    end
+
     private
 
     class ModelPayload
@@ -64,6 +72,10 @@ class Magma
         @records.concat records
       end
 
+      def reset
+        @records = []
+      end
+
       def to_hash
         {
           documents: Hash[
@@ -77,20 +89,24 @@ class Magma
         }
       end
 
-      def to_tsv
-        attributes = @attribute_names.select do |att_name| 
+      def tsv_header
+        tsv_attributes.join("\t") + "\n"
+      end
+
+      def tsv_attributes
+        @tvs_attributes ||= @attribute_names.select do |att_name| 
           @model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute)
         end
-        attributes.unshift @model.identity unless attributes.include?(@model.identity)
+      end
 
+      def to_tsv
         CSV.generate(col_sep: "\t") do |csv|
-          csv << attributes
           @records.each do |record|
-            csv << attributes.map do |att_name|
+            csv << tsv_attributes.map do |att_name|
               if att_name == :id
                 record[att_name]
               else
-                record.txt_for att_name
+                @model.attributes[att_name].txt_for(record)
               end
             end
           end

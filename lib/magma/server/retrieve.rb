@@ -1,5 +1,6 @@
 require_relative 'controller'
 require_relative '../retrieval'
+require 'ostruct'
 
 # In general, you Retrieve with a request like this:
 # {
@@ -49,19 +50,37 @@ class Magma
       end
 
       def response
-        validate
+        begin
+          validate
 
-        if success?
-          perform
-          case @format
-          when "tsv"
-            success 'text/tsv', @payload.to_tsv
+          if success?
+            case @format
+            when "tsv"
+              return [ 200, { 'Content-Type' => 'text/tsv' }, tsv_payload ]
+            else
+              perform
+              return success('application/json', @payload.to_hash.to_json)
+            end
           else
-            success 'application/json', @payload.to_hash.to_json
+            return failure(422, errors: @errors)
           end
-        else
-          return failure(422, errors: @errors)
+        rescue ArgumentError => e
+          puts e.backtrace
+          return failure 422, errors: [ e.message ]
         end
+      end
+
+      def initialize request
+        super request
+
+        @model_name =  @params[:model_name]
+        @record_names = @params[:record_names]
+        @attribute_names = @params[:attribute_names].is_a?(Array) ? @params[:attribute_names].map(&:to_sym) : @params[:attribute_names]
+        @collapse_tables =  @params[:collapse_tables] || @params[:format] == "tsv"
+        @filter = @params[:filter]
+        @page_size = @params[:page_size]
+        @page = @params[:page]
+        @format = @params[:format] || "json"
       end
 
       private
@@ -73,6 +92,13 @@ class Magma
         return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
         return error('Cannot retrieve by record name for all models') if @model_name == "all" && @record_names.is_a?(Array) && !@record_names.empty?
         return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
+      end
+
+      def valid_record_names?
+        @record_names.is_a?(Array) && 
+          (@record_names.all?{|name| name.is_a?(String)} ||
+           @record_names.all?{|name| name.is_a?(Fixnum)}) || 
+          @record_names == "all"
       end
 
       def perform
@@ -92,17 +118,10 @@ class Magma
         end
       end
 
-<<<<<<< HEAD
-      def retrieve_model(model)
-        time = Time.now
-        # Extract the attributes from the model.
-=======
 
       def retrieve_model model
->>>>>>> wip filtering via retrieval
-        attributes = model.attributes.values.select do |att|
-          get_attribute?(att,model)
-        end
+        # Extract the attributes from the model.
+        attributes = selected_attributes(model)
         return if attributes.empty?
 
         retrieval = Magma::Retrieval.new(
@@ -125,11 +144,12 @@ class Magma
         # 2 is probably expensive.
         # 1 requires composition here, which is probably mostly fine except for
         # a few attribute classes like tables and collections
-        time = Time.now
-        records = retrieval.records
-        puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
-
-        @payload.add_records( model, records )
+        if !@record_names.empty?
+          time = Time.now
+          records = retrieval.records
+          puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
+          @payload.add_records( model, records )
+        end
 
         # add the records for any table attributes
         # This requires a secondary query.
@@ -145,11 +165,38 @@ class Magma
       def retrieve_table_attribute(model, attribute)
       end
 
-      def valid_record_names?
-        @record_names.is_a?(Array) && 
-          (@record_names.all?{|name| name.is_a?(String)} ||
-           @record_names.all?{|name| name.is_a?(Fixnum)}) || 
-          @record_names == "all"
+      def tsv_payload
+        @payload = Magma::Payload.new
+
+        model = Magma.instance.get_model(@model_name)
+        attributes = selected_attributes(model)
+        return if attributes.empty?
+
+        retrieval = Magma::Retrieval.new(
+          model,
+          @record_names,
+          attributes, 
+          @filter
+        )
+        @payload.add_model(model, retrieval.attribute_names)
+        return Enumerator.new do |stream|
+          stream << @payload.tsv_header
+          retrieval.each_page do |records|
+            @payload.add_records(model, records)
+            stream << @payload.to_tsv
+            @payload.reset(model)
+          end
+        end
+      end
+
+      def selected_attributes model
+        attributes = model.attributes.values.select do |att|
+          get_attribute?(att,model)
+        end
+        if !model.has_identifier?
+          attributes.push(OpenStruct.new(name: :id))
+        end
+        attributes
       end
 
       def get_attribute?(att, model)

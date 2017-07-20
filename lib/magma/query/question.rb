@@ -109,6 +109,10 @@ class Magma
       @options = options
     end
 
+    def set_page page
+      @options[page] = page
+    end
+
     def answer
       table = to_table
 
@@ -133,20 +137,53 @@ class Magma
       end
     end
 
-    def to_sql
+    def page_bounds(page, page_size)
+      raise ArgumentError, "Page must start at 1" unless page > 0
 
-      query = @model.from(
-        Sequel.as(@model.table_name, @start_predicate.alias_name)
-      ).order(@start_predicate.identity)
+      page_query = count_query.from_self(alias: :main_query)
+        .select(@start_predicate.identity)
+        .where(
+          Sequel.lit(
+            '? % ? = 1',
+            Sequel[:main_query][:row],
+            page_size
+          )
+        )
+        .limit(2)
+        .offset(page-1)
 
-      # Apply joins to the query. 
-      predicate_collect(:join).uniq.each do |join|
-        query = join.apply(query)
+      Magma.instance.db[page_query.sql].all.map do |row|
+        row[@start_predicate.identity]
       end
+    end
 
-      # Apply the contraints to the query. 
-      predicate_collect(:constraint).uniq.each do |constraint|
-        query = constraint.apply(query)
+    def count
+      count_query.count
+    end
+
+    def to_sql
+      query = base_query
+
+      # do you have page bounds? if so, compute them here.
+      if @options[:page] && @options[:page_size]
+        bounds = page_bounds(@options[:page], @options[:page_size])
+        raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+        query = query.where(
+          Sequel.lit(
+            '? >= ?',
+            @start_predicate.column_name,
+            bounds.first
+          )
+        )
+        if bounds.length > 1
+          query = query.where(
+            Sequel.lit(
+              '? < ?',
+              @start_predicate.column_name,
+              bounds.last
+            )
+          )
+        end
       end
 
       query = query.select(
@@ -162,9 +199,33 @@ class Magma
 
     private
 
-    # This function will loop and apply 'joins', 'constraints' and 'selects' to
-    # the sql query being built up.
-    def predicate_collect(type)
+    def base_query
+      query = @model.from(
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
+      ).order(@start_predicate.identity)
+
+      predicate_collect(:join).uniq.each do |join|
+        query = join.apply(query)
+      end
+
+      predicate_collect(:constraint).uniq.each do |constraint|
+        query = constraint.apply(query)
+      end
+
+      query
+    end
+
+    def count_query
+      # only select the start predicate
+      base_query.select(
+        *@start_predicate.select,
+        Sequel.function(:row_number)
+          .over(order: @start_predicate.column_name)
+          .as(:row)
+      )
+    end
+
+    def predicate_collect type
       predicates.map(&type).inject(&:+) || []
     end
   end

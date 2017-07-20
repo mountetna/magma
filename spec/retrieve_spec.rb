@@ -27,10 +27,10 @@ describe Magma::Server::Retrieve do
 
   it 'can get all models from the retrieve endpoint.' do
     retrieve(
+      project_name: 'labors'
       model_name: 'all',
       record_names: [],
-      attribute_names: [],
-      project_name: 'labors'
+      attribute_names: "all"
     )
     expect(last_response).to(be_ok)
   end
@@ -45,7 +45,7 @@ describe Magma::Server::Retrieve do
     expect(last_response.status).to eq(422)
   end
 
-  it "retrieves records by name" do
+  it "retrieves records by identifier" do
     labors = create_list(:labor,3)
 
     names = labors.map(&:name).map(&:to_sym)
@@ -63,8 +63,22 @@ describe Magma::Server::Retrieve do
     expect(json[:models][:labor][:documents]).not_to have_key(names.last)
   end
 
-  it 'can retrieve a TSV of data from the endpoint' do
-    labor_list = create_list(:labor, 3)
+  it "can retrieve records by id if there is no identifier" do
+    prizes = create_list(:prize,3)
+    retrieve(
+      model_name: "prize",
+      record_names: prizes[0..1].map(&:id),
+      attribute_names: "all" 
+    )
+
+    json = JSON.parse(last_response.body)
+
+    expect(json["models"]["prize"]["documents"]).to have_key(prizes[0].id.to_s)
+    expect(json["models"]["prize"]["documents"]).not_to have_key(prizes[2].id.to_s)
+  end
+
+  it "can retrieve a TSV of data from the endpoint" do
+    labor_list = create_list(:labor, 12)
     required_atts = ["name", "number", "completed"]
     retrieve(
       model_name: 'labor',
@@ -90,21 +104,22 @@ describe Magma::Server::Retrieve do
     )
 
     json = JSON.parse(last_response.body)
-    expect(json["models"]["labor"]["documents"].count).to be(2)
+    expect(json["models"]["labor"]["documents"].count).to eq(2)
   end
 
   it "can page results" do
-    labor_list = create_list(:labor, 6)
+    labor_list = create_list(:labor, 9)
+    names = labor_list.sort_by(&:name)[6..8].map(&:name)
 
     retrieve(
       model_name: "labor",
       record_names: "all",
       attribute_names: "all",
       page_size: 3,
-      page: 1
+      page: 3
     )
 
     json = JSON.parse(last_response.body)
-    expect(json["models"]["labor"]["documents"].count).to be(3)
+    expect(json["models"]["labor"]["documents"].keys).to eq(names)
   end
 end

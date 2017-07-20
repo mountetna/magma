@@ -33,8 +33,8 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
-    def json_for(record)
-      record.send(@name)
+    def json_for record
+      record[ @name ]
     end
 
     def txt_for(record)
