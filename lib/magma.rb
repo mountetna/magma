@@ -8,16 +8,15 @@ require_relative 'magma/revision'
 require_relative 'magma/commands'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
+require_relative 'magma/storage'
 require 'singleton'
 
 class Magma
   include Singleton
-
   # Database handle for the singleton.
-  attr_reader :db
-
-  def connect(db_config)
-    @db = Sequel.connect(db_config)
+  attr_reader :db, :storage
+  def connect db_config
+    @db = Sequel.connect( db_config )
   end
 
   def get_model(project_name, model_name)
@@ -53,8 +52,9 @@ class Magma
     connect(config :db)
 
     if config(:storage)
-      require_relative 'magma/document'
+      require_relative 'magma/file'
       require_relative 'magma/image'
+      @storage = Magma::Storage.new
     end
 
     config(:project_path).split(/\s+/).each do |project_dir|

@@ -90,6 +90,20 @@ describe Magma::Server::Retrieve do
     header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
     expect(header).to eq(required_atts)
+    expect(table.length).to eq(12)
+  end
+
+  it "can retrieve a TSV of data without an identifier" do
+    prize_list = create_list(:prize, 12)
+    retrieve(
+      model_name: "prize",
+      record_names: "all",
+      attribute_names: "all",
+      format: "tsv"
+    )
+    header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+    expect(table.length).to eq(12)
   end
 
   it "can use a filter" do

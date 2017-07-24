@@ -6,7 +6,7 @@ class Magma
   #        ChildAttribute - this returns another Record predicate
   #        CollectionAttribute
   #        TableAttribute - these both return a Model predicate
-  #        DocumentAttribute - this returns a Document predicate
+  #        FileAttribute - this returns a File predicate
   #        ImageAttribute - this returns a Image predicate
   #        ForeignKey - this returns a Record predicate
   #        Attribute - this, depending on its type, can have different results
@@ -109,7 +109,7 @@ class Magma
         return Magma::RecordPredicate.new(@attribute.link_model, nil, *@predicates)
       when Magma::TableAttribute, Magma::CollectionAttribute
         return Magma::ModelPredicate.new(@attribute.link_model, *@predicates)
-      when Magma::DocumentAttribute, Magma::ImageAttribute
+      when Magma::FileAttribute, Magma::ImageAttribute
         return Magma::FilePredicate.new(@model, alias_name, @attribute.name, *@predicates)
       else
         case @attribute.type.name

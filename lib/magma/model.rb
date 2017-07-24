@@ -57,9 +57,9 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
-      def document(name, opts = {})
-        mount_uploader(name, Magma::Document)
-        attribute(name, opts.merge(attribute_class: Magma::DocumentAttribute))
+      def file name, opts = {}
+        mount_uploader name, Magma::File
+        attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
 
       def image(name, opts = {})

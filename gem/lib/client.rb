@@ -27,44 +27,23 @@ class Magma
     #   record_names: [ "rn1", "rn2" ], # or "all",
     #   attribute_names:  "all"
     # }
-    def retrieve(token, project_name, params)
+    def retrieve(token, project_name, params, &block)
       params[:token] = token
       params[:project_name] = project_name
-      response = json_post('retrieve', params)
-      status = response.code.to_i
-
-      # If something went wrong with the magma server...
-      if status >= 500
-        raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
-      elsif status >= 400
-        raise Magma::ClientError.new(status, errors: parse_error(response))
-      end
-
-      # Everything worked out great.
-      return response
+      json_post(:retrieve, params, &block)
     end
 
     # This 'query' end point is used to fetch data by graph query
     # See question.rb for more detail
-    def query(token, project_name, question)
-      opts = {token: token, project_name: project_name, query: question}
-      response = json_post('query', opts)
-      status = response.code.to_i
-
-      # If something went wrong with the magma server...
-      if status >= 500
-        raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
-      elsif status >= 400
-        raise Magma::ClientError.new(status, {query: question, errors: parse_error(response)})
-      end
-
-      return response
+    def query(token, project_name, question, &block)
+      params = {token: token, project_name: project_name, query: question}
+      json_post(:query, params, { 500 => params, 400 => params }, &block)
     end
 
     # Post revisions to Magma records
     # { model_name: { record_name: { attribute1: 1, attribute2: 2 } } } }
     # data can also be a File or IO stream
-    def update(token, project_name, revisions)
+    def update(token, project_name, revisions, &block)
       content = []
 
       # We need to store revision data in a multipart/form-data object.
@@ -84,30 +63,31 @@ class Magma
       content << [ 'token', token ]
       content << [ 'project_name', project_name ]
 
-      multipart_post('update', content) do |response|
-        status = response.code.to_i
-        if status >= 500
-          raise Magma::ClientError.new(status, errors: [ "A Magma server error occurred." ])
-        elsif status >= 400
-          raise Magma::ClientError.new(status, update: revisions, errors: errors(response))
-        end
-        return response
-      end
+      multipart_post(:update, content, { 400 => { update: revisions } }, &block)
     end
 
     private
 
-    def json_post(endpoint, params, &block)
-      post(endpoint, "application/json", params.to_json, &block)
+    def persistent_connection
+      @http ||= begin
+                  http = Net::HTTP::Persistent.new
+                  http.read_timeout = 3600
+                  http
+                end
     end
 
-    def multipart_post endpoint, content, &block
+    def json_post(endpoint, params, status_errors={}, &block)
+      post(endpoint, "application/json", params.to_json, status_errors, &block)
+    end
+
+    def multipart_post endpoint, content, status_errors={}, &block
       uri = URI("#{@host}/#{endpoint}")
       multipart = Net::HTTP::Post::Multipart.new uri.path, content
-      persistent_connection.request(uri, multipart, &block)
+
+      request(uri, multipart, status_errors, &block)
     end
 
-    def post endpoint, content_type, body, &block
+    def post endpoint, content_type, body, status_errors, &block
       uri = URI("#{@host}/#{endpoint}")
       post = Net::HTTP::Post.new(
         uri.path,
@@ -115,19 +95,29 @@ class Magma
         'Accept'=> 'application/json'
       )
       post.body = body
-      persistent_connection.request(uri, post, &block)
+      request(uri, post, status_errors, &block)
     end
 
-    def persistent_connection
-      @http ||= begin
-        http = Net::HTTP::Persistent.new
-        http.read_timeout = 3600
-        http
+    def status_check(response, status_errors)
+      status = response.code.to_i
+      if status >= 500
+        raise Magma::ClientError.new(status, (status_errors[500] || {}).merge(errors: [ "A Magma server error occured." ]))
+      elsif status >= 400
+        raise Magma::ClientError.new(status, (status_errors[400] || {}).merge(errors: JSON.parse(response.body)["errors"]))
       end
     end
 
-    def parse_error(response)
-      JSON.parse(response.body)['errors']
+    def request(uri, data, status_errors, &block)
+      if block_given?
+        persistent_connection.request(uri, data) do |response|
+          status_check(response, status_errors)
+          yield response
+        end
+      else
+        response = persistent_connection.request(uri, data)
+        status_check(response, status_errors)
+        return response
+      end
     end
   end
 end

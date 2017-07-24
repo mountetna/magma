@@ -95,7 +95,7 @@ class Magma
 
       def tsv_attributes
         @tvs_attributes ||= @attribute_names.select do |att_name| 
-          @model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute)
+          att_name == :id || (@model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute))
         end
       end
 

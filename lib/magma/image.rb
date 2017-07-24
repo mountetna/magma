@@ -7,7 +7,6 @@ class Magma
     storage :fog
     before :store, :run_loaders
 
-
     version :thumb do
       process resize_to_fit: [ 200, 400 ]
       process convert: 'png'

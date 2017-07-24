@@ -169,7 +169,7 @@ end
 require_relative 'attributes/link'
 require_relative 'attributes/child'
 require_relative 'attributes/collection'
-require_relative 'attributes/document'
+require_relative 'attributes/file'
 require_relative 'attributes/foreign_key'
 require_relative 'attributes/image'
 require_relative 'attributes/table'

@@ -1,5 +1,5 @@
 class Magma
-  class DocumentAttribute < Attribute
+  class FileAttribute < Attribute
     def initialize(project, name, model, opts)
       super
       @type = String
@@ -15,17 +15,20 @@ class Magma
     end
 
     def json_for(record)
-      document = record.send(@name)
-      if document.current_path && document.url
-        {url: document.url, path: File.basename(document.current_path)}
+      file = record.send(@name)
+      if file.current_path && file.url
+        {
+          url: file.url,
+          path: File.basename(file.current_path)
+        }
       else
         nil
       end
     end
 
     def txt_for(record)
-      document = json_for(record)
-      document ? document[:url] : nil
+      file = json_for(record)
+      file ? file[:url] : nil
     end
   end
 end
