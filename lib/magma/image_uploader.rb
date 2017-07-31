@@ -2,7 +2,7 @@ require 'fog'
 require 'carrierwave/sequel'
 
 class Magma
-  class Image  < CarrierWave::Uploader::Base
+  class ImageUploader  < CarrierWave::Uploader::Base
     include CarrierWave::MiniMagick
     storage :fog
     before :store, :run_loaders

@@ -21,9 +21,11 @@ class Magma
       end
     end
 
-    def each_page
-      count = question.count
+    def count
+      question.count
+    end
 
+    def each_page
       pages = (count.to_f / @page_size).ceil
 
       pages.times do |page|

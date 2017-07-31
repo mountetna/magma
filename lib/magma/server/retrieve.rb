@@ -78,8 +78,8 @@ class Magma
         @attribute_names = @params[:attribute_names].is_a?(Array) ? @params[:attribute_names].map(&:to_sym) : @params[:attribute_names]
         @collapse_tables =  @params[:collapse_tables] || @params[:format] == "tsv"
         @filter = @params[:filter]
-        @page_size = @params[:page_size]
         @page = @params[:page]
+        @page_size = @params[:page_size]
         @format = @params[:format] || "json"
       end
 
@@ -133,6 +133,8 @@ class Magma
           @page_size
         )
         @payload.add_model(model, retrieval.attribute_names)
+        
+        @payload.add_count(model, retrieval.count) if @page == 1
 
         # These records are not Sequel instances as the payload
         # expects - the payload to_hash method will fall apart here.

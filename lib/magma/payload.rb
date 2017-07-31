@@ -21,6 +21,10 @@ class Magma
       @models[model].add_records records
     end
 
+    def add_count model, count
+      @models[model].add_count count
+    end
+
     def reset model
       @models[model].reset
     end
@@ -72,6 +76,10 @@ class Magma
         @records.concat records
       end
 
+      def add_count count
+        @count = count
+      end
+
       def reset
         @records = []
       end
@@ -81,12 +89,26 @@ class Magma
           documents: Hash[
             @records.map do |record|
               [
-                record[@model.identity], record
+                record[@model.identity], json_document(record)
               ]
             end
           ],
-          template: @model.json_template
-        }
+          template: @model.json_template,
+          count: @count
+        }.reject {|k,v| v.nil? }
+      end
+
+      def json_document record
+        # A JSON version of this record (actually a hash). Each attribute
+        # reports in its own fashion
+        Hash[
+          attribute_names.map do |name|
+            [ 
+              name, 
+              @model.has_attribute?(name) ? @model.attributes[name].json_for(record) : record[name] 
+            ]
+          end
+        ]
       end
 
       def tsv_header

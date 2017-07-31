@@ -129,11 +129,46 @@ describe Magma::Server::Retrieve do
       model_name: "labor",
       record_names: "all",
       attribute_names: "all",
-      page_size: 3,
-      page: 3
+      page: 3,
+      page_size: 3
     )
 
     json = JSON.parse(last_response.body)
     expect(json["models"]["labor"]["documents"].keys).to eq(names)
+  end
+
+  it "can page results with joined collections" do
+    monster_list = create_list(:monster, 9)
+    victim_list = monster_list.map do |monster|
+      create_list(:victim, 2, monster: monster)
+    end.flatten
+
+    names = monster_list.sort_by(&:name)[6..8].map(&:name)
+
+    retrieve(
+      model_name: "monster",
+      record_names: "all",
+      attribute_names: "all",
+      page: 3,
+      page_size: 3
+    )
+
+    json = JSON.parse(last_response.body)
+    expect(json["models"]["monster"]["documents"].keys).to eq(names)
+  end
+
+  it "returns a count of total records for page 1" do
+    labor_list = create_list(:labor, 9)
+
+    retrieve(
+      model_name: "labor",
+      record_names: "all",
+      attribute_names: "all",
+      page: 1,
+      page_size: 3
+    )
+
+    json = JSON.parse(last_response.body)
+    expect(json["models"]["labor"]["count"]).to eq(9)
   end
 end

@@ -2,7 +2,7 @@ require 'fog'
 require 'carrierwave/sequel'
 require 'carrierwave/storage/fog'
 class Magma
-  class File  < CarrierWave::Uploader::Base
+  class FileUploader  < CarrierWave::Uploader::Base
     storage :fog
     before :store, :run_loaders
 

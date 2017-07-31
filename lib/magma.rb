@@ -52,8 +52,8 @@ class Magma
     connect(config :db)
 
     if config(:storage)
-      require_relative 'magma/file'
-      require_relative 'magma/image'
+      require_relative 'magma/file_uploader'
+      require_relative 'magma/image_uploader'
       @storage = Magma::Storage.new
     end
 

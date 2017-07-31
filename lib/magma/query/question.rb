@@ -110,7 +110,7 @@ class Magma
     end
 
     def set_page page
-      @options[page] = page
+      @options[:page] = page
     end
 
     def answer
@@ -218,9 +218,13 @@ class Magma
     def count_query
       # only select the start predicate
       base_query.select(
-        *@start_predicate.select,
+        *@start_predicate.select
+      ).distinct(
+        @start_predicate.column_name
+      ).from_self.select(
+        @start_predicate.identity,
         Sequel.function(:row_number)
-          .over(order: @start_predicate.column_name)
+          .over(order: @start_predicate.identity)
           .as(:row)
       )
     end

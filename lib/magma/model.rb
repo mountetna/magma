@@ -58,13 +58,13 @@ class Magma
       end
 
       def file name, opts = {}
-        mount_uploader name, Magma::File
+        mount_uploader name, Magma::FileUploader
         attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
 
-      def image(name, opts = {})
-        mount_uploader(name, Magma::Image)
-        attribute(name, opts.merge(attribute_class: Magma::ImageAttribute))
+      def image name, opts = {}
+        mount_uploader name, Magma::ImageUploader
+        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
       end
 
       def collection(name, opts = {})
