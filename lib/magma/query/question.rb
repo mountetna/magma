@@ -109,6 +109,7 @@ class Magma
       @options = options
     end
 
+    # allow us to re-use the same question for a different page
     def set_page page
       @options[:page] = page
     end
@@ -137,28 +138,16 @@ class Magma
       end
     end
 
-    def page_bounds(page, page_size)
-      raise ArgumentError, "Page must start at 1" unless page > 0
-
-      page_query = count_query.from_self(alias: :main_query)
-        .select(@start_predicate.identity)
-        .where(
-          Sequel.lit(
-            '? % ? = 1',
-            Sequel[:main_query][:row],
-            page_size
-          )
-        )
-        .limit(2)
-        .offset(page-1)
-
-      Magma.instance.db[page_query.sql].all.map do |row|
-        row[@start_predicate.identity]
-      end
-    end
-
     def count
       count_query.count
+    end
+
+    private
+
+    def to_table
+      Magma.instance.db[
+        to_sql
+      ].all
     end
 
     def to_sql
@@ -166,24 +155,7 @@ class Magma
 
       # do you have page bounds? if so, compute them here.
       if @options[:page] && @options[:page_size]
-        bounds = page_bounds(@options[:page], @options[:page_size])
-        raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
-        query = query.where(
-          Sequel.lit(
-            '? >= ?',
-            @start_predicate.column_name,
-            bounds.first
-          )
-        )
-        if bounds.length > 1
-          query = query.where(
-            Sequel.lit(
-              '? < ?',
-              @start_predicate.column_name,
-              bounds.last
-            )
-          )
-        end
+        query = paged_query( query )
       end
 
       query = query.select(
@@ -192,12 +164,6 @@ class Magma
 
       query.sql
     end
-
-    def to_table
-      Magma.instance.db[to_sql].all
-    end
-
-    private
 
     def base_query
       query = @model.from(
@@ -227,6 +193,45 @@ class Magma
           .over(order: @start_predicate.identity)
           .as(:row)
       )
+    end
+
+    def bounds_query
+      count_query.from_self(alias: :main_query)
+        .select(@start_predicate.identity)
+        .where(
+          Sequel.lit(
+            '? % ? = 1',
+            Sequel[:main_query][:row],
+            @options[:page_size]
+          )
+        )
+        .limit(2)
+        .offset(@options[:page]-1)
+    end
+
+    def paged_query(query)
+      raise ArgumentError, "Page must start at 1" unless @options[:page] > 0
+      bounds = Magma.instance.db[bounds_query.sql].all.map do |row|
+        row[@start_predicate.identity]
+      end
+      raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+      query = query.where(
+        Sequel.lit(
+          '? >= ?',
+          @start_predicate.column_name,
+          bounds.first
+        )
+      )
+      if bounds.length > 1
+        query = query.where(
+          Sequel.lit(
+            '? < ?',
+            @start_predicate.column_name,
+            bounds.last
+          )
+        )
+      end
+      query
     end
 
     def predicate_collect type

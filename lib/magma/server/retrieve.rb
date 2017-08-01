@@ -136,16 +136,6 @@ class Magma
         
         @payload.add_count(model, retrieval.count) if @page == 1
 
-        # These records are not Sequel instances as the payload
-        # expects - the payload to_hash method will fall apart here.
-        # Our options are:
-        # 1) compose the record here as a hash and merely make the payload a
-        # thin shell
-        # 2) Wrap the record in a class that quacks like a Sequel instance
-        #
-        # 2 is probably expensive.
-        # 1 requires composition here, which is probably mostly fine except for
-        # a few attribute classes like tables and collections
         if !@record_names.empty?
           time = Time.now
           records = retrieval.records

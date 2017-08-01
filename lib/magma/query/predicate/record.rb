@@ -69,13 +69,13 @@ class Magma
         when Magma::ForeignKeyAttribute
           return [
             Magma::Question::Constraint.new(
-              "\"#{alias_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL"
+              Sequel.lit("\"#{alias_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL")
             )
           ]
         else
           return [
             Magma::Question::Constraint.new(
-              "\"#{alias_name}\".\"#{@attribute.name}\" IS NOT NULL"
+              Sequel.lit("\"#{alias_name}\".\"#{@attribute.name}\" IS NOT NULL")
             )
           ]
         end
