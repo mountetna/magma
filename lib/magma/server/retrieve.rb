@@ -128,7 +128,7 @@ class Magma
           model,
           @record_names,
           attributes, 
-          @filter,
+          Magma::Retrieval::StringFilter.new(@filter),
           @page,
           @page_size
         )
@@ -141,20 +141,48 @@ class Magma
           records = retrieval.records
           puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
           @payload.add_records( model, records )
-        end
 
-        # add the records for any table attributes
-        # This requires a secondary query.
-        if !@collapse_tables
-          attributes.each do |att|
-            next unless att.is_a?(Magma::TableAttribute)
+          # add the records for any table attributes
+          # This requires a secondary query.
+          if !@collapse_tables
+            attributes.each do |att|
+              next unless att.is_a?(Magma::TableAttribute)
 
-            retrieve_table_attribute(model, att)
+              retrieve_table_attribute(model, records, att)
+            end
           end
         end
+
       end
 
-      def retrieve_table_attribute(model, attribute)
+      def retrieve_table_attribute(model, records, attribute)
+        link_model = attribute.link_model
+
+        link_attributes = link_model.attributes.reject do |att_name, att|
+          att.is_a?(Magma::TableAttribute)
+        end.values
+        if !link_model.has_identifier?
+          link_attributes.push(OpenStruct.new(name: :id))
+        end
+
+        record_names = records.map do |record|
+          record[model.identity]
+        end
+
+        retrieval = Magma::Retrieval.new(
+          link_model,
+          "all",
+          link_attributes,
+          Magma::Retrieval::ParentFilter.new(
+            link_model, model, record_names
+          ),
+
+          # some day this should be table pages
+          nil,
+          nil
+        )
+        @payload.add_model( link_model, retrieval.attribute_names )
+        @payload.add_records( link_model, retrieval.records )
       end
 
       def tsv_payload
@@ -164,11 +192,12 @@ class Magma
         attributes = selected_attributes(model)
         return if attributes.empty?
 
+
         retrieval = Magma::Retrieval.new(
           model,
           @record_names,
           attributes, 
-          @filter
+          Magma::Retrieval::StringFilter.new(@filter)
         )
         @payload.add_model(model, retrieval.attribute_names)
         return Enumerator.new do |stream|

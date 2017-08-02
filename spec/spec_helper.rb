@@ -166,6 +166,7 @@ FactoryGirl.define do
 
   factory :prize, class: Labors::Prize do
     to_create(&:save)
+    sequence(:name) { |n| "prize#{n}" }
   end
 
   factory :project, class: Labors::Project do

@@ -40,10 +40,13 @@ class Magma
         name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
       end
 
-      def parent(name, opts = {})
-        @parent = name
-        many_to_one(name, class: resolve_namespace(name))
-        attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
+      def parent name=nil, opts = {}
+        if name
+          @parent = name
+          many_to_one name
+          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+        end
+        @parent
       end
 
       def child(name, opts = {})

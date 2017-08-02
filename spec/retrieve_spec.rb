@@ -1,4 +1,3 @@
-require 'pry'
 describe Magma::Server::Retrieve do
   include Rack::Test::Methods
 
@@ -170,5 +169,28 @@ describe Magma::Server::Retrieve do
 
     json = JSON.parse(last_response.body)
     expect(json["models"]["labor"]["count"]).to eq(9)
+  end
+
+  it "retrieves table associations" do
+    lion = create(:labor, name: "Nemean Lion", number: 1, completed: true)
+    hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
+    stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
+    lion_prizes = create_list(:prize, 3, labor: lion)
+    hydra_prizes = create_list(:prize, 3, labor: hydra)
+    stables_prizes = create_list(:prize, 3, labor: stables)
+
+    selected_prize_ids = (lion_prizes + hydra_prizes).map do |prize|
+      prize.send(Prize.identity).to_s
+    end.sort
+
+    retrieve(
+      model_name: "labor",
+      record_names: [ "Nemean Lion", "Lernean Hydra" ],
+      attribute_names: [ "prize" ]
+    )
+
+    json = JSON.parse(last_response.body)
+    expect(json["models"]["labor"]["documents"].size).to eq(2)
+    expect(json["models"]["prize"]["documents"].keys.sort).to eq(selected_prize_ids)
   end
 end

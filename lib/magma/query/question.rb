@@ -165,6 +165,8 @@ class Magma
       query.sql
     end
 
+    # The base query joins all of the tables and applies constraints for this
+    # question, but does not select any columns
     def base_query
       query = @model.from(
         Sequel.as(@model.table_name, @start_predicate.alias_name)
@@ -181,24 +183,26 @@ class Magma
       query
     end
 
+    # return distinct identifiers, useful for counting results and row-numbering
     def count_query
-      # only select the start predicate
       base_query.select(
         *@start_predicate.select
       ).distinct(
         @start_predicate.column_name
-      ).from_self.select(
+      )
+    end
+
+    # get page bounds for this question using @options[:page] and @options[:page_size]
+    def bounds_query
+      count_query.from_self.select(
+        # add row_numbers to the count query
         @start_predicate.identity,
         Sequel.function(:row_number)
           .over(order: @start_predicate.identity)
           .as(:row)
-      )
-    end
-
-    def bounds_query
-      count_query.from_self(alias: :main_query)
-        .select(@start_predicate.identity)
-        .where(
+      ).from_self(alias: :main_query).select(
+        # only the first row from each page
+        @start_predicate.identity).where(
           Sequel.lit(
             '? % ? = 1',
             Sequel[:main_query][:row],
@@ -207,6 +211,7 @@ class Magma
         )
         .limit(2)
         .offset(@options[:page]-1)
+        # return only the 2 identifiers for this page
     end
 
     def paged_query(query)
@@ -215,6 +220,8 @@ class Magma
         row[@start_predicate.identity]
       end
       raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+
+      # apply bounds to the query
       query = query.where(
         Sequel.lit(
           '? >= ?',
