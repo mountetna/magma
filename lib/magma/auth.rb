@@ -16,9 +16,8 @@ class Magma
   end
 
   class Auth
-    def initialize(app, config)
+    def initialize(app)
       @app = app
-      @config = config
     end
 
     def call(env)
@@ -30,8 +29,11 @@ class Magma
         pre_janus_check
 
         # Make the request to Janus.
-        data = {:token=> @params[:token], :app_key=> @config[:app_key]}
-        response = make_request(@config[:janus_addr]+'/check', data).body
+        response = make_request(
+          Magma.instance.config(:janus_addr)+'/check',
+          token: @params[:token],
+          app_key: Magma.instance.config(:app_key)
+        ).body
         response = JSON.parse(response)
 
         # The checks require after we call Janus.
@@ -64,7 +66,7 @@ class Magma
       end
 
       # Check for the app key.
-      if @config[:app_key].nil?
+      if Magma.instance.config(:app_key).nil?
         raise_err(400, {errors: ['No app key.']})
       end
     end
