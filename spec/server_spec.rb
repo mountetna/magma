@@ -1,5 +1,3 @@
-load_magma
-
 describe 'Magma::Server' do
   include Rack::Test::Methods
 
@@ -10,6 +8,6 @@ describe 'Magma::Server' do
   it 'shows little at the root.' do
     get '/'
     expect(last_response).to(be_ok)
-    expect(last_response.body).to(eq('::magma::'))
+    expect(last_response.body).to(eq('Magma On.'))
   end
 end
