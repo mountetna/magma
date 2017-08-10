@@ -61,6 +61,6 @@ describe Magma::Server::Update do
 
     lion.refresh
     expect(last_response.status).to eq(422)
-    expect(lion.species).to eq('hydra')
+    expect(lion.species).to eq('lion')
   end
 end
