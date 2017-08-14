@@ -20,7 +20,13 @@ class Magma
       raise 'Magma configuration is missing host entry.' unless @host
     end
 
-    # This endpoint returns records by model name
+    # This endpoint returns models and records by name:
+    # e.g. params:
+    # {
+    #   model_name: "model_one", # or "all"
+    #   record_names: [ "rn1", "rn2" ], # or "all",
+    #   attribute_names:  "all"
+    # }
     def retrieve(token, project_name, params)
       params[:token] = token
       params[:project_name] = project_name
@@ -38,10 +44,8 @@ class Magma
       return [status, response.body]
     end
 
-    # This 'query' end point is used to fetch a very specific peice of data from
-    # the database using what we have termed 'Manifests'. A 'Manifest' (in
-    # short) is a graph query that traverses the database and extracts a very 
-    # particular peice of data.
+    # This 'query' end point is used to fetch data by graph query
+    # See question.rb for more detail
     def query(token, project_name, question)
       opts = {token: token, project_name: project_name, query: question}
       response = json_post('query', opts)
@@ -58,6 +62,9 @@ class Magma
       return [status, response.body]
     end
 
+    # Post revisions to Magma records
+    # { model_name: { record_name: { attribute1: 1, attribute2: 2 } } } }
+    # data can also be a File or IO stream
     def update(revisions)
       content = []
 
