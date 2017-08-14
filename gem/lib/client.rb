@@ -20,8 +20,7 @@ class Magma
       raise 'Magma configuration is missing host entry.' unless @host
     end
 
-    # This 'retrieve' end point resolves to a standard SQL query that give us
-    # back sets of data. It is to be used to for querying general record sets.
+    # This endpoint returns records by model name
     def retrieve(token, project_name, params)
       params[:token] = token
       params[:project_name] = project_name
@@ -30,9 +29,9 @@ class Magma
 
       # If something went wrong with the magma server...
       if status >= 500
-        raise_err(status, {errors: ['A Magma server error occurred.']})
+        raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
       elsif status >= 400
-        raise_err(status, errors: parse_err(response))
+        raise Magma::ClientError.new(status, errors: parse_error(response))
       end
 
       # Everything worked out great.
@@ -50,9 +49,9 @@ class Magma
 
       # If something went wrong with the magma server...
       if status >= 500
-        raise_err(status, {errors: ['A Magma server error occurred.']})
+        raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
       elsif status >= 400
-        raise_err(status, {query: question, errors: parse_err(response)})
+        raise Magma::ClientError.new(status, {query: question, errors: parse_err(response)})
       end
 
       # Everything worked out great.
@@ -82,9 +81,9 @@ class Magma
 
       # If something went wrong with the magma server...
       if status >= 500
-        raise_err(status, {errors: ['A Magma server error occurred.']})
+        raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
       elsif status >= 400
-        raise_err(status, {update: revisions, errors: parse_err(response)})
+        raise Magma::ClientError.new(status, {update: revisions, errors: parse_err(response)})
       end
 
       # Everything worked out great.
@@ -122,12 +121,8 @@ class Magma
       end
     end
 
-    def parse_err(response)
+    def parse_error(response)
       JSON.parse(response.body)['errors']
-    end
-
-    def raise_err(status, body)
-      raise Magma::ClientError.new(status, body)
     end
   end
 end
