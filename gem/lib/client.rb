@@ -98,28 +98,20 @@ class Magma
     end
 
     def multipart_post(endpoint, content)
-      begin
-        uri = URI("#{@host}/#{endpoint}")
-        multipart = Net::HTTP::Post::Multipart.new(uri.path, content)
-        persistent_connection.request(uri, multipart)
-      rescue
-        raise_err(500, {errors: ['There was a Magma connection error.']})
-      end
+      uri = URI("#{@host}/#{endpoint}")
+      multipart = Net::HTTP::Post::Multipart.new(uri.path, content)
+      persistent_connection.request(uri, multipart)
     end
 
     def post(endpoint, content_type, body)
-      begin
-        uri = URI("#{@host}/#{endpoint}")
-        post = Net::HTTP::Post.new(
-          uri.path,
-          'Content-Type'=> content_type,
-          'Accept'=> 'application/json'
-        )
-        post.body = body
-        persistent_connection.request(uri, post)
-      rescue
-        raise_err(500, {errors: ['There was a Magma connection error.']})
-      end
+      uri = URI("#{@host}/#{endpoint}")
+      post = Net::HTTP::Post.new(
+        uri.path,
+        'Content-Type'=> content_type,
+        'Accept'=> 'application/json'
+      )
+      post.body = body
+      persistent_connection.request(uri, post)
     end
 
     def persistent_connection
