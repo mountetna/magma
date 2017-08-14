@@ -21,6 +21,8 @@ class Magma
     end
 
     def call(env)
+      return @app.call(env) if ENV["MAGMA_ENV"] == "test"
+
       @request = Rack::Request.new(env)
       @params = @request.env['rack.request.params']
 

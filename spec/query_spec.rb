@@ -6,7 +6,7 @@ describe Magma::Server::Update do
   end
 
   def query(question)
-    json_post(:query, {project_name: 'Labors', query: question})
+    json_post(:query, {project_name: 'labors', query: question})
   end
 
   context 'Magma::RecordPredicate' do

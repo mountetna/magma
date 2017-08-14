@@ -42,7 +42,7 @@ class Magma
 
       def parent(name, opts = {})
         @parent = name
-        many_to_one(name,  {class: resove_namespace(name)})
+        many_to_one(name, class: resolve_namespace(name))
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
@@ -52,8 +52,8 @@ class Magma
       end
 
       def link(name, opts = {})
-        full_model_name = resove_namespace(opts[:link_model] || name)
-        many_to_one(name, {class: full_model_name})
+        full_model_name = resolve_namespace(opts[:link_model] || name)
+        many_to_one(name, class: full_model_name)
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
@@ -68,12 +68,12 @@ class Magma
       end
 
       def collection(name, opts = {})
-        one_to_many(name, {class: resove_namespace(name), primary_key: :id})
+        one_to_many(name, class: resolve_namespace(name), primary_key: :id)
         attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
       end
 
       def table(name, opts = {})
-        one_to_many(name, {class: resove_namespace(name), primary_key: :id})
+        one_to_many(name, class: resolve_namespace(name), primary_key: :id)
         attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
@@ -202,8 +202,8 @@ class Magma
       # Extract the full module name and prepend it to the incoming class name
       # so we can get the correct Module/Class reference. This one is to 
       # correctly format the Ruby models so they may reference eachother.
-      def resove_namespace(name)
-        :"#{self.name.split(/::/)[0]}::#{name.to_s.camel_case}"
+      def resolve_namespace(name)
+        :"#{self.name.split(/::/).first}::#{name.to_s.camel_case}"
       end
 
       # Takes the module/class namespace and turns it into a postgres
