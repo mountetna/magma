@@ -55,7 +55,7 @@ class Magma
       if status >= 500
         raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
       elsif status >= 400
-        raise Magma::ClientError.new(status, {query: question, errors: parse_err(response)})
+        raise Magma::ClientError.new(status, {query: question, errors: parse_error(response)})
       end
 
       # Everything worked out great.
@@ -90,7 +90,7 @@ class Magma
       if status >= 500
         raise Magma::ClientError.new(status, {errors: ['A Magma server error occurred.']})
       elsif status >= 400
-        raise Magma::ClientError.new(status, {update: revisions, errors: parse_err(response)})
+        raise Magma::ClientError.new(status, {update: revisions, errors: parse_error(response)})
       end
 
       # Everything worked out great.
