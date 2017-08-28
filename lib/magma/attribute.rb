@@ -101,11 +101,12 @@ class Magma
     def update_link(record, link)
     end
 
+    # If a Validator is defined then return it.
     def validation
-      if self.class.const_defined?(:Validation)
-        self.class.const_get(:Validation)
+      if self.class.const_defined?(:Validator)
+        self.class.const_get(:Validator)
       else
-        Magma::BaseAttributeValidation
+        Magma::BaseAttributeValidator
       end
     end
 
@@ -131,7 +132,8 @@ class Magma
       end
     end
 
-    class Validation < Magma::BaseAttributeValidation
+    class Validator < Magma::AttributeValidator
+
       def validate(value)
         case match
         when Regexp
@@ -140,7 +142,12 @@ class Magma
           if !match.map(&:to_s).include?(value)
             yield "On #{@attribute.name}, '#{value}' should be one of #{match.join(", ")}."
           end
+
+        when Validator
+
+          yield blah
         end
+
       end
 
       private
