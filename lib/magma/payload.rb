@@ -11,20 +11,18 @@ class Magma
       @models = {}
     end
 
-    def add_model model, attribute_names=nil
+    def add_model(model, attribute_names=nil)
       return if @models[model]
-
-      @models[model] = ModelPayload.new(model,attribute_names)
+      @models[model] = ModelPayload.new(model, attribute_names)
     end
     
-    def add_records model, records
-      @models[model].add_records records
+    def add_records(model, records)
+      @models[model].add_records(records)
     end
 
-    def add_revision revision
-      add_model revision.model
-
-      add_records revision.model, [ revision.record ]
+    def add_revision(revision)
+      add_model(revision.model)
+      add_records(revision.model, [revision.record])
     end
 
     def to_hash
@@ -52,16 +50,16 @@ class Magma
     private
 
     class ModelPayload
-      def initialize model, attribute_names
+      attr_reader :records, :attribute_names
+
+      def initialize(model, attribute_names)
         @model = model
         @attribute_names = attribute_names
         @records = []
       end
 
-      attr_reader :records, :attribute_names
-
-      def add_records records
-        @records.concat records
+      def add_records(records)
+        @records.concat(records)
       end
 
       def to_hash
@@ -99,5 +97,6 @@ class Magma
         end
       end
     end
+
   end
 end

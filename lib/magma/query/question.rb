@@ -1,4 +1,3 @@
-require 'pry'
 require_relative 'predicate'
 
 # A query for a piece of data. Each question is a path through the data
