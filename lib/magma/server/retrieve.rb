@@ -1,4 +1,5 @@
 require_relative 'controller'
+require 'pry'
 
 # In general, you Retrieve with a request like this:
 # {
@@ -101,28 +102,27 @@ class Magma
 
         # Extract the attributes from the model.
         @attributes = model.attributes.values.select do |att|
-          get_attribute?(att,model)
+          get_attribute?(att, model)
         end
 
         # Extract the attributes that need to be 'eager'-ly loaded and then
         # eagerly load the attributes referenced in a separate db table.
-        records = model.eager(@attributes.map(&:eager).compact)
+        dataset = model.eager(@attributes.map(&:eager).compact)
 
-        # If there are multiple records being requested then extract the records
-        # that match.
+        # If there are multiple records being requested then generate a SQL
+        # sql query that matches.
         if @record_names.is_a?(Array)
-          records = records.where({model.identity=> @record_names})
+          dataset = dataset.where({model.identity=> @record_names})
         end
 
         # TODO: Replace this with a pure-SQL version that returns a hash for 
         # this record.
         #
-        # Pull the records.
-        records = records.all
+        # Run the SQL query to pull the records.
+        records = dataset.all
 
         @payload.add_model(model, @attributes.map(&:name))
-        @payload.add_records( model, records)
-
+        @payload.add_records(model, records)
         pull_table_data(records)
 
         puts("Retrieving #{model.name} took #{Time.now - time} seconds")
