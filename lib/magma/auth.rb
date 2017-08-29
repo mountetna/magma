@@ -67,7 +67,7 @@ class Magma
       end
 
       # Check for the app key.
-      if @config[:app_key].nil?
+      if Magma.instance.config(:app_key).nil?
         raise_err(400, {errors: ['No app key.']})
       end
     end
