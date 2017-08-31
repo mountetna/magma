@@ -13,6 +13,10 @@ class Magma
       @status = status
       @body = body
     end
+
+    def to_json
+      { errors: [ @body ] }.to_json
+    end
   end
 
   class Auth
@@ -21,119 +25,63 @@ class Magma
     end
 
     def call(env)
+      # Don't check authentication in the test environment - this might not be the right move
       return @app.call(env) if ENV["MAGMA_ENV"] == "test"
 
-      @request = Rack::Request.new(env)
-      @params = @request.env['rack.request.params']
+      @params = env['rack.request.params']
 
-      begin
-        # The checks required before we call Janus.
-        pre_janus_check
+      raise Magma::AuthError.new(422, 'No token.') if @params[:token].nil?
+      raise Magma::AuthError.new(422, 'No project_name.') if @params[:project_name].nil?
 
-        # Make the request to Janus.
-        response = make_request(
-          Magma.instance.config(:janus_addr)+'/check',
-          token: @params[:token],
-          app_key: Magma.instance.config(:app_key)
-        ).body
-        response = JSON.parse(response)
+      # Make the request to Janus.
+      response = make_request(
+        Magma.instance.config(:janus_addr)+'/check',
+        token: @params[:token],
+        app_key: Magma.instance.config(:app_key)
+      )
 
-        # The checks require after we call Janus.
-        post_janus_check(response)
-      rescue AuthError=> err
-        return send_err(err.status, err.body)
-      end
+      user_info = JSON.parse(response.body, symbolize_names: true)
+
+      raise Magma::AuthError.new(422, 'Invalid project.') unless has_project_permission?(user_info)
 
       # Set the user's permissions on the 'env' object, and carry on!
-      env.merge!({'user_info'=> response['user_info']})
+      env.update('user_info'=> user_info)
 
       # Carry on!
       @app.call(env)
+    rescue Magma::AuthError => err
+      return Rack::Response.new(err.to_json, err.status)
     end
 
-    def pre_janus_check
-      # Check for the params.
-      if @params == nil
-        raise_err(400, {errors: ['No parameters.']})
-      end
-
-      # Check for the token.
-      if @params[:token].nil?
-        raise_err(400, {errors: ['Invalid login.']})
-      end
-
-      # Check for the project name.
-      if @params[:project_name].nil?
-        raise_err(400, {errors: ['No project.']})
-      end
-
-      # Check for the app key.
-      if Magma.instance.config(:app_key).nil?
-        raise_err(400, {errors: ['No app key.']})
-      end
-    end
-
-    def post_janus_check(response)
-      # Check the response from Janus.
-      if !response.key?('success')
-        raise_err(500, {errors: ['The Janus response is malformed.']}) 
-      end
-
-      if !response['success']
-        raise_err(400, {errors: ['Invalid login.']}) 
-      end
-
-      # Check that the user has some permission for the project requested.
-      if !project_valid?(response)
-        raise_err(400, {errors: ['Invalid project.']})
-      end
-    end
 
     # Make a request to Janus for the user permissions.
     def make_request(url, data)
-      begin
-        uri = URI.parse(url)
-        https_conn = Net::HTTP.new(uri.host, uri.port)
-        https_conn.use_ssl = true
-        https_conn.verify_mode = OpenSSL::SSL::VERIFY_PEER
-        https_conn.open_timeout = 20
-        https_conn.read_timeout = 20
+      uri = URI.parse(url)
+      https_conn = Net::HTTP.new(uri.host, uri.port)
+      https_conn.use_ssl = true
+      https_conn.verify_mode = OpenSSL::SSL::VERIFY_PEER
+      https_conn.open_timeout = 20
+      https_conn.read_timeout = 20
 
-        request = Net::HTTP::Post.new(uri.path)
-        request.set_form_data(data)
+      request = Net::HTTP::Post.new(uri.path)
+      request.set_form_data(data)
 
-        response = https_conn.request(request)
-        status = response.code.to_i
+      response = https_conn.request(request)
+      status = response.code.to_i
 
-        # If something went wrong with the janus server...
-        if status >= 400
-          return send_err(status, {errors: ['A Janus server error occurred.']})
-        end
+      # If something went wrong with the janus server...
+      raise Magma::AuthError.new(422, 'Invalid login') if status >= 400
 
-        return response
-      rescue
-        return send_err(500, {errors: ['A Janus connection error occurred.']})
-      end
+      raise Magma::AuthError.new(500, 'Janus server error') if status >= 500
+
+      return response
     end
 
     # Check that the user has a valid project listed in their permissions.
-    def project_valid?(response)
-      valid = false
-      response['user_info']['permissions'].each do |perm|
-        if perm['project_name'] == @params[:project_name]
-          valid = true
-          break
-        end
+    def has_project_permission?(user_info)
+      user_info[:permissions].any? do |perm|
+        perm[:project_name] == @params[:project_name]
       end
-      return valid
-    end
-
-    def raise_err(status, body)
-      raise Magma::AuthError.new(status, body)
-    end
-
-    def send_err(status, body)
-      return Rack::Response.new(body.to_json, status)
     end
   end
 end
