@@ -65,7 +65,7 @@ class Magma
     # Post revisions to Magma records
     # { model_name: { record_name: { attribute1: 1, attribute2: 2 } } } }
     # data can also be a File or IO stream
-    def update(revisions)
+    def update(token, project_name, revisions)
       content = []
 
       # We need to store revision data in a multipart/form-data object.
