@@ -33,7 +33,7 @@ class Magma
     def update record, new_value
     end
 
-    class Validation < Magma::BaseAttributeValidation
+    class Validator < Magma::AttributeValidator
       def validate value
         unless value.is_a?(Array)
           yield "#{value} is not an Array."

@@ -6,7 +6,7 @@ describe Magma::Server::Update do
   end
 
   def update(revisions)
-    json_post(:update, {project_name: 'Labors', revisions: revisions})
+    json_post(:update, {project_name: 'labors', revisions: revisions})
   end
 
   it 'can update content' do
@@ -52,7 +52,7 @@ describe Magma::Server::Update do
             }
           }
         },
-        project_name: 'Labors'
+        project_name: 'labors'
       }.to_json,
       {
         'CONTENT_TYPE' => 'application/json'

@@ -24,7 +24,7 @@ class Magma
 
       def order(*columns)
         @order = columns
-        set_dataset dataset.order(*@order)
+        set_dataset(dataset.order(*@order))
       end
 
       def attribute(attr_name, opts = {})
@@ -42,7 +42,7 @@ class Magma
 
       def parent(name, opts = {})
         @parent = name
-        many_to_one(name,  {class: resove_namespace(name)})
+        many_to_one(name, class: resolve_namespace(name))
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
@@ -52,8 +52,8 @@ class Magma
       end
 
       def link(name, opts = {})
-        full_model_name = resove_namespace(opts[:link_model] || name)
-        many_to_one(name, {class: full_model_name})
+        full_model_name = resolve_namespace(opts[:link_model] || name)
+        many_to_one(name, class: full_model_name)
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
@@ -68,12 +68,12 @@ class Magma
       end
 
       def collection(name, opts = {})
-        one_to_many(name, {class: resove_namespace(name), primary_key: :id})
+        one_to_many(name, class: resolve_namespace(name), primary_key: :id)
         attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
       end
 
       def table(name, opts = {})
-        one_to_many(name, {class: resove_namespace(name), primary_key: :id})
+        one_to_many(name, class: resolve_namespace(name), primary_key: :id)
         attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
@@ -83,6 +83,26 @@ class Magma
 
         # Default ordering is by identifier.
         order(name) unless @order
+      end
+
+      # Set and/or return the validator for this model.
+      def validator(class_name = nil)
+        if(class_name == nil && @validator != nil)
+          return @validator
+        else
+          if(class_name != nil)
+
+            # Get the name space for the validator and append it's class name to
+            # it to generate a 'new' for return.
+            class_name = "#{self.name.split(/::/)[0]}::#{class_name.to_s}"
+            if Kernel.const_defined?(class_name)
+              @validator = Kernel.const_get(class_name)
+            end
+
+            return @validator
+          end
+        end
+        return nil
       end
 
       def model_name
@@ -202,8 +222,8 @@ class Magma
       # Extract the full module name and prepend it to the incoming class name
       # so we can get the correct Module/Class reference. This one is to 
       # correctly format the Ruby models so they may reference eachother.
-      def resove_namespace(name)
-        :"#{self.name.split(/::/)[0]}::#{name.to_s.camel_case}"
+      def resolve_namespace(name)
+        :"#{self.name.split(/::/).first}::#{name.to_s.camel_case}"
       end
 
       # Takes the module/class namespace and turns it into a postgres
@@ -218,7 +238,6 @@ class Magma
         # one to one correlation between a model's module/class and a postgres
         # schema/table.
         set_dataset(namespaced_table_name(subclass))
-
         super
         subclass.attribute(:created_at, type: DateTime, hide: true)
         subclass.attribute(:updated_at, type: DateTime, hide: true)

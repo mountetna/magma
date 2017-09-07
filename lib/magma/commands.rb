@@ -51,12 +51,12 @@ class Magma
 
     def load_but_dont_check_tables(config)
       Magma.instance.configure(config)
-      Magma.instance.load_models(false)
+      Magma.instance.load_projects(false)
     end
 
     def load_and_check_tables(config)
       Magma.instance.configure(config)
-      Magma.instance.load_models(true)
+      Magma.instance.load_projects(true)
     end
   end
 
@@ -109,6 +109,7 @@ class Magma
     usage 'Suggest a migration based on the current model attributes.'
 
     def execute
+
       puts <<EOT
 Sequel.migration do
   change do
