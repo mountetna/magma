@@ -22,21 +22,16 @@ class Magma
   end
 
   def get_model(project_name, model_name)
-    nm = model_name.to_s.camel_case.to_sym
+    model_class_name = model_name.to_s.camel_case
+    project_class_name = project_name.to_s.camel_case
     begin
-      model = Kernel.const_get(project_name).const_get(nm)
+      model = Kernel.const_get(project_class_name).const_get(model_class_name)
       raise NameError unless model < Magma::Model
       return model
     rescue NameError => e
-      err_txt = 'Could not find Magma::Model '
-      err_txt += namespaced_model(project_name, model_name).to_s
-      raise NameError, err_txt
+      err_txt = "Could not find Magma::Model #{project_class_name}::#{model_class_name}"
+      raise(NameError, err_txt)
     end
-  end
-
-  # Appends the project name to the model name.
-  def namespaced_model(project_name, model_name)
-    :"#{project_name}::#{model_name.to_s.camel_case}"
   end
 
   def magma_models

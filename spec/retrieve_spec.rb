@@ -14,7 +14,7 @@ describe Magma::Server::Retrieve do
       model_name: 'labor',
       record_names: [],
       attribute_names: [],
-      project_name: 'Labors'
+      project_name: 'labors'
     )
     expect(last_response).to(be_ok)
   end
@@ -29,7 +29,7 @@ describe Magma::Server::Retrieve do
       model_name: 'all',
       record_names: [],
       attribute_names: [],
-      project_name: 'Labors'
+      project_name: 'labors'
     )
     expect(last_response).to(be_ok)
   end
@@ -41,7 +41,7 @@ describe Magma::Server::Retrieve do
       model_name: 'labor',
       record_names: labors[0..1].map(&:name),
       attribute_names: 'all',
-      project_name: 'Labors'
+      project_name: 'labors'
     )
 
     json = JSON.parse(last_response.body)
@@ -57,7 +57,7 @@ describe Magma::Server::Retrieve do
       record_names: 'all',
       attribute_names: 'all',
       format: 'tsv',
-      project_name: 'Labors'
+      project_name: 'labors'
     )
     # strong assumption about how columns should be ordered, may
     # be inappropriate for this test - unavoidable?
