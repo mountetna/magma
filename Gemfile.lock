@@ -1,3 +1,12 @@
+GIT
+  remote: git@github.com:mountetna/germ.git
+  revision: 6d92284b82dc5b68d33894c5f078083813302168
+  specs:
+    germ (0.3.2)
+      extlib
+      net-http-persistent
+      sequel
+
 GEM
   remote: http://rubygems.org/
   specs:
@@ -20,8 +29,12 @@ GEM
     carrierwave-sequel (0.1.1)
       carrierwave
       sequel
+    connection_pool (2.2.1)
+    docile (1.1.5)
     excon (0.49.0)
     extlib (0.9.16)
+    factory_girl (4.8.0)
+      activesupport (>= 3.0.0)
     fission (0.5.0)
       CFPropertyList (~> 2.2)
     fog (1.38.0)
@@ -152,10 +165,6 @@ GEM
       fog-core
       nokogiri (~> 1.5, >= 1.5.11)
     formatador (0.2.5)
-    germ (0.3.2)
-      extlib
-      net-http-persistent
-      sequel
     i18n (0.7.0)
     inflecto (0.0.2)
     ipaddress (0.8.3)
@@ -167,17 +176,25 @@ GEM
     mini_portile2 (2.0.0)
     minitest (5.9.1)
     multi_json (1.12.1)
-    net-http-persistent (2.9.4)
+    net-http-persistent (3.0.0)
+      connection_pool (~> 2.2)
     nokogiri (1.6.7.2)
       mini_portile2 (~> 2.0.0.rc2)
     pg (0.19.0)
     rack (1.6.5)
+    rack-test (0.7.0)
+      rack (>= 1.0, < 3)
     rbvmomi (1.8.2)
       builder
       nokogiri (>= 1.4.1)
       trollop
     ruby-ole (1.2.12)
-    sequel (4.34.0)
+    sequel (4.49.0)
+    simplecov (0.15.1)
+      docile (~> 1.1.0)
+      json (>= 1.8, < 3)
+      simplecov-html (~> 0.10.0)
+    simplecov-html (0.10.2)
     spreadsheet (1.1.2)
       ruby-ole (>= 1.0)
     thread_safe (0.3.5)
@@ -191,15 +208,22 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport (>= 4.2.6)
+  carrierwave
   carrierwave-sequel
   extlib
+  factory_girl
   fog
-  germ
+  germ!
   mini_magick
   pg
   rack
-  sequel
+  rack-test
+  sequel (= 4.49.0)
+  simplecov
   spreadsheet
+
+RUBY VERSION
+   ruby 2.2.2p95
 
 BUNDLED WITH
    1.14.6
