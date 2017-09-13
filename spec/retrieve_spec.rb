@@ -32,6 +32,7 @@ describe Magma::Server::Retrieve do
       project_name: 'labors'
     )
     expect(last_response).to(be_ok)
+    expect(last_response).to(be_ok)
   end
 
   it 'retrieves records by name' do

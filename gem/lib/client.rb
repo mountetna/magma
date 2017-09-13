@@ -82,6 +82,9 @@ class Magma
         end
       end
 
+      content << [ 'token', token ]
+      content << [ 'project_name', project_name ]
+
       # Send the update data.
       response = multipart_post('update', content)
       status = response.code.to_i
