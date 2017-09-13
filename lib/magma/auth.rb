@@ -25,9 +25,6 @@ class Magma
     end
 
     def call(env)
-      # Don't check authentication in the test environment - this might not be the right move
-      return @app.call(env) if ENV["MAGMA_ENV"] == "test"
-
       @params = env['rack.request.params']
 
       raise Magma::AuthError.new(422, 'No token.') if @params[:token].nil?
