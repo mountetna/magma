@@ -65,7 +65,7 @@ describe Magma::Client do
       )
     end.to_not raise_error(Magma::ClientError)
    
-    json = JSON.parse(payload, symbolize_names: true)
+    json = json_body(payload)
 
     expect(status).to eq(200)
     expect(json[:models].keys).to eq([:labor])
@@ -110,7 +110,7 @@ describe Magma::Client do
       )
     end.to_not raise_error
    
-    json = JSON.parse(payload, symbolize_names: true)
+    json = json_body(payload)
 
     expect(status).to eq(200)
     expect(json[:answer].length).to eq(3)

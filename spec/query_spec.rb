@@ -14,10 +14,10 @@ describe Magma::Server::Update do
       poison = create(:prize, name: 'poison', worth: 5)
       poop = create(:prize, name: 'poop')
 
-      query(['prize', ['::has', 'worth'], '::all', '::identifier'])
+      query(['prize', ['::has', 'worth'], '::all', 'name'])
       
-      answer = JSON.parse(last_response.body)['answer']
-      expect(answer.length).to eq(1)
+      json = json_body(last_response.body)
+      expect(json[:answer].first.last).to eq('poison')
     end
 
     it 'can retrieve metrics' do
@@ -28,8 +28,9 @@ describe Magma::Server::Update do
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
       query(['labor', '::all', '::metrics'])
 
-      answer = Hash[JSON.parse(last_response.body)['answer']]
-      expect(answer['Lernean Hydra']['lucrative']['score']).to eq('success')
+      json = json_body(last_response.body)
+      answer = Hash[json[:answer]]
+      expect(answer['Lernean Hydra'][:lucrative][:score]).to eq('success')
     end
   end
 
@@ -45,8 +46,8 @@ describe Magma::Server::Update do
         [ 'labor', [ 'name', '::matches', 'L' ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json['answer'].length).to eq(2)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
     end
 
     it 'supports ::equals' do
@@ -54,8 +55,8 @@ describe Magma::Server::Update do
         [ 'labor', [ 'name', '::equals', 'Nemean Lion' ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json['answer'].length).to eq(1)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(1)
     end
 
     it 'supports ::in' do
@@ -63,8 +64,8 @@ describe Magma::Server::Update do
         [ 'labor', [ 'name', '::in', [ 'Nemean Lion', 'Lernean Hydra' ] ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json['answer'].length).to eq(2)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
     end
   end
 
@@ -83,16 +84,16 @@ describe Magma::Server::Update do
         [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::first', 'worth', '::>', 2 ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json['answer'].length).to eq(2)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
     end
     it 'supports in' do
       query(
         [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::first', 'worth', '::in', [ 5 ] ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json['answer'].length).to eq(2)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
     end
   end
 
@@ -111,16 +112,16 @@ describe Magma::Server::Update do
         [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::first', 'worth', '::>', 2 ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json["answer"].length).to eq(2)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
     end
     it "supports in" do
       query(
         [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::first', 'worth', '::in', [ 5 ] ], '::all', '::identifier' ]
       )
 
-      json = JSON.parse(last_response.body)
-      expect(json["answer"].length).to eq(2)
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
     end
   end
 
@@ -131,7 +132,7 @@ describe Magma::Server::Update do
       [ 'labor', '::all', '::identifier' ]
     )
 
-    json = JSON.parse(last_response.body)
-    expect(json['answer'].length).to eq(3)
+    json = json_body(last_response.body)
+    expect(json[:answer].length).to eq(3)
   end
 end

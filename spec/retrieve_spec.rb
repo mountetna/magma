@@ -32,23 +32,24 @@ describe Magma::Server::Retrieve do
       project_name: 'labors'
     )
     expect(last_response).to(be_ok)
-    expect(last_response).to(be_ok)
   end
 
   it 'retrieves records by name' do
     labors = create_list(:labor,3)
 
+    names = labors.map(&:name).map(&:to_sym)
+
     retrieve(
       model_name: 'labor',
-      record_names: labors[0..1].map(&:name),
+      record_names: names[0..1],
       attribute_names: 'all',
       project_name: 'labors'
     )
 
-    json = JSON.parse(last_response.body)
+    json = json_body(last_response.body)
 
-    expect(json['models']['labor']['documents']).to have_key(labors[0].name)
-    expect(json['models']['labor']['documents']).not_to have_key(labors[2].name)
+    expect(json[:models][:labor][:documents]).to have_key(names.first)
+    expect(json[:models][:labor][:documents]).not_to have_key(names.last)
   end
 
   it 'can retrieve a TSV of data from the endpoint' do

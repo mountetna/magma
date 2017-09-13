@@ -171,6 +171,10 @@ def fixture(name)
   File.join(File.dirname(__FILE__), "fixtures/#{name}.txt")
 end
 
+def json_body(body)
+  JSON.parse(body, symbolize_names: true)
+end
+
 def json_post(endpoint, hash)
   post("/#{endpoint}", hash.to_json, {'CONTENT_TYPE'=> 'application/json'})
 end
