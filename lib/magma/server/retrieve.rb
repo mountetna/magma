@@ -188,7 +188,7 @@ class Magma
       def tsv_payload
         @payload = Magma::Payload.new
 
-        model = Magma.instance.get_model(@model_name)
+        model = Magma.instance.get_model(@project_name, @model_name)
         attributes = selected_attributes(model)
         return if attributes.empty?
 

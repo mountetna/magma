@@ -29,11 +29,8 @@ class Magma
 
       def attribute(attr_name, opts = {})
 
-        # 'name_space' is also the same as the project name.
-        name_space = self.name.split(/::/)[0]
-
         klass = opts.delete(:attribute_class) || Magma::Attribute
-        attributes[attr_name] = klass.new(name_space, attr_name, self, opts)
+        attributes[attr_name] = klass.new(attr_name, self, opts)
       end
 
       def has_attribute?(name)
@@ -88,6 +85,10 @@ class Magma
         order(name) unless @order
       end
 
+      def project_name
+        name.split('::').first.snake_case.to_sym
+      end
+
       def model_name
         name.split('::').last.snake_case.to_sym
       end
@@ -134,42 +135,35 @@ class Magma
 
         db.transaction do
 
-          # This is the name of the temporary table into which we drop all of
-          # our update data into. We have to remove the double underscore since
-          # it is interpeted by Sequel as namespacing/schema.
-          tmp_tbl_nm = table_name.to_s.sub!('__', '_')
-          tmp_tbl_nm = :"bulk_update_#{tmp_tbl_nm}"
+          temp_table_name = :"bulk_update_#{project_name}_#{model_name.to_s.plural}"
 
-          # This is the name of our table. We convert the '__' to '.' so we can
-          # properly namespace/schema the appropriate table. (A Sequel model 
-          # corresponds to a table).
-          tbl_nm = table_name.to_s.sub!('__', '.').to_sym
+          orig_table_name = "#{project_name}.#{model_name.to_s.plural}".to_sym
 
           # Create a temporary database and drop when done, also copy the source
           # table structure (by Sequel model) onto the temp table.
-          tmp_tbl_qry = <<-EOT
-            CREATE TEMP TABLE #{tmp_tbl_nm}
+          temp_table_query = <<-EOT
+            CREATE TEMP TABLE #{temp_table_name}
             ON COMMIT DROP
-            AS SELECT * FROM #{tbl_nm} WHERE 1=0;
+            AS SELECT * FROM #{orig_table_name} WHERE 1=0;
           EOT
 
-          puts tmp_tbl_qry
-          db.run(tmp_tbl_qry)
+          puts temp_table_query
+          db.run(temp_table_query)
 
           # In the event of foreign keys we create another column in our
           # temporary table for matching later.
-          tmp_tbl_qry = <<-EOT
-            ALTER TABLE #{tmp_tbl_nm}
+          temp_table_query = <<-EOT
+            ALTER TABLE #{temp_table_name}
             ADD COLUMN #{src_id} integer;
           EOT
 
           unless columns.include?(src_id)
-            puts tmp_tbl_qry
-            db.run(tmp_tbl_qry)
+            puts temp_table_query
+            db.run(temp_table_query)
           end
 
           # Insert the records into the temporary DB.
-          db[tmp_tbl_nm].multi_insert(records)
+          db[temp_table_name].multi_insert(records)
 
           # Generate the column name mapping from the temporary database to the 
           # permanent one.
@@ -179,14 +173,14 @@ class Magma
 
           # Move the data from the temporary database into the permanent one.
           # This should also destroy the temporary database.
-          tbl_qry = <<-EOT
-            UPDATE #{tbl_nm} AS dest
+          temp_table_query = <<-EOT
+            UPDATE #{orig_table_name} AS dest
             SET #{column_alias}
-            FROM #{tmp_tbl_nm} AS src
+            FROM #{temp_table_name} AS src
             WHERE dest.#{dest_id} = src.#{src_id};
           EOT
 
-          db.run(tbl_qry)
+          db.run(temp_table_query)
         end
       end
 
@@ -213,7 +207,9 @@ class Magma
       # schema/table string. This one is to establish the Sequel Model to 
       # Postgres DB connection.
       def namespaced_table_name(subclass)
-        :"#{subclass.name.split(/::/).map(&:snake_case).join('__').plural}"
+        project_name, table_name = subclass.name.split(/::/).map(&:snake_case)
+        table_name = table_name.plural
+        Sequel[project_name.to_sym][table_name.to_sym]
       end
 
       def inherited(subclass)

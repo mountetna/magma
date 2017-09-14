@@ -10,8 +10,7 @@ class Magma
       end
     end
 
-    def initialize(project, name, model, opts)
-      @project = project
+    def initialize(name, model, opts)
       @name = name
       @model = model
       set_options(opts)

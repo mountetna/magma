@@ -1,6 +1,6 @@
 class Magma
   class ImageAttribute < Attribute
-    def initialize(project, name, model, opts)
+    def initialize(name, model, opts)
       super
       @type = String
     end

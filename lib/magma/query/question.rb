@@ -43,7 +43,7 @@ class Magma
   class Question
     class Join
       def initialize(t1, t1_alias, t1_id, t2, t2_alias, t2_id)
-        @table1 = t1.to_sym
+        @table1 = t1
         @table1_alias = t1_alias.to_sym
         @table1_id = t1_id.to_sym
         @table2_alias = t2_alias.to_sym
@@ -52,7 +52,7 @@ class Magma
 
       def apply query
         query.left_outer_join(
-          Sequel.identifier(@table1).as(@table1_alias),
+          Sequel.as(@table1,@table1_alias),
           table1_column => table2_column
         )
       end
@@ -103,9 +103,8 @@ class Magma
     end
 
     def initialize(project_name, predicates, options = {})
-      model = Magma.instance.get_model(project_name, predicates.shift)
-      @start_predicate = ModelPredicate.new(model, *predicates)
-      @model = @start_predicate.model
+      @model = Magma.instance.get_model(project_name, predicates.shift)
+      @start_predicate = ModelPredicate.new(@model, *predicates)
       @options = options
     end
 

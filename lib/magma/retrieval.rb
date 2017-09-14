@@ -37,7 +37,7 @@ class Magma
     private
 
     def question
-      @question ||= Magma::Question.new(query, page: @page, page_size: @page_size)
+      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size)
     end
 
     def query

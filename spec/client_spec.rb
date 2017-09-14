@@ -50,10 +50,9 @@ describe Magma::Client do
   it "invokes the retrieve endpoint correctly." do
     token = 'janus-token'
 
-    status = nil
-    payload = nil
+    response = nil
     expect do
-      status, payload = client.retrieve(
+      response = client.retrieve(
         token,
         'labors',
         {
@@ -65,9 +64,8 @@ describe Magma::Client do
       )
     end.to_not raise_error(Magma::ClientError)
    
-    json = json_body(payload)
+    json = json_body(response.body)
 
-    expect(status).to eq(200)
     expect(json[:models].keys).to eq([:labor])
   end 
 
@@ -75,10 +73,8 @@ describe Magma::Client do
     token = 'janus-token'
     lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
 
-    status = nil
-    payload = nil
     expect do
-      status, payload = client.update(
+      client.update(
         token,
         'labors',
         {
@@ -89,10 +85,9 @@ describe Magma::Client do
           }
         }
       )
-    end.to_not raise_error
+    end.to_not raise_error(Magma::ClientError)
    
     lion.refresh
-    expect(status).to eq(200)
     expect(lion.species).to eq('lion')
   end
   
@@ -100,19 +95,17 @@ describe Magma::Client do
     token = 'janus-token'
     create_list(:labor, 3)
 
-    status = nil
-    payload = nil
+    response = nil
     expect do
-      status, payload = client.query(
+      response = client.query(
         token,
         'labors',
         [ 'labor', '::all', '::identifier' ]
       )
-    end.to_not raise_error
+    end.to_not raise_error(Magma::ClientError)
    
-    json = json_body(payload)
+    json = json_body(response.body)
 
-    expect(status).to eq(200)
     expect(json[:answer].length).to eq(3)
   end
 end

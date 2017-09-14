@@ -26,7 +26,7 @@ describe Magma::Server::Retrieve do
 
   it 'can get all models from the retrieve endpoint.' do
     retrieve(
-      project_name: 'labors'
+      project_name: 'labors',
       model_name: 'all',
       record_names: [],
       attribute_names: "all"
@@ -36,6 +36,7 @@ describe Magma::Server::Retrieve do
 
   it "complains if there are record names for all models" do
     retrieve(
+      project_name: 'labors',
       model_name: "all",
       record_names: [ "record1", "record2" ],
       attribute_names: []
@@ -65,6 +66,7 @@ describe Magma::Server::Retrieve do
   it "can retrieve records by id if there is no identifier" do
     prizes = create_list(:prize,3)
     retrieve(
+      project_name: 'labors',
       model_name: "prize",
       record_names: prizes[0..1].map(&:id),
       attribute_names: "all" 
@@ -95,6 +97,7 @@ describe Magma::Server::Retrieve do
   it "can retrieve a TSV of data without an identifier" do
     prize_list = create_list(:prize, 12)
     retrieve(
+      project_name: 'labors',
       model_name: "prize",
       record_names: "all",
       attribute_names: "all",
@@ -110,6 +113,7 @@ describe Magma::Server::Retrieve do
     hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
     stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
     retrieve(
+      project_name: 'labors',
       model_name: "labor",
       record_names: "all",
       attribute_names: "all",
@@ -125,6 +129,7 @@ describe Magma::Server::Retrieve do
     names = labor_list.sort_by(&:name)[6..8].map(&:name)
 
     retrieve(
+      project_name: 'labors',
       model_name: "labor",
       record_names: "all",
       attribute_names: "all",
@@ -145,6 +150,7 @@ describe Magma::Server::Retrieve do
     names = monster_list.sort_by(&:name)[6..8].map(&:name)
 
     retrieve(
+      project_name: 'labors',
       model_name: "monster",
       record_names: "all",
       attribute_names: "all",
@@ -160,6 +166,7 @@ describe Magma::Server::Retrieve do
     labor_list = create_list(:labor, 9)
 
     retrieve(
+      project_name: 'labors',
       model_name: "labor",
       record_names: "all",
       attribute_names: "all",
@@ -180,10 +187,11 @@ describe Magma::Server::Retrieve do
     stables_prizes = create_list(:prize, 3, labor: stables)
 
     selected_prize_ids = (lion_prizes + hydra_prizes).map do |prize|
-      prize.send(Prize.identity).to_s
+      prize.send(Labors::Prize.identity).to_s
     end.sort
 
     retrieve(
+      project_name: 'labors',
       model_name: "labor",
       record_names: [ "Nemean Lion", "Lernean Hydra" ],
       attribute_names: [ "prize" ]

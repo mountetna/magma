@@ -1,6 +1,6 @@
 class Magma
   class FileAttribute < Attribute
-    def initialize(project, name, model, opts)
+    def initialize(name, model, opts)
       super
       @type = String
     end
