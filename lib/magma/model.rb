@@ -61,6 +61,7 @@ class Magma
         mount_uploader name, Magma::FileUploader
         attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
+      alias_method :document, :file
 
       def image name, opts = {}
         mount_uploader name, Magma::ImageUploader
