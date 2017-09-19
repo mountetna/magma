@@ -182,12 +182,25 @@ class Magma
       query
     end
 
-    # return distinct identifiers, useful for counting results and row-numbering
+    # return identifiers, useful for counting results and row-numbering
     def count_query
-      base_query.select(
+      # unlike the base query, we do not want to collect joins for mapped
+      # values, only for filters on the start_predicate.
+
+      query = @model.from(
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
+      ).order(@start_predicate.identity)
+
+      @start_predicate.join.uniq.each do |join|
+        query = join.apply(query)
+      end
+
+      @start_predicate.constraint.uniq.each do |constraint|
+        query = constraint.apply(query)
+      end
+
+      query.select(
         *@start_predicate.select
-      ).distinct(
-        @start_predicate.column_name
       )
     end
 

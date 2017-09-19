@@ -42,6 +42,8 @@ class Magma
         @collapse_tables = @params[:collapse_tables] || @params[:format] == "tsv"
         @filter = @params[:filter]
         @format = @params[:format] || "json"
+        @page = @params[:page]
+        @page_size = @params[:page_size]
 
         @attribute_names = @params[:attribute_names]
         if @params[:attribute_names].is_a?(Array)
@@ -68,19 +70,6 @@ class Magma
           puts e.backtrace
           return failure 422, errors: [ e.message ]
         end
-      end
-
-      def initialize request
-        super request
-
-        @model_name =  @params[:model_name]
-        @record_names = @params[:record_names]
-        @attribute_names = @params[:attribute_names].is_a?(Array) ? @params[:attribute_names].map(&:to_sym) : @params[:attribute_names]
-        @collapse_tables =  @params[:collapse_tables] || @params[:format] == "tsv"
-        @filter = @params[:filter]
-        @page = @params[:page]
-        @page_size = @params[:page_size]
-        @format = @params[:format] || "json"
       end
 
       private
