@@ -13,6 +13,5 @@ use Magma::ParseBody
 use Rack::ShowExceptions
 use Magma::SymbolizeParams
 use Magma::Auth
-use Rack::Chunked
 
 run Magma::Server.new(YAML.load(File.read('config.yml')), logger)
