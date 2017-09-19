@@ -80,14 +80,14 @@ class Magma
       post(endpoint, "application/json", params.to_json, status_errors, &block)
     end
 
-    def multipart_post endpoint, content, status_errors={}, &block
+    def multipart_post(endpoint, content, status_errors={}, &block)
       uri = URI("#{@host}/#{endpoint}")
       multipart = Net::HTTP::Post::Multipart.new uri.path, content
 
       request(uri, multipart, status_errors, &block)
     end
 
-    def post endpoint, content_type, body, status_errors, &block
+    def post(endpoint, content_type, body, status_errors, &block)
       uri = URI("#{@host}/#{endpoint}")
       post = Net::HTTP::Post.new(
         uri.path,
