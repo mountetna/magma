@@ -51,12 +51,12 @@ class Magma
 
     def load_but_dont_check_tables(config)
       Magma.instance.configure(config)
-      Magma.instance.load_models(false)
+      Magma.instance.load_projects(false)
     end
 
     def load_and_check_tables(config)
       Magma.instance.configure(config)
-      Magma.instance.load_models(true)
+      Magma.instance.load_projects(true)
     end
   end
 

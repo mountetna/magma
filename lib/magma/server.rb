@@ -20,7 +20,7 @@ class Magma
     def initialize(config, logger)
       Magma.instance.tap do |magma|
         magma.configure(config)
-        magma.load_models
+        magma.load_projects
         magma.persist_connection
         magma.db.loggers << logger
       end

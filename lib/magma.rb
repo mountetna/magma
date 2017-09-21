@@ -1,5 +1,5 @@
 require 'sequel'
-require_relative 'magma/validation'
+require_relative 'magma/validator'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
 require_relative 'magma/attribute'
@@ -49,7 +49,9 @@ class Magma
     (ENV['MAGMA_ENV'] || :development).to_sym
   end
 
-  def load_models(check_tables = true)
+  # Load the files specific to projects such as their data models, validators, 
+  # loaders, and metrics.
+  def load_projects(check_tables = true)
     connect(config :db)
 
     if config(:storage)
@@ -57,23 +59,36 @@ class Magma
       require_relative 'magma/image'
     end
 
+    # Extract the liste project paths from the config file and loop over them.
     config(:project_path).split(/\s+/).each do |project_dir|
-      base_file = File.join(File.dirname(__FILE__), '..', project_dir, 'requirements.rb')
+
+      dir_nm = File.dirname(__FILE__) # Current working directory name.
+
+      # Look in each project path for the 'requirements.rb' file. This file
+      # should list out what models and items are to be included at Magma
+      # start up.
+      base_file = File.join(dir_nm, '..', project_dir, 'requirements.rb')
+
+      # If the 'requirements.rb' file exists then load that file. Otherwise load
+      # the items from the sub folders.
       if File.exists?(base_file)
         require base_file 
       else
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'models', '**', '*.rb'), &method(:require))
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'loaders', '**', '*.rb'), &method(:require))
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'metrics', '**', '*.rb'), &method(:require))
+        ['validators', 'models', 'loaders', 'metrics'].each do |folder_name|
+          args = [dir_nm, '..', project_dir, folder_name, '**', '*.rb']
+          Dir.glob(File.join(*args), &method(:require))
+        end
       end
     end
 
+    # Check that the loaded models have matching tables in postgres.
     if check_tables
       magma_models.each do |model|
         raise "Missing table for #{model}." unless model.has_table?
       end
     end
 
+    # Start up Carrierwave, which hooks into S3, which houses our large files.
     carrier_wave_init
   end
 
