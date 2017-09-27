@@ -16,7 +16,7 @@ class Magma
       child TrueClass
 
       constraint do
-        basic_constraint(@attribute_name, @arguments[1].to_f)
+        basic_constraint(@attribute_name, @arguments[1])
       end
     end
 

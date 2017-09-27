@@ -45,16 +45,16 @@ class Magma
     end
 
     def join
-      if @verb.gives?(:join)
-        [ @verb.do(:join) ]
+      if @verb && @verb.gives?(:join)
+        [ @verb.do(:join) ].compact
       else
         []
       end
     end
 
     def constraint
-      if @verb.gives?(:constraint)
-        [ @verb.do(:constraint) ]
+      if @verb && @verb.gives?(:constraint)
+        [ @verb.do(:constraint) ].compact
       else
         []
       end
@@ -65,7 +65,7 @@ class Magma
     end
 
     def extract table, identity
-      if @verb.gives?(:extract)
+      if @verb && @verb.gives?(:extract)
         @verb.do(:extract, table, identity)
       else
         child_extract(table,identity)
@@ -139,16 +139,17 @@ class Magma
           end
         end
       end
+
       return [
         Magma::Verb.new(predicate,matching_block),
         query_args[0...matching_args.size],
-        query_args[matching_args.size..-1]
+        query_args[matching_args.size..-1] || []
       ]
     end
 
     # Some constraint helpers
     def comparison_constraint column_name, operator, value
-      new(
+      Magma::Constraint.new(
         Sequel.lit(
           "? #{operator.sub(/::/,'')} ?",
           Sequel.qualify(alias_name, column_name),
@@ -158,7 +159,7 @@ class Magma
     end
 
     def not_null_constraint(column_name)
-      new(
+      Magma::Constraint.new(
         Sequel.lit(
           "? IS NOT NULL",
           Sequel.qualify(alias_name, column_name)
@@ -167,10 +168,8 @@ class Magma
     end
 
     def basic_constraint column_name, value
-      new(
-        Sequel.lit(
-          Sequel.qualify(alias_name, column_name) => value
-        )
+      Magma::Constraint.new(
+        Sequel.qualify(alias_name, column_name) => value
       )
     end
 

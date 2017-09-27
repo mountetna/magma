@@ -48,7 +48,7 @@ class Magma
 
     verb "::first" do
       child :record_child
-      extract do |table,identity|
+      extract do |table,return_identity|
         child_extract(
           table.group_by do |row|
             row[identity]
@@ -60,7 +60,7 @@ class Magma
 
     verb "::all" do
       child :record_child
-      extract do |table,identity|
+      extract do |table,return_identity|
         table.group_by do |row|
           row[identity]
         end.map do |identifier,rows|

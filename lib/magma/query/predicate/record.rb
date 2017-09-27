@@ -31,23 +31,22 @@ class Magma
     end
 
     verb "::has", :attribute_name do
-      child do
-        return terminal(TrueClass)
-      end
+      child TrueClass
 
       constraint do
-        case valid_attribute(@arguments[1])
+        attribute = valid_attribute(@arguments[1])
+        case attribute
         when Magma::ForeignKeyAttribute
-          not_null_constraint(@attribute.foreign_id)
+          not_null_constraint(attribute.foreign_id)
         else
-          not_null_constraint(@attribute.name)
+          not_null_constraint(attribute.name)
         end
       end
     end
 
     verb "::metrics" do
       child do
-        return Magma::MetricsPredicate.new(@model, alias_name, *@query_args)
+        Magma::MetricsPredicate.new(@model, alias_name, *@query_args)
       end
     end
 
@@ -60,7 +59,7 @@ class Magma
 
     verb Array do
       child do
-        return Magma::VectorPredicate.new(@model, alias_name, @arguments[0], *@query_args)
+        Magma::VectorPredicate.new(@model, alias_name, @arguments[0], *@query_args)
       end
     end
 
@@ -77,7 +76,8 @@ class Magma
     end
 
     def attribute_join
-      case @attribute
+      attribute = valid_attribute(@arguments[0])
+      case attribute
       when Magma::ForeignKeyAttribute
         return Magma::Join.new(
           @child_predicate.table_name,
@@ -85,13 +85,13 @@ class Magma
           :id,
           table_name,
           alias_name,
-          @attribute.foreign_id
+          attribute.foreign_id
         )
       when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
         return Magma::Join.new(
           @child_predicate.table_name,
           @child_predicate.alias_name,
-          @attribute.self_id,
+          attribute.self_id,
           table_name,
           alias_name,
           :id
@@ -100,27 +100,28 @@ class Magma
     end
 
     def attribute_child(attribute_name)
-      case valid_attribute(attribute_name)
+      attribute = valid_attribute(attribute_name)
+      case attribute
       when :id
-        return Magma::NumberPredicate.new(@model, alias_name, @attribute, *@query_args)
+        return Magma::NumberPredicate.new(@model, alias_name, attribute, *@query_args)
       when Magma::ChildAttribute, Magma::ForeignKeyAttribute
-        return Magma::RecordPredicate.new(@attribute.link_model, nil, *@query_args)
+        return Magma::RecordPredicate.new(attribute.link_model, nil, *@query_args)
       when Magma::TableAttribute, Magma::CollectionAttribute
-        return Magma::ModelPredicate.new(@attribute.link_model, *@query_args)
+        return Magma::ModelPredicate.new(attribute.link_model, *@query_args)
       when Magma::FileAttribute, Magma::ImageAttribute
-        return Magma::FilePredicate.new(@model, alias_name, @attribute.name, *@query_args)
+        return Magma::FilePredicate.new(@model, alias_name, attribute.name, *@query_args)
       else
-        case @attribute.type.name
+        case attribute.type.name
         when "String"
-          return Magma::StringPredicate.new(@model, alias_name, @attribute.name, *@query_args)
+          return Magma::StringPredicate.new(@model, alias_name, attribute.name, *@query_args)
         when "Integer", "Float"
-          return Magma::NumberPredicate.new(@model, alias_name, @attribute.name, *@query_args)
+          return Magma::NumberPredicate.new(@model, alias_name, attribute.name, *@query_args)
         when "DateTime"
-          return Magma::DateTimePredicate.new(@model, alias_name, @attribute.name, *@query_args)
+          return Magma::DateTimePredicate.new(@model, alias_name, attribute.name, *@query_args)
         when "TrueClass"
-          return Magma::BooleanPredicate.new(@model, alias_name, @attribute.name, *@query_args)
+          return Magma::BooleanPredicate.new(@model, alias_name, attribute.name, *@query_args)
         else
-          invalid_argument! @attribute.name
+          invalid_argument! attribute.name
         end
       end
     end
