@@ -43,9 +43,9 @@ require_relative 'constraint'
 
 class Magma
   class Question
-    def initialize(project_name, predicates, options = {})
-      @model = Magma.instance.get_model(project_name, predicates.shift)
-      @start_predicate = ModelPredicate.new(@model, *predicates)
+    def initialize(project_name, query_args, options = {})
+      @model = Magma.instance.get_model(project_name, query_args.shift)
+      @start_predicate = ModelPredicate.new(@model, *query_args)
       @options = options
     end
 

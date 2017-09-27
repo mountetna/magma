@@ -2,12 +2,12 @@ class Magma
   class ColumnPredicate < Magma::Predicate
     # This Predicate returns an actual attribute value of some kind - a number, integer, etc.,
     # or else a test on that value (number > 2, etc.)
-    def initialize model, alias_name, attribute_name, argument=nil, *predicates
+    def initialize model, alias_name, attribute_name, argument=nil, *query_args
       @model = model
       @alias_name = alias_name
       @attribute_name = attribute_name
       @argument = argument
-      @predicates = predicates
+      @query_args = query_args
       @child_predicate = get_child
     end
 

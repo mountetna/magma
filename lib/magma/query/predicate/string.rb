@@ -24,16 +24,16 @@ class Magma
     def get_child
       case @argument
       when "::matches"
-        operand = @predicates.shift
+        operand = @query_args.shift
         invalid_argument! operand unless operand && operand.is_a?(String)
         @operand = Regexp.new(operand)
         return terminal(TrueClass)
       when "::equals"
-        @operand = @predicates.shift
+        @operand = @query_args.shift
         invalid_argument! @operand unless @operand && @operand.is_a?(String)
         return terminal(TrueClass)
       when "::in"
-        @operand = @predicates.shift
+        @operand = @query_args.shift
         invalid_argument! @operand unless @operand && @operand.is_a?(Array)
         return terminal(TrueClass)
       when nil

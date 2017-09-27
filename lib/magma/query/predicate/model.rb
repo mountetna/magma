@@ -26,16 +26,16 @@ class Magma
 
     attr_reader :model
 
-    def initialize(model, *predicates)
+    def initialize(model, *query_args)
       @model = model
       @filters = []
 
-      # Since we are shifting off the the first elements on the predicates array
+      # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
-      while predicates.first.is_a?(Array)
+      while query_args.first.is_a?(Array)
 
-        filter = RecordPredicate.new(@model, alias_name, *predicates.shift)
+        filter = RecordPredicate.new(@model, alias_name, *query_args.shift)
 
         err_msg = "Filter #{filter} does not reduce to Boolean "
         err_msg += "#{filter.argument} #{filter.reduced_type}!"
@@ -44,7 +44,7 @@ class Magma
         @filters.push(filter)
       end
 
-      @predicates = predicates
+      @query_args = query_args
       @child_predicate = get_child
     end
 

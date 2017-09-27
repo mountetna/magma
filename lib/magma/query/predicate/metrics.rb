@@ -1,9 +1,9 @@
 class Magma
   class MetricsPredicate < Magma::Predicate
-    def initialize model, alias_name, *predicates
+    def initialize model, alias_name, *query_args
       @model = model
       @alias_name = alias_name
-      @predicates = predicates
+      @query_args = query_args
       @child_predicate = get_child
     end
 

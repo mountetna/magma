@@ -2,11 +2,11 @@ class Magma
   # just like the ModelPredicate, this keeps track of its own predicate chain.
   # Confusing... Perhaps a better concept is in order?
   class VectorPredicate < Magma::Predicate
-    def initialize model, alias_name, columns, *predicates
+    def initialize model, alias_name, columns, *query_args
       @model = model
       @alias_name = alias_name
       @columns = columns
-      @predicates = predicates
+      @query_args = query_args
       @child_predicate = get_child
     end
 

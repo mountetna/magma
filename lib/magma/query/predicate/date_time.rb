@@ -21,7 +21,7 @@ class Magma
     def get_child
       case @argument
       when "::<=", "::<", "::>", "::>=", "::="
-        operand = @predicates.shift
+        operand = @query_args.shift
         invalid_argument! operand unless operand && operand.is_a?(String)
         @operand = DateTime.parse(operand)
         return terminal(TrueClass)
