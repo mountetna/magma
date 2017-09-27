@@ -1,11 +1,32 @@
 # This is the base class for parsing a query (Question). Each argument in the
-# question is a Predicate, starting with a ModelPredicate and ending with a
-# TerminalPredicate. Each predicate determines what are the correct following
-# arguments and validates accordingly.
+# question is a series of arguments which yield Predicates, starting with a
+# ModelPredicate and ending with a TerminalPredicate. Each predicate
+# determines what are the correct following arguments and validates
+# accordingly.
+#
+# There are four basic types of predicates:
+#
+# ModelPredicate   - represents a list of records, its arguments are a series
+#                    of filters on that list and various options to reduce
+#                    that list.
+# RecordPredicate  - represents a single record, its arguments are mostly a
+#                    list of attribute names
+# ColumnPredicate  - represents a value from a database table, its
+#                    arguments are boolean tests on that value
+# VectorPredicate  - represents an array of mapped values
+# 
+# From these predicates we wish to produce a SQL query. The basic form of
+# such a query is defined by SELECT, FROM+JOIN, WHERE. Each predicate must
+# therefore respond to #select, #join, #constraint. The Question will
+# collect these and use them to make the SQL query.
+#
+# Each predicate consumes arguments from the argument chain until it is
+# satisfied, and then returns a valid child predicate which is responsible
+# for the rest. If a predicate does not know how to consume its arguments,
+# it raises an error.
 
 class Magma
   class Predicate
-
     attr_reader :argument
 
     def reduced_type
