@@ -1,39 +1,27 @@
 class Magma
   class BooleanPredicate < Magma::ColumnPredicate
-    def constraint
-      case @argument
-      when "::true"
-        return [
-          Magma::Constraint.new(
-            Sequel.lit(
-              Sequel.qualify(alias_name, @attribute_name) => true
-            )
-          )
-        ]
-      when "::false"
-        return [
-          Magma::Constraint.new(
-            Sequel.lit(
-              Sequel.qualify(alias_name, @attribute_name) => false
-            )
-          )
-        ]
-      end
-      super
+    verb nil do
+      child TrueClass
     end
 
-    private
+    verb "::true" do
+      child TrueClass
+      constraint do
+        Magma::Constraint.basic(true)
+      end
+    end
 
-    def get_child
-      case @argument
-      when "::true"
-      when "::false"
-      when "::null"
-        return terminal(TrueClass)
-      when nil
-        return terminal(TrueClass)
-      else
-        invalid_argument! @argument
+    verb "::false" do
+      child TrueClass
+      constraint do
+        Magma::Constraint.basic(false)
+      end
+    end
+
+    verb "::null" do
+      child TrueClass
+      constraint do
+        Magma::Constraint.basic(nil)
       end
     end
   end

@@ -1,45 +1,30 @@
 class Magma
   class StringPredicate < Magma::ColumnPredicate
-    def constraint 
-      case @argument
-      when "::matches", "::equals", "::in"
-        return [
-          Magma::Constraint.new(
-            Sequel.qualify(alias_name, @attribute_name) => @operand
-          )
-        ]
+    verb nil do
+      child String
+    end
+
+    verb "::matches", String do
+      child TrueClass
+
+      constraint do
+        basic_constraint(@attribute_name, Regexp.new(@arguments[1]))
       end
-
-      super
     end
 
-    def to_hash
-      super.merge(
-        operand: @operand
-      )
+    verb "::equals", String do
+      child TrueClass
+
+      constraint do
+        basic_constraint(@attribute_name, @arguments[1].to_f)
+      end
     end
 
-    private
+    verb "::in", Array do
+      child TrueClass
 
-    def get_child
-      case @argument
-      when "::matches"
-        operand = @query_args.shift
-        invalid_argument! operand unless operand && operand.is_a?(String)
-        @operand = Regexp.new(operand)
-        return terminal(TrueClass)
-      when "::equals"
-        @operand = @query_args.shift
-        invalid_argument! @operand unless @operand && @operand.is_a?(String)
-        return terminal(TrueClass)
-      when "::in"
-        @operand = @query_args.shift
-        invalid_argument! @operand unless @operand && @operand.is_a?(Array)
-        return terminal(TrueClass)
-      when nil
-        return terminal(String)
-      else
-        invalid_argument! @argument
+      constraint do
+        basic_constraint(@attribute_name, @arguments[1])
       end
     end
   end

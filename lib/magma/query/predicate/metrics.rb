@@ -3,8 +3,11 @@ class Magma
     def initialize model, alias_name, *query_args
       @model = model
       @alias_name = alias_name
-      @query_args = query_args
-      @child_predicate = get_child
+      process_args(query_args)
+    end
+
+    verb nil do
+      child Hash
     end
 
     def extract table, identity
@@ -30,14 +33,10 @@ class Magma
     end
 
     def select
-      @argument.nil? ? [ Sequel[alias_name][@model.identity].as(column_name) ] : []
+      @arguments.empty? ? [ Sequel[alias_name][@model.identity].as(column_name) ] : []
     end
 
     private
-
-    def get_child
-      terminal(Hash)
-    end
 
     def column_name
       :"#{alias_name}_#{@model.identity}"

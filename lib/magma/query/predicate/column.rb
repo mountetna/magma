@@ -2,13 +2,11 @@ class Magma
   class ColumnPredicate < Magma::Predicate
     # This Predicate returns an actual attribute value of some kind - a number, integer, etc.,
     # or else a test on that value (number > 2, etc.)
-    def initialize model, alias_name, attribute_name, argument=nil, *query_args
+    def initialize model, alias_name, attribute_name, *query_args
       @model = model
       @alias_name = alias_name
       @attribute_name = attribute_name
-      @argument = argument
-      @query_args = query_args
-      @child_predicate = get_child
+      process_args(query_args)
     end
 
     def extract table, identity
@@ -16,7 +14,7 @@ class Magma
     end
 
     def select
-      @argument.nil? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
+      @arguments.empty? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
     end
 
     protected

@@ -5,9 +5,18 @@ class Magma
     def initialize model, alias_name, columns, *query_args
       @model = model
       @alias_name = alias_name
-      @columns = columns
-      @query_args = query_args
-      @child_predicate = get_child
+      raise ArgumentError, "Column vector cannot be empty!" if columns.empty?
+      @column_predicates = columns.map do |column_query|
+        # now, we merely map this to a record predicate. Handy!
+        RecordPredicate.new(@model, @alias_name, *column_query)
+      end
+      process_args(query_args)
+    end
+
+    verb nil do
+      child do
+        terminal(Array)
+      end
     end
 
     def extract table, identity
@@ -27,17 +36,6 @@ class Magma
       @column_predicates.map do |pred|
         pred.flatten.map(&:select).inject(&:+)
       end.inject(&:+)
-    end
-
-    private
-
-    def get_child
-      raise ArgumentError, "Column vector cannot be empty!" if @columns.empty?
-      @column_predicates = @columns.map do |column_query|
-        # now, we merely map this to a record predicate. Handy!
-        RecordPredicate.new(@model, @alias_name, *column_query)
-      end
-      return terminal(Array)
     end
   end
 end

@@ -34,7 +34,6 @@ class Magma
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
       while query_args.first.is_a?(Array)
-
         filter = RecordPredicate.new(@model, alias_name, *query_args.shift)
 
         err_msg = "Filter #{filter} does not reduce to Boolean "
@@ -44,8 +43,34 @@ class Magma
         @filters.push(filter)
       end
 
-      @query_args = query_args
-      @child_predicate = get_child
+      process_args(query_args)
+    end
+
+    verb "::first" do
+      child :record_child
+      extract do |table,identity|
+        child_extract(
+          table.group_by do |row|
+            row[identity]
+          end.first.last,
+          identity
+        )
+      end
+    end
+
+    verb "::all" do
+      child :record_child
+      extract do |table,identity|
+        table.group_by do |row|
+          row[identity]
+        end.map do |identifier,rows|
+          [ identifier, child_extract(rows, identity) ]
+        end
+      end
+    end
+
+    def record_child
+      RecordPredicate.new(@model, alias_name, *@query_args)
     end
 
     def join
@@ -68,34 +93,6 @@ class Magma
       end.inject(&:+) || []
     end
 
-    def extract(table, return_identity)
-      case @argument
-      when "::first"
-        # after me there might be either a column OR another
-        # model it is up to the model to construct a list or
-        # return a single item as it sees fit
-        # 
-        # '::all' returns a list of identifier-value pairs for
-        # all identifiers for THIS model
-        #
-        # '::first' returns a SINGLE value - no identifier required
-        super(
-          table.group_by do |row|
-            row[identity]
-          end.first.last,
-          identity
-        )
-      when "::all"
-        table.group_by do |row|
-          row[identity]
-        end.map do |identifier,rows|
-          [ identifier, super(rows, identity) ]
-        end
-      else
-        invalid_argument!(@argument)
-      end
-    end
-
     def to_hash
       super.merge(
         model: model,
@@ -109,21 +106,6 @@ class Magma
 
     def identity
       :"#{alias_name}_#{@model.identity}"
-    end
-
-    private
-
-    def get_child
-      @argument = @predicates.shift
-
-      invalid_argument! unless @argument
-
-      case @argument
-      when "::first", "::all"
-        return RecordPredicate.new(@model, alias_name, *@predicates)
-      else
-        invalid_argument!(@argument)
-      end
     end
   end
 end
