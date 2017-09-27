@@ -4,7 +4,7 @@ class Magma
       case @argument
       when "::<=", "::<", "::>", "::>=", "::="
         return [
-          Magma::Question::Constraint.new(
+          Magma::Constraint.new(
             Sequel.lit(
               "? #{@argument.sub(/::/,'')} ?",
               Sequel.qualify(alias_name, @attribute_name),

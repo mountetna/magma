@@ -4,7 +4,7 @@ class Magma
       case @argument
       when "::true"
         return [
-          Magma::Question::Constraint.new(
+          Magma::Constraint.new(
             Sequel.lit(
               Sequel.qualify(alias_name, @attribute_name) => true
             )
@@ -12,7 +12,7 @@ class Magma
         ]
       when "::false"
         return [
-          Magma::Question::Constraint.new(
+          Magma::Constraint.new(
             Sequel.lit(
               Sequel.qualify(alias_name, @attribute_name) => false
             )

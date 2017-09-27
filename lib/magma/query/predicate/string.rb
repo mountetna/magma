@@ -4,7 +4,7 @@ class Magma
       case @argument
       when "::matches", "::equals", "::in"
         return [
-          Magma::Question::Constraint.new(
+          Magma::Constraint.new(
             Sequel.qualify(alias_name, @attribute_name) => @operand
           )
         ]

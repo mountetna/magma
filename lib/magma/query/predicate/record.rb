@@ -31,7 +31,7 @@ class Magma
         case @attribute
         when Magma::ForeignKeyAttribute
           return [
-            Magma::Question::Join.new(
+            Magma::Join.new(
               @child_predicate.table_name,
               @child_predicate.alias_name,
               :id,
@@ -42,7 +42,7 @@ class Magma
           ]
         when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
           return [
-            Magma::Question::Join.new(
+            Magma::Join.new(
               @child_predicate.table_name,
               @child_predicate.alias_name,
               @attribute.self_id,
@@ -68,13 +68,13 @@ class Magma
         case @attribute
         when Magma::ForeignKeyAttribute
           return [
-            Magma::Question::Constraint.new(
+            Magma::Constraint.new(
               Sequel.lit("\"#{alias_name}\".\"#{@attribute.foreign_id}\" IS NOT NULL")
             )
           ]
         else
           return [
-            Magma::Question::Constraint.new(
+            Magma::Constraint.new(
               Sequel.lit("\"#{alias_name}\".\"#{@attribute.name}\" IS NOT NULL")
             )
           ]
