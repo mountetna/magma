@@ -7,7 +7,14 @@ class Magma
     end
 
     def apply(query)
-      query.where(*@conditions)
+      @inverted ?
+        query.exclude(*@conditions)
+      :
+        query.where(*@conditions)
+    end
+
+    def invert!
+      @inverted = true
     end
 
     def to_s

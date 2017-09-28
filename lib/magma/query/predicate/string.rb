@@ -20,11 +20,27 @@ class Magma
       end
     end
 
+    verb "::not", String do
+      child TrueClass
+
+      constraint do
+        not_constraint(@attribute_name, @arguments[1])
+      end
+    end
+
     verb "::in", Array do
       child TrueClass
 
       constraint do
         basic_constraint(@attribute_name, @arguments[1])
+      end
+    end
+
+    verb "::not", Array do
+      child TrueClass
+
+      constraint do
+        not_constraint(@attribute_name, @arguments[1])
       end
     end
   end

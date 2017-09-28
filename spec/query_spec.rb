@@ -111,6 +111,15 @@ describe Magma::Server::Query do
       expect(json[:answer].length).to eq(1)
     end
 
+    it 'supports ::not' do
+      query(
+        [ 'labor', [ 'name', '::not', 'Nemean Lion' ], '::all', '::identifier' ]
+      )
+
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(2)
+    end
+
     it 'supports ::in' do
       query(
         [ 'labor', [ 'name', '::in', [ 'Nemean Lion', 'Lernean Hydra' ] ], '::all', '::identifier' ]
@@ -118,6 +127,15 @@ describe Magma::Server::Query do
 
       json = json_body(last_response.body)
       expect(json[:answer].length).to eq(2)
+    end
+
+    it 'supports ::not for arrays' do
+      query(
+        [ 'labor', [ 'name', '::not', [ 'Nemean Lion', 'Lernean Hydra' ] ], '::all', '::identifier' ]
+      )
+
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(1)
     end
   end
 

@@ -167,6 +167,14 @@ class Magma
       )
     end
 
+    def not_constraint column_name, value
+      Magma::Constraint.new(
+        Sequel.qualify(alias_name, column_name) => value
+      ).tap do |constraint|
+        constraint.invert!
+      end
+    end
+
     def basic_constraint column_name, value
       Magma::Constraint.new(
         Sequel.qualify(alias_name, column_name) => value
