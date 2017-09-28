@@ -9,6 +9,58 @@ describe Magma::Server::Query do
     json_post(:query, {project_name: 'labors', query: question})
   end
 
+  context Magma::ModelPredicate do
+    it 'supports ::first' do
+      poison = create(:prize, name: 'poison', worth: 5)
+      poop = create(:prize, name: 'poop')
+
+      query(['prize', '::first', 'name'])
+
+      json = json_body(last_response.body)
+      expect(json[:answer]).to eq('poison')
+    end
+
+    it 'supports ::all' do
+      poison = create(:prize, name: 'poison', worth: 5)
+      poop = create(:prize, name: 'poop')
+
+      query(['prize', '::all', 'name'])
+
+      json = json_body(last_response.body)
+      expect(json[:answer].map(&:last)).to eq([ 'poison', 'poop' ])
+    end
+
+    it 'supports ::any' do
+      poison = create(:prize, name: 'poison', worth: 5)
+      poop = create(:prize, name: 'poop', worth: 0)
+
+      query(['prize', [ 'worth', '::>', 0 ], '::any' ])
+
+      json = json_body(last_response.body)
+      expect(json[:answer]).to eq(true)
+    end
+
+    it 'supports ::count' do
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+
+      poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
+      poop = create(:prize, labor: stables, name: 'poop', worth: 0)
+      iou = create(:prize, labor: stables, name: 'iou', worth: 2)
+      skin = create(:prize, labor: lion, name: 'skin', worth: 6)
+
+      query(['labor', '::all', 'prize', '::count' ])
+
+      json = json_body(last_response.body)
+      expect(json[:answer]).to eq([
+        [ 'Augean Stables', 2 ],
+        [ 'Lernean Hydra', 1 ],
+        [ 'Nemean Lion', 1 ]
+      ])
+    end
+  end
+
   context 'Magma::RecordPredicate' do
     it 'supports ::has' do
       poison = create(:prize, name: 'poison', worth: 5)
@@ -81,7 +133,7 @@ describe Magma::Server::Query do
     end
     it 'supports >, <, >=, <=' do
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::first', 'worth', '::>', 2 ], '::all', '::identifier' ]
+        [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::any' ], '::all', '::identifier' ]
       )
 
       json = json_body(last_response.body)
@@ -89,7 +141,7 @@ describe Magma::Server::Query do
     end
     it 'supports in' do
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::first', 'worth', '::in', [ 5 ] ], '::all', '::identifier' ]
+        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::any' ], '::all', '::identifier' ]
       )
 
       json = json_body(last_response.body)
@@ -109,7 +161,7 @@ describe Magma::Server::Query do
     end
     it "supports >, <, >=, <=" do
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::first', 'worth', '::>', 2 ], '::all', '::identifier' ]
+        [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::any' ], '::all', '::identifier' ]
       )
 
       json = json_body(last_response.body)
@@ -117,7 +169,7 @@ describe Magma::Server::Query do
     end
     it "supports in" do
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::first', 'worth', '::in', [ 5 ] ], '::all', '::identifier' ]
+        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::any' ], '::all', '::identifier' ]
       )
 
       json = json_body(last_response.body)

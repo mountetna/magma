@@ -69,6 +69,24 @@ class Magma
       end
     end
 
+    verb "::any" do
+      child TrueClass
+      extract do |table,return_identity|
+        table.any? do |row|
+          row[identity]
+        end
+      end
+    end
+
+    verb "::count" do
+      child Numeric
+      extract do |table,return_identity|
+        table.count do |row|
+          row[identity]
+        end
+      end
+    end
+
     def record_child
       RecordPredicate.new(@model, alias_name, *@query_args)
     end
