@@ -1,10 +1,10 @@
 class Magma
   class FilePredicate < Magma::ColumnPredicate
-    verb "::url" do
+    verb '::url' do
       child String
     end
 
-    verb "::path" do
+    verb '::path' do
       child String
     end
 

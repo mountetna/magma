@@ -4,21 +4,21 @@ class Magma
       child TrueClass
     end
 
-    verb "::true" do
+    verb '::true' do
       child TrueClass
       constraint do
         Magma::Constraint.basic(true)
       end
     end
 
-    verb "::false" do
+    verb '::false' do
       child TrueClass
       constraint do
         Magma::Constraint.basic(false)
       end
     end
 
-    verb "::null" do
+    verb '::null' do
       child TrueClass
       constraint do
         Magma::Constraint.basic(nil)

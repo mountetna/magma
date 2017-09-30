@@ -168,7 +168,7 @@ class Magma
     end
 
     def paged_query(query)
-      raise ArgumentError, "Page must start at 1" unless @options[:page] > 0
+      raise ArgumentError, 'Page must start at 1' unless @options[:page] > 0
       bounds = Magma.instance.db[bounds_query.sql].all.map do |row|
         row[@start_predicate.identity]
       end

@@ -30,7 +30,7 @@ class Magma
       end
     end
 
-    verb "::has", :attribute_name do
+    verb '::has', :attribute_name do
       child TrueClass
 
       constraint do
@@ -44,7 +44,7 @@ class Magma
       end
     end
 
-    verb "::metrics" do
+    verb '::metrics' do
       child do
         Magma::MetricsPredicate.new(@model, alias_name, *@query_args)
       end
@@ -112,13 +112,13 @@ class Magma
         return Magma::FilePredicate.new(@model, alias_name, attribute.name, *@query_args)
       else
         case attribute.type.name
-        when "String"
+        when 'String'
           return Magma::StringPredicate.new(@model, alias_name, attribute.name, *@query_args)
-        when "Integer", "Float"
+        when 'Integer', 'Float'
           return Magma::NumberPredicate.new(@model, alias_name, attribute.name, *@query_args)
-        when "DateTime"
+        when 'DateTime'
           return Magma::DateTimePredicate.new(@model, alias_name, attribute.name, *@query_args)
-        when "TrueClass"
+        when 'TrueClass'
           return Magma::BooleanPredicate.new(@model, alias_name, attribute.name, *@query_args)
         else
           invalid_argument! attribute.name

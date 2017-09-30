@@ -4,7 +4,7 @@ class Magma
       child String
     end
 
-    verb "::matches", String do
+    verb '::matches', String do
       child TrueClass
 
       constraint do
@@ -12,7 +12,7 @@ class Magma
       end
     end
 
-    verb "::equals", String do
+    verb '::equals', String do
       child TrueClass
 
       constraint do
@@ -20,7 +20,7 @@ class Magma
       end
     end
 
-    verb "::not", String do
+    verb '::not', String do
       child TrueClass
 
       constraint do
@@ -28,7 +28,7 @@ class Magma
       end
     end
 
-    verb "::in", Array do
+    verb '::in', Array do
       child TrueClass
 
       constraint do
@@ -36,7 +36,7 @@ class Magma
       end
     end
 
-    verb "::not", Array do
+    verb '::not', Array do
       child TrueClass
 
       constraint do

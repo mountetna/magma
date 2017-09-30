@@ -70,7 +70,7 @@ describe Magma::Server::Query do
     end
   end
 
-  context 'Magma::RecordPredicate' do
+  context Magma::RecordPredicate do
     it 'supports ::has' do
       poison = create(:prize, name: 'poison', worth: 5)
       poop = create(:prize, name: 'poop')
@@ -95,7 +95,7 @@ describe Magma::Server::Query do
     end
   end
 
-  context 'Magma::StringPredicate' do
+  context Magma::StringPredicate do
     before(:each) do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
@@ -148,63 +148,76 @@ describe Magma::Server::Query do
     end
   end
 
-  context 'Magma::NumberPredicate' do
+  context Magma::NumberPredicate do
     before(:each) do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
 
-      hide = create(:prize, labor: lion, name: 'hide', worth: 5)
+      hide = create(:prize, labor: lion, name: 'hide', worth: 6)
       poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
     end
-    it 'supports >, <, >=, <=' do
+
+    it 'supports comparisons' do
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::any' ], '::all', '::identifier' ]
+        [ 'labor', [ 'prize', [ 'worth', '::!=', 0 ], '::any' ], '::all', '::identifier' ]
       )
 
       json = json_body(last_response.body)
       expect(json[:answer].length).to eq(2)
     end
-    it 'supports in' do
+
+    it 'supports ::in' do
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::any' ], '::all', '::identifier' ]
+        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5, 6 ] ], '::any' ], '::all', '::identifier' ]
       )
 
       json = json_body(last_response.body)
       expect(json[:answer].length).to eq(2)
+    end
+
+    it 'supports ::not' do
+      query(
+        [ 'labor', [ 'prize', [ 'worth', '::not', [ 5, 6 ] ], '::any' ], '::all', '::identifier' ]
+      )
+
+      json = json_body(last_response.body)
+      expect(json[:answer].length).to eq(1)
     end
   end
 
-  context "Magma::NumberPredicate" do
-    before(:each) do
-      lion = create(:labor, name: "Nemean Lion", number: 1, completed: true)
-      hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
-      stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
+  context Magma::VectorPredicate do
+    it 'can return an arrayed result' do
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
 
-      hide = create(:prize, labor: lion, name: "hide", worth: 5)
-      poison = create(:prize, labor: hydra, name: "poison", worth: 5)
-      poop = create(:prize, labor: stables, name: "poop", worth: 0)
-    end
-    it "supports >, <, >=, <=" do
+      poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
+      poop = create(:prize, labor: stables, name: 'poop', worth: 0)
+
       query(
-        [ 'labor', [ 'prize', [ 'worth', '::>', 2 ], '::any' ], '::all', '::identifier' ]
+        [ 'labor', '::all', 
+          [
+            [ 'number' ],
+            [ 'completed' ],
+            [ 'prize', '::first', 'name' ],
+            [ 'prize', '::first', 'worth' ],
+          ]
+        ]
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
-    end
-    it "supports in" do
-      query(
-        [ 'labor', [ 'prize', [ 'worth', '::in', [ 5 ] ], '::any' ], '::all', '::identifier' ]
-      )
-
-      json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
+      puts json[:errors] if json[:errors]
+      expect(json[:answer]).to eq([
+        ['Augean Stables', [5, false, 'poop', 0]],
+        ['Lernean Hydra', [2, false, 'poison', 5]],
+        ['Nemean Lion', [1, true, nil, nil]]
+      ])
     end
   end
 
-  it "can post a basic query" do
+  it 'can post a basic query' do
     create_list(:labor, 3)
 
     query(
@@ -215,7 +228,7 @@ describe Magma::Server::Query do
     expect(json[:answer].length).to eq(3)
   end
 
-  it "generates an error for bad arguments" do
+  it 'generates an error for bad arguments' do
     create_list(:labor, 3)
 
     query(
@@ -223,35 +236,7 @@ describe Magma::Server::Query do
     )
 
     json = json_body(last_response.body)
-    expect(json[:errors]).to eq(["::ball is not a valid argument to Magma::ModelPredicate"])
+    expect(json[:errors]).to eq(['::ball is not a valid argument to Magma::ModelPredicate'])
     expect(last_response.status).to eq(422)
-  end
-
-  it "can return an arrayed result" do
-    lion = create(:labor, name: "Nemean Lion", number: 1, completed: true)
-    hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
-    stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
-
-    poison = create(:prize, labor: hydra, name: "poison", worth: 5)
-    poop = create(:prize, labor: stables, name: "poop", worth: 0)
-
-    query(
-      [ 'labor', '::all', 
-        [
-          [ 'number' ],
-          [ 'completed' ],
-          [ 'prize', '::first', 'name' ],
-          [ 'prize', '::first', 'worth' ],
-        ]
-      ]
-    )
-
-    json = JSON.parse(last_response.body)
-    puts json["errors"] if json["errors"]
-    expect(json["answer"]).to eq([
-      ["Augean Stables", [5, false, "poop", 0]],
-      ["Lernean Hydra", [2, false, "poison", 5]],
-      ["Nemean Lion", [1, true, nil, nil]]
-    ])
   end
 end

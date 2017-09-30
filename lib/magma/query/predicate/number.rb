@@ -4,7 +4,7 @@ class Magma
       child Numeric
     end
 
-    verb [ "::<=", "::<", "::>=", "::>", "::=" ], Numeric do
+    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], Numeric do
       child TrueClass
 
       constraint do
@@ -12,10 +12,17 @@ class Magma
       end
     end
 
-    verb "::in", Array do
+    verb '::in', Array do
       child TrueClass
       constraint do
         basic_constraint(@attribute_name, @arguments[1])
+      end
+    end
+
+    verb '::not', Array do
+      child TrueClass
+      constraint do
+        not_constraint(@attribute_name, @arguments[1])
       end
     end
   end

@@ -46,7 +46,7 @@ class Magma
       process_args(query_args)
     end
 
-    verb "::first" do
+    verb '::first' do
       child :record_child
       extract do |table,return_identity|
         child_extract(
@@ -58,7 +58,7 @@ class Magma
       end
     end
 
-    verb "::all" do
+    verb '::all' do
       child :record_child
       extract do |table,return_identity|
         table.group_by do |row|
@@ -69,7 +69,7 @@ class Magma
       end
     end
 
-    verb "::any" do
+    verb '::any' do
       child TrueClass
       extract do |table,return_identity|
         table.any? do |row|
@@ -78,7 +78,7 @@ class Magma
       end
     end
 
-    verb "::count" do
+    verb '::count' do
       child Numeric
       extract do |table,return_identity|
         table.count do |row|

@@ -5,7 +5,7 @@ class Magma
     def initialize model, alias_name, columns, *query_args
       @model = model
       @alias_name = alias_name
-      raise ArgumentError, "Column vector cannot be empty!" if columns.empty?
+      raise ArgumentError, 'Column vector cannot be empty!' if columns.empty?
       @column_predicates = columns.map do |column_query|
         # now, we merely map this to a record predicate. Handy!
         RecordPredicate.new(@model, @alias_name, *column_query)

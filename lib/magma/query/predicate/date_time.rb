@@ -4,7 +4,7 @@ class Magma
       child DateTime
     end
 
-    verb [ "::<=", "::<", "::>=", "::>", "::=" ], String do
+    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], String do
       child TrueClass
 
       constraint do

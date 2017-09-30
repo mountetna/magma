@@ -190,7 +190,7 @@ class Magma
     def not_null_constraint(column_name)
       Magma::Constraint.new(
         Sequel.lit(
-          "? IS NOT NULL",
+          '? IS NOT NULL',
           Sequel.qualify(alias_name, column_name)
         )
       )
@@ -216,7 +216,7 @@ class Magma
     end
 
     def terminal value
-      raise ArgumentError, "Trailing arguments after terminal value!" unless @query_args.empty?
+      raise ArgumentError, 'Trailing arguments after terminal value!' unless @query_args.empty?
       Magma::TerminalPredicate.new(value)
     end
   end

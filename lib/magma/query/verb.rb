@@ -11,8 +11,6 @@ class Magma
       if respond_to?(:"get_#{action}", true)
         send :"get_#{action}", *args
       else
-        require 'pry'
-        binding.pry
         raise ArgumentError, "Verb for #{@predicate} cannot do #{action}"
       end
     end
