@@ -9,6 +9,15 @@ describe Magma::Server::Query do
     json_post(:query, {project_name: 'labors', query: question})
   end
 
+  context Magma::Question do
+    it 'returns a list of predicate definitions' do
+      query('::predicates')
+
+      json = json_body(last_response.body)
+      expect(json[:predicates].keys).to include(:model, :record)
+    end
+  end
+
   context Magma::ModelPredicate do
     it 'supports ::first' do
       poison = create(:prize, name: 'poison', worth: 5)
@@ -204,6 +213,18 @@ describe Magma::Server::Query do
 
     json = json_body(last_response.body)
     expect(json[:answer].length).to eq(3)
+  end
+
+  it "generates an error for bad arguments" do
+    create_list(:labor, 3)
+
+    query(
+      [ 'labor', '::ball', '::bidentifier' ]
+    )
+
+    json = json_body(last_response.body)
+    expect(json[:errors]).to eq(["::ball is not a valid argument to Magma::ModelPredicate"])
+    expect(last_response.status).to eq(422)
   end
 
   it "can return an arrayed result" do

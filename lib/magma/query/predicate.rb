@@ -115,36 +115,65 @@ class Magma
       @child_predicate = @verb.do(:child)
     end
 
-    def self.verb *args, &block
-      @verbs ||= {}
-      @verbs[args] = block
-    end
-
-    def self.match_verbs(query_args, predicate)
-      @verbs ||= {}
-      matching_args, matching_block = @verbs.find do |verb_args, block|
-        verb_args.each.with_index.all? do |verb_arg, i|
-          query_arg = query_args[i]
-          case verb_arg
-          when nil
-            query_arg.nil?
-          when Class
-            query_arg.is_a?(verb_arg)
-          when Array
-            verb_arg.include?(query_arg)
-          when Symbol
-            predicate.send(verb_arg, query_arg)
-          when String
-            verb_arg == query_arg
-          end
-        end
+    # Code relating to defining and looking up predicate verbs
+    class << self
+      def verbs
+        @verbs ||= {}
       end
 
-      return [
-        Magma::Verb.new(predicate,matching_block),
-        query_args[0...matching_args.size],
-        query_args[matching_args.size..-1] || []
-      ]
+      def verb *args, &block
+        verbs[args] = block
+      end
+
+      def match_verbs(query_args, predicate)
+        matching_args, matching_block = verbs.find do |verb_args, block|
+          verb_args.each.with_index.all? do |verb_arg, i|
+            query_arg = query_args[i]
+            case verb_arg
+            when nil
+              query_arg.nil?
+            when Class
+              query_arg.is_a?(verb_arg)
+            when Array
+              verb_arg.include?(query_arg)
+            when Symbol
+              predicate.send(verb_arg, query_arg)
+            when String
+              verb_arg == query_arg
+            end
+          end
+        end
+
+        # this will raise an ArgumentError
+        predicate.send(:invalid_argument!,query_args.first) if matching_args.nil?
+
+        return [
+          Magma::Verb.new(predicate,matching_block),
+          query_args[0...matching_args.size],
+          query_args[matching_args.size..-1] || []
+        ]
+      end
+
+      def to_json
+        predicate_classes = ObjectSpace.each_object(Magma::Predicate.singleton_class).to_a
+
+        real_predicate_classes = predicate_classes.select do |pred_class|
+          !predicate_classes.any? { |other_pred_class| other_pred_class < pred_class }
+        end
+
+        response = {
+          predicates: Hash[
+            real_predicate_classes.map do |pred_class|
+              [
+                pred_class.name.snake_case.sub(/^magma::/,'').sub(/_predicate/,''),
+                pred_class.verbs.keys
+              ]
+            end
+          ]
+        }
+
+        response.to_json
+      end
     end
 
     # Some constraint helpers
