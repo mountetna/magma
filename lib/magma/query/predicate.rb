@@ -6,11 +6,13 @@
 # There are four basic types of predicates:
 #
 # ModelPredicate   - represents a list of records, its arguments are a series
-# of filters on that list and various options to reduce that list.
+#                    of filters on that list and various options to reduce that
+#                    list.
 # RecordPredicate  - represents a single record, its arguments are mostly a
-# list of attribute names ColumnPredicate  - represents a value from a database
-# table, its arguments are boolean tests on that value VectorPredicate  -
-# represents an array of mapped values
+#                    list of attribute names 
+# ColumnPredicate  - represents a value from a database table, its arguments
+#                    are boolean tests on that value
+# VectorPredicate  - represents an array of mapped values
 # 
 # From these predicates we wish to produce a SQL query. The basic form of such
 # a query is defined by SELECT, FROM+JOIN, WHERE. Each predicate must therefore
