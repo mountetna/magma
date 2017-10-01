@@ -167,14 +167,23 @@ class Magma
           predicates: Hash[
             real_predicate_classes.map do |pred_class|
               [
-                pred_class.name.snake_case.sub(/^magma::/,'').sub(/_predicate/,''),
-                pred_class.verbs.keys
+                pred_class.predicate_name,
+                pred_class.verbs.map do |args, block|
+                  {
+                    args: args,
+                    return_type: Magma::Verb.new(nil,block).return_type
+                  }
+                end
               ]
             end
           ]
         }
 
         response.to_json
+      end
+
+      def predicate_name
+        name.snake_case.sub(/^magma::/,'').sub(/_predicate/,'')
       end
     end
 

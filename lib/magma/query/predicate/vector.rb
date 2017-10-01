@@ -14,9 +14,7 @@ class Magma
     end
 
     verb nil do
-      child do
-        terminal(Array)
-      end
+      child Array
     end
 
     def extract table, identity

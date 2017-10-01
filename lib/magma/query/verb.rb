@@ -19,6 +19,14 @@ class Magma
       instance_variable_defined?("@#{action}")
     end
 
+    def return_type
+      if @child.is_a?(Class)
+        @child.name
+      else
+        nil
+      end
+    end
+
     private
 
     def child(arg=nil, &block)
