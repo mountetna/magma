@@ -10,8 +10,7 @@ class Magma
       end
     end
 
-    def initialize(project, name, model, opts)
-      @project = project
+    def initialize(name, model, opts)
       @name = name
       @model = model
       set_options(opts)
@@ -33,8 +32,8 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
-    def json_for(record)
-      record.send(@name)
+    def json_for record
+      record[ @name ]
     end
 
     def txt_for(record)
@@ -169,7 +168,7 @@ end
 require_relative 'attributes/link'
 require_relative 'attributes/child'
 require_relative 'attributes/collection'
-require_relative 'attributes/document'
+require_relative 'attributes/file'
 require_relative 'attributes/foreign_key'
 require_relative 'attributes/image'
 require_relative 'attributes/table'

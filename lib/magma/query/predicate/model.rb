@@ -55,7 +55,11 @@ class Magma
     end
 
     def select
-      [ Sequel[alias_name][@model.identity].as(identity) ]
+      [ column_name.as(identity) ]
+    end
+
+    def column_name
+      Sequel[alias_name][@model.identity]
     end
 
     def constraint 

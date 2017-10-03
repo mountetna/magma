@@ -14,8 +14,7 @@ class Magma
     end
 
     def json_for record
-      link = record.send(@name)
-      link ? link.identifier : nil
+      record[@name]
     end
 
     def eager

@@ -1,5 +1,5 @@
 class Magma
-  class ImageAttribute < Attribute
+  class FileAttribute < Attribute
     def initialize(name, model, opts)
       super
       @type = String
@@ -17,20 +17,18 @@ class Magma
     def json_for record
       path = record[@name]
       if path
-        thumb_path = File.join(File.dirname(path), "thumb_#{File.basename(path)}")
         {
           url: Magma.instance.storage.get_url(path),
-          path: File.basename(path),
-          thumb: Magma.instance.storage.get_url(thumb_path)
+          path: File.basename(path)
         }
       else
         nil
       end
     end
-    
-    def txt_for record
-      image = json_for(record)
-      image ? image[:url] : nil
+
+    def txt_for(record)
+      file = json_for(record)
+      file ? file[:url] : nil
     end
   end
 end

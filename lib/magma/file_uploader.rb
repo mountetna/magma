@@ -1,17 +1,10 @@
 require 'fog'
 require 'carrierwave/sequel'
-
+require 'carrierwave/storage/fog'
 class Magma
-  class Image  < CarrierWave::Uploader::Base
-    include CarrierWave::MiniMagick
+  class FileUploader  < CarrierWave::Uploader::Base
     storage :fog
     before :store, :run_loaders
-
-
-    version :thumb do
-      process resize_to_fit: [ 200, 400 ]
-      process convert: 'png'
-    end
 
     def filename
       file = model.send(mounted_as).file

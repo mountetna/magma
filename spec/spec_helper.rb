@@ -156,10 +156,17 @@ FactoryGirl.define do
 
   factory :monster, class: Labors::Monster do
     to_create(&:save)
+    sequence(:name) { |n| "monster#{n}" }
+  end
+
+  factory :victim, class: Labors::Victim do
+    to_create(&:save)
+    sequence(:name) { |n| "victim#{n}" }
   end
 
   factory :prize, class: Labors::Prize do
     to_create(&:save)
+    sequence(:name) { |n| "prize#{n}" }
   end
 
   factory :project, class: Labors::Project do

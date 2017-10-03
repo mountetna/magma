@@ -1,9 +1,9 @@
 class TSVLoader < Magma::Loader
   description "Insert or update data from a TSV file"
 
-  def load file, model_name
+  def load file, project_name, model_name
     @table = CSV.read(file, col_sep: "\t")
-    @model = Magma.instance.get_model(model_name)
+    @model = Magma.instance.get_model(project_name, model_name)
     @header = @table.shift.map(&:to_sym)
 
     bad_attributes = @header.reject do |name| @model.has_attribute?(name) end
