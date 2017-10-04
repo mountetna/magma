@@ -26,14 +26,22 @@ class Magma
 
     attr_reader :model
 
-    def initialize model, *predicates
-      @model = model.is_a?(Magma::Model) ? model : Magma.instance.get_model(model)
+    def initialize(model, *predicates)
+      @model = model
       @filters = []
 
+      # Since we are shifting off the the first elements on the predicates array
+      # we look to see if the first element is an array itself. If it is then we
+      # add it to the filters.
       while predicates.first.is_a?(Array)
+
         filter = RecordPredicate.new(@model, alias_name, *predicates.shift)
-        raise ArgumentError, "Filter #{filter} does not reduce to Boolean #{filter.argument} #{filter.reduced_type}!" unless filter.reduced_type == TrueClass
-        @filters.push filter
+
+        err_msg = "Filter #{filter} does not reduce to Boolean "
+        err_msg += "#{filter.argument} #{filter.reduced_type}!"
+        raise ArgumentError, err_msg unless filter.reduced_type == TrueClass
+
+        @filters.push(filter)
       end
 
       @predicates = predicates
@@ -47,7 +55,11 @@ class Magma
     end
 
     def select
-      [ Sequel[alias_name][@model.identity].as(identity) ]
+      [ column_name.as(identity) ]
+    end
+
+    def column_name
+      Sequel[alias_name][@model.identity]
     end
 
     def constraint 
@@ -56,7 +68,7 @@ class Magma
       end.inject(&:+) || []
     end
 
-    def extract table, return_identity
+    def extract(table, return_identity)
       case @argument
       when "::first"
         # after me there might be either a column OR another
@@ -80,7 +92,7 @@ class Magma
           [ identifier, super(rows, identity) ]
         end
       else
-        invalid_argument! @argument
+        invalid_argument!(@argument)
       end
     end
 
@@ -110,7 +122,7 @@ class Magma
       when "::first", "::all"
         return RecordPredicate.new(@model, alias_name, *@predicates)
       else
-        invalid_argument! @argument
+        invalid_argument!(@argument)
       end
     end
   end

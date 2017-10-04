@@ -2,8 +2,10 @@
 # question is a Predicate, starting with a ModelPredicate and ending with a
 # TerminalPredicate. Each predicate determines what are the correct following
 # arguments and validates accordingly.
+
 class Magma
   class Predicate
+
     attr_reader :argument
 
     def reduced_type
@@ -86,3 +88,4 @@ require_relative 'predicate/number'
 require_relative 'predicate/string'
 require_relative 'predicate/terminal'
 require_relative 'predicate/metrics'
+require_relative 'predicate/vector'

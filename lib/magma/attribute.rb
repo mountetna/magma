@@ -1,19 +1,19 @@
 class Magma
   class Attribute
-    def self.options
-      [ :type, :desc, :display_name, 
-        :hide, :readonly, :unique, :index,
-        :match, :format_hint, :loader,
-        :link_model
-      ]
+    DISPLAY_ONLY = [:child, :collection]
+    attr_reader(:name, :type, :desc, :loader, :match, :format_hint)
+
+    class << self
+      def options
+        [:type, :desc, :display_name, :hide, :readonly, :unique, :index, :match,
+:format_hint, :loader, :link_model]
+      end
     end
-    DISPLAY_ONLY = [ :child, :collection ]
-    attr_reader :name, :type, :desc, :loader, :match, :format_hint
-    def initialize name, model, opts
+
+    def initialize(name, model, opts)
       @name = name
       @model = model
-
-      set_options opts
+      set_options(opts)
     end
 
     def json_template
@@ -33,10 +33,10 @@ class Magma
     end
 
     def json_for record
-      record.send @name
+      record[ @name ]
     end
 
-    def txt_for record
+    def txt_for(record)
       json_for record
     end
 
@@ -44,8 +44,8 @@ class Magma
       nil
     end
 
-    def update record, new_value
-      record.set({ @name => new_value })
+    def update(record, new_value)
+      record.set({@name=> new_value})
     end
 
     def read_only?
@@ -97,36 +97,46 @@ class Magma
       end
     end
 
-    def update_link record, link
+    def update_link(record, link)
     end
 
     def validation
-      self.class.const_defined?(:Validation) ? self.class.const_get(:Validation) : Magma::BaseAttributeValidation
+      if self.class.const_defined?(:Validation)
+        self.class.const_get(:Validation)
+      else
+        Magma::BaseAttributeValidation
+      end
     end
 
     def entry
-      self.class.const_defined?(:Entry) ? self.class.const_get(:Entry) : Magma::BaseAttributeEntry
+      if self.class.const_defined?(:Entry)
+        self.class.const_get(:Entry)
+      else
+        Magma::BaseAttributeEntry
+      end
     end
 
     private
+
     def schema
       @model.schema
     end
 
-    def set_options opts
+    def set_options(opts)
       opts.each do |opt,value|
-        if self.class.options.include? opt
+        if self.class.options.include?(opt)
           instance_variable_set("@#{opt}", value)
         end
       end
     end
+
     class Validation < Magma::BaseAttributeValidation
       def validate(value)
         case match
         when Regexp
           yield format_error(value) if !match.match(value)
         when Array
-          if !match.map(&:to_s).include? value
+          if !match.map(&:to_s).include?(value)
             yield "On #{@attribute.name}, '#{value}' should be one of #{match.join(", ")}."
           end
         end
@@ -146,20 +156,19 @@ class Magma
         end
       end
     end
+
     class Entry < Magma::BaseAttributeEntry
       def entry(value)
         [ @attribute.name, value ]
       end
     end
   end
-
-
 end
 
 require_relative 'attributes/link'
 require_relative 'attributes/child'
 require_relative 'attributes/collection'
-require_relative 'attributes/document'
+require_relative 'attributes/file'
 require_relative 'attributes/foreign_key'
 require_relative 'attributes/image'
 require_relative 'attributes/table'
