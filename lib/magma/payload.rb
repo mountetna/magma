@@ -101,8 +101,9 @@ class Magma
       def json_document record
         # A JSON version of this record (actually a hash). Each attribute
         # reports in its own fashion
+        names = attribute_names || @model.attributes.keys
         Hash[
-          attribute_names.map do |name|
+          names.map do |name|
             [ 
               name, 
               @model.has_attribute?(name) ? @model.attributes[name].json_for(record) : record[name] 
