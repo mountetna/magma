@@ -64,8 +64,9 @@ class Magma
         table.group_by do |row|
           row[identity]
         end.map do |identifier,rows|
+          next unless identifier
           [ identifier, child_extract(rows, identity) ]
-        end
+        end.compact
       end
     end
 
