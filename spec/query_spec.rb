@@ -53,6 +53,7 @@ describe Magma::Server::Query do
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+      hind = create(:labor, name: 'Ceryneian Hind', number: 3, completed: true)
 
       poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
@@ -64,6 +65,7 @@ describe Magma::Server::Query do
       json = json_body(last_response.body)
       expect(json[:answer]).to eq([
         [ 'Augean Stables', 2 ],
+        [ 'Ceryneian Hind', 0 ],
         [ 'Lernean Hydra', 1 ],
         [ 'Nemean Lion', 1 ]
       ])
