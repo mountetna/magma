@@ -4,32 +4,32 @@ require 'ostruct'
 
 # In general, you Retrieve with a request like this:
 # {
-#   model_name: "model",
-#   record_names: [ "record1", "record2" ],
-#   attribute_names: [ "att_a", "att_b" ]
+#   model_name: 'model',
+#   record_names: [ 'record1', 'record2' ],
+#   attribute_names: [ 'att_a', 'att_b' ]
 # }
 #
 # Some special cases:
 #
 # This will pull all attributes for the requested records
 # {
-#   model_name: "model",
-#   record_names: [ "record1", "record2" ],
-#   attribute_names: "all"
+#   model_name: 'model',
+#   record_names: [ 'record1', 'record2' ],
+#   attribute_names: 'all'
 # }
 #
 # This will pull all records for the given model
 # {
-#   model_name: "model",
-#   record_names: "all",
+#   model_name: 'model',
+#   record_names: 'all',
 #   attribute_names: ...
 # }
 #
 # This will pull all identifiers for all models and records
 # {
-#   model_name: "all",
-#   record_names: "all",
-#   attribute_names: "identifier"
+#   model_name: 'all',
+#   record_names: 'all',
+#   attribute_names: 'identifier'
 # }
 
 class Magma
@@ -39,9 +39,9 @@ class Magma
         super(request)
         @model_name = @params[:model_name]
         @record_names = @params[:record_names]
-        @collapse_tables = @params[:collapse_tables] || @params[:format] == "tsv"
+        @collapse_tables = @params[:collapse_tables] || @params[:format] == 'tsv'
         @filter = @params[:filter]
-        @format = @params[:format] || "json"
+        @format = @params[:format] || 'json'
         @page = @params[:page]
         @page_size = @params[:page_size]
 
@@ -57,7 +57,7 @@ class Magma
 
           if success?
             case @format
-            when "tsv"
+            when 'tsv'
               return [ 200, { 'Content-Type' => 'text/tsv' }, tsv_payload ]
             else
               perform
@@ -78,16 +78,16 @@ class Magma
         return error('No model name given') if @model_name.nil?
         return error('No record names given') if @record_names.nil?
         return error('Improperly formed record names') unless valid_record_names?
-        return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
-        return error('Cannot retrieve by record name for all models') if @model_name == "all" && @record_names.is_a?(Array) && !@record_names.empty?
-        return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
+        return error('Improperly formed attribute names') unless @attribute_names.is_a?(Array) || @attribute_names == 'all' || @attribute_names == 'identifier'
+        return error('Cannot retrieve by record name for all models') if @model_name == 'all' && @record_names.is_a?(Array) && !@record_names.empty?
+        return error('Cannot retrieve several models in tsv format') if @model_name == 'all' && @format == 'tsv'
       end
 
       def valid_record_names?
         @record_names.is_a?(Array) && 
           (@record_names.all?{|name| name.is_a?(String)} ||
            @record_names.all?{|name| name.is_a?(Fixnum)}) || 
-          @record_names == "all"
+          @record_names == 'all'
       end
 
       def perform
@@ -160,7 +160,7 @@ class Magma
 
         retrieval = Magma::Retrieval.new(
           link_model,
-          "all",
+          'all',
           link_attributes,
           Magma::Retrieval::ParentFilter.new(
             link_model, model, record_names
@@ -211,7 +211,7 @@ class Magma
 
       def get_attribute?(att, model)
         return false if @collapse_tables && att.is_a?(Magma::TableAttribute)
-        @attribute_names == "all" ||
+        @attribute_names == 'all' ||
           (model.identity == att.name) ||
           (@attribute_names.is_a?(Array) && @attribute_names.include?(att.name))
       end
