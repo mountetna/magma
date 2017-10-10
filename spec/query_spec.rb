@@ -83,6 +83,16 @@ describe Magma::Server::Query do
       expect(json[:answer].first.last).to eq('poison')
     end
 
+    it 'supports ::lacks' do
+      poison = create(:prize, name: 'poison', worth: 5)
+      poop = create(:prize, name: 'poop')
+
+      query(['prize', ['::lacks', 'worth'], '::all', 'name'])
+      
+      json = json_body(last_response.body)
+      expect(json[:answer].first.last).to eq('poop')
+    end
+
     it 'can retrieve metrics' do
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
@@ -186,6 +196,24 @@ describe Magma::Server::Query do
 
       json = json_body(last_response.body)
       expect(json[:answer].length).to eq(1)
+    end
+  end
+
+  context Magma::BooleanPredicate do
+    it 'checks truthiness' do
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      query(
+        [ 'labor',
+          [ 'completed', '::false' ],
+          '::all',
+          'name'
+        ]
+      )
+
+      json = json_body(last_response.body)
+      expect(json[:answer].map(&:last)).to eq([ 'Augean Stables', 'Lernean Hydra' ])
     end
   end
 

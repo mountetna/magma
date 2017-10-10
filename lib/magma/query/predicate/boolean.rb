@@ -7,21 +7,14 @@ class Magma
     verb '::true' do
       child TrueClass
       constraint do
-        Magma::Constraint.basic(true)
+        basic_constraint(@attribute_name, true)
       end
     end
 
     verb '::false' do
       child TrueClass
       constraint do
-        Magma::Constraint.basic(false)
-      end
-    end
-
-    verb '::null' do
-      child TrueClass
-      constraint do
-        Magma::Constraint.basic(nil)
+        basic_constraint(@attribute_name, false)
       end
     end
   end

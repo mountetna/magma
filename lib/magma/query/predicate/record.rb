@@ -44,6 +44,20 @@ class Magma
       end
     end
 
+    verb '::lacks', :attribute_name do
+      child TrueClass
+
+      constraint do
+        attribute = valid_attribute(@arguments[1])
+        case attribute
+        when Magma::ForeignKeyAttribute
+          basic_constraint(attribute.foreign_id, nil)
+        else
+          basic_constraint(attribute.name, nil)
+        end
+      end
+    end
+
     verb '::metrics' do
       child do
         Magma::MetricsPredicate.new(@model, alias_name, *@query_args)
