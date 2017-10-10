@@ -120,7 +120,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
+      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::equals' do
@@ -129,7 +129,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(1)
+      expect(json[:answer].first.last).to eq('Nemean Lion')
     end
 
     it 'supports ::not' do
@@ -138,7 +138,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
+      expect(json[:answer].map(&:last)).to eq(['Augean Stables', 'Lernean Hydra'])
     end
 
     it 'supports ::in' do
@@ -147,7 +147,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
+      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::not for arrays' do
@@ -156,7 +156,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(1)
+      expect(json[:answer].first.last).to eq('Augean Stables')
     end
   end
 
@@ -177,7 +177,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
+      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::in' do
@@ -186,7 +186,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(2)
+      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::not' do
@@ -195,7 +195,7 @@ describe Magma::Server::Query do
       )
 
       json = json_body(last_response.body)
-      expect(json[:answer].length).to eq(1)
+      expect(json[:answer].first.last).to eq('Augean Stables')
     end
   end
 
@@ -248,14 +248,14 @@ describe Magma::Server::Query do
   end
 
   it 'can post a basic query' do
-    create_list(:labor, 3)
+    labors = create_list(:labor, 3)
 
     query(
       [ 'labor', '::all', '::identifier' ]
     )
 
     json = json_body(last_response.body)
-    expect(json[:answer].length).to eq(3)
+    expect(json[:answer].map(&:last)).to eq(labors.map(&:identifier))
   end
 
   it 'generates an error for bad arguments' do
