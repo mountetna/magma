@@ -66,7 +66,7 @@ class Magma
     class ModelPayload
       def initialize model, attribute_names
         @model = model
-        @attribute_names = attribute_names
+        @attribute_names = attribute_names || @model.attributes.keys
         @records = []
       end
 
@@ -102,7 +102,7 @@ class Magma
         # A JSON version of this record (actually a hash). Each attribute
         # reports in its own fashion
         Hash[
-          attribute_names.map do |name|
+          @attribute_names.map do |name|
             [ 
               name, 
               @model.has_attribute?(name) ? @model.attributes[name].json_for(record) : record[name] 
@@ -116,7 +116,7 @@ class Magma
       end
 
       def tsv_attributes
-        @tvs_attributes ||= @attribute_names.select do |att_name| 
+        @tsv_attributes ||= @attribute_names.select do |att_name| 
           att_name == :id || (@model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute))
         end
       end

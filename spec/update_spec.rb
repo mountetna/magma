@@ -20,6 +20,7 @@ describe Magma::Server::Update do
     )
     lion.refresh
     expect(lion.species).to eq('lion')
+    expect(last_response.status).to eq(200)
   end
 
   it 'can update a collection' do
@@ -36,6 +37,7 @@ describe Magma::Server::Update do
     )
 
     expect(Labors::Labor.count).to be(2)
+    expect(last_response.status).to eq(200)
   end
 
   it 'fails on validation checks' do
