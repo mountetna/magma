@@ -1,44 +1,28 @@
 class Magma
   class NumberPredicate < Magma::ColumnPredicate
-    def constraint 
-      case @argument
-      when "::<=", "::<", "::>", "::>=", "::="
-        return [
-          Magma::Question::Constraint.new(
-            Sequel.lit(
-              "? #{@argument.sub(/::/,'')} ?",
-              Sequel.qualify(alias_name, @attribute_name),
-              @operand
-            )
-          )
-        ]
-      when "::in"
-        return [
-          Magma::Question::Constraint.new(
-            Sequel.qualify(alias_name, @attribute_name) => @operand
-          )
-        ]
-      end
-      super
+    verb nil do
+      child Numeric
     end
 
-    private
+    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], Numeric do
+      child TrueClass
 
-    def get_child
-      case @argument
-      when "::<=", "::<", "::>", "::>=", "::="
-        operand = @predicates.shift
-        invalid_argument! operand unless operand.respond_to? :to_f
-        @operand = operand.to_f
-        return terminal(TrueClass)
-      when "::in"
-        @operand = @predicates.shift
-        invalid_argument! @operand unless @operand && @operand.is_a?(Array)
-        return terminal(TrueClass)
-      when nil
-        return terminal(Numeric)
-      else
-        invalid_argument! @argument
+      constraint do
+        comparison_constraint(@attribute_name, @arguments[0], @arguments[1].to_f)
+      end
+    end
+
+    verb '::in', Array do
+      child TrueClass
+      constraint do
+        basic_constraint(@attribute_name, @arguments[1])
+      end
+    end
+
+    verb '::not', Array do
+      child TrueClass
+      constraint do
+        not_constraint(@attribute_name, @arguments[1])
       end
     end
   end

@@ -63,6 +63,41 @@ describe Magma::Server::Retrieve do
     expect(json[:models][:labor][:documents]).not_to have_key(names.last)
   end
 
+  it "retrieves collections as a list of identifiers" do
+    project = create(:project, name: 'The Twelve Labors of Hercules')
+    labors = create_list(:labor, 3, project: project)
+
+    retrieve(
+      model_name: 'project',
+      record_names: [ project.name ],
+      attribute_names: [ 'labor' ],
+      project_name: 'labors'
+    )
+
+    json = json_body(last_response.body)
+    project_doc = json[:models][:project][:documents][project.name.to_sym]
+
+    expect(project_doc).not_to be_nil
+    expect(project_doc[:labor]).to eq(labors.map(&:name))
+  end
+
+  it "returns an empty list for empty collections" do
+    project = create(:project, name: 'The Twelve Labors of Hercules')
+
+    retrieve(
+      model_name: 'project',
+      record_names: [ project.name ],
+      attribute_names: [ 'labor' ],
+      project_name: 'labors'
+    )
+
+    json = json_body(last_response.body)
+    project_doc = json[:models][:project][:documents][project.name.to_sym]
+    
+    expect(project_doc).not_to be_nil
+    expect(project_doc[:labor]).to eq([])
+  end
+
   it "can retrieve records by id if there is no identifier" do
     prizes = create_list(:prize,3)
     retrieve(

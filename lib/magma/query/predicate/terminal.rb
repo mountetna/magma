@@ -4,6 +4,9 @@ class Magma
       @terminal = value
     end
 
+    verb nil do
+    end
+
     def reduced_type
       @terminal
     end

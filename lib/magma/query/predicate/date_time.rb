@@ -1,34 +1,14 @@
 class Magma
   class DateTimePredicate < Magma::ColumnPredicate
-    def constraint
-      case @argument
-      when "::<=", "::<", "::>", "::>=", "::="
-        return [
-          Magma::Question::Constraint.new(
-            Sequel.lit(
-              "? #{@argument.sub(/::/,'')} ?",
-              Sequel.qualify(alias_name, @attribute_name),
-              @operand
-            )
-          )
-        ]
-      end
-      super
+    verb nil do
+      child DateTime
     end
 
-    private
+    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], String do
+      child TrueClass
 
-    def get_child
-      case @argument
-      when "::<=", "::<", "::>", "::>=", "::="
-        operand = @predicates.shift
-        invalid_argument! operand unless operand && operand.is_a?(String)
-        @operand = DateTime.parse(operand)
-        return terminal(TrueClass)
-      when nil
-        return terminal(DateTime)
-      else
-        invalid_argument! @argument
+      constraint do
+        comparison_constraint(@attribute_name, @arguments[0], DateTime.parse(@arguments[1]))
       end
     end
   end

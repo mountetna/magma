@@ -23,7 +23,7 @@ class Magma
 
     def json_for record
       link = record[@name]
-      link ? link.map(&:last) : nil
+      link ? link.map(&:last).sort : nil
     end
 
     def txt_for record
