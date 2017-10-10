@@ -135,4 +135,32 @@ describe Magma::Server::Update do
     json = json_body(last_response.body)
     expect(json[:answer].length).to eq(3)
   end
+
+  it "can return an arrayed result" do
+    lion = create(:labor, name: "Nemean Lion", number: 1, completed: true)
+    hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
+    stables = create(:labor, name: "Augean Stables", number: 5, completed: false)
+
+    poison = create(:prize, labor: hydra, name: "poison", worth: 5)
+    poop = create(:prize, labor: stables, name: "poop", worth: 0)
+
+    query(
+      [ 'labor', '::all', 
+        [
+          [ 'number' ],
+          [ 'completed' ],
+          [ 'prize', '::first', 'name' ],
+          [ 'prize', '::first', 'worth' ],
+        ]
+      ]
+    )
+
+    json = JSON.parse(last_response.body)
+    puts json["errors"] if json["errors"]
+    expect(json["answer"]).to eq([
+      ["Augean Stables", [5, false, "poop", 0]],
+      ["Lernean Hydra", [2, false, "poison", 5]],
+      ["Nemean Lion", [1, true, nil, nil]]
+    ])
+  end
 end

@@ -22,8 +22,8 @@ class Magma
     end
 
     def json_for record
-      collection = record.send(@name)
-      collection.map &:identifier
+      link = record[@name]
+      link ? link.map(&:last) : nil
     end
 
     def txt_for record

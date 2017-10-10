@@ -43,17 +43,17 @@ class Magma
   class Question
     class Join
       def initialize(t1, t1_alias, t1_id, t2, t2_alias, t2_id)
-        @table1 = t1.to_sym
+        @table1 = t1
         @table1_alias = t1_alias.to_sym
         @table1_id = t1_id.to_sym
         @table2_alias = t2_alias.to_sym
         @table2_id = t2_id.to_sym
       end
 
-      def apply(query)
-        query.join(
-          Sequel.as(@table1, @table1_alias),
-          {table1_column=> table2_column}
+      def apply query
+        query.left_outer_join(
+          Sequel.as(@table1,@table1_alias),
+          table1_column => table2_column
         )
       end
 
@@ -103,10 +103,14 @@ class Magma
     end
 
     def initialize(project_name, predicates, options = {})
-      model = Magma.instance.get_model(project_name, predicates.shift)
-      @start_predicate = ModelPredicate.new(model, *predicates)
-      @model = @start_predicate.model
+      @model = Magma.instance.get_model(project_name, predicates.shift)
+      @start_predicate = ModelPredicate.new(@model, *predicates)
       @options = options
+    end
+
+    # allow us to re-use the same question for a different page
+    def set_page page
+      @options[:page] = page
     end
 
     def answer
@@ -133,20 +137,24 @@ class Magma
       end
     end
 
+    def count
+      count_query.count
+    end
+
+    private
+
+    def to_table
+      Magma.instance.db[
+        to_sql
+      ].all
+    end
+
     def to_sql
+      query = base_query
 
-      query = @model.from(
-        Sequel.as(@model.table_name, @start_predicate.alias_name)
-      ).order(@start_predicate.identity)
-
-      # Apply joins to the query. 
-      predicate_collect(:join).uniq.each do |join|
-        query = join.apply(query)
-      end
-
-      # Apply the contraints to the query. 
-      predicate_collect(:constraint).uniq.each do |constraint|
-        query = constraint.apply(query)
+      # do you have page bounds? if so, compute them here.
+      if @options[:page] && @options[:page_size]
+        query = paged_query( query )
       end
 
       query = query.select(
@@ -156,15 +164,96 @@ class Magma
       query.sql
     end
 
-    def to_table
-      Magma.instance.db[to_sql].all
+    # The base query joins all of the tables and applies constraints for this
+    # question, but does not select any columns
+    def base_query
+      query = @model.from(
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
+      ).order(@start_predicate.identity)
+
+      predicate_collect(:join).uniq.each do |join|
+        query = join.apply(query)
+      end
+
+      predicate_collect(:constraint).uniq.each do |constraint|
+        query = constraint.apply(query)
+      end
+
+      query
     end
 
-    private
+    # return identifiers, useful for counting results and row-numbering
+    def count_query
+      # unlike the base query, we do not want to collect joins for mapped
+      # values, only for filters on the start_predicate.
 
-    # This function will loop and apply 'joins', 'constraints' and 'selects' to
-    # the sql query being built up.
-    def predicate_collect(type)
+      query = @model.from(
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
+      ).order(@start_predicate.identity)
+
+      @start_predicate.join.uniq.each do |join|
+        query = join.apply(query)
+      end
+
+      @start_predicate.constraint.uniq.each do |constraint|
+        query = constraint.apply(query)
+      end
+
+      query.select(
+        *@start_predicate.select
+      )
+    end
+
+    # get page bounds for this question using @options[:page] and @options[:page_size]
+    def bounds_query
+      count_query.from_self.select(
+        # add row_numbers to the count query
+        @start_predicate.identity,
+        Sequel.function(:row_number)
+          .over(order: @start_predicate.identity)
+          .as(:row)
+      ).from_self(alias: :main_query).select(
+        # only the first row from each page
+        @start_predicate.identity).where(
+          Sequel.lit(
+            '? % ? = 1',
+            Sequel[:main_query][:row],
+            @options[:page_size]
+          )
+        )
+        .limit(2)
+        .offset(@options[:page]-1)
+        # return only the 2 identifiers for this page
+    end
+
+    def paged_query(query)
+      raise ArgumentError, "Page must start at 1" unless @options[:page] > 0
+      bounds = Magma.instance.db[bounds_query.sql].all.map do |row|
+        row[@start_predicate.identity]
+      end
+      raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+
+      # apply bounds to the query
+      query = query.where(
+        Sequel.lit(
+          '? >= ?',
+          @start_predicate.column_name,
+          bounds.first
+        )
+      )
+      if bounds.length > 1
+        query = query.where(
+          Sequel.lit(
+            '? < ?',
+            @start_predicate.column_name,
+            bounds.last
+          )
+        )
+      end
+      query
+    end
+
+    def predicate_collect type
       predicates.map(&type).inject(&:+) || []
     end
   end
