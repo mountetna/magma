@@ -37,11 +37,11 @@ class Magma
         name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
       end
 
-      def parent name=nil, opts = {}
+      def parent(name=nil, opts = {})
         if name
           @parent = name
           many_to_one name
-          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+          attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
         end
         @parent
       end
@@ -57,14 +57,14 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
-      def file name, opts = {}
-        mount_uploader name, Magma::FileUploader
+      def file(name, opts = {})
+        mount_uploader(name, Magma::FileUploader)
         attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
       alias_method :document, :file
 
       def image name, opts = {}
-        mount_uploader name, Magma::ImageUploader
+        mount_uploader(name, Magma::ImageUploader)
         attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
       end
 
@@ -128,7 +128,7 @@ class Magma
         # Return a json template of this thing.
         attribute_names ||= attributes.keys
         {
-          name: model_name, 
+          name: model_name,
           attributes: Hash[
             attribute_names.map do |name|
               [ name, attributes[name].json_template ]
@@ -188,9 +188,9 @@ class Magma
           # Insert the records into the temporary DB.
           db[temp_table_name].multi_insert(records)
 
-          # Generate the column name mapping from the temporary database to the 
+          # Generate the column name mapping from the temporary database to the
           # permanent one.
-          column_alias = update_columns.map do |column| 
+          column_alias = update_columns.map do |column|
             "#{column}=src.#{column}"
           end.join(', ')
 
@@ -220,14 +220,14 @@ class Magma
       end
 
       # Extract the full module name and prepend it to the incoming class name
-      # so we can get the correct Module/Class reference. This one is to 
+      # so we can get the correct Module/Class reference. This one is to
       # correctly format the Ruby models so they may reference eachother.
       def resolve_namespace(name)
         :"#{self.name.split(/::/).first}::#{name.to_s.camel_case}"
       end
 
       # Takes the module/class namespace and turns it into a postgres
-      # schema/table string. This one is to establish the Sequel Model to 
+      # schema/table string. This one is to establish the Sequel Model to
       # Postgres DB connection.
       def namespaced_table_name(subclass)
         project_name, table_name = subclass.name.split(/::/).map(&:snake_case)
@@ -236,7 +236,7 @@ class Magma
       end
 
       def inherited(subclass)
-        # Sets the appropriate postgres schema for the model. There should be a 
+        # Sets the appropriate postgres schema for the model. There should be a
         # one to one correlation between a model's module/class and a postgres
         # schema/table.
         set_dataset(namespaced_table_name(subclass))

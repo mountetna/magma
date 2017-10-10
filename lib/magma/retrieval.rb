@@ -3,7 +3,7 @@ class Magma
     attr_reader :attribute_names
     MAX_PAGE_SIZE=10_000
 
-    def initialize model, record_names, attributes, filter=nil, page=1, page_size=MAX_PAGE_SIZE
+    def initialize(model, record_names, attributes, filter=nil, page=1, page_size=MAX_PAGE_SIZE)
       @model = model
       @record_names = record_names
       @attributes = attributes
@@ -37,7 +37,12 @@ class Magma
     private
 
     def question
-      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size)
+      @question ||= Magma::Question.new(
+        @model.project_name,
+        query,
+        page: @page,
+        page_size: @page_size
+      )
     end
 
     def query
@@ -82,7 +87,7 @@ class Magma
     end
 
     class ParentFilter
-      def initialize child, parent, parent_ids
+      def initialize(child, parent, parent_ids)
         @child = child
         @parent = parent
         raise unless @child.attributes[@child.parent].link_model == @parent
@@ -97,8 +102,8 @@ class Magma
     end
 
     class StringFilter
-      def initialize filter
-        @filter = filter || ""
+      def initialize(filter)
+        @filter = filter || ''
       end
 
       def apply(attributes)
@@ -122,19 +127,19 @@ class Magma
 
         case att
         when Magma::CollectionAttribute, Magma::TableAttribute
-          raise ArgumentError, "Cannot filter on collection attributes"
+          raise ArgumentError, 'Cannot filter on collection attributes'
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           return [ att_name, '::identifier', string_op(operator), value ]
         when Magma::Attribute
           case att.type.name
-          when "Integer", "Float", "DateTime"
+          when 'Integer', 'Float', 'DateTime'
             return [ att_name, numeric_op(operator), value ]
-          when "String"
+          when 'String'
             return [ att_name, string_op(operator), value ]
-          when "TrueClass"
+          when 'TrueClass'
             return [ att_name, boolean_op(operator, value) ]
           else
-            raise ArgumentError, "Unknown type for attribute"
+            raise ArgumentError, 'Unknown type for attribute'
           end
         else
           raise ArgumentError, "Cannot query for #{att_name}"
@@ -143,18 +148,18 @@ class Magma
 
       def string_op operator
         case operator
-        when "="
-          return "::equals"
-        when "~"
-          return "::matches"
+        when '='
+          return '::equals'
+        when '~'
+          return '::matches'
         else
-          raise ArgumentError, "Invalid operator #{operator} for string attribute!"
+          raise ArgumentError, 'Invalid operator #{operator} for string attribute!'
         end
       end
 
       def numeric_op operator
         case operator
-        when "=", "<=", ">=", ">", "<"
+        when '=', '<=', '>=', '>', '<'
           return "::#{operator}"
         else
           raise ArgumentError, "Invalid operator #{operator} for string attribute!"
@@ -162,12 +167,12 @@ class Magma
       end
 
       def boolean_op operator, value
-        raise ArgumentError, "Invalid operator #{operator} for boolean column!" unless operator == "="
+        raise ArgumentError, "Invalid operator #{operator} for boolean column!" unless operator == '='
         case value
-        when "true"
-          return "::true"
-        when "false"
-          return "::false"
+        when 'true'
+          return '::true'
+        when 'false'
+          return '::false'
         end
       end
     end
