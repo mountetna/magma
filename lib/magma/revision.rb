@@ -19,6 +19,10 @@ class Magma
       @errors.empty?
     end
 
+    def attribute_names
+      @revised_document.keys
+    end
+
     def post!
       # update the record using this revision
       @revised_document.each do |name, new_value|
@@ -34,7 +38,9 @@ class Magma
     def censored document
       document.select do |att_name,val|
         @model.has_attribute?(att_name) && !@model.attributes[att_name.to_sym].read_only?
-      end
+      end.merge(
+        @model.identity => @record_name
+      )
     end
   end
 end
