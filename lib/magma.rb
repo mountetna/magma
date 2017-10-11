@@ -91,7 +91,7 @@ class Magma
   attr_reader :logger
 
   def logger=(logger)
-    db.loggers << logger
+    db.loggers << logger if db
     @logger = logger
   end
 
