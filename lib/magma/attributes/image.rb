@@ -17,7 +17,7 @@ class Magma
     def json_for record
       path = record[@name]
       if path
-        thumb_path = File.join(File.dirname(path), "thumb_#{File.basename(path)}")
+        thumb_path = "thumb_#{path}"
         {
           url: Magma.instance.storage.get_url(path),
           path: File.basename(path),

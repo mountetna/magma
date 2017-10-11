@@ -1,8 +1,10 @@
 require 'extlib'
 require 'date'
+require 'logger'
 
 class Magma
   def run_command(config, cmd = :help, *args)
+    self.logger = Logger.new('/dev/stdout')
     cmd = cmd.to_sym
     if has_command?(cmd)
       all_commands[cmd].setup(config)

@@ -20,6 +20,8 @@ describe Magma::Server::Update do
     )
     lion.refresh
     expect(lion.species).to eq('lion')
+    json = json_body(last_response.body)
+    expect(json[:models][:monster][:documents][:'Nemean Lion']).to eq(name: 'Nemean Lion', species: 'lion')
     expect(last_response.status).to eq(200)
   end
 
@@ -37,13 +39,15 @@ describe Magma::Server::Update do
     )
 
     expect(Labors::Labor.count).to be(2)
+    json = json_body(last_response.body)
+    expect(json[:models][:project][:documents][:'The Two Labors of Hercules']).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
     expect(last_response.status).to eq(200)
   end
 
   it 'fails on validation checks' do
     # The actual validation is defined in spec/labors/models/monster.rb,
     # not sure how to move it here
-    lion = create(:monster, name: "Nemean Lion", species: "lion")
+    lion = create(:monster, name: 'Nemean Lion', species: 'lion')
     post(
       '/update',
       {
