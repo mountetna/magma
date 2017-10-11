@@ -8,8 +8,10 @@ class Magma
         validator = Magma::Validator.new
 
         revisions = @params[:revisions].map do |model_name, model_revisions|
+          model = Magma.instance.get_model(@project_name, model_name)
+
           model_revisions.map do |record_name, revision_data|
-            Magma::Revision.new(@project_name, model_name.to_s, record_name.to_s, revision_data, validator)
+            Magma::Revision.new(model, record_name.to_s, revision_data, validator)
           end
         end.flatten
 
