@@ -1,6 +1,6 @@
 class Magma
   class Revision
-    attr_reader :model, :record_name, :revised_document
+    attr_reader :model, :record_name
     def initialize(model, record_name, revised_document, validator)
       @model = model
       @record = @model[@model.identity => record_name]
