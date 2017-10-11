@@ -4,7 +4,7 @@ require 'logger'
 
 class Magma
   def run_command(config, cmd = :help, *args)
-    self.logger = Logger.new('/dev/stdout')
+    self.logger = Logger.new(STDOUT)
     cmd = cmd.to_sym
     if has_command?(cmd)
       all_commands[cmd].setup(config)
