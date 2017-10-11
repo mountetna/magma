@@ -22,7 +22,7 @@ class Magma
         magma.configure(config)
         magma.load_models
         magma.persist_connection
-        magma.db.loggers << logger
+        magma.logger = logger
       end
     end
 
