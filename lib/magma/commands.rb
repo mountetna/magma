@@ -114,7 +114,7 @@ class Magma
       puts <<EOT
 Sequel.migration do
   change do
-    #{Magma.instance.magma_projects.values.map(&:models).map(&:values).flatten.map(&:migration).reject(&:empty?).join("\n")}
+    #{Magma.instance.magma_projects.values.map(&:migrations).flatten.join("\n")}
   end
 end
 EOT

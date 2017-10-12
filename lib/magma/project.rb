@@ -19,6 +19,10 @@ class Magma
       ]
     end
 
+    def migrations
+      models.values.map(&:migration).reject(&:empty?)
+    end
+
     private
 
     def project_container
