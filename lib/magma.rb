@@ -103,6 +103,13 @@ class Magma
     end
   end
 
+  attr_reader :logger
+
+  def logger=(logger)
+    db.loggers << logger if db
+    @logger = logger
+  end
+
   private
 
   def carrier_wave_init
