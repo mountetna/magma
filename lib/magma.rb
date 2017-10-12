@@ -1,4 +1,5 @@
 require 'sequel'
+require_relative 'magma/project'
 require_relative 'magma/validation'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
@@ -20,20 +21,18 @@ class Magma
   end
 
   def get_model(project_name, model_name)
-    model_class_name = model_name.to_s.camel_case
-    project_class_name = project_name.to_s.camel_case
-    begin
-      model = Kernel.const_get(project_class_name).const_get(model_class_name)
-      raise NameError unless model < Magma::Model
-      return model
-    rescue NameError => e
-      err_txt = "Could not find Magma::Model #{project_class_name}::#{model_class_name}"
-      raise(NameError, err_txt)
-    end
+    project = get_project(project_name)
+    model = project.models[model_name.to_sym] if project
+    raise NameError, "Could not find Magma::Model #{project_name}::#{model_name}" unless model
+    return model
   end
 
-  def magma_models
-    @magma_models ||= find_descendents(Magma::Model)
+  def get_project(project_name)
+    magma_projects[project_name.to_sym]
+  end
+
+  def magma_projects
+    @magma_projects ||= {}
   end
 
   def configure(opts)
@@ -58,14 +57,8 @@ class Magma
     end
 
     config(:project_path).split(/\s+/).each do |project_dir|
-      base_file = File.join(File.dirname(__FILE__), '..', project_dir, 'requirements.rb')
-      if File.exists?(base_file)
-        require base_file 
-      else
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'models', '**', '*.rb'), &method(:require))
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'loaders', '**', '*.rb'), &method(:require))
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'metrics', '**', '*.rb'), &method(:require))
-      end
+      project = Magma::Project.new(project_dir)
+      magma_projects[ project.project_name ] = project
     end
 
     if check_tables
