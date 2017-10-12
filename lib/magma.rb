@@ -47,7 +47,7 @@ class Magma
     (ENV['MAGMA_ENV'] || :development).to_sym
   end
 
-  def load_models(check_tables = true)
+  def load_models(validate = true)
     connect(config :db)
 
     if config(:storage)
@@ -61,13 +61,44 @@ class Magma
       magma_projects[ project.project_name ] = project
     end
 
-    if check_tables
-      magma_models.each do |model|
-        raise "Missing table for #{model}." unless model.has_table?
-      end
-    end
+    validate_models if validate
 
     carrier_wave_init
+  end
+
+  class Magma::ValidationError < StandardError
+  end
+
+  def validate_models
+    magma_projects.each do |project_name, project|
+      # Check that there is a project model
+      project_model = project.models.values.find {|m| m.model_name == :project}
+
+      raise Magma::ValidationError, "There is no Project model for project #{project.project_name}" unless project_model
+
+      project.models.each do |model_name, model|
+        # Make sure the model_name is valid
+        if [ :attributes, :attribute, :all, :identifier ].include?(model_name)
+          raise Magma::ValidationError, "Model name #{model_name} is reserved."
+        end
+
+        # Check that tables exist
+        raise Magma::ValidationError, "Missing table for #{model}." unless model.has_table?
+
+        # Check reciprocal links
+        model.attributes.each do |att_name, attribute|
+          next unless attribute.respond_to?(:link_model)
+          link_model = attribute.link_model
+          link_attribute = link_model.attributes.values.find do |attribute|
+            attribute.respond_to?(:link_model) && attribute.link_model == model
+          end
+          raise Magma::ValidationError, "Missing reciprocal link for #{model_name}##{att_name} from #{link_model.model_name}." unless link_attribute
+        end
+
+        # Check for orphan models
+        raise Magma::ValidationError, "Orphan model #{model_name}." unless model.attributes.values.any?{|att| att.is_a?(Magma::Link)}
+      end
+    end
   end
 
   def persist_connection
