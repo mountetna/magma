@@ -21,16 +21,16 @@ class Magma
       @name
     end
 
-    def json_for record
+    def json_for(record)
       link = record[@name]
       link ? link.map(&:last).sort : nil
     end
 
-    def txt_for record
-      json_for(record).join(", ")
+    def txt_for(record)
+      json_for(record).join(', ')
     end
 
-    def update record, new_ids
+    def update(record, new_ids)
       old_links = record.send(@name)
 
       old_ids = old_links.map(&:identifier)
@@ -44,29 +44,34 @@ class Magma
       if !new_links.empty?
         link_model.multi_insert(
           new_links.map do |link|
-            { link_model.identity => link, self_id => record.id }
+            {link_model.identity=> link, self_id=> record.id}
           end
         )
       end
 
       if !existing_links.empty?
-        link_records( existing_links ).update( self_id => record.id )
+        link_records(existing_links).update(self_id=> record.id)
       end
 
       if !removed_links.empty?
-        link_records( removed_links ).update( self_id => nil )
+        link_records(removed_links).update(self_id=> nil)
       end
     end
 
     class Validator < Magma::AttributeValidator
-      def validate(value)
-        unless value.is_a?(Array)
-          yield "#{value} is not an Array."
+      def validate(values)
+        unless values.is_a?(Array)
+          yield "#{values} is not an Array."
           return
         end
-        value.each do |link|
+
+        # For each sub value in this collection we re-run the validations with 
+        # the default linked model, identity and value.
+        values.each do |link|
           next unless link
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity, link) do |error|
+
+          args = [@attribute.link_model, @attribute.link_model.identity, link]
+          @validator.validate(*args) do |error|
             yield error
           end
         end

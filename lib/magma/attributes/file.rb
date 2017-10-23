@@ -14,12 +14,12 @@ class Magma
       record.modified!(name)
     end
 
-    def json_for record
+    def json_for(record)
       path = record[@name]
       if path
         {
-          url: Magma.instance.storage.get_url(path),
-          path: File.basename(path)
+          url: '/', #Magma.instance.storage.get_url(path),
+          path: '/'#File.basename(path)
         }
       else
         nil

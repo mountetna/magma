@@ -17,18 +17,16 @@ describe Magma::Client do
       begin
         client = @configuration_class.instance
 
-        # Note that we are neither testing #post nor #multipart_post
+        # Note that we are neither testing #post nor #multipart_post.
         allow(client).to receive(:multipart_post) do |endpoint, content|
+
           path = "/#{endpoint}"
           multipart = Net::HTTP::Post::Multipart.new(path, content)
           body = multipart.body_stream.read
-          content_type = multipart.to_hash["content-type"].first
+          content_type = multipart.to_hash['content-type'].first
 
-          post(
-            "/#{endpoint}",
-            body,
-            'CONTENT_TYPE' => content_type
-          )
+          post("/#{endpoint}", body, 'CONTENT_TYPE'=> content_type)
+
           last_response.define_singleton_method(:code) do
             status
           end
@@ -36,10 +34,13 @@ describe Magma::Client do
         end
 
         allow(client).to receive(:post) do |endpoint, content_type, body|
-          post("/#{endpoint}", body, { 'CONTENT_TYPE'=> content_type })
+
+          post("/#{endpoint}", body, {'CONTENT_TYPE'=> content_type})
+
           last_response.define_singleton_method(:code) do
             status
           end
+
           last_response
         end
 
@@ -47,7 +48,7 @@ describe Magma::Client do
       end
   end
 
-  it "invokes the retrieve endpoint correctly." do
+  it 'invokes the retrieve endpoint correctly.' do
     token = 'janus-token'
 
     response = nil
@@ -56,20 +57,20 @@ describe Magma::Client do
         token,
         'labors',
         {
-          model_name: "labor",
+          project_name: 'labors',
+          model_name: 'labor',
           record_names: [],
-          attribute_names: [],
-          project_name: "labors"
+          attribute_names: []
         }
       )
     end.to_not raise_error(Magma::ClientError)
-   
+
     json = json_body(response.body)
 
     expect(json[:models].keys).to eq([:labor])
-  end 
+  end
 
-  it "invokes the update endpoint correctly." do
+  it 'invokes the update endpoint correctly.' do
     token = 'janus-token'
     lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
 
@@ -86,12 +87,12 @@ describe Magma::Client do
         }
       )
     end.to_not raise_error(Magma::ClientError)
-   
+
     lion.refresh
     expect(lion.species).to eq('lion')
   end
-  
-  it "invokes the query endpoint correctly." do
+
+  it 'invokes the query endpoint correctly.' do
     token = 'janus-token'
     create_list(:labor, 3)
 
@@ -103,7 +104,7 @@ describe Magma::Client do
         [ 'labor', '::all', '::identifier' ]
       )
     end.to_not raise_error(Magma::ClientError)
-   
+
     json = json_body(response.body)
 
     expect(json[:answer].length).to eq(3)

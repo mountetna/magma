@@ -10,7 +10,7 @@ class Magma
       foreign_id
     end
 
-    def migration mig
+    def migration(mig)
       [
         mig.foreign_key_entry(column_name, link_model.table_name),
         mig.index_entry(column_name)
@@ -21,11 +21,11 @@ class Magma
       @name
     end
 
-    def json_for record
+    def json_for(record)
       record[@name]
     end
 
-    def update record, link
+    def update(record, link)
       if link.nil?
         record[ foreign_id ] = nil
         return
@@ -39,8 +39,10 @@ class Magma
     class Validator < Magma::AttributeValidator
       def validate(value)
         return if value.is_a?(Magma::TempId) || value.nil?
+
         if @attribute.link_identity
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity, value) do |error|
+          args = [@attribute.link_model, @attribute.link_model.identity, value]
+          @validator.validate(*args) do |error|
             yield error
           end
         end
@@ -48,16 +50,21 @@ class Magma
     end
 
     class Entry < Magma::BaseAttributeEntry
-      def entry value
+      def entry(value)
         return nil if value.nil?
 
         if value.is_a? Magma::TempId
-          [ @attribute.foreign_id, value.real_id ]
+          [
+            @attribute.foreign_id,
+            value.real_id
+          ]
         elsif @attribute.link_identity
-          [ @attribute.foreign_id, @loader.identifier_id(@attribute.link_model, value) ]
+          [
+            @attribute.foreign_id,
+            @loader.identifier_id(@attribute.link_model, value)
+          ]
         end
       end
     end
-
   end
 end

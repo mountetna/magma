@@ -37,6 +37,7 @@ class Magma
     class Retrieve < Magma::Server::Controller
       def initialize(request)
         super(request)
+
         @model_name = @params[:model_name]
         @record_names = @params[:record_names]
         @collapse_tables = @params[:collapse_tables] || @params[:format] == 'tsv'
@@ -75,12 +76,32 @@ class Magma
       private
 
       def validate
-        return error('No model name given') if @model_name.nil?
-        return error('No record names given') if @record_names.nil?
-        return error('Improperly formed record names') unless valid_record_names?
-        return error('Improperly formed attribute names') unless @attribute_names.is_a?(Array) || @attribute_names == 'all' || @attribute_names == 'identifier'
-        return error('Cannot retrieve by record name for all models') if @model_name == 'all' && @record_names.is_a?(Array) && !@record_names.empty?
-        return error('Cannot retrieve several models in tsv format') if @model_name == 'all' && @format == 'tsv'
+        return error('No model name given.') if @model_name.nil?
+        return error('No record names given.') if @record_names.nil?
+
+        unless valid_record_names?
+          return error('Improperly formed record names.') 
+        end
+
+        unless(
+          @attribute_names.is_a?(Array) ||
+          @attribute_names == 'all' ||
+          @attribute_names == 'identifier'
+        )
+          return error('Improperly formed attribute names.')
+        end
+
+        if(
+          @model_name == 'all' &&
+          @record_names.is_a?(Array) &&
+          !@record_names.empty?
+        )
+          return error('Cannot retrieve by record name for all models.')
+        end
+
+        if @model_name == 'all' && @format == 'tsv'
+          return error('Cannot retrieve several models in tsv format.')
+        end
       end
 
       def valid_record_names?
@@ -108,7 +129,7 @@ class Magma
       end
 
 
-      def retrieve_model model
+      def retrieve_model(model)
         # Extract the attributes from the model.
         attributes = selected_attributes(model)
         return if attributes.empty?
@@ -129,14 +150,13 @@ class Magma
           time = Time.now
           records = retrieval.records
           puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
-          @payload.add_records( model, records )
+          @payload.add_records(model, records)
 
-          # add the records for any table attributes
-          # This requires a secondary query.
+          # Add the records for any table attributes This requires a secondary
+          # query.
           if !@collapse_tables
             attributes.each do |att|
               next unless att.is_a?(Magma::TableAttribute)
-
               retrieve_table_attribute(model, records, att)
             end
           end
@@ -145,11 +165,14 @@ class Magma
       end
 
       def retrieve_table_attribute(model, records, attribute)
+
+        # Get the model that this attribute is a type of.
         link_model = attribute.link_model
 
         link_attributes = link_model.attributes.reject do |att_name, att|
           att.is_a?(Magma::TableAttribute)
         end.values
+
         if !link_model.has_identifier?
           link_attributes.push(OpenStruct.new(name: :id))
         end
@@ -165,13 +188,12 @@ class Magma
           Magma::Retrieval::ParentFilter.new(
             link_model, model, record_names
           ),
-
-          # some day this should be table pages
-          nil,
-          nil
+          nil, # Some day this should be table pages.
+          nil  # Some day this should be table pages.
         )
-        @payload.add_model( link_model, retrieval.attribute_names )
-        @payload.add_records( link_model, retrieval.records )
+
+        @payload.add_model(link_model, retrieval.attribute_names)
+        @payload.add_records(link_model, retrieval.records)
       end
 
       def tsv_payload
@@ -180,7 +202,6 @@ class Magma
         model = Magma.instance.get_model(@project_name, @model_name)
         attributes = selected_attributes(model)
         return if attributes.empty?
-
 
         retrieval = Magma::Retrieval.new(
           model,
@@ -199,7 +220,7 @@ class Magma
         end
       end
 
-      def selected_attributes model
+      def selected_attributes(model)
         attributes = model.attributes.values.select do |att|
           get_attribute?(att,model)
         end

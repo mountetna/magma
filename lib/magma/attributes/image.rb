@@ -14,7 +14,7 @@ class Magma
       record.modified!(name)
     end
 
-    def json_for record
+    def json_for(record)
       path = record[@name]
       if path
         thumb_path = "thumb_#{path}"
@@ -28,7 +28,7 @@ class Magma
       end
     end
     
-    def txt_for record
+    def txt_for(record)
       image = json_for(record)
       image ? image[:url] : nil
     end
