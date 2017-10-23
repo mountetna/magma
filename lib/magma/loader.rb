@@ -19,7 +19,7 @@ class Magma
       @model = model
       @validator = validator
       @loader = loader
-      @model_validation = @validator.model_validation(@model)
+      @model_validation = @validator.model_validator(@model)
       @attribute_entries = {}
     end
 
