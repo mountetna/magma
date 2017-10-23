@@ -13,7 +13,8 @@ class Magma
       @fields = {}
     end
 
-    def match(data_name, data_value)
+    def match(record)
+    #def match(data_name, data_value)
 
       # Select or build the entry to match against.
       match_value = @fields[data_name] ||= build_matcher(data_name)
