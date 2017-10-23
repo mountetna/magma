@@ -7,12 +7,27 @@ class Magma
       @model_matchers = {}
     end
 
+    # If a default attribute has a complex type (such as a collection or table)
+    # then those sub items also have their own model and type. In this situation
+    # the attribute will have an overriding Magma::AttributeValidator. This will
+    # break out the individual items and then call this function on each sub
+    # item.
+    def validate(model, att_name, value)
+      model_validator(model).validate_attribute(att_name, value) do |error|
+        yield error
+      end
+    end
+
     # If there is not a validator set on the model then use the default
     # ModelValidator
     def model_validator(model = nil)
       if model.validator == nil
+
+        # Build a default ModelValidator.
         @model_validators[model] ||= Magma::ModelValidator.new(model, self)
       else
+
+        # Pull the validator that was defined on the model.
         @model_validators[model] ||= model.validator.new(model, self)
       end
       return @model_validators[model]

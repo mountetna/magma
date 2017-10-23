@@ -61,6 +61,7 @@ class Magma
         mount_uploader(name, Magma::FileUploader)
         attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
+
       alias_method :document, :file
 
       def image name, opts = {}
@@ -106,11 +107,9 @@ class Magma
         return nil
       end
 
-      # REDUNDANT FUNCTIONS!
-
       def project_name
-        name.split('::').first.snake_case.to_sym
-      end
+         name.split('::').first.snake_case.to_sym
+       end
 
       def model_name
         name.split('::').last.snake_case.to_sym
