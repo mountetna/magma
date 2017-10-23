@@ -7,6 +7,7 @@ class Magma
         payload = Magma::Payload.new
         validator = Magma::Validator.new
 
+        # Process the revisions.
         revisions = @params[:revisions].map do |model_name, model_revisions|
           model = Magma.instance.get_model(@project_name, model_name)
 
@@ -15,10 +16,12 @@ class Magma
           end
         end.flatten
 
+        # Validate the revisions.
         revisions.each do |revision|
           error(revision.errors) if !revision.valid?
         end
 
+        # If there are no errors in validation then post the revisions.
         if success?
           revisions.each do |revision|
             begin
@@ -31,6 +34,7 @@ class Magma
           end
         end
 
+        # Return the records updated by the revisions.
         if success?
           revisions.group_by(&:model).each do |model,model_revisions|
             attribute_names = model_revisions.first.attribute_names
