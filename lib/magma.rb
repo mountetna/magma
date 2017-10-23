@@ -1,6 +1,7 @@
 require 'sequel'
 require_relative 'magma/validator'
 require_relative 'magma/loader'
+require_relative 'magma/generator'
 require_relative 'magma/migration'
 require_relative 'magma/attribute'
 require_relative 'magma/model'
@@ -84,7 +85,9 @@ class Magma
     # Check that the loaded models have matching tables in postgres.
     if check_tables
       magma_models.each do |model|
-        raise "Missing table for #{model}." unless model.has_table?
+        unless model.has_table?
+          raise "Missing table for #{model}."
+        end
       end
     end
 

@@ -63,13 +63,26 @@ class Magma
   end
 
   class Help < Magma::Command
-    usage 'List this help'
+    usage 'List this help.'
 
     def execute
       puts 'Commands:'
       Magma.instance.all_commands.each do |name,cmd|
         puts cmd.usage
       end
+    end
+  end
+
+  class Test < Magma::Command
+    usage 'Loads the models and exits. This IS NOT unit testing. This is a '\
+'simple functional initialization test.'
+
+    def execute
+      puts 'Loaded models and exited.'
+    end
+
+    def setup(config)
+      load_and_check_tables(config)
     end
   end
 
@@ -170,7 +183,43 @@ EOT
       begin
         loader.dispatch
       rescue Magma::LoadFailed => e
-        puts "Load failed with these complaints:"
+        puts 'Load failed with these complaints:'
+        puts e.complaints
+      end
+    end
+
+    def setup(config)
+      load_and_check_tables(config)
+    end
+  end
+
+  # Generate some dummy data for the DB to work with
+  class Generate < Magma::Command
+    usage 'Run data loaders on models for current dataset.'
+
+    def execute(*args)
+      # Pull all the generators listed in the project `requirements.rb` file.
+      generators = Magma.instance.find_descendents(Magma::Generator)
+
+      # If there are no args then show the registerd generators.
+      if args.empty?
+        # List available generators
+        puts 'Available generators:'
+        generators.each do |generator|
+          puts "%30s  %s" % [generator.generator_name, generator.description]
+        end
+        exit
+      end
+
+      # Check that the requested generator exists
+      generator = generators.find do |l| l.generator_name == args[0] end
+      raise "Could not find a generator named #{args[0]}" unless generator
+
+      generator = generator.new
+      begin
+        generator.dispatch(args[1])
+      rescue Magma::LoadFailed => e
+        puts 'Generation failed with these complaints:'
         puts e.complaints
       end
     end
