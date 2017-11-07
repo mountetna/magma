@@ -128,7 +128,7 @@ class Magma
         when Magma::Attribute
           case att.type.name
           when "Integer", "Float", "DateTime"
-            return [ att_name, numeric_op(operator), value ]
+            return [ att_name, numeric_op(operator), value.to_f ]
           when "String"
             return [ att_name, string_op(operator), value ]
           when "TrueClass"
