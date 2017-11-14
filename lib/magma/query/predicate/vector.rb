@@ -17,6 +17,12 @@ class Magma
       child Array
     end
 
+    def constraint
+      @column_predicates.map do |column|
+        column.flatten.map(&:constraint).inject(&:+) || []
+      end.inject(&:+) || []
+    end
+
     def extract table, identity
       @column_predicates.map do |pred|
         pred.extract(table,identity)
