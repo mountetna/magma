@@ -1,4 +1,4 @@
-describe Magma::Server::Query do
+describe Magma::QueryController do
   include Rack::Test::Methods
 
   def app

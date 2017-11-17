@@ -1,4 +1,4 @@
-describe Magma::Server::Retrieve do
+describe Magma::RetrieveController do
   include Rack::Test::Methods
 
   def app
