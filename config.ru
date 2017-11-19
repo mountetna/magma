@@ -1,7 +1,6 @@
 require 'yaml'
-require 'logger'
 require 'bundler'
-Bundler.require(:default, ENV["MAGMA_ENV"])
+Bundler.require(:default)
 
 require_relative 'lib/magma/server'
 require_relative 'lib/magma/auth'
@@ -11,4 +10,4 @@ use Etna::ParseBody
 use Etna::SymbolizeParams
 use Magma::Auth
 
-run Magma::Server.new(YAML.load(File.read('config.yml')), logger)
+run Magma::Server.new(YAML.load(File.read('config.yml')))
