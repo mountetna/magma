@@ -95,7 +95,7 @@ class Magma
 
         # Pull the data.
         if @model_name == 'all'
-          Magma.instance.magma_models.each do |model|
+          Magma.instance.get_project(@project_name).models.each do |model_name, model|
             next if @attribute_names == 'identifier' && !model.has_identifier?
             retrieve_model(model)
           end

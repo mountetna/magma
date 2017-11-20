@@ -1,4 +1,5 @@
 require 'sequel'
+require_relative 'magma/project'
 require_relative 'magma/validation'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
@@ -20,20 +21,18 @@ class Magma
   end
 
   def get_model(project_name, model_name)
-    model_class_name = model_name.to_s.camel_case
-    project_class_name = project_name.to_s.camel_case
-    begin
-      model = Kernel.const_get(project_class_name).const_get(model_class_name)
-      raise NameError unless model < Magma::Model
-      return model
-    rescue NameError => e
-      err_txt = "Could not find Magma::Model #{project_class_name}::#{model_class_name}"
-      raise(NameError, err_txt)
-    end
+    project = get_project(project_name)
+    model = project.models[model_name.to_sym] if project
+    raise NameError, "Could not find Magma::Model #{project_name}::#{model_name}" unless model
+    return model
   end
 
-  def magma_models
-    @magma_models ||= find_descendents(Magma::Model)
+  def get_project(project_name)
+    magma_projects[project_name.to_sym]
+  end
+
+  def magma_projects
+    @magma_projects ||= {}
   end
 
   def configure(opts)
@@ -48,7 +47,7 @@ class Magma
     (ENV['MAGMA_ENV'] || :development).to_sym
   end
 
-  def load_models(check_tables = true)
+  def load_models(validate = true)
     connect(config :db)
 
     if config(:storage)
@@ -58,23 +57,48 @@ class Magma
     end
 
     config(:project_path).split(/\s+/).each do |project_dir|
-      base_file = File.join(File.dirname(__FILE__), '..', project_dir, 'requirements.rb')
-      if File.exists?(base_file)
-        require base_file 
-      else
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'models', '**', '*.rb'), &method(:require))
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'loaders', '**', '*.rb'), &method(:require))
-        Dir.glob(File.join(File.dirname(__FILE__), '..', project_dir, 'metrics', '**', '*.rb'), &method(:require))
-      end
+      project = Magma::Project.new(project_dir)
+      magma_projects[ project.project_name ] = project
     end
 
-    if check_tables
-      magma_models.each do |model|
-        raise "Missing table for #{model}." unless model.has_table?
-      end
-    end
+    validate_models if validate
 
     carrier_wave_init
+  end
+
+  class Magma::ValidationError < StandardError
+  end
+
+  def validate_models
+    magma_projects.each do |project_name, project|
+      # Check that there is a project model
+      project_model = project.models.values.find {|m| m.model_name == :project}
+
+      raise Magma::ValidationError, "There is no Project model for project #{project.project_name}" unless project_model
+
+      project.models.each do |model_name, model|
+        # Make sure the model_name is valid
+        if [ :attributes, :attribute, :all, :identifier ].include?(model_name)
+          raise Magma::ValidationError, "Model name #{model_name} is reserved."
+        end
+
+        # Check that tables exist
+        raise Magma::ValidationError, "Missing table for #{model}." unless model.has_table?
+
+        # Check reciprocal links
+        model.attributes.each do |att_name, attribute|
+          next unless attribute.respond_to?(:link_model)
+          link_model = attribute.link_model
+          link_attribute = link_model.attributes.values.find do |attribute|
+            attribute.respond_to?(:link_model) && attribute.link_model == model
+          end
+          raise Magma::ValidationError, "Missing reciprocal link for #{model_name}##{att_name} from #{link_model.model_name}." unless link_attribute
+        end
+
+        # Check for orphan models
+        raise Magma::ValidationError, "Orphan model #{model_name}." unless model.attributes.values.any?{|att| att.is_a?(Magma::Link)}
+      end
+    end
   end
 
   def persist_connection

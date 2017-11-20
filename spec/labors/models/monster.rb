@@ -4,5 +4,6 @@ module Labors
 
     identifier :name, type: String
     attribute :species, type: String, match: /^[a-z\s]+$/
+    collection :victim
   end
 end
