@@ -156,7 +156,28 @@ describe Magma::Server::Retrieve do
     )
 
     json = JSON.parse(last_response.body)
+    expect(last_response.status).to eq(200)
     expect(json["models"]["labor"]["documents"].count).to eq(2)
+  end
+
+  it "can filter on numbers" do
+    poison = create(:prize, name: 'poison', worth: 5)
+    poop = create(:prize, name: 'poop', worth: 0)
+    iou = create(:prize, name: 'iou', worth: 2)
+    skin = create(:prize, name: 'skin', worth: 6)
+    retrieve(
+      project_name: 'labors',
+      model_name: 'prize',
+      record_names: 'all',
+      attribute_names: 'all',
+      filter: 'worth>2'
+    )
+
+    expect(last_response.status).to eq(200)
+
+    json = json_body(last_response.body)
+    prize_names = json[:models][:prize][:documents].values.map{|d| d[:name]}
+    expect(prize_names).to eq(['poison', 'skin'])
   end
 
   it "can page results" do
