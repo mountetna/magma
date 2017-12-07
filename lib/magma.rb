@@ -36,7 +36,7 @@ class Magma
     @db.pool.connection_validation_timeout = -1
   end
 
-  def load_models(check_tables = true)
+  def load_models(validate = true)
     setup_db
 
     if config(:storage)
