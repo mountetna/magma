@@ -28,16 +28,15 @@ class Magma
     #   attribute_names:  "all"
     # }
     def retrieve(token, project_name, params, &block)
-      params[:token] = token
       params[:project_name] = project_name
-      json_post(:retrieve, params, &block)
+      json_post(:retrieve, token, params, &block)
     end
 
     # This 'query' end point is used to fetch data by graph query
     # See question.rb for more detail
     def query(token, project_name, question, &block)
-      params = {token: token, project_name: project_name, query: question}
-      json_post(:query, params, { 500 => params, 400 => params }, &block)
+      params = {project_name: project_name, query: question}
+      json_post(:query, token, params, { 500 => params, 400 => params }, &block)
     end
 
     # Post revisions to Magma records
@@ -60,10 +59,9 @@ class Magma
         end
       end
 
-      content << [ 'token', token ]
       content << [ 'project_name', project_name ]
 
-      multipart_post(:update, content, { 400 => { update: revisions } }, &block)
+      multipart_post(:update, token, content, { 400 => { update: revisions } }, &block)
     end
 
     private
@@ -76,23 +74,25 @@ class Magma
                 end
     end
 
-    def json_post(endpoint, params, status_errors={}, &block)
-      post(endpoint, "application/json", params.to_json, status_errors, &block)
+    def json_post(endpoint, token, params, status_errors={}, &block)
+      post(endpoint, "application/json", token, params.to_json, status_errors, &block)
     end
 
-    def multipart_post(endpoint, content, status_errors={}, &block)
+    def multipart_post(endpoint, token, content, status_errors={}, &block)
       uri = URI("#{@host}/#{endpoint}")
       multipart = Net::HTTP::Post::Multipart.new uri.path, content
+      multipart.add_field('Authorization', "Basic #{token}")
 
       request(uri, multipart, status_errors, &block)
     end
 
-    def post(endpoint, content_type, body, status_errors, &block)
+    def post(endpoint, content_type, token, body, status_errors, &block)
       uri = URI("#{@host}/#{endpoint}")
       post = Net::HTTP::Post.new(
         uri.path,
         'Content-Type'=> content_type,
-        'Accept'=> 'application/json'
+        'Accept'=> 'application/json',
+        'Authorization'=>"Basic #{token}"
       )
       post.body = body
       request(uri, post, status_errors, &block)

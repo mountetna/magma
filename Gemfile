@@ -16,3 +16,5 @@ gem 'rack-test', require: "rack/test"
 gem 'factory_bot'
 gem 'rspec'
 gem 'database_cleaner'
+
+gem 'pry'

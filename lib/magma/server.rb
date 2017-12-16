@@ -15,17 +15,11 @@ class Magma
     end
 
     # Connect to the database and get some data.
-    post '/retrieve' do
-      Magma::RetrieveController.new(@request).response
-    end
+    post '/retrieve', action: 'retrieve#action'
 
-    post '/update' do
-      Magma::UpdateController.new(@request).response
-    end
+    post '/update', action: 'update#action'
 
-    post '/query' do
-      Magma::QueryController.new(@request).response
-    end
+    post '/query', action: 'query#action'
 
     get '/' do
       [ 200, {}, 'Magma On.' ]

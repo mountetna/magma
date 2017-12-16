@@ -18,7 +18,7 @@ describe Magma::Client do
         client = @configuration_class.instance
 
         # Note that we are neither testing #post nor #multipart_post
-        allow(client).to receive(:multipart_post) do |endpoint, content|
+        allow(client).to receive(:multipart_post) do |endpoint, token, content|
           path = "/#{endpoint}"
           multipart = Net::HTTP::Post::Multipart.new(path, content)
           body = multipart.body_stream.read
@@ -35,7 +35,7 @@ describe Magma::Client do
           last_response
         end
 
-        allow(client).to receive(:post) do |endpoint, content_type, body|
+        allow(client).to receive(:post) do |endpoint, content_type, token, body|
           post("/#{endpoint}", body, { 'CONTENT_TYPE'=> content_type })
           last_response.define_singleton_method(:code) do
             status
