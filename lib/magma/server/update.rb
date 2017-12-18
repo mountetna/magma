@@ -9,7 +9,7 @@ class UpdateController < Magma::Controller
     post_revisions if success?
 
     if success?
-      success 'application/json', revisions_payload.to_json
+      success(revisions_payload.to_json, 'application/json')
     else
       failure(422, errors: @errors)
     end

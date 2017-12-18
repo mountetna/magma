@@ -62,7 +62,7 @@ class RetrieveController < Magma::Controller
           return [ 200, { 'Content-Type' => 'text/tsv' }, tsv_payload ]
         else
           perform
-          return success('application/json', @payload.to_hash.to_json)
+          return success(@payload.to_hash.to_json, 'application/json')
         end
       else
         return failure(422, errors: @errors)
