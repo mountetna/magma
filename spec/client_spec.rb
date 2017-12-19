@@ -24,6 +24,7 @@ describe Magma::Client do
           body = multipart.body_stream.read
           content_type = multipart.to_hash["content-type"].first
 
+          auth_header(:editor)
           post(
             "/#{endpoint}",
             body,
@@ -36,6 +37,7 @@ describe Magma::Client do
         end
 
         allow(client).to receive(:post) do |endpoint, content_type, token, body|
+          auth_header(:viewer)
           post("/#{endpoint}", body, { 'CONTENT_TYPE'=> content_type })
           last_response.define_singleton_method(:code) do
             status

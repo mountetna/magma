@@ -15,13 +15,13 @@ ENV['MAGMA_ENV'] = 'test'
 # wrong. Check to ensure that this is not out-of-date in some important way!
 
 require_relative '../lib/magma/server'
-require_relative '../lib/magma/auth'
 require_relative '../lib/magma'
 
 OUTER_APP = Rack::Builder.new do
   use Etna::ParseBody
   use Etna::SymbolizeParams
 
+  use Etna::TestAuth
   run Magma::Server.new(YAML.load(File.read('config.yml')))
 end
 
@@ -176,6 +176,23 @@ end
 
 def json_body(body)
   JSON.parse(body, symbolize_names: true)
+end
+
+AUTH_USERS = {
+  editor: { 
+    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'e:labors' 
+  },
+  viewer: {
+    email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors' 
+  },
+  non_user: {
+    email: 'nessus@centaurs.org', first: 'Nessus', perm: ''
+  }
+}
+
+def auth_header(user_type)
+  token = Base64.strict_encode64(AUTH_USERS[user_type].to_json)
+  header('Authorization', "Basic #{token}")
 end
 
 def json_post(endpoint, hash)
