@@ -30,7 +30,7 @@ describe Magma::RetrieveController do
       attribute_names: [],
       project_name: 'labors'
     )
-    expect(last_response).to(be_ok)
+    expect(last_response.status).to eq(200)
   end
 
   it 'complains with missing params.' do

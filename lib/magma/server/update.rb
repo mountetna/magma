@@ -2,8 +2,6 @@ require_relative 'controller'
 
 class UpdateController < Magma::Controller
   def action
-    return failure(401, errors: [ 'You are unauthorized' ]) unless @user && @user.can_edit?(@project_name)
-
     validate_revisions
 
     post_revisions if success?

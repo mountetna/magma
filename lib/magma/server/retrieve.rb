@@ -51,8 +51,6 @@ class RetrieveController < Magma::Controller
   end
 
   def action
-    return failure(401, errors: [ 'You are unauthorized' ]) unless @user && @user.can_view?(@project_name)
-
     begin
       validate
 

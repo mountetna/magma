@@ -191,8 +191,7 @@ AUTH_USERS = {
 }
 
 def auth_header(user_type)
-  token = Base64.strict_encode64(AUTH_USERS[user_type].to_json)
-  header('Authorization', "Basic #{token}")
+  header(*Etna::TestAuth.header(AUTH_USERS[user_type]))
 end
 
 def json_post(endpoint, hash)
