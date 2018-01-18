@@ -86,16 +86,22 @@ Attributes describe the data elements of the model, their interactions with othe
   **_identifier_** - a special attribute, a unique string identifier for records of this model type. Links between records are specified using the _identifier_ attribute. If no identifier is set the identifier defaults to the database _id_.
 
   <u>link types:</u>
+
   **_parent_** - an ancestor in a hierarchy, stored via a foriegn_key column in the model
+
   **_child_** - a child in a hierarchy, stored in the foreign model
   link - same as 'parent', just intended to represent other sorts of relations for clarity
+
   **_collection_** - an array of links to children
 
   <u>tables:</u>
+
   **_table_** - similar to a collection, except while a collection references a wholly separate model, a table is intended to essentially be a vector of values that loads with this model.
 
   <u>file types</u>:
+
   **_document_** - a generic binary document, stored on S3
+
   **_image_** - an image, similar to a document except it allows some thumbnailing
 
 ## JSON api
