@@ -1,5 +1,6 @@
 require_relative 'controller'
 require_relative '../retrieval'
+require_relative '../tsv_writer'
 require 'ostruct'
 
 # In general, you Retrieve with a request like this:
@@ -184,17 +185,12 @@ class RetrieveController < Magma::Controller
     retrieval = Magma::Retrieval.new(
       model,
       @record_names,
-      attributes, 
+      attributes,
       Magma::Retrieval::StringFilter.new(@filter)
     )
-    @payload.add_model(model, retrieval.attribute_names)
+
     return Enumerator.new do |stream|
-      stream << @payload.tsv_header
-      retrieval.each_page do |records|
-        @payload.add_records(model, records)
-        stream << @payload.to_tsv
-        @payload.reset(model)
-      end
+      TSVWriter.new(model, retrieval, @payload).write_tsv(stream)
     end
   end
 
