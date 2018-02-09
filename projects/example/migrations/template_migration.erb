@@ -1,0 +1,12 @@
+Sequel.migration do
+  change do
+    create_table(:<%= project_name.to_s %>__projects) do
+      primary_key :id
+      DateTime :created_at
+      DateTime :updated_at
+      String :description
+      String :name
+      unique :name
+    end
+  end
+end

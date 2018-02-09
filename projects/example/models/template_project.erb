@@ -1,0 +1,10 @@
+module <%= project_name.to_s.capitalize %>
+  class Project < Magma::Model
+    attribute :description,
+      type: String,
+      desc: 'A short text describing the project.'
+    identifier :name,
+      type: String,
+      desc: 'Name for this project.'
+  end
+end
