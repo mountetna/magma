@@ -60,10 +60,16 @@ class Magma
 
   def validate_models
     magma_projects.each do |project_name, project|
-      # Check that there is a project model
+
+      # Check that there is a project model.
       project_model = project.models.values.find {|m| m.model_name == :project}
 
-      raise Magma::ValidationError, "There is no Project model for project #{project.project_name}" unless project_model
+      unless project_model
+        raise(
+          Magma::ValidationError,
+          "There is no Project model for project #{project.project_name}"
+        )
+      end
 
       project.models.each do |model_name, model|
         # Make sure the model_name is valid
@@ -71,21 +77,32 @@ class Magma
           raise Magma::ValidationError, "Model name #{model_name} is reserved."
         end
 
-        # Check that tables exist
-        raise Magma::ValidationError, "Missing table for #{model}." unless model.has_table?
+        # Check that tables exist.
+        unless model.has_table?
+          raise Magma::ValidationError, "Missing table for #{model}."
+        end
 
-        # Check reciprocal links
+        # Check reciprocal links.
         model.attributes.each do |att_name, attribute|
           next unless attribute.respond_to?(:link_model)
           link_model = attribute.link_model
           link_attribute = link_model.attributes.values.find do |attribute|
             attribute.respond_to?(:link_model) && attribute.link_model == model
           end
-          raise Magma::ValidationError, "Missing reciprocal link for #{model_name}##{att_name} from #{link_model.model_name}." unless link_attribute
+
+          unless link_attribute
+            raise(
+              Magma::ValidationError,
+              "Missing reciprocal link for #{model_name}##{att_name} "\
+"from #{link_model.model_name}." 
+            )
+          end
         end
 
-        # Check for orphan models
-        raise Magma::ValidationError, "Orphan model #{model_name}." unless model.attributes.values.any?{|att| att.is_a?(Magma::Link)}
+        # Check for orphan models.
+        unless model.attributes.values.any?{|att| att.is_a?(Magma::Link)}
+          raise Magma::ValidationError, "Orphan model #{model_name}." 
+        end
       end
     end
   end
