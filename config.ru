@@ -1,17 +1,12 @@
-require_relative 'lib/magma/server'
-require_relative 'lib/magma/parse_body'
-require_relative 'lib/magma/auth'
-require_relative 'lib/magma/symbolize_params'
-require_relative 'lib/magma'
 require 'yaml'
-require 'logger'
+require 'bundler'
+Bundler.require(:default)
 
-logger = Logger.new('log/error.log')
+require_relative 'lib/magma/server'
+require_relative 'lib/magma'
 
-use Rack::CommonLogger, logger
-use Magma::ParseBody
-use Rack::ShowExceptions
-use Magma::SymbolizeParams
-use Magma::Auth
+use Etna::ParseBody
+use Etna::SymbolizeParams
+use Etna::Auth
 
-run Magma::Server.new(YAML.load(File.read('config.yml')), logger)
+run Magma::Server.new(YAML.load(File.read('config.yml')))

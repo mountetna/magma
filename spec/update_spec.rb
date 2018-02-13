@@ -1,28 +1,28 @@
-describe Magma::Server::Update do
+describe Magma::UpdateController do
   include Rack::Test::Methods
 
   def app
     OUTER_APP
   end
 
-  def update(revisions)
+  def update(revisions, user_type=:editor)
+    auth_header(user_type)
     json_post(:update, {project_name: 'labors', revisions: revisions})
   end
 
-  it 'can update content' do
+  it 'fails for non-editors' do
     lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
     update(
-      'monster' => {
-        'Nemean Lion' => {
-          species: 'lion'
+      {
+        monster: {
+          'Nemean Lion': {
+            species: 'lion'
+          }
         }
-      }
+      },
+      :viewer
     )
-    lion.refresh
-    expect(lion.species).to eq('lion')
-    json = json_body(last_response.body)
-    expect(json[:models][:monster][:documents][:'Nemean Lion']).to eq(name: 'Nemean Lion', species: 'lion')
-    expect(last_response.status).to eq(200)
+    expect(last_response.status).to eq(401)
   end
 
   it 'can update a collection' do
@@ -48,20 +48,11 @@ describe Magma::Server::Update do
     # The actual validation is defined in spec/labors/models/monster.rb,
     # not sure how to move it here
     lion = create(:monster, name: 'Nemean Lion', species: 'lion')
-    post(
-      '/update',
-      {
-        revisions: {
-          'monster' => {
-            'Nemean Lion' => {
-              species: 'Lion'
-            }
-          }
-        },
-        project_name: 'labors'
-      }.to_json,
-      {
-        'CONTENT_TYPE' => 'application/json'
+    update(
+      monster: {
+        'Nemean Lion': {
+          species: 'Lion'
+        }
       }
     )
 

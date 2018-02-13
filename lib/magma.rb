@@ -10,15 +10,10 @@ require_relative 'magma/commands'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
 require_relative 'magma/storage'
-require 'singleton'
 
 class Magma
-  include Singleton
-  # Database handle for the singleton.
+  include Etna::Application
   attr_reader :db, :storage
-  def connect db_config
-    @db = Sequel.connect( db_config )
-  end
 
   def get_model(project_name, model_name)
     project = get_project(project_name)
@@ -35,20 +30,14 @@ class Magma
     @magma_projects ||= {}
   end
 
-  def configure(opts)
-    @config = opts
-  end
-
-  def config(type)
-    @config[environment][type]
-  end
-
-  def environment
-    (ENV['MAGMA_ENV'] || :development).to_sym
+  def setup_db
+    @db = Sequel.connect(config(:db))
+    @db.extension :connection_validator
+    @db.pool.connection_validation_timeout = -1
   end
 
   def load_models(validate = true)
-    connect(config :db)
+    setup_db
 
     if config(:storage)
       require_relative 'magma/file_uploader'
@@ -110,13 +99,6 @@ class Magma
     ObjectSpace.each_object(Class).select do |k|
       k < klass
     end
-  end
-
-  attr_reader :logger
-
-  def logger=(logger)
-    db.loggers << logger if db
-    @logger = logger
   end
 
   private

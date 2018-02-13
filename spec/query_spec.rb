@@ -1,12 +1,47 @@
-describe Magma::Server::Query do
+describe Magma::QueryController do
   include Rack::Test::Methods
 
   def app
     OUTER_APP
   end
 
-  def query(question)
+  def query(question,user_type=:viewer)
+    auth_header(user_type)
     json_post(:query, {project_name: 'labors', query: question})
+  end
+
+  it 'can post a basic query' do
+    labors = create_list(:labor, 3)
+
+    query(
+      [ 'labor', '::all', '::identifier' ]
+    )
+
+    json = json_body(last_response.body)
+    expect(json[:answer].map(&:last)).to eq(labors.map(&:identifier))
+  end
+
+  it 'generates an error for bad arguments' do
+    create_list(:labor, 3)
+
+    query(
+      [ 'labor', '::ball', '::bidentifier' ]
+    )
+
+    json = json_body(last_response.body)
+    expect(json[:errors]).to eq(['::ball is not a valid argument to Magma::ModelPredicate'])
+    expect(last_response.status).to eq(422)
+  end
+
+  it 'fails for non-users' do
+    labors = create_list(:labor, 3)
+
+    query(
+      [ 'labor', '::all', '::identifier' ],
+      :non_user
+    )
+
+    expect(last_response.status).to eq(401)
   end
 
   context Magma::Question do
@@ -245,28 +280,5 @@ describe Magma::Server::Query do
         ['Nemean Lion', [1, true, nil, nil]]
       ])
     end
-  end
-
-  it 'can post a basic query' do
-    labors = create_list(:labor, 3)
-
-    query(
-      [ 'labor', '::all', '::identifier' ]
-    )
-
-    json = json_body(last_response.body)
-    expect(json[:answer].map(&:last)).to eq(labors.map(&:identifier))
-  end
-
-  it 'generates an error for bad arguments' do
-    create_list(:labor, 3)
-
-    query(
-      [ 'labor', '::ball', '::bidentifier' ]
-    )
-
-    json = json_body(last_response.body)
-    expect(json[:errors]).to eq(['::ball is not a valid argument to Magma::ModelPredicate'])
-    expect(last_response.status).to eq(422)
   end
 end

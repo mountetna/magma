@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+require 'bundler'
+Bundler.require :default
+
 require_relative '../lib/magma'
 require 'yaml'
 

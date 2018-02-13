@@ -1,12 +1,26 @@
-describe Magma::Server::Retrieve do
+describe Magma::RetrieveController do
   include Rack::Test::Methods
 
   def app
     OUTER_APP
   end
 
-  def retrieve(post)
+  def retrieve(post, user_type=:viewer)
+    auth_header(user_type)
     json_post(:retrieve, post)
+  end
+
+  it 'fails for non-users' do
+    retrieve(
+      {
+        model_name: 'labor',
+        record_names: [],
+        attribute_names: [],
+        project_name: 'labors'
+      },
+      :non_user
+    )
+    expect(last_response.status).to eq(401)
   end
 
   it 'calls the retrieve endpoint and returns a template.' do
@@ -16,11 +30,11 @@ describe Magma::Server::Retrieve do
       attribute_names: [],
       project_name: 'labors'
     )
-    expect(last_response).to(be_ok)
+    expect(last_response.status).to eq(200)
   end
 
   it 'complains with missing params.' do
-    retrieve({})
+    retrieve(project_name: 'labors')
     expect(last_response.status).to eq(422)
   end
 
