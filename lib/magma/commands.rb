@@ -28,7 +28,7 @@ class Magma
       Sequel.extension(:migration)
       base_dir = "#{Dir.pwd}/projects/"
       project_nm = project_name.gsub(/[^\w]+/,'_').sub(/^_/,'').sub(/_$/,'')
-      table = "schema_info_#{project_nm}"
+      table = "schema_info_projects_#{project_nm}"
 
       if version
         puts "Migrating to version #{version}."
@@ -64,7 +64,7 @@ class Magma
   # the table creation in the correct order), but we should add logic here so
   # we do not have to in the future.
   class Plan < Etna::Command
-    usage "[<project directory>] # Suggest a migration based on the current "\
+    usage "[<project path>] # Suggest a migration based on the current "\
 "model attributes."
 
     def execute(project = nil)
@@ -117,44 +117,54 @@ class Magma
   end
 
   class Load < Etna::Command
-    usage 'Run data loaders on models for current dataset.'
+    usage "[<project path>] [<loader name>] [<data file>] # Run data loaders "\
+"on models for current dataset."
 
     def execute(*args)
       loaders = Magma.instance.find_descendents(Magma::Loader)
 
-      if args.empty?
-        # List available loaders
+      if args[1].nil?
         puts 'Available loaders:'
         loaders.each do |loader|
-          puts "%30s  %s" % [ loader.loader_name, loader.description ]
+          puts "%30s  %s" % [loader.loader_name, loader.description]
         end
         exit
       end
 
-      loader = loaders.find do |l| l.loader_name == args[0] end
+      loader = loaders.find do |l| l.loader_name == args[1] end
 
-      raise "Could not find a loader named #{args[0]}" unless loader
+      raise "Could not find a loader named #{args[1]}" unless loader
 
       loader = loader.new
-      loader.load(*args[1..-1])
+      loader.load(*args[2..-1])
+
       begin
         loader.dispatch
       rescue Magma::LoadFailed => e
-        puts "Load failed with these complaints:"
+        puts 'Load failed with these complaints:'
         puts e.complaints
       end
     end
 
     def setup(config, *args)
-      super
-      Magma.instance.load_models
+
+      unless args[0]
+        raise 'You must specify a project path to look for loaders.'
+      end
+
+      env = (ENV['MAGMA_ENV'] || :development).to_sym
+      config[env][:project_path] = args[0] if args[0]
+
+      Magma.instance.configure(config)
+      Magma.instance.load_models(false)
     end
   end
 
   # This will create a new project folder with the starting migrations and the 
   # appropriate db schema's
   class Create < Etna::Command
-    usage '[<project name>] #Create a new project with initial schema and folders.'
+    usage "[<project name>] #Create a new project with initial schema and "\
+"folders."
 
     def execute(project_name)
 
@@ -164,7 +174,9 @@ class Magma
       end
 
       # Check that the project/schema does not yet exisit.
-      query = "SELECT * from pg_catalog.pg_namespace where nspname='#{project_name}'"
+      query = "SELECT * from pg_catalog.pg_namespace where "\
+"nspname='#{project_name}'"
+
       if Magma.instance.db.fetch(query).all.length > 0
         raise ArgumentError.new('Project name already exists in the DB.')
       end
@@ -209,10 +221,16 @@ class Magma
       migration = ERB.new(File.read(migration_path))
       migration_file = migration.result(template_binding)
 
-      file_name = File.join(base_dir, project_name.to_s, 'migrations/001_start.rb')
+      file_name = File.join(
+        base_dir,
+        project_name.to_s,
+        'migrations/001_start.rb'
+      )
       File.open(file_name, 'w') {|f| f.write(migration_file)}
 
-      puts "You can now run the command 'bin/magma migrate #{project_name}' for your new project.\n"
+      puts "You can now run the command 'bin/magma migrate #{project_name}' "\
+"for your new project.\n"
+
     end
 
     def setup(config, *args)
