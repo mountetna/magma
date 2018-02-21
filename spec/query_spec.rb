@@ -41,7 +41,7 @@ describe Magma::QueryController do
       :non_user
     )
 
-    expect(last_response.status).to eq(401)
+    expect(last_response.status).to eq(403)
   end
 
   context Magma::Question do

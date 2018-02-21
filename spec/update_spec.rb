@@ -22,7 +22,7 @@ describe Magma::UpdateController do
       },
       :viewer
     )
-    expect(last_response.status).to eq(401)
+    expect(last_response.status).to eq(403)
   end
 
   it 'can update a collection' do
