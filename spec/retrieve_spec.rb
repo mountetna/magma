@@ -20,7 +20,7 @@ describe Magma::RetrieveController do
       },
       :non_user
     )
-    expect(last_response.status).to eq(401)
+    expect(last_response.status).to eq(403)
   end
 
   it 'calls the retrieve endpoint and returns a template.' do
