@@ -1,3 +1,5 @@
+require_relative './query/question'
+
 class Magma
   class Retrieval
     attr_reader :attribute_names
@@ -16,9 +18,7 @@ class Magma
     # we should be able to make a PAGE BOUNDS query, after which we can specify
     # limits on our question from outside.
     def records
-      question.answer.map do |name, row|
-        Hash[ @attribute_names.zip(row) ]
-      end
+      to_records(question.answer)
     end
 
     def count
@@ -26,15 +26,18 @@ class Magma
     end
 
     def each_page
-      pages = (count.to_f / @page_size).ceil
-
-      pages.times do |page|
-        question.set_page(page+1)
-        yield records
+      question.each_page_answer do |answer|
+        yield to_records(answer)
       end
     end
 
     private
+
+    def to_records(answer)
+      answer.map do |name, row|
+        Hash[ @attribute_names.zip(row) ]
+      end
+    end
 
     def question
       @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size)

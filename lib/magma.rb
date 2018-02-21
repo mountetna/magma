@@ -10,6 +10,8 @@ require_relative 'magma/commands'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
 require_relative 'magma/storage'
+require_relative 'magma/unloader'
+require 'singleton'
 
 class Magma
   include Etna::Application
