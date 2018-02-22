@@ -64,8 +64,8 @@ class Magma
   # the table creation in the correct order), but we should add logic here so
   # we do not have to in the future.
   class Plan < Etna::Command
-    usage "[<project path>] # Suggest a migration based on the current "\
-"model attributes."
+    usage "Suggest a migration based on the current model attributes.
+      *args - arg[0]: project_path\n\n"
 
     def execute(project = nil)
       migrations = Magma.instance.magma_projects.values
@@ -117,8 +117,8 @@ class Magma
   end
 
   class Load < Etna::Command
-    usage "[<project path>] [<loader name>] [<data file>] # Run data loaders "\
-"on models for current dataset."
+    usage "Run data loaders on models for current dataset.
+      *args - arg[0]: project_path, arg[1]: loader_name, arg[2]: data_file\n\n"
 
     def execute(*args)
       loaders = Magma.instance.find_descendents(Magma::Loader)
@@ -163,8 +163,8 @@ class Magma
   # This will create a new project folder with the starting migrations and the 
   # appropriate db schema's
   class Create < Etna::Command
-    usage "[<project name>] #Create a new project with initial schema and "\
-"folders."
+    usage "Create a new project with initial schema and folders.
+      *args - arg[0]: project_name\n\n"
 
     def execute(project_name)
 
@@ -240,8 +240,8 @@ class Magma
   end
 
   class Unload < Etna::Command
-    usage 'Run Unloader to dump the dataset of a model into a gzipped tsv.
-      *args - arg[0]: project_name, arg[1]: model_name, args[2]: gzip?, arg[3]: file'
+    usage "Run Unloader to dump the dataset of a model into a gzipped tsv.
+      *args - arg[0]: project_name, arg[1]: model_name, args[2]: gzip?, arg[3]: file\n\n"
 
     def execute(*args)
       begin
