@@ -190,7 +190,7 @@ class RetrieveController < Magma::Controller
     )
 
     return Enumerator.new do |stream|
-      TSVWriter.new(model, retrieval, @payload).write_tsv(stream)
+      Magma::TSVWriter.new(model, retrieval, @payload).write_tsv{ |lines| stream << lines }
     end
   end
 
