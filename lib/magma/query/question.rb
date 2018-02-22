@@ -159,6 +159,7 @@ class Magma
 
     # get page bounds for this question using @options[:page] and @options[:page_size]
     def bounds_query
+      raise ArgumentError, 'Page size must be greater than 1' unless @options[:page_size] > 1
       count_query.from_self.select(
         # add row_numbers to the count query
         @start_predicate.identity,
@@ -180,6 +181,7 @@ class Magma
       bounds_query.limit(2).offset(@options[:page]-1)
     end
 
+    # create an upper and lower limit for each page bound
     def all_bounds
       bounds = to_table(bounds_query)
       bounds.map.with_index do |row, index|
