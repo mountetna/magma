@@ -4,36 +4,24 @@ describe 'TSVWriter' do
 
   it 'should write a tsv with all attributes and records from model, retrieval, and payload' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
-    labors = create_list(:labor, 3, project: project)
+    labors = create_list(:labor, 4, project: project)
 
+    payload = Magma::Payload.new
     model = Magma.instance.get_model('labors', 'labor')
-
     retrieval = Magma::Retrieval.new(
         model,
         nil,
         model.attributes.values,
-        nil
+        nil,
+        1,
+        2
     )
 
-    class MockFile
-      attr_reader :lines
-      def initialize
-        @lines = []
-      end
+    file = StringIO.new
+    Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
 
-      def << line
-        @lines.push(line)
-      end
-    end
-
-    file = MockFile.new
-    payload = Magma::Payload.new
-    TSVWriter.new(model, retrieval, payload).write_tsv(file)
-
-    header = "project\tname\tmonster\tnumber\tcompleted\tyear\n"
-    expect(file.lines[0]).to eq(header)
-
-    rows_count = file.lines[1].split("\n").size
-    expect(rows_count).to eq(3)
+    lines = file.string.split("\n")
+    expect(lines[0]).to eq(payload.tsv_header.sub("\n", ''))
+    expect(lines.size).to eq(5)
   end
 end
