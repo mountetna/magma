@@ -127,4 +127,30 @@ EOT
       Magma.instance.load_models
     end
   end
+
+  class Unload < Etna::Command
+    usage '<project_name> <model_name> # Dump the dataset of the model into a tsv'
+
+    def execute(project_name, model_name)
+      require_relative './payload'
+      require_relative './retrieval'
+      require_relative './tsv_writer'
+
+      begin
+        model = Magma.instance.get_model(project_name, model_name)
+        retrieval = Magma::Retrieval.new(model, nil, model.attributes.values, nil, 1, 100_000)
+        payload = Magma::Payload.new
+        Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| puts lines }
+      rescue Exception => e
+        puts "Unload failed:"
+        puts e.message
+      end
+    end
+
+    def setup(config)
+      super
+      Magma.instance.load_models
+      Magma.instance.setup_db
+    end
+  end
 end

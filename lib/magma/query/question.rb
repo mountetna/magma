@@ -55,10 +55,22 @@ class Magma
     end
 
     def answer
-      table = to_table
+      table = to_table(query)
 
       @start_predicate.extract(table, identity)
     end
+
+    def each_page_answer
+      all_bounds.each do |bound|
+        query = base_query.select(
+            *(predicate_collect(:select)).uniq
+        )
+        query = apply_bounds(query, bound[:lower], bound[:upper])
+        table = to_table(query)
+        page_answer = @start_predicate.extract(table, identity)
+        yield page_answer
+        end
+      end
 
     def predicates
       @predicates ||= @start_predicate.flatten
@@ -84,13 +96,13 @@ class Magma
 
     private
 
-    def to_table
+    def to_table(query)
       Magma.instance.db[
-        to_sql
+        query.sql
       ].all
     end
 
-    def to_sql
+    def query
       query = base_query
 
       # do you have page bounds? if so, compute them here.
@@ -102,7 +114,7 @@ class Magma
         *(predicate_collect(:select)).uniq
       )
 
-      query.sql
+      query
     end
 
     # The base query joins all of the tables and applies constraints for this
@@ -147,6 +159,7 @@ class Magma
 
     # get page bounds for this question using @options[:page] and @options[:page_size]
     def bounds_query
+      raise ArgumentError, 'Page size must be greater than 1' unless @options[:page_size] > 1
       count_query.from_self.select(
         # add row_numbers to the count query
         @start_predicate.identity,
@@ -162,36 +175,54 @@ class Magma
             @options[:page_size]
           )
         )
-        .limit(2)
-        .offset(@options[:page]-1)
-        # return only the 2 identifiers for this page
     end
 
-    def paged_query(query)
-      raise ArgumentError, 'Page must start at 1' unless @options[:page] > 0
-      bounds = Magma.instance.db[bounds_query.sql].all.map do |row|
-        row[@start_predicate.identity]
-      end
-      raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+    def page_bounds_query
+      bounds_query.limit(2).offset(@options[:page]-1)
+    end
 
-      # apply bounds to the query
+    # create an upper and lower limit for each page bound
+    def all_bounds
+      bounds = to_table(bounds_query)
+      bounds.map.with_index do |row, index|
+        bound = {:lower =>  row[@start_predicate.identity], :upper => nil}
+
+        if bounds[index + 1]
+          bound[:upper] = bounds[index + 1][@start_predicate.identity]
+        end
+
+        bound
+      end
+    end
+
+    def apply_bounds(query, lower, upper)
       query = query.where(
         Sequel.lit(
           '? >= ?',
           @start_predicate.column_name,
-          bounds.first
+          lower
         )
       )
-      if bounds.length > 1
+      if upper
         query = query.where(
           Sequel.lit(
             '? < ?',
             @start_predicate.column_name,
-            bounds.last
+            upper
           )
         )
       end
       query
+    end
+
+    def paged_query(query)
+      raise ArgumentError, 'Page must start at 1' unless @options[:page] > 0
+      bounds = to_table(page_bounds_query).map do |row|
+        row[@start_predicate.identity]
+      end
+      raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+
+      apply_bounds(query, bounds[0], bounds[1])
     end
 
     def predicate_collect type
