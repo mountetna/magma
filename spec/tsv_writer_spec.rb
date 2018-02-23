@@ -21,7 +21,13 @@ describe 'TSVWriter' do
     Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
 
     lines = file.string.split("\n")
-    expect(lines[0]).to eq(payload.tsv_header.sub("\n", ''))
+    header = lines[0]
+    expect(header).to eq(payload.tsv_header.sub("\n", ''))
     expect(lines.size).to eq(5)
+
+    name_index = header.split("\t").find_index("name")
+    tsv_labors_names = lines.drop(1).map { |l| l.split("\t")[name_index] }.sort
+    labors_names = labors.map(&:name).sort
+    expect(tsv_labors_names).to eq(labors_names)
   end
 end
