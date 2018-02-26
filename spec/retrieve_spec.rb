@@ -194,6 +194,49 @@ describe Magma::RetrieveController do
     expect(prize_names).to eq(['poison', 'skin'])
   end
 
+  it "can filter on dates" do
+    old_labors = create_list(:labor, 3, year: DateTime.new(500))
+    new_labors = create_list(:labor, 3, year: DateTime.new(2000))
+
+    retrieve(
+      project_name: 'labors',
+      model_name: 'labor',
+      record_names: 'all',
+      attribute_names: 'all',
+      filter: 'year>1999-01-01'
+    )
+
+    expect(last_response.status).to eq(200)
+
+    json = json_body(last_response.body)
+    labor_names = json[:models][:labor][:documents].values.map{|d| d[:name]}
+    expect(labor_names).to eq(new_labors.map(&:name))
+  end
+
+  it 'can filter on updated_at, created_at' do
+    Timecop.freeze(DateTime.new(500))
+    old_labors = create_list(:labor, 3)
+
+    Timecop.freeze(DateTime.new(2000))
+    new_labors = create_list(:labor, 3)
+
+    retrieve(
+      project_name: 'labors',
+      model_name: 'labor',
+      record_names: 'all',
+      attribute_names: 'all',
+      filter: 'updated_at>1999-01-01 created_at>1999-01-01'
+    )
+
+    expect(last_response.status).to eq(200)
+
+    json = json_body(last_response.body)
+    labor_names = json[:models][:labor][:documents].values.map{|d| d[:name]}
+    expect(labor_names).to eq(new_labors.map(&:name))
+
+    Timecop.return
+  end
+
   it "can page results" do
     labor_list = create_list(:labor, 9)
     names = labor_list.sort_by(&:name)[6..8].map(&:name)
