@@ -59,6 +59,16 @@ describe Magma::RetrieveController do
     expect(last_response.status).to eq(422)
   end
 
+  it 'forbids grabbing the entire dataset' do
+    retrieve(
+      project_name: 'labors',
+      model_name: 'all',
+      record_names: 'all',
+      attribute_names: "all"
+    )
+    expect(last_response.status).to eq(422)
+  end
+
   it "retrieves records by identifier" do
     labors = create_list(:labor,3)
 
