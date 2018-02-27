@@ -79,7 +79,7 @@ class RetrieveController < Magma::Controller
     return error('No record names given') if @record_names.nil?
     return error('Improperly formed record names') unless valid_record_names?
     return error("Improperly formed attribute names") unless @attribute_names.is_a?(Array) || @attribute_names == "all" || @attribute_names == "identifier"
-    return error('Cannot retrieve by record name for all models') if @model_name == "all" && @record_names.is_a?(Array) && !@record_names.empty?
+    return error('Cannot retrieve by record name for all models') if @model_name == "all" && (!@record_names.is_a?(Array) || !@record_names.empty?)
     return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
   end
 

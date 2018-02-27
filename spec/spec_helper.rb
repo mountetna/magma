@@ -5,6 +5,7 @@ require 'database_cleaner'
 require 'rack/test'
 require 'etna'
 require 'simplecov'
+require 'timecop'
 SimpleCov.start
 
 

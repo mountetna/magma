@@ -11,10 +11,13 @@ gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'fog'
 gem 'spreadsheet'
-gem 'simplecov'
-gem 'rack-test', require: "rack/test"
-gem 'factory_bot'
-gem 'rspec'
-gem 'database_cleaner'
 
-gem 'pry'
+group :test do
+  gem 'simplecov'
+  gem 'rack-test', require: "rack/test"
+  gem 'factory_bot'
+  gem 'rspec'
+  gem 'database_cleaner'
+  gem 'pry'
+  gem 'timecop'
+end
