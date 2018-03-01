@@ -6,10 +6,10 @@ class QueryController < Magma::Controller
     return failure(401, errors: [ 'You are unauthorized' ]) unless @user && @user.can_view?(@project_name)
     begin
       return success(Magma::Predicate.to_json, 'application/json') if @params[:query] == '::predicates'
-      question = Magma::Question.new(@project_name, @params[:query])
+      question = Magma::Question.new(@project_name, @params[:query], :timeout => 300000)
       return_data = {answer: question.answer, type: question.type}
       return success(return_data.to_json, 'application/json')
-    rescue ArgumentError => e
+    rescue StandardError => e
       puts e.backtrace
       return failure(422, errors: [ e.message ])
     end
