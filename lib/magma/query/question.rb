@@ -47,6 +47,7 @@ class Magma
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @start_predicate = ModelPredicate.new(@model, *query_args)
       @options = options
+      @db = Magma.instance.db
     end
 
     # allow us to re-use the same question for a different page
@@ -97,9 +98,15 @@ class Magma
     private
 
     def to_table(query)
-      Magma.instance.db[
-        query.sql
-      ].all
+      @options[:timeout] ? with_timeout { @db[query.sql].all } : @db[query.sql].all
+    end
+
+    def with_timeout
+      raise ArgumentError, 'Timeout only works with postgres' if @db.adapter_scheme != :postgres
+      @db.transaction do
+        @db.run("SET LOCAL statement_timeout = #{@options[:timeout]}")
+        yield
+      end
     end
 
     def query
