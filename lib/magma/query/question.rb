@@ -1,6 +1,7 @@
 require_relative 'predicate'
 require_relative 'join'
 require_relative 'constraint'
+require_relative 'query_executor'
 
 # A query for a piece of data. Each question is a path through the data
 # hierarchy/schema/graph or whatever you want to call it. The basic idea is
@@ -47,7 +48,6 @@ class Magma
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @start_predicate = ModelPredicate.new(@model, *query_args)
       @options = options
-      @db = Magma.instance.db
     end
 
     # allow us to re-use the same question for a different page
@@ -98,15 +98,7 @@ class Magma
     private
 
     def to_table(query)
-      @options[:timeout] ? with_timeout { @db[query.sql].all } : @db[query.sql].all
-    end
-
-    def with_timeout
-      raise ArgumentError, 'Timeout only works with postgres' if @db.adapter_scheme != :postgres
-      @db.transaction do
-        @db.run("SET LOCAL statement_timeout = #{@options[:timeout]}")
-        yield
-      end
+      Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 
     def query
