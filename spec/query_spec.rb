@@ -18,7 +18,7 @@ describe Magma::QueryController do
     )
 
     json = json_body(last_response.body)
-    expect(json[:answer].map(&:last)).to eq(labors.map(&:identifier))
+    expect(json[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
   end
 
   it 'generates an error for bad arguments' do
