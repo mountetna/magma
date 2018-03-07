@@ -7,7 +7,7 @@ class QueryController < Magma::Controller
     begin
       return success(Magma::Predicate.to_json, 'application/json') if @params[:query] == '::predicates'
       question = Magma::Question.new(@project_name, @params[:query],
-                                     :timeout => Magma.instance.config(:query_timeout))
+                                     timeout: Magma.instance.config(:query_timeout))
       return_data = {answer: question.answer, type: question.type}
       return success(return_data.to_json, 'application/json')
     rescue ArgumentError => e
