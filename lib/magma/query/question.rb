@@ -1,6 +1,7 @@
 require_relative 'predicate'
 require_relative 'join'
 require_relative 'constraint'
+require_relative 'query_executor'
 
 # A query for a piece of data. Each question is a path through the data
 # hierarchy/schema/graph or whatever you want to call it. The basic idea is
@@ -97,9 +98,7 @@ class Magma
     private
 
     def to_table(query)
-      Magma.instance.db[
-        query.sql
-      ].all
+      Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 
     def query

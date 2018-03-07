@@ -18,7 +18,7 @@ describe Magma::QueryController do
     )
 
     json = json_body(last_response.body)
-    expect(json[:answer].map(&:last)).to eq(labors.map(&:identifier))
+    expect(json[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
   end
 
   it 'generates an error for bad arguments' do
@@ -42,6 +42,16 @@ describe Magma::QueryController do
     )
 
     expect(last_response.status).to eq(403)
+  end
+
+  it 'generates a 501 error from a DB error' do
+    allow_any_instance_of(Magma::Question).to receive(:answer).and_raise(Sequel::DatabaseError)
+
+    query(
+        [ 'labor', '::all', '::identifier' ]
+    )
+
+    expect(last_response.status).to eq(501)
   end
 
   context Magma::Question do
