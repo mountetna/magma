@@ -33,10 +33,17 @@ describe 'QueryExecutor' do
 
   it 'should raise an error when the query execution surpasses the timeout' do
     db = Magma.instance.db
-    query = db['fake query that takes a long time']
-    allow(query).to receive(:sql) { 'SELECT pg_sleep(1);' }
+    query = db['SELECT pg_sleep(0.1);']
 
-    expect { Magma::QueryExecutor.new(query, 900, db).execute }.to raise_error(Sequel::DatabaseError)
+    expect { Magma::QueryExecutor.new(query, 10, db).execute }.to raise_error(Sequel::DatabaseError)
+  end
+
+  it 'should not raise an error when the query is within the timeout' do
+    db = Magma.instance.db
+    query = db['SELECT pg_sleep(0.1);']
+
+    expect { Magma::QueryExecutor.new(query, 1000, db).execute }.not_to raise_error
+
   end
 
   it 'should fetch rows' do
