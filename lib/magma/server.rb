@@ -11,6 +11,8 @@ class Magma
       super
       application.tap do |magma|
         magma.load_models
+
+        magma.db.loggers << @logger
       end
     end
 
