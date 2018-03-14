@@ -1,4 +1,4 @@
-describe Magma::RetrieveController do
+describe RetrieveController do
   include Rack::Test::Methods
 
   def app
@@ -72,6 +72,7 @@ describe Magma::RetrieveController do
   it 'allows grabbing the entire set of identifiers' do
     labors = create_list(:labor,3)
     monsters = create_list(:monster,3)
+    prizes = create_list(:prize,3)
     retrieve(
       project_name: 'labors',
       model_name: 'all',
@@ -81,8 +82,12 @@ describe Magma::RetrieveController do
     expect(last_response.status).to eq(200)
     json = json_body(last_response.body)
 
+    # any model with an identifier returns all records
     expect(json[:models][:labor][:documents].keys).to eq(labors.map(&:name).map(&:to_sym))
     expect(json[:models][:monster][:documents].keys).to eq(monsters.map(&:name).map(&:to_sym))
+
+    # it does not return a model with no identifier
+    expect(json[:models][:prize]).to be_nil
   end
 
   it 'retrieves records by identifier' do
@@ -133,7 +138,7 @@ describe Magma::RetrieveController do
 
     json = json_body(last_response.body)
     project_doc = json[:models][:project][:documents][project.name.to_sym]
-    
+
     expect(project_doc).not_to be_nil
     expect(project_doc[:labor]).to eq([])
   end
