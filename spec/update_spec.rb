@@ -1,4 +1,4 @@
-describe Magma::UpdateController do
+describe UpdateController do
   include Rack::Test::Methods
 
   def app
