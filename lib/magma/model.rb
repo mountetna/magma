@@ -28,7 +28,6 @@ class Magma
       end
 
       def attribute(attr_name, opts = {})
-
         klass = opts.delete(:attribute_class) || Magma::Attribute
         attributes[attr_name] = klass.new(attr_name, self, opts)
       end
@@ -37,11 +36,14 @@ class Magma
         name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
       end
 
-      def parent name=nil, opts = {}
+      def parent(name = nil, opts = {})
         if name
           @parent = name
-          many_to_one name
-          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+          many_to_one(name)
+          attribute(
+            name,
+            opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+          )
         end
         @parent
       end
@@ -57,15 +59,16 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
-      def file name, opts = {}
-        mount_uploader name, Magma::FileUploader
-        attribute name, opts.merge(attribute_class: Magma::FileAttribute)
+      def file(name, opts = {})
+        mount_uploader(name, Magma::FileUploader)
+        attribute(name, opts.merge(attribute_class: Magma::FileAttribute))
       end
+
       alias_method :document, :file
 
-      def image name, opts = {}
-        mount_uploader name, Magma::ImageUploader
-        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
+      def image(name, opts = {})
+        mount_uploader(name, Magma::ImageUploader)
+        attribute(name, opts.merge(attribute_class: Magma::ImageAttribute))
       end
 
       def collection(name, opts = {})
@@ -86,6 +89,28 @@ class Magma
         order(name) unless @order
       end
 
+      # Set and/or return the dictionary for this model. If a dictionary is set 
+      # then it will be used for validation.
+      def dictionary(class_name, opts = {})
+
+        # Return the dictionary if already set.
+        return @dictionary if(class_name == nil && @dictionary != nil)
+
+        if(class_name != nil && Kernel.const_defined?(class_name))
+          @dictionary = Kernel.const_get(class_name)
+        end
+
+        return nil
+      end
+
+      def dictionary_name
+        dict_name = @dictionary.name.split('::')
+        {
+          project: dict_name[0].to_s,
+          name: dict_name[1].to_s
+        }
+      end
+
       def project_name
         name.split('::').first.snake_case.to_sym
       end
@@ -103,18 +128,19 @@ class Magma
       end
 
       def json_template(attribute_names = nil)
-        # Return a json template of this thing.
+        # Return a json template of the model.
         attribute_names ||= attributes.keys
         {
-          name: model_name, 
+          name: model_name,
           attributes: Hash[
             attribute_names.map do |name|
-              [ name, attributes[name].json_template ]
+              [name, attributes[name].json_template]
             end
           ],
           identifier: identity,
-          parent: @parent
-        }.delete_if {|k,v| v.nil? }
+          parent: @parent,
+          dictionary: @dictionary.nil? ? nil : dictionary_name
+        }.delete_if {|k,v| v.nil?}
       end
 
       def schema
@@ -168,7 +194,7 @@ class Magma
 
           # Generate the column name mapping from the temporary database to the 
           # permanent one.
-          column_alias = update_columns.map do |column| 
+          column_alias = update_columns.map do |column|
             "#{column}=src.#{column}"
           end.join(', ')
 
