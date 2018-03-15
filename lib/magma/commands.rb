@@ -1,6 +1,7 @@
 require 'extlib'
 require 'date'
 require 'logger'
+require 'erb'
 
 class Magma
   class Help < Etna::Command
@@ -15,9 +16,9 @@ class Magma
   end
 
   class Migrate < Etna::Command
-    usage "[<project name>] [<version number>] # Leave version number blank to"\
-" migrate to the latest."
-    
+    usage "Leave version number blank to migrate to the latest.
+      *args - arg[0]: project_name, arg[1]: version_number\n\n"
+
     def execute(project_name, version = nil)
 
       # Check that we have a project name.
@@ -118,12 +119,12 @@ class Magma
 
   class Load < Etna::Command
     usage "Run data loaders on models for current dataset.
-      *args - arg[0]: project_path, arg[1]: loader_name, arg[2]: data_file\n\n"
+      *args - arg[0]: loader_name, arg[1]: data_file\n\n"
 
     def execute(*args)
       loaders = Magma.instance.find_descendents(Magma::Loader)
 
-      if args[1].nil?
+      if args[0].nil?
         puts 'Available loaders:'
         loaders.each do |loader|
           puts "%30s  %s" % [loader.loader_name, loader.description]
@@ -131,12 +132,11 @@ class Magma
         exit
       end
 
-      loader = loaders.find do |l| l.loader_name == args[1] end
-
-      raise "Could not find a loader named #{args[1]}" unless loader
+      loader = loaders.find do |l| l.loader_name == args[0] end
+      raise "Could not find a loader named #{args[0]}" unless loader
 
       loader = loader.new
-      loader.load(*args[2..-1])
+      loader.load(*args[1..-1])
 
       begin
         loader.dispatch
@@ -148,14 +148,16 @@ class Magma
 
     def setup(config, *args)
 
-      unless args[0]
-        raise 'You must specify a project path to look for loaders.'
-      end
+      #unless args[0]
+      # raise 'You must specify a project path to look for loaders.'
+      #end
 
       env = (ENV['MAGMA_ENV'] || :development).to_sym
-      config[env][:project_path] = args[0] if args[0]
+      # config[env][:project_path] = args[0] if args[0]
 
       Magma.instance.configure(config)
+      #Magma.instance.load_models(false)
+
       Magma.instance.load_models(false)
     end
   end
