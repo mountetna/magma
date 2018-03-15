@@ -11,20 +11,43 @@ class Magma
       super
       application.tap do |magma|
         magma.load_models
-
         magma.db.loggers << @logger
       end
     end
 
     # Connect to the database and get some data.
-    post '/retrieve', action: 'retrieve#action', auth: { user: { can_view?: :project_name } }
+    post(
+      '/retrieve',
+      {
+        action: 'retrieve#action',
+        auth: {
+          user: {can_view?: :project_name}
+        }
+      }
+    )
 
-    post '/query', action: 'query#action', auth: { user: { can_view?: :project_name } }
+    post(
+      '/query',
+      {
+        action: 'query#action',
+        auth: {
+          user: {can_view?: :project_name}
+        }
+      }
+    )
 
-    post '/update', action: 'update#action', auth: { user: { can_edit?: :project_name } } 
+    post(
+      '/update',
+      {
+        action: 'update#action',
+        auth: {
+          user: {can_edit?: :project_name}
+        }
+      }
+    )
 
     get '/' do
-      [ 200, {}, 'Magma On.' ]
+      [200, {}, 'Magma On.']
     end
   end
 end
