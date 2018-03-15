@@ -10,7 +10,6 @@ require_relative 'magma/commands'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
 require_relative 'magma/storage'
-require_relative 'magma/unloader'
 require 'singleton'
 
 class Magma
@@ -125,7 +124,7 @@ class Magma
   def carrier_wave_init
     opts = config(:storage)
     return unless opts
-    #CarrierWave.tmp_path = '/tmp'
+    CarrierWave.tmp_path = Magma.instance.config(:tmp_path)
     CarrierWave.configure do |config|
       config.fog_credentials = opts[:credentials]
       config.fog_directory = opts[:directory]

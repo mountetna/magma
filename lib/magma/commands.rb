@@ -240,14 +240,18 @@ class Magma
   end
 
   class Unload < Etna::Command
-    usage "Run Unloader to dump the dataset of a model into a gzipped tsv.
-      *args - arg[0]: project_name, arg[1]: model_name, args[2]: gzip?, arg[3]: file\n\n"
+    usage '<project_name> <model_name> # Dump the dataset of the model into a tsv'
 
-    def execute(*args)
+    def execute(project_name, model_name)
+      require_relative './payload'
+      require_relative './retrieval'
+      require_relative './tsv_writer'
+
       begin
-        model = Magma.instance.get_model(args[0], args[1])
-        unloader = ModelUnloader.new(model)
-        unloader.tsv_dump(file_dir: args[3], gzip: args[2] == 'true' || args[2] == 't')
+        model = Magma.instance.get_model(project_name, model_name)
+        retrieval = Magma::Retrieval.new(model, nil, model.attributes.values, nil, 1, 100_000)
+        payload = Magma::Payload.new
+        Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| puts lines }
       rescue Exception => e
         puts "Unload failed:"
         puts e.message

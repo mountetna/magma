@@ -1,6 +1,7 @@
 require_relative 'predicate'
 require_relative 'join'
 require_relative 'constraint'
+require_relative 'query_executor'
 
 # A query for a piece of data. Each question is a path through the data
 # hierarchy/schema/graph or whatever you want to call it. The basic idea is
@@ -97,9 +98,7 @@ class Magma
     private
 
     def to_table(query)
-      Magma.instance.db[
-        query.sql
-      ].all
+      Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 
     def query
@@ -159,6 +158,7 @@ class Magma
 
     # get page bounds for this question using @options[:page] and @options[:page_size]
     def bounds_query
+      raise ArgumentError, 'Page size must be greater than 1' unless @options[:page_size] > 1
       count_query.from_self.select(
         # add row_numbers to the count query
         @start_predicate.identity,
@@ -180,6 +180,7 @@ class Magma
       bounds_query.limit(2).offset(@options[:page]-1)
     end
 
+    # create an upper and lower limit for each page bound
     def all_bounds
       bounds = to_table(bounds_query)
       bounds.map.with_index do |row, index|

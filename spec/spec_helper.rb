@@ -5,6 +5,7 @@ require 'database_cleaner'
 require 'rack/test'
 require 'etna'
 require 'simplecov'
+require 'timecop'
 SimpleCov.start
 
 
@@ -54,6 +55,18 @@ RSpec.configure do |config|
     # ...rather than:
     #     # => "be bigger than 2"
     expectations.include_chain_clauses_in_custom_matcher_descriptions = true
+  end
+
+  # suppress annoying console output during the run
+  original_stderr = $stderr
+  original_stdout = $stdout
+  config.before(:all) do
+    $stderr = File.open(File::NULL, "w")
+    $stdout = File.open(File::NULL, "w")
+  end
+  config.after(:all) do
+    $stderr = original_stderr
+    $stdout = original_stdout
   end
 
   # rspec-mocks config goes here. You can use an alternate test double
@@ -131,6 +144,7 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     FactoryBot.find_definitions
+    DatabaseCleaner[:sequel].db = Magma.instance.db
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
   end

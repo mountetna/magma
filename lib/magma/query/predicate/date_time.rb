@@ -4,11 +4,12 @@ class Magma
       child DateTime
     end
 
-    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], String do
+    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], DateTime do
       child TrueClass
 
       constraint do
-        comparison_constraint(@attribute_name, @arguments[0], DateTime.parse(@arguments[1]))
+        op, date = @arguments
+        comparison_constraint(@attribute_name, op, date)
       end
     end
   end
