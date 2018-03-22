@@ -6,6 +6,8 @@ require 'rack/test'
 require 'etna'
 require 'simplecov'
 require 'timecop'
+require 'webmock/rspec'
+
 SimpleCov.start
 
 

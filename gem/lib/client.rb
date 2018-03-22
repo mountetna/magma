@@ -111,12 +111,12 @@ class Magma
     def request(uri, data, status_errors, &block)
       if block_given?
         persistent_connection.request(uri, data) do |response|
-          #status_check(response, status_errors)
+          status_check(response, status_errors)
           yield response
         end
       else
         response = persistent_connection.request(uri, data)
-        #status_check(response, status_errors)
+        status_check(response, status_errors)
         return response
       end
     end

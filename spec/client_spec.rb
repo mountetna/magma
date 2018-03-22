@@ -8,76 +8,60 @@ describe Magma::Client do
   end
 
   before(:each) do
-    @configuration_class = Magma::Client.clone
-    @client = nil
+    stub_request(:post, 'https://magma.test/retrieve').to_rack(app)
+    stub_request(:post, 'https://magma.test/query').to_rack(app)
+    stub_request(:post, 'https://magma.test/update').to_rack(app)
+    @token = Base64.strict_encode64(AUTH_USERS[:editor].to_json)
   end
 
   def client
-    @client ||= 
-      begin
-        client = @configuration_class.instance
-
-        # Note that we are neither testing #post nor #multipart_post
-        allow(client).to receive(:multipart_post) do |endpoint, token, content|
-          path = "/#{endpoint}"
-          multipart = Net::HTTP::Post::Multipart.new(path, content)
-          body = multipart.body_stream.read
-          content_type = multipart.to_hash["content-type"].first
-
-          auth_header(:editor)
-          post(
-            "/#{endpoint}",
-            body,
-            'CONTENT_TYPE' => content_type
-          )
-          last_response.define_singleton_method(:code) do
-            status
-          end
-          last_response
-        end
-
-        allow(client).to receive(:post) do |endpoint, content_type, token, body|
-          auth_header(:viewer)
-          post("/#{endpoint}", body, { 'CONTENT_TYPE'=> content_type })
-          last_response.define_singleton_method(:code) do
-            status
-          end
-          last_response
-        end
-
-        client
-      end
+    Magma::Client.instance
   end
 
-  it "invokes the retrieve endpoint correctly." do
-    token = 'janus-token'
+  it 'raises a client error for bad statuses' do
+    response = nil
+    expect do
 
+      # this request has no record_name
+
+      response = client.retrieve(
+        @token,
+        'labors',
+        {
+          model_name: 'labor',
+          attribute_names: [],
+          project_name: 'labors'
+        }
+      )
+    end.to raise_error(Magma::ClientError)
+  end
+
+  it 'invokes the retrieve endpoint correctly.' do
     response = nil
     expect do
       response = client.retrieve(
-        token,
+        @token,
         'labors',
         {
-          model_name: "labor",
+          model_name: 'labor',
           record_names: [],
           attribute_names: [],
-          project_name: "labors"
+          project_name: 'labors'
         }
       )
     end.to_not raise_error(Magma::ClientError)
-   
+
     json = json_body(response.body)
 
     expect(json[:models].keys).to eq([:labor])
-  end 
+  end
 
-  it "invokes the update endpoint correctly." do
-    token = 'janus-token'
+  it 'invokes the update endpoint correctly.' do
     lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
 
     expect do
       client.update(
-        token,
+        @token,
         'labors',
         {
           monster: {
@@ -88,24 +72,23 @@ describe Magma::Client do
         }
       )
     end.to_not raise_error(Magma::ClientError)
-   
+
     lion.refresh
     expect(lion.species).to eq('lion')
   end
-  
-  it "invokes the query endpoint correctly." do
-    token = 'janus-token'
+
+  it 'invokes the query endpoint correctly.' do
     create_list(:labor, 3)
 
     response = nil
     expect do
       response = client.query(
-        token,
+        @token,
         'labors',
         [ 'labor', '::all', '::identifier' ]
       )
     end.to_not raise_error(Magma::ClientError)
-   
+
     json = json_body(response.body)
 
     expect(json[:answer].length).to eq(3)
