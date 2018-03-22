@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name = 'magma'
-  spec.version = '0.5'
+  spec.version = '0.5.1'
   spec.summary = 'Magma client gem'
   spec.description = 'See summary'
   spec.email = 'Saurabh.Asthana@ucsf.edu'
