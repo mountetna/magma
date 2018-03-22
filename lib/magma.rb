@@ -100,8 +100,11 @@ class Magma
           end
         end
 
-        # Check for orphan models.
-        unless model.attributes.values.any?{|att| att.is_a?(Magma::Link)}
+        # Check for orphan models. Make and exception for the root model.
+        if(
+          !model.attributes.values.any?{|att| att.is_a?(Magma::Link)} &&
+          model_name != :project
+        )
           raise Magma::ValidationError, "Orphan model #{model_name}." 
         end
       end
