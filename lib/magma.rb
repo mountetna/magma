@@ -85,8 +85,15 @@ class Magma
           raise Magma::ValidationError, "Missing reciprocal link for #{model_name}##{att_name} from #{link_model.model_name}." unless link_attribute
         end
 
-        # Check for orphan models
-        raise Magma::ValidationError, "Orphan model #{model_name}." unless model.attributes.values.any?{|att| att.is_a?(Magma::Link)}
+
+        # Check for orphan models. Make and exception for the root model.
+        if(
+          !model.attributes.values.any?{|att| att.is_a?(Magma::Link)} &&
+          model_name != :project
+        )
+
+          raise Magma::ValidationError, "Orphan model #{model_name}." 
+        end
       end
     end
   end
