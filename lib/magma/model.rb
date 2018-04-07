@@ -106,8 +106,8 @@ class Magma
       def dictionary_name
         dict_name = @dictionary.name.split('::')
         {
-          project: dict_name[0].to_s,
-          name: dict_name[1].to_s
+          project: dict_name[0].to_s.snake_case,
+          name: dict_name[1].to_s.snake_case
         }
       end
 
