@@ -19,7 +19,11 @@ class Magma
   def get_model(project_name, model_name)
     project = get_project(project_name)
     model = project.models[model_name.to_sym] if project
-    raise NameError, "Could not find Magma::Model #{project_name}::#{model_name}" unless model
+ 
+    unless model
+      raise NameError, "Could not find Magma::Model #{project_name}::#{model_name}"
+    end
+
     return model
   end
 
