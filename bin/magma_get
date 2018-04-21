@@ -1,0 +1,35 @@
+#!/bin/sh
+
+if [ -z "$*" ];
+then
+	echo "Usage: magma_get <project_name> <model_name> <attribute_name>"
+	exit
+fi
+
+PROJECT_NAME=$1
+MODEL_NAME=$2
+ATTRIBUTE_NAME=$3
+
+TXT=$(wget --quiet -O - \
+	--post-data="{\"format\": \"tsv\", \"project_name\":\"$PROJECT_NAME\", \"model_name\":\"$MODEL_NAME\", \"record_names\":\"all\", \"attribute_names\":[ \"$ATTRIBUTE_NAME\" ]}" \
+	--header=Content-Type:application/json \
+	--header="Authorization: Etna $TOKEN" "https://magma.ucsf.edu/retrieve")
+
+
+# the column ordering is poorly defined
+HEADER=$(echo "$TXT" | head -1)
+BODY=$(echo "$TXT" | tail -n +2)
+DATA_COLUMN=$(echo "$HEADER" |tr '\t' '\n'|awk "/$ATTRIBUTE_NAME/ {print FNR}")
+
+echo $DATA_COLUMN
+[[ "$DATA_COLUMN" == 1 ]] && IDENTIFIER_COLUMN=2 || IDENTIFIER_COLUMN=1
+
+echo "$BODY" | while read; do
+	IDENTIFIER=$(cut -d$'\t' -f$IDENTIFIER_COLUMN <<<"$REPLY")
+	FILE=$(cut -d$'\t' -f$DATA_COLUMN <<<"$REPLY")
+	[[ -z "$FILE" ]] && continue
+	[[ $FILE =~ \.([a-z]*)\? ]] && SUFFIX=${BASH_REMATCH[1]}
+	FILENAME="$PROJECT_NAME-$MODEL_NAME-$IDENTIFIER-$ATTRIBUTE_NAME.$SUFFIX"
+	echo "getting $FILENAME from $FILE"
+	wget -O $FILENAME $FILE
+done
