@@ -6,7 +6,7 @@ Data leaves Magma through JSON (the /retrieve and /query endpoints)
 
 # Configuration
 
-Magma is a Rack application, which means you can run it using any Rack-compatible server (e.g. thin or Passenger).
+Magma is a Rack application, which means you can run it using any Rack-compatible server (e.g. Puma or Passenger).
 
 Magma has a single YAML config file, `config.yml`; DO NOT TRACK this file, as it will hold all of your secrets. It uses the Etna::Application configuration syntax, e.g.:
 
@@ -21,6 +21,8 @@ The environment is by default `development` but may be set via the environment v
 
 Some things you may configure:
 
+    # This is the database configuration for the Sequel ORM (Documented at https://sequel.jeremyevans.net)
+    # Magma uses the postgres adapter; it may not work with other databases.
     :db:
       :database: magma
       :host: localhost
@@ -28,16 +30,15 @@ Some things you may configure:
       :user: magma
       :password: AAAAAAAA
 
-This is the database configuration for the Sequel ORM (https://sequel.jeremyevans.net) - see Sequel docs for more parameters. Note that Magma is currently wedded to the postgres adapter.
-
+    # A space-separated lists of magma project directories.
+    # See below for details on creating a project.
     :project_path: ./projects/labors/
 
-Here you list each of your project directories (space-separated) - see below for details of creating your project. Only projects listed here will be served by Magma.
-
+    # Where Magma will attempt to log - some server errors may not be trapped here.
     :log_file: log/error.log
 
-Where Magma will attempt to log - note that some server errors may end up in other places.
-
+    # Magma uses the `fog/aws` gem to connect to S3 for file storage,
+    # and Carrierwave to manage uploads
     :storage:
       :provider: fog/aws
       :directory: 'my-magma-bucket'
@@ -48,15 +49,13 @@ Where Magma will attempt to log - note that some server errors may end up in oth
         :aws_secret_access_key: 'SoMeSecrEtK/Ey'
         :region: 'us-area-52'
 
-Magma uses the `fog/aws` gem to connect to S3 for file storage; again, this configuration passes through the Sequel ORM and the `carrierwave` gem - see their documentation for details.
-
+    # The algorithm used by the authentication service (Janus) to sign tokens
+    # and the public key to validate them.
     :token_algo: RS256
     :rsa_public: |
       -----BEGIN PUBLIC KEY-----
       KeYGoEsHeRE==
       -----END PUBLIC KEY-----
-
-Lastly, the algorithm used by Janus (the Etna authentication service) to sign tokens and the public key to validate them.
 
 # Models
 
@@ -69,13 +68,9 @@ Here is an example Magma model:
       end
     end
 
-Magma models use the Sequel ORM (http://sequel.jeremyevans.net/)
+Magma models use the Sequel ORM (http://sequel.jeremyevans.net/). Each model contains a list of attributes. Each attribute has a name (e.g. `patient_name`) and contains a piece of data - a String, Integer, Date, boolean, JSON object, etc. - or a link, a relationship to another model. Attributes may also include validations, add database indexes, and define specific behaviors.
 
-Magma models are intended to be fairly stuffed-shirt representations of the data; schema-less data may fly in some places, but given the messy nature of bioinformatic data, fascist virtues should prevail here. This takes two major forms within Magma:
-
-1) Each model is self-documented, describing each of the attribute columns, how it is intended to be used, and what a well-formed document should look like.
-
-2) Certain data representations are encouraged (e.g. tree hierarchies vs. graphs with cycles)
+Magma models are organized in a hierarchy - the root model must be called `Project`.
 
 ### Attributes
 
@@ -100,7 +95,7 @@ Attributes describe the data elements of the model, their interactions with othe
 
   <u>file types</u>:
 
-  **_document_** - a generic binary document, stored on S3
+  **_file_** - a generic binary document, stored on S3
 
   **_image_** - an image, similar to a document except it allows some thumbnailing
 
