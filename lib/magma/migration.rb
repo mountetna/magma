@@ -1,8 +1,11 @@
 class Magma
   class Migration
     class << self
+      def table_name(model)
+        "Sequel[:#{model.project_name}][:#{model.implicit_table_name}]"
+      end
       def create(model)
-        puts model.table_name
+        #puts table_name(model)
         if Magma.instance.db.table_exists?(model.table_name)
           return Magma::UpdateMigration.new(model)
         else
@@ -27,24 +30,28 @@ class Magma
 
     def to_s
       @changes.map do |key,lines|
-        str = SPC*2 + key + ' do' + "\n"
-        lines.each do |line|
-          str += SPC*3 + line + "\n"
-        end
-        str += SPC*2 + 'end' + "\n"
-        str
-      end.join('').chomp
+        [
+          space("#{key} do", 2),
+          lines.map do |line|
+            space(line,3)
+          end,
+          space('end',2)
+        ].flatten.join("\n")
+      end.join("\n").chomp
     end
 
     private
 
     SPC='  '
+    def space(txt, pad)
+      "#{SPC*pad}#{txt}"
+    end
 
   end
   class CreateMigration < Migration
     def initialize(model)
       super
-      tlb_nm = "create_table(:#{model.table_name})"
+      tlb_nm = "create_table(#{Magma::Migration.table_name(model)})"
       change(tlb_nm, ['primary_key :id']+new_attributes)
     end
 
@@ -55,8 +62,11 @@ class Magma
       end.compact.flatten
     end
 
-    def foreign_key_entry column_name, foreign_table
-      "foreign_key :#{column_name}, :#{foreign_table}"
+    class Entry
+    end
+
+    def foreign_key_entry column_name, foreign_model
+      "foreign_key :#{column_name}, #{Magma::Migration.table_name(foreign_model)}"
     end
 
     def column_entry name, type
@@ -79,15 +89,15 @@ class Magma
   class UpdateMigration < Migration
     def initialize model
       super
-      change("alter_table(:#{model.table_name})", missing_attributes) unless missing_attributes.empty?
+      change("alter_table(#{Magma::Migration.table_name(model)})", missing_attributes) unless missing_attributes.empty?
 
-      change("alter_table(:#{model.table_name})", removed_attributes) unless removed_attributes.empty?
+      change("alter_table(#{Magma::Migration.table_name(model)})", removed_attributes) unless removed_attributes.empty?
 
-      change("alter_table(:#{model.table_name})", changed_attributes) unless changed_attributes.empty?
+      change("alter_table(#{Magma::Migration.table_name(model)})", changed_attributes) unless changed_attributes.empty?
     end
 
-    def foreign_key_entry column_name, foreign_table
-      "add_foreign_key :#{column_name}, :#{foreign_table}"
+    def foreign_key_entry column_name, foreign_model
+      "add_foreign_key :#{column_name}, #{Magma::Migration.table_name(foreign_model)}"
     end
 
     def column_type_entry name, type

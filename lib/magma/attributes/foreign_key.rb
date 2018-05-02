@@ -12,7 +12,7 @@ class Magma
 
     def migration mig
       [
-        mig.foreign_key_entry(column_name, link_model.table_name),
+        mig.foreign_key_entry(column_name, link_model),
         mig.index_entry(column_name)
       ]
     end
