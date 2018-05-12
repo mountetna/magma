@@ -21,3 +21,7 @@ group :test do
   gem 'pry'
   gem 'timecop'
 end
+
+Dir.glob File.expand_path("projects/*/Gemfile",__dir__) do |file|
+  instance_eval File.read(file)
+end
