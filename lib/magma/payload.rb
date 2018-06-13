@@ -35,7 +35,8 @@ class Magma
           models: Hash[
             @models.map do |model, model_payload|
               [
-                model.model_name, model_payload.to_hash
+                "#{model.project_name}_#{ model.model_name}",
+                model_payload.to_hash
               ]
             end
           ]
@@ -95,8 +96,8 @@ class Magma
         # reports in its own fashion.
         Hash[
           @attribute_names.map do |name|
-            [ 
-              name, 
+            [
+              name,
               @model.has_attribute?(name) ? @model.attributes[name].json_for(record) : record[name]
             ]
           end

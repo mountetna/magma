@@ -17,9 +17,14 @@ class Magma
     end
 
     def json_template
-      {
+      model_name = nil;
+      if self.is_a?(Magma::Link)
+        model_name = "#{@model.project_name}_#{link_model.model_name}"
+      end
+
+      return {
         name: @name,
-        model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
+        model_name: model_name,
         type: @type.nil? ? nil : @type.name,
         attribute_class: self.class.name,
         desc: @desc,
@@ -29,7 +34,7 @@ class Magma
         format_hint: @format_hint,
         read_only: read_only?,
         shown: shown?
-      }.delete_if {|k,v| v.nil? }
+      }.delete_if {|k, v| v.nil?}
     end
 
     def json_for record
@@ -75,7 +80,6 @@ class Magma
     def column_name
       @name
     end
-
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')

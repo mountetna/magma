@@ -127,18 +127,18 @@ class Magma
         Magma::Migration.create(self)
       end
 
+      # Return a json template of the model.
       def json_template(attribute_names = nil)
-        # Return a json template of the model.
         attribute_names ||= attributes.keys
         {
-          name: model_name,
+          name: "#{project_name}_#{model_name}",
           attributes: Hash[
             attribute_names.map do |name|
               [name, attributes[name].json_template]
             end
           ],
           identifier: identity,
-          parent: @parent,
+          parent: "#{project_name}_#{@parent}",
           dictionary: @dictionary.nil? ? nil : dictionary_name
         }.delete_if {|k,v| v.nil?}
       end
