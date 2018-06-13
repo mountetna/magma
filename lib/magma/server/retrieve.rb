@@ -148,8 +148,8 @@ class RetrieveController < Magma::Controller
       @page,
       @page_size
     )
+
     @payload.add_model(model, retrieval.attribute_names)
-    
     @payload.add_count(model, retrieval.count) if @page == 1
 
     if !@record_names.empty?

@@ -5,7 +5,7 @@ class Magma
       true
     end
 
-    def schema_unchanged? 
+    def schema_unchanged?
       true
     end
 
@@ -17,24 +17,25 @@ class Magma
       nil
     end
 
-    def json_for record
-      link = record[@name]
-      link ? link.map(&:last) : nil
-    end
-
-    def txt_for record
-      nil
-    end
-
     def eager
       @name
     end
 
-    def update record, new_value
+    def json_for(record)
+      link = record[@name]
+      link ? link.map(&:last) : nil
+    end
+
+    def txt_for(record)
+      nil
+    end
+
+    def update(record, new_ids)
+      nil
     end
 
     class Validation < Magma::BaseAttributeValidation
-      def validate value
+      def validate(value)
         unless value.is_a?(Array)
           yield "#{value} is not an Array."
           return

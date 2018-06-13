@@ -5,7 +5,7 @@ class Magma
       true
     end
 
-    def schema_unchanged? 
+    def schema_unchanged?
       true
     end
 
@@ -21,16 +21,16 @@ class Magma
       @name
     end
 
-    def json_for record
+    def json_for(record)
       link = record[@name]
       link ? link.map(&:last).sort : nil
     end
 
-    def txt_for record
-      json_for(record).join(", ")
+    def txt_for(record)
+      json_for(record).join(', ')
     end
 
-    def update record, new_ids
+    def update(record, new_ids)
       old_links = record.send(@name)
 
       old_ids = old_links.map(&:identifier)
