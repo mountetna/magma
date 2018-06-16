@@ -8,33 +8,48 @@ class Magma
 
     def execute
       puts 'Commands:'
-      Magma.instance.commands.each do |name,cmd|
+      Magma.instance.commands.each do |name, cmd|
         puts cmd.usage
       end
     end
   end
 
   class Migrate < Etna::Command
-    usage 'Run migrations for the current environment.'
-    
-    def execute(version=nil)
-      Sequel.extension(:migration)
-      db = Magma.instance.db
+    usage "Leave version number blank to migrate to the latest.
+      *args - arg[0]: project_name, arg[1]: version_number\n\n"
 
-      Magma.instance.config(:project_path).split(/\s+/).each do |project_dir|
-        table = "schema_info_#{project_dir.gsub(/[^\w]+/,'_').sub(/^_/,'').sub(/_$/,'')}"
-        if version
-          puts "Migrating to version #{version}"
-          Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table, target: version.to_i)
-        else
-          puts 'Migrating to latest'
-          Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table)
-        end
+    def execute(project_name, version = nil)
+
+      # Check that we have a project name.
+      unless project_name
+        raise ArgumentError.new('Project name must not be nil.')
+      end
+
+      Sequel.extension(:migration)
+      base_dir = "#{Dir.pwd}/projects/"
+      project_nm = project_name.gsub(/[^\w]+/,'_').sub(/^_/,'').sub(/_$/,'')
+      table = "schema_info_projects_#{project_nm}"
+
+      if version
+        puts "Migrating to version #{version}."
+        Sequel::Migrator.run(
+          Magma.instance.db,
+          "#{base_dir}#{project_name}/migrations",
+          table: table,
+          target: version.to_i
+        )
+      else
+        puts 'Migrating to latest.'
+        Sequel::Migrator.run(
+          Magma.instance.db,
+          "#{base_dir}#{project_name}/migrations",
+          table: table
+        )
       end
     end
 
-    def setup(config)
-      super
+    def setup(config, *args)
+      Magma.instance.configure(config)
       Magma.instance.setup_db
     end
   end
@@ -94,37 +109,38 @@ EOT
   end
 
   class Load < Etna::Command
-    usage 'Run data loaders on models for current dataset.'
+    usage "Run data loaders on models for current dataset.
+      *args - arg[0]: loader_name, arg[1]: data_file\n\n"
 
     def execute(*args)
       loaders = Magma.instance.find_descendents(Magma::Loader)
 
-      if args.empty?
-        # List available loaders
+      if args[0].nil?
         puts 'Available loaders:'
         loaders.each do |loader|
-          puts "%30s  %s" % [ loader.loader_name, loader.description ]
+          puts "%30s  %s" % [loader.loader_name, loader.description]
         end
         exit
       end
 
       loader = loaders.find do |l| l.loader_name == args[0] end
-
       raise "Could not find a loader named #{args[0]}" unless loader
 
       loader = loader.new
       loader.load(*args[1..-1])
+
       begin
         loader.dispatch
       rescue Magma::LoadFailed => e
-        puts "Load failed with these complaints:"
+        puts 'Load failed with these complaints:'
         puts e.complaints
       end
     end
 
-    def setup(config)
-      super
-      Magma.instance.load_models
+    def setup(config, *args)
+      env = (ENV['MAGMA_ENV'] || :development).to_sym
+      Magma.instance.configure(config)
+      Magma.instance.load_models(false)
     end
   end
 
@@ -150,6 +166,85 @@ EOT
     def setup(config)
       super
       Magma.instance.load_models
+      Magma.instance.setup_db
+    end
+  end
+
+  # This will create a new project folder with the starting migrations and the 
+  # appropriate db schema's
+  class Create < Etna::Command
+    usage "Create a new project with initial schema and folders.
+      *args - arg[0]: project_name\n\n"
+
+    def execute(project_name)
+
+      # Check that we have a project name.
+      unless project_name
+        raise ArgumentError.new('Project name must not be nil.')
+      end
+
+      # Check that the project/schema does not yet exisit.
+      query = "SELECT * from pg_catalog.pg_namespace where "\
+"nspname='#{project_name}'"
+
+      if Magma.instance.db.fetch(query).all.length > 0
+        raise ArgumentError.new('Project name already exists in the DB.')
+      end
+
+      # Check that the project folder does not exist.
+      if File.directory?("#{Dir.pwd}/projects/#{project_name}")
+        raise ArgumentError.new('A project folder already exists.')
+      end
+
+      # Create the schema in the DB.
+      Magma.instance.db.create_schema(project_name.to_sym)
+
+      # Create the project folders.
+      base_dir = "#{Dir.pwd}/projects/"
+      Dir.mkdir "#{base_dir}#{project_name}"
+      Dir.mkdir "#{base_dir}#{project_name}/models"
+      Dir.mkdir "#{base_dir}#{project_name}/migrations"
+
+      # Set up the variables required by the templates.
+      template_binding = binding
+      template_binding.local_variable_set(:project_name, project_name)
+
+      # Create the base model for the project.
+      project_model_path = "#{base_dir}example/models/template_project.erb"
+      project_model = ERB.new(File.read(project_model_path))
+      project_model_file = project_model.result(template_binding)
+
+      # Write the project model file out to disk.
+      file_name = File.join(base_dir, project_name.to_s, 'models/project.rb')
+      File.open(file_name, 'w') {|f| f.write(project_model_file)}
+
+      # Create the base requirement file for the project.
+      req_path = "#{base_dir}example/template_requirements.erb"
+      req_file = ERB.new(File.read(req_path)).result()
+
+      # Write the requirements file out to disk.
+      file_name = File.join(base_dir, project_name.to_s, '/requirements.rb')
+      File.open(file_name, 'w') {|f| f.write(req_file)}
+
+      # Create the base migration for the project
+      migration_path = "#{base_dir}example/migrations/template_migration.erb"
+      migration = ERB.new(File.read(migration_path))
+      migration_file = migration.result(template_binding)
+
+      file_name = File.join(
+        base_dir,
+        project_name.to_s,
+        'migrations/001_start.rb'
+      )
+      File.open(file_name, 'w') {|f| f.write(migration_file)}
+
+      puts "You can now run the command 'bin/magma migrate #{project_name}' "\
+"for your new project.\n"
+
+    end
+
+    def setup(config, *args)
+      Magma.instance.configure(config)
       Magma.instance.setup_db
     end
   end
