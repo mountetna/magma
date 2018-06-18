@@ -35,7 +35,7 @@ class Magma
           models: Hash[
             @models.map do |model, model_payload|
               [
-                "#{model.project_name}_#{ model.model_name}",
+                model.model_name,
                 model_payload.to_hash
               ]
             end

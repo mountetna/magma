@@ -131,14 +131,14 @@ class Magma
       def json_template(attribute_names = nil)
         attribute_names ||= attributes.keys
         {
-          name: "#{project_name}_#{model_name}",
+          name: model_name,
           attributes: Hash[
             attribute_names.map do |name|
               [name, attributes[name].json_template]
             end
           ],
           identifier: identity,
-          parent: "#{project_name}_#{@parent}",
+          parent: parent,
           dictionary: @dictionary.nil? ? nil : dictionary_name
         }.delete_if {|k,v| v.nil?}
       end
