@@ -17,14 +17,9 @@ class Magma
     end
 
     def json_template
-      model_name = nil;
-      if self.is_a?(Magma::Link)
-        model_name = "#{@model.project_name}_#{link_model.model_name}"
-      end
-
       return {
         name: @name,
-        model_name: model_name,
+        model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: @type.nil? ? nil : @type.name,
         attribute_class: self.class.name,
         desc: @desc,
