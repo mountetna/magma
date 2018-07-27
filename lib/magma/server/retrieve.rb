@@ -54,11 +54,18 @@ class RetrieveController < Magma::Controller
   def action
     begin
       validate
-
       if success?
         case @format
-        when "tsv"
-          return [ 200, { 'Content-Type' => 'text/tsv' }, tsv_payload ]
+        when 'tsv'
+          filename = (@params[:filename].nil?) ? 'download' : @params[:filename]
+          return [
+            200,
+            {
+              'Content-Type'=> 'text/tsv',
+              'Content-Disposition'=> "filename=\'#{filename}.tsv\'"
+            },
+            tsv_payload
+          ]
         else
           perform
           return success(@payload.to_hash.to_json, 'application/json')
@@ -75,6 +82,7 @@ class RetrieveController < Magma::Controller
   private
 
   def validate
+<<<<<<< Updated upstream
     return error('No model name given') if @model_name.nil?
     return error('No record names given') if @record_names.nil?
     return error('Improperly formed record names') unless valid_record_names?
@@ -82,12 +90,45 @@ class RetrieveController < Magma::Controller
     return error('Cannot retrieve by record name for all models') if @model_name == "all" && @record_names.is_a?(Array) && !@record_names.empty?
     return error('Can only retrieve identifiers for all records for all models') if @model_name == "all" && @record_names == "all" && @attribute_names != "identifier"
     return error('Cannot retrieve several models in tsv format') if @model_name == "all" && @format == "tsv"
+=======
+    return error('No model name given.') if @model_name.nil?
+    return error('No record names given.') if @record_names.nil?
+    return error('Improperly formed record names.') unless valid_record_names?
+
+    unless(
+      @attribute_names.is_a?(Array) ||
+      @attribute_names == 'all' ||
+      @attribute_names == 'identifier'
+    )
+      return error('Improperly formed attribute names.')
+    end
+
+    if(
+      @model_name == 'all' &&
+      @record_names.is_a?(Array) &&
+      !@record_names.empty?
+    )
+      return error('Cannot retrieve by record name for all models.')
+    end
+
+    if(
+      @model_name == 'all' &&
+      @record_names == 'all' &&
+      @attribute_names != 'identifier'
+    )
+      return error('Can only retrieve identifiers for all records for all models')
+    end
+
+    if @model_name == 'all' && @format == 'tsv'
+      return error('Cannot retrieve several models in tsv format')
+    end
+>>>>>>> Stashed changes
   end
 
   def valid_record_names?
-    @record_names.is_a?(Array) && 
+    @record_names.is_a?(Array) &&
       (@record_names.all?{|name| name.is_a?(String)} ||
-       @record_names.all?{|name| name.is_a?(Fixnum)}) || 
+       @record_names.all?{|name| name.is_a?(Fixnum)}) ||
       @record_names == "all"
   end
 
@@ -117,13 +158,13 @@ class RetrieveController < Magma::Controller
     retrieval = Magma::Retrieval.new(
       model,
       @record_names,
-      attributes, 
+      attributes,
       Magma::Retrieval::StringFilter.new(@filter),
       @page,
       @page_size
     )
     @payload.add_model(model, retrieval.attribute_names)
-    
+
     @payload.add_count(model, retrieval.count) if @page == 1
 
     if !@record_names.empty?
