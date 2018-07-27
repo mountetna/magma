@@ -58,7 +58,15 @@ class RetrieveController < Magma::Controller
       if success?
         case @format
         when 'tsv'
-          return [200, {'Content-Type'=> 'text/tsv'}, tsv_payload]
+          filename = (@params[:filename].nil?) ? 'download' : @params[:filename]
+          return [
+            200,
+            {
+              'Content-Type'=> 'text/tsv',
+              'Content-Disposition'=> "filename=\'#{filename}.tsv\'"
+            },
+            tsv_payload
+          ]
         else
           perform
           return success(@payload.to_hash.to_json, 'application/json')
@@ -104,7 +112,7 @@ class RetrieveController < Magma::Controller
     end
 
     if @model_name == 'all' && @format == 'tsv'
-      return error('Cannot retrieve several models in tsv format') 
+      return error('Cannot retrieve several models in tsv format')
     end
   end
 
@@ -143,7 +151,7 @@ class RetrieveController < Magma::Controller
     retrieval = Magma::Retrieval.new(
       model,
       @record_names,
-      attributes, 
+      attributes,
       Magma::Retrieval::StringFilter.new(@filter),
       @page,
       @page_size
