@@ -1,6 +1,7 @@
 require 'sequel'
 require_relative 'magma/project'
-require_relative 'magma/validation'
+require_relative 'magma/validator'
+
 require_relative 'magma/loader'
 require_relative 'magma/migration'
 require_relative 'magma/attribute'
@@ -19,7 +20,7 @@ class Magma
   def get_model(project_name, model_name)
     project = get_project(project_name)
     model = project.models[model_name.to_sym] if project
- 
+
     unless model
       raise NameError, "Could not find Magma::Model #{project_name}::#{model_name}"
     end
@@ -41,7 +42,7 @@ class Magma
     @db.pool.connection_validation_timeout = -1
   end
 
-  def load_models(validate = true)
+  def load_projects(validate = true)
     setup_db
 
     if config(:storage)
@@ -52,7 +53,7 @@ class Magma
 
     config(:project_path).split(/\s+/).each do |project_dir|
       project = Magma::Project.new(project_dir)
-      magma_projects[ project.project_name ] = project
+      magma_projects[project.project_name] = project
     end
 
     validate_models if validate
@@ -78,7 +79,7 @@ class Magma
 
       project.models.each do |model_name, model|
         # Make sure the model_name is valid
-        if [ :attributes, :attribute, :all, :identifier ].include?(model_name)
+        if [:attributes, :attribute, :all, :identifier].include?(model_name)
           raise Magma::ValidationError, "Model name #{model_name} is reserved."
         end
 
@@ -99,7 +100,7 @@ class Magma
             raise(
               Magma::ValidationError,
               "Missing reciprocal link for #{model_name}##{att_name} "\
-"from #{link_model.model_name}." 
+"from #{link_model.model_name}."
             )
           end
         end
@@ -109,7 +110,7 @@ class Magma
           !model.attributes.values.any?{|att| att.is_a?(Magma::Link)} &&
           model_name != :project
         )
-          raise Magma::ValidationError, "Orphan model #{model_name}." 
+          raise Magma::ValidationError, "Orphan model #{model_name}."
         end
       end
     end

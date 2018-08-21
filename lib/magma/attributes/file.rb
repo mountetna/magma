@@ -14,7 +14,7 @@ class Magma
       record.modified!(name)
     end
 
-    def json_for record
+    def json_for(record)
       path = record[@name]
       if path
         {

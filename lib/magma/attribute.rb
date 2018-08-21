@@ -64,7 +64,7 @@ class Magma
       schema.has_key?(column_name)
     end
 
-    def schema_unchanged? 
+    def schema_unchanged?
       schema[column_name][:db_type].to_sym == literal_type
     end
 
@@ -81,7 +81,7 @@ class Magma
     end
 
     def migration(mig)
-      [ 
+      [
         mig.column_entry(@name, type),
         @unique && mig.unique_entry(@name),
         @index && mig.index_entry(@name)
@@ -100,10 +100,10 @@ class Magma
     end
 
     def validation
-      if self.class.const_defined?(:Validation)
-        self.class.const_get(:Validation)
+      if self.class.const_defined?(:Validator)
+        self.class.const_get(:Validator)
       else
-        Magma::BaseAttributeValidation
+        Magma::AttributeValidator
       end
     end
 
@@ -129,7 +129,7 @@ class Magma
       end
     end
 
-    class Validation < Magma::BaseAttributeValidation
+    class Validation < Magma::AttributeValidator
       def validate(value)
         case match
         when Regexp

@@ -24,7 +24,7 @@ class Magma
 
       def order(*columns)
         @order = columns
-        set_dataset dataset.order(*@order)
+        set_dataset(dataset.order(*@order))
       end
 
       def attribute(attr_name, opts = {})
@@ -89,7 +89,7 @@ class Magma
         order(name) unless @order
       end
 
-      # Set and/or return the dictionary for this model. If a dictionary is set 
+      # Set and/or return the dictionary for this model. If a dictionary is set
       # then it will be used for validation.
       def dictionary(class_name, opts = {})
 
@@ -109,6 +109,24 @@ class Magma
           project: dict_name[0].to_s.snake_case,
           name: dict_name[1].to_s.snake_case
         }
+      end
+
+      # Set and/or return the validator for this model.
+      def validator(class_name = nil)
+        if(class_name == nil && @validator != nil)
+          return @validator
+        else
+          if(class_name != nil)
+            # Get the name space for the validator and append it's class name to
+            # it to generate a 'new' for return.
+            class_name = "#{self.name.split(/::/)[0]}::#{class_name.to_s}"
+            if Kernel.const_defined?(class_name)
+              @validator = Kernel.const_get(class_name)
+            end
+            return @validator
+          end
+        end
+        return nil
       end
 
       def project_name
@@ -192,7 +210,7 @@ class Magma
           # Insert the records into the temporary DB.
           db[temp_table_name].multi_insert(records)
 
-          # Generate the column name mapping from the temporary database to the 
+          # Generate the column name mapping from the temporary database to the
           # permanent one.
           column_alias = update_columns.map do |column|
             "#{column}=src.#{column}"
@@ -224,14 +242,14 @@ class Magma
       end
 
       # Extract the full module name and prepend it to the incoming class name
-      # so we can get the correct Module/Class reference. This one is to 
+      # so we can get the correct Module/Class reference. This one is to
       # correctly format the Ruby models so they may reference eachother.
       def resolve_namespace(name)
         :"#{self.name.split(/::/).first}::#{name.to_s.camel_case}"
       end
 
       # Takes the module/class namespace and turns it into a postgres
-      # schema/table string. This one is to establish the Sequel Model to 
+      # schema/table string. This one is to establish the Sequel Model to
       # Postgres DB connection.
       def namespaced_table_name(subclass)
         project_name, table_name = subclass.name.split(/::/).map(&:snake_case)
@@ -240,7 +258,7 @@ class Magma
       end
 
       def inherited(subclass)
-        # Sets the appropriate postgres schema for the model. There should be a 
+        # Sets the appropriate postgres schema for the model. There should be a
         # one to one correlation between a model's module/class and a postgres
         # schema/table.
         set_dataset(namespaced_table_name(subclass))

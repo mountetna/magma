@@ -34,7 +34,7 @@ class Magma
       nil
     end
 
-    class Validation < Magma::BaseAttributeValidation
+    class Validator < Magma::AttributeValidator
       def validate(value)
         unless value.is_a?(Array)
           yield "#{value} is not an Array."
@@ -43,7 +43,8 @@ class Magma
         return unless @attribute.link_identity
         value.each do |link|
           next if link.nil? || link.empty?
-          @validator.validate(@attribute.link_model,@attribute.link_model.identity,link) do |error|
+          args = [@attribute.link_model, @attribute.link_model.identity, link]
+          @validator.validate(*args) do |error|
             yield error
           end
         end
