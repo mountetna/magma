@@ -40,11 +40,16 @@ class Magma
 
     SPC='  '
 
+    def namespaced_table_name(model_name)
+      project_name, table_name = model_name.split(/::/).map(&:snake_case)
+      table_name = table_name.plural
+      "Sequel[:#{project_name}][:#{table_name}]"
+    end
   end
   class CreateMigration < Migration
     def initialize(model)
       super
-      tlb_nm = "create_table(:#{model.table_name})"
+      tlb_nm = "create_table(#{namespaced_table_name(model.name)})"
       change(tlb_nm, ['primary_key :id']+new_attributes)
     end
 
@@ -55,8 +60,9 @@ class Magma
       end.compact.flatten
     end
 
-    def foreign_key_entry column_name, foreign_table
-      "foreign_key :#{column_name}, :#{foreign_table}"
+    def foreign_key_entry(column_name, foreign_table)
+      table = "[:#{foreign_table.table.to_s}][:#{foreign_table.column.to_s}]"
+      "foreign_key :#{column_name}, Sequel#{table}"
     end
 
     def column_entry name, type
@@ -86,8 +92,9 @@ class Magma
       change("alter_table(:#{model.table_name})", changed_attributes) unless changed_attributes.empty?
     end
 
-    def foreign_key_entry column_name, foreign_table
-      "add_foreign_key :#{column_name}, :#{foreign_table}"
+    def foreign_key_entry(column_name, foreign_table)
+      table = "[:#{foreign_table.table.to_s}][:#{foreign_table.column.to_s}]"
+      "add_foreign_key :#{column_name}, Sequel#{table}"
     end
 
     def column_type_entry name, type
@@ -114,7 +121,7 @@ class Magma
       end
     end
 
-    private 
+    private
 
     def missing_attributes
       @model.attributes.map do |name,att|
@@ -128,7 +135,7 @@ class Magma
         next unless att.schema_ok?
         next unless att.needs_column?
         next if att.schema_unchanged?
-        column_type_entry(att.column_name, 
+        column_type_entry(att.column_name,
                           att.type)
       end.compact.flatten
     end
