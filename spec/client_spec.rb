@@ -8,9 +8,9 @@ describe Magma::Client do
   end
 
   before(:each) do
-    stub_request(:post, 'https://magma.test/retrieve').to_rack(app)
-    stub_request(:post, 'https://magma.test/query').to_rack(app)
-    stub_request(:post, 'https://magma.test/update').to_rack(app)
+    stub_request(:post, 'http://magma.test/retrieve').to_rack(app)
+    stub_request(:post, 'http://magma.test/query').to_rack(app)
+    stub_request(:post, 'http://magma.test/update').to_rack(app)
     @token = Base64.strict_encode64(AUTH_USERS[:editor].to_json)
   end
 
@@ -22,8 +22,7 @@ describe Magma::Client do
     response = nil
     expect do
 
-      # this request has no record_name
-
+      # This request has no record_name.
       response = client.retrieve(
         @token,
         'labors',
@@ -94,5 +93,3 @@ describe Magma::Client do
     expect(json[:answer].length).to eq(3)
   end
 end
-
-
