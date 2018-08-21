@@ -10,8 +10,7 @@ class Magma
     def initialize(config)
       super
       application.tap do |magma|
-        magma.load_models
-
+        magma.load_projects
         magma.db.loggers << @logger
       end
     end
@@ -21,7 +20,7 @@ class Magma
 
     post '/query', action: 'query#action', auth: { user: { can_view?: :project_name } }
 
-    post '/update', action: 'update#action', auth: { user: { can_edit?: :project_name } } 
+    post '/update', action: 'update#action', auth: { user: { can_edit?: :project_name } }
 
     get '/' do
       [ 200, {}, 'Magma On.' ]
