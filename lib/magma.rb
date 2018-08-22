@@ -37,7 +37,7 @@ class Magma
     @db.pool.connection_validation_timeout = -1
   end
 
-  def load_models(validate = true)
+  def load_projects(validate = true)
     setup_db
 
     if config(:storage)
@@ -92,7 +92,7 @@ class Magma
           model_name != :project
         )
 
-          raise Magma::ValidationError, "Orphan model #{model_name}." 
+          raise Magma::ValidationError, "Orphan model #{model_name}."
         end
       end
     end
