@@ -14,14 +14,16 @@ gem 'spreadsheet'
 
 group :test do
   gem 'simplecov'
-  gem 'rack-test', require: "rack/test"
+  gem 'rack-test', require: 'rack/test'
   gem 'factory_bot'
   gem 'rspec'
   gem 'database_cleaner'
   gem 'pry'
   gem 'timecop'
+  gem 'webmock'
+  gem 'multipart-post'
 end
 
-Dir.glob File.expand_path("projects/*/Gemfile",__dir__) do |file|
+Dir.glob File.expand_path('projects/*/Gemfile', __dir__) do |file|
   instance_eval File.read(file)
 end

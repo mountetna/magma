@@ -195,11 +195,11 @@ def json_body(body)
 end
 
 AUTH_USERS = {
-  editor: { 
-    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'e:labors' 
+  editor: {
+    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'e:labors'
   },
   viewer: {
-    email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors' 
+    email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors'
   },
   non_user: {
     email: 'nessus@centaurs.org', first: 'Nessus', perm: ''

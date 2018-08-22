@@ -16,7 +16,7 @@ class UpdateController < Magma::Controller
   private
 
   def revisions
-    @revisions ||= 
+    @revisions ||=
       begin
         validator = Magma::Validator.new
 
@@ -24,7 +24,12 @@ class UpdateController < Magma::Controller
           model = Magma.instance.get_model(@project_name, model_name)
 
           model_revisions.map do |record_name, revision_data|
-            Magma::Revision.new(model, record_name.to_s, revision_data, validator)
+            Magma::Revision.new(
+              model,
+              record_name.to_s,
+              revision_data,
+              validator
+            )
           end
         end.flatten
       end

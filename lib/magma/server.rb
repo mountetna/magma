@@ -10,7 +10,7 @@ class Magma
     def initialize(config)
       super
       application.tap do |magma|
-        magma.load_models
+        magma.load_projects
         magma.db.loggers << @logger
       end
     end

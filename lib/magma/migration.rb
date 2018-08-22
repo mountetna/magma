@@ -42,14 +42,14 @@ class Magma
     def namespaced_table_name(model_name)
       project_name, table_name = model_name.split(/::/).map(&:snake_case)
       table_name = table_name.plural
-      "#{project_name}__#{table_name}"
+      "Sequel[:#{project_name}][:#{table_name}]"
     end
   end
 
   class CreateMigration < Migration
     def initialize(model)
       super
-      tlb_nm = "create_table(:#{namespaced_table_name(model.name)})"
+      tlb_nm = "create_table(#{namespaced_table_name(model.name)})"
       change(tlb_nm, ['primary_key :id']+new_attributes)
     end
 
@@ -61,8 +61,8 @@ class Magma
     end
 
     def foreign_key_entry(column_name, foreign_table)
-      table = "#{foreign_table.table.to_s}__#{foreign_table.column.to_s}".to_sym
-      "foreign_key :#{column_name}, :#{table}"
+      table = "[:#{foreign_table.table.to_s}][:#{foreign_table.column.to_s}]"
+      "foreign_key :#{column_name}, Sequel#{table}"
     end
 
     def column_entry(name, type)
@@ -109,8 +109,8 @@ class Magma
     end
 
     def foreign_key_entry(column_name, foreign_table)
-      table = "#{foreign_table.table.to_s}__#{foreign_table.column.to_s}".to_sym
-      "add_foreign_key :#{column_name}, :#{table}"
+      table = "[:#{foreign_table.table.to_s}][:#{foreign_table.column.to_s}]"
+      "add_foreign_key :#{column_name}, Sequel#{table}"
     end
 
     def column_type_entry(name, type)
@@ -137,7 +137,7 @@ class Magma
       end
     end
 
-    private 
+    private
 
     def missing_attributes
       @model.attributes.map do |name, att|

@@ -9,6 +9,8 @@ GEM
       i18n (>= 0.7, < 2)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
+    addressable (2.5.2)
+      public_suffix (>= 2.0.2, < 4.0)
     builder (3.2.3)
     carrierwave (1.2.2)
       activemodel (>= 4.0.0)
@@ -19,6 +21,8 @@ GEM
       sequel
     coderay (1.1.2)
     concurrent-ruby (1.0.5)
+    crack (0.4.3)
+      safe_yaml (~> 1.0.0)
     curb (0.9.4)
     database_cleaner (1.7.0)
     diff-lcs (1.3)
@@ -188,6 +192,7 @@ GEM
       fog-core
       nokogiri (>= 1.5.11, < 2.0.0)
     formatador (0.2.5)
+    hashdiff (0.3.7)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
     i18n (1.0.1)
@@ -204,6 +209,7 @@ GEM
     mini_portile2 (2.3.0)
     minitest (5.11.3)
     multi_json (1.13.1)
+    multipart-post (2.0.0)
     netrc (0.11.0)
     nokogiri (1.8.2)
       mini_portile2 (~> 2.3.0)
@@ -213,6 +219,7 @@ GEM
     pry (0.11.3)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
+    public_suffix (3.0.3)
     rack (2.0.5)
     rack-test (1.0.0)
       rack (>= 1.0, < 3)
@@ -242,6 +249,7 @@ GEM
       rspec-support (~> 3.7.0)
     rspec-support (3.7.1)
     ruby-ole (1.2.12.1)
+    safe_yaml (1.0.4)
     sequel (4.49.0)
     simplecov (0.16.1)
       docile (~> 1.1)
@@ -258,6 +266,10 @@ GEM
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.5)
+    webmock (3.4.2)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
+      hashdiff
     xml-simple (1.1.5)
 
 PLATFORMS
@@ -273,6 +285,7 @@ DEPENDENCIES
   factory_bot
   fog
   mini_magick
+  multipart-post
   pg
   pry
   rack-test
@@ -281,9 +294,10 @@ DEPENDENCIES
   simplecov
   spreadsheet
   timecop
+  webmock
 
 RUBY VERSION
    ruby 2.2.2p95
 
 BUNDLED WITH
-   1.14.6
+   1.16.1

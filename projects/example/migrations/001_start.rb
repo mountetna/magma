@@ -1,6 +1,6 @@
 Sequel.migration do
   change do
-    create_table(:example__example_projects) do
+    create_table(Sequel[:example][:example_projects]) do
       primary_key :id
       DateTime :created_at
       DateTime :updated_at
@@ -8,7 +8,8 @@ Sequel.migration do
       String :name
       unique :name
     end
-    create_table(:example__example_patients) do
+
+    create_table(Sequel[:example][:example_patients])
       primary_key :id
       DateTime :created_at
       DateTime :updated_at

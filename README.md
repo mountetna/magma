@@ -156,7 +156,68 @@ Attributes describe the data elements of the model, their interactions with othe
 
   **POST _/query_** - accepts JSON queries in Magma's Query language. See https://github.com/mountetna/magma/wiki/Query for more details.
 
+## Database setup
+
 ### Migrations
 
 Magma attempts to maintain a strict adherence between its models and the database schema by suggesting migrations. These are written in the Sequel ORM's migration language, not pure SQL, so they are fairly straightforward to amend when Magma plans incorrectly.
 
+Magma separates out projects using 'schema' in postgres. On the Ruby 'Sequel' side of things we namespace our models with the 'schema' in Postgres. For example, if I have a Postgres 'schema' called 'ipi' then a model for 'ipi' would look like thus:
+
+```
+module Ipi
+  class Patient < Magma::Model
+    ...
+  end
+end
+```
+
+As you can see we have namespaced the model with the name of the Postgres 'schema'. When we create a migration using the command:
+
+```
+$ MAGMA_ENV=[ENV] bin/magma plan
+```
+
+the command will look in the `./projects` folder and loop over the models. Since the models are namespaced those module names end up being converted into Postgres 'schema' names for the 'Sequel.migration'.
+
+### Project creation
+
+There is a one to one correspondence between a postgres schema and a project. It is how magma organizes projects. One can manual create the appropriate schema (see below) but there is a command that will will create it for you:
+
+```
+$ MAGMA_ENV=[ENV] bin/magma create [PROJECT_NAME]
+```
+
+Once the project/schema has been create on the DB you can generate the migrations and run the migrations as mentioned in the previous step.
+
+### Another method for migration.
+
+Here is another method for running the migration. BUT you should use the Magma command (see the README.md in the `./projects` directory).
+
+`$ sequel -m [MIGRATION FOLDER] postgres://[USER]:[PASS]@[HOST]/[DATABASE NAME]?search_path=[SCHEMA]`
+
+### A manual method for DB and schema/project setup.
+
+If we assume that the Postgres user is named 'developer' and that the ENV is 'test', 'development', or 'production', then the following commands will set up an appropriate Postgres 'schema' for your project.
+
+```
+$ sudo -i -u postgres
+$ psql
+postgres=# drop database magma_[ENV];
+postgres=# create database magma_[ENV];
+postgres=# \c magma_[ENV];
+magma_[ENV]=# REVOKE ALL ON schema public FROM public;
+magma_[ENV]=# REVOKE ALL ON DATABASE magma_[ENV] FROM public;
+magma_[ENV]=# GRANT CONNECT, CREATE, TEMPORARY ON DATABASE magma_[ENV] TO developer;
+magma_[ENV]=# CREATE SCHEMA [PROJECT NAME];
+magma_[ENV]=# GRANT CREATE, USAGE ON SCHEMA [PROJECT NAME] TO developer;
+magma_[ENV]=# GRANT CREATE, USAGE ON SCHEMA public TO developer;
+magma_[ENV]=# \q
+$ exit
+```
+
+One final note: If you notice, we REVOKE permissions on the 'schema' public, for security reasons. However, we do use the public 'schema' to hold project specific information. So we do need to be able to write to it, thus we have the GRANT command of `public TO developer`;
+
+### More information.
+
+Look at the `./projects` directory README.md for more info related to creating magma models and migrations and for an example of a project setup.

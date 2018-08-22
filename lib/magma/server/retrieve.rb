@@ -5,32 +5,32 @@ require 'ostruct'
 
 # In general, you Retrieve with a request like this:
 # {
-#   model_name: "model",
-#   record_names: [ "record1", "record2" ],
-#   attribute_names: [ "att_a", "att_b" ]
+#   model_name: 'model',
+#   record_names: ['record1', 'record2'],
+#   attribute_names: ['att_a', 'att_b']
 # }
 #
 # Some special cases:
 #
 # This will pull all attributes for the requested records
 # {
-#   model_name: "model",
-#   record_names: [ "record1", "record2" ],
-#   attribute_names: "all"
+#   model_name: 'model',
+#   record_names: ['record1', 'record2'],
+#   attribute_names: 'all'
 # }
 #
 # This will pull all records for the given model
 # {
-#   model_name: "model",
-#   record_names: "all",
+#   model_name: 'model',
+#   record_names: 'all',
 #   attribute_names: ...
 # }
 #
 # This will pull all identifiers for all models and records
 # {
-#   model_name: "all",
-#   record_names: "all",
-#   attribute_names: "identifier"
+#   model_name: 'all',
+#   record_names: 'all',
+#   attribute_names: 'identifier
 # }
 
 class RetrieveController < Magma::Controller
@@ -108,11 +108,13 @@ class RetrieveController < Magma::Controller
       @record_names == 'all' &&
       @attribute_names != 'identifier'
     )
-      return error('Can only retrieve identifiers for all records for all models')
+      return error(
+        'Can only retrieve identifiers for all records for all models.'
+      )
     end
 
     if @model_name == 'all' && @format == 'tsv'
-      return error('Cannot retrieve several models in tsv format')
+      return error('Cannot retrieve several models in tsv format.')
     end
   end
 
@@ -163,7 +165,7 @@ class RetrieveController < Magma::Controller
     if !@record_names.empty?
       time = Time.now
       records = retrieval.records
-      puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
+      puts "Retrieving #{model.model_name} took #{Time.now - time} seconds."
       @payload.add_records(model, records)
 
       # Add the records for any table attributes. This requires a secondary
@@ -178,11 +180,14 @@ class RetrieveController < Magma::Controller
   end
 
   def retrieve_table_attribute(model, records, attribute)
+
+    # Get the model that this attribute is a type of.
     link_model = attribute.link_model
 
     link_attributes = link_model.attributes.reject do |att_name, att|
       att.is_a?(Magma::TableAttribute)
     end.values
+
     if !link_model.has_identifier?
       link_attributes.push(OpenStruct.new(name: :id))
     end
@@ -203,8 +208,8 @@ class RetrieveController < Magma::Controller
       nil,
       nil
     )
-    @payload.add_model( link_model, retrieval.attribute_names )
-    @payload.add_records( link_model, retrieval.records )
+    @payload.add_model(link_model, retrieval.attribute_names)
+    @payload.add_records(link_model, retrieval.records)
   end
 
   def tsv_payload
@@ -231,7 +236,7 @@ class RetrieveController < Magma::Controller
     end
   end
 
-  def selected_attributes model
+  def selected_attributes(model)
     attributes = model.attributes.values.select do |att|
       get_attribute?(att,model)
     end
