@@ -28,6 +28,11 @@ class Magma
         set_dataset dataset.order(*@order)
       end
 
+      def dictionary(dict_model, attributes={})
+        @dictionary = dict_model
+        @dictionary_attributes = attributes
+      end
+
       def attribute(attr_name, opts = {})
 
         klass = opts.delete(:attribute_class) || Magma::Attribute
