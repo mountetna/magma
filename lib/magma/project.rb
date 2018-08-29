@@ -12,8 +12,10 @@ class Magma
     def models
       @models ||= Hash[
         project_container.constants(false).map do |c|
-          project_container.const_get(c) 
-        end.select do |m| m < Magma::Model end.map do |m|
+          project_container.const_get(c)
+        end.select do |m|
+          m.is_a?(Class) && m < Magma::Model
+        end.map do |m|
           [ m.model_name, m ]
         end
       ]
