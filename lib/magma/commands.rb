@@ -15,7 +15,7 @@ class Magma
   end
 
   class Migrate < Etna::Command
-    usage 'Run migrations for the current environment.'
+    usage '[<version_number>] # Run migrations for the current environment.'
     
     def execute(version=nil)
       Sequel.extension(:migration)
@@ -49,13 +49,20 @@ class Magma
   # the table creation in the correct order), but we should add logic here so
   # we do not have to in the future.
   class Plan < Etna::Command
-    usage 'Suggest a migration based on the current model attributes.'
+    usage '[<project_name>] # Suggest a migration based on the current model attributes.'
 
-    def execute
+    def execute(project_name=nil)
+      if project_name
+        project = Magma.instance.get_project(project_name)
+        raise ArgumentError, "No such project #{project_name}!" unless project
+        projects = [ project ]
+      else
+        projects = Magma.instance.magma_projects.values
+      end
       puts <<EOT
 Sequel.migration do
   change do
-#{Magma.instance.magma_projects.values.map(&:migrations).flatten.join("\n")}
+#{projects.map(&:migrations).flatten.join("\n")}
   end
 end
 EOT
@@ -64,17 +71,6 @@ EOT
     def setup(config)
       super
       Magma.instance.load_models(false)
-    end
-  end
-
-  class Timestamp < Etna::Command
-    usage 'Generate a current timestamp (for use with \'Magma plan\').'
-
-    def execute
-      puts DateTime.now.strftime('%Y%m%d%H%M%S')
-    end
-
-    def setup(config)
     end
   end
 
