@@ -16,10 +16,13 @@ group :test do
   gem 'simplecov'
   gem 'rack-test', require: "rack/test"
   gem 'factory_bot'
+  gem 'webmock'
   gem 'rspec'
   gem 'database_cleaner'
   gem 'pry'
   gem 'timecop'
+  gem 'net-http-persistent'
+  gem 'multipart-post'
 end
 
 Dir.glob File.expand_path("projects/*/Gemfile",__dir__) do |file|

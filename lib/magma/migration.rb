@@ -70,7 +70,7 @@ class Magma
     end
 
     def column_entry name, type
-      "#{type.name} :#{name}"
+      "#{type.respond_to?(:name) ? type.name : type} :#{name}"
     end
 
     def unique_entry name
@@ -105,7 +105,7 @@ class Magma
     end
 
     def column_entry name, type
-      "add_column :#{name}, #{type}"
+      "add_column :#{name}, #{type.is_a?(Symbol) ? ":#{type}" : type}"
     end
 
     def remove_column_entry name
