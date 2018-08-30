@@ -40,6 +40,24 @@ class Magma
       end.join("\n").chomp
     end
 
+    def attribute_migration(att)
+      case att
+      when Magma::ForeignKeyAttribute
+        [
+          foreign_key_entry(att.column_name, att.link_model),
+          index_entry(att.column_name)
+        ]
+      when Magma::Attribute
+        [
+          column_entry(att.column_name, att.type),
+          att.unique && unique_entry(att.column_name),
+          att.index && index_entry(att.column_name)
+        ].compact
+      else
+        nil
+      end
+    end
+
     private
 
     SPC='  '
@@ -58,11 +76,8 @@ class Magma
     def new_attributes
       @model.attributes.map do |name,att|
         next unless att.needs_column?
-        att.migration(self)
+        attribute_migration(att)
       end.compact.flatten
-    end
-
-    class Entry
     end
 
     def foreign_key_entry column_name, foreign_model
@@ -129,17 +144,17 @@ class Magma
     def missing_attributes
       @model.attributes.map do |name,att|
         next if att.schema_ok?
-        att.migration(self)
+        attribute_migration(att)
       end.compact.flatten
     end
+
 
     def changed_attributes
       @model.attributes.map do |name,att|
         next unless att.schema_ok?
         next unless att.needs_column?
         next if att.schema_unchanged?
-        column_type_entry(att.column_name, 
-                          att.type)
+        column_type_entry(att.column_name, att.type)
       end.compact.flatten
     end
 

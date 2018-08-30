@@ -1,7 +1,8 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    attr_reader(:name, :type, :desc, :loader, :match, :format_hint)
+    attr_reader :name, :type, :desc, :loader, :match, :format_hint, :unique, :index
+
 
     class << self
       def options
@@ -79,14 +80,6 @@ class Magma
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
-    end
-
-    def migration(mig)
-      [ 
-        mig.column_entry(@name, type),
-        @unique && mig.unique_entry(@name),
-        @index && mig.index_entry(@name)
-      ].compact
     end
 
     def literal_type
