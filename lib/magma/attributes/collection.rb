@@ -1,26 +1,6 @@
 class Magma
   class CollectionAttribute < Attribute
     include Magma::Link
-    def schema_ok?
-      true
-    end
-
-    def schema_unchanged? 
-      true
-    end
-
-    def needs_column?
-      nil
-    end
-
-    def tab_column?
-      nil
-    end
-
-    def eager
-      @name
-    end
-
     def json_for record
       link = record[@name]
       link ? link.map(&:last).sort : nil

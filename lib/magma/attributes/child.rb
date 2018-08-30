@@ -1,24 +1,8 @@
 class Magma
   class ChildAttribute < Attribute
     include Magma::Link
-    def schema_ok?
-      true
-    end
-
-    def schema_unchanged? 
-      true
-    end
-
-    def needs_column?
-      nil
-    end
-
     def json_for record
       record[@name]
-    end
-
-    def eager
-      @name
     end
 
     def update record, link

@@ -41,10 +41,6 @@ class Magma
       json_for record
     end
 
-    def eager
-      nil
-    end
-
     def update(record, new_value)
       record.set({@name=> new_value})
     end
@@ -57,22 +53,6 @@ class Magma
       !@hide
     end
 
-    def tab_column?
-      shown?
-    end
-
-    def schema_ok?
-      schema.has_key?(column_name)
-    end
-
-    def schema_unchanged? 
-      schema[column_name][:db_type].to_sym == literal_type
-    end
-
-    def needs_column?
-      true
-    end
-
     def column_name
       @name
     end
@@ -80,14 +60,6 @@ class Magma
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
-    end
-
-    def literal_type
-      if @type == DateTime
-        :"timestamp without time zone"
-      else
-        Magma.instance.db.cast_type_literal(@type)
-      end
     end
 
     def update_link(record, link)
@@ -110,10 +82,6 @@ class Magma
     end
 
     private
-
-    def schema
-      @model.schema
-    end
 
     def set_options(opts)
       opts.each do |opt,value|

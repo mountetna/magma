@@ -40,6 +40,8 @@ class Magma
       end.join("\n").chomp
     end
 
+    private
+
     def attribute_migration(att)
       case att
       when Magma::ForeignKeyAttribute
@@ -58,7 +60,34 @@ class Magma
       end
     end
 
-    private
+    # this denotes a link attribute that points here (i.e.,
+    # the foreign key is in the link_model) and therefore has
+    # no column in this model
+    def foreign_attribute?(att)
+      [ Magma::ChildAttribute, Magma::CollectionAttribute, Magma::TableAttribute ].any? do |att_class|
+        att.instance_of?(att_class)
+      end
+    end
+
+    def schema_supports_attribute?(model, att)
+      if foreign_attribute?(att)
+        return true
+      else
+        return model.schema.has_key?(att.column_name)
+      end
+    end
+
+    def schema_unchanged?(model, att)
+      # we don't need to worry about models that link to us
+      return true if foreign_attribute?(att)
+      # neither can foreign keys change their type
+      return true if att.is_a?(Magma::ForeignKeyAttribute)
+
+      literal_type = att.type == DateTime ?  :"timestamp without time zone" :
+        Magma.instance.db.cast_type_literal(att.type)
+
+      return model.schema[att.column_name][:db_type].to_sym == literal_type
+    end
 
     SPC='  '
     def space(txt, pad)
@@ -75,7 +104,7 @@ class Magma
 
     def new_attributes
       @model.attributes.map do |name,att|
-        next unless att.needs_column?
+        next if foreign_attribute?(att)
         attribute_migration(att)
       end.compact.flatten
     end
@@ -139,11 +168,11 @@ class Magma
       end
     end
 
-    private 
+    private
 
     def missing_attributes
       @model.attributes.map do |name,att|
-        next if att.schema_ok?
+        next if schema_supports_attribute?(@model, att)
         attribute_migration(att)
       end.compact.flatten
     end
@@ -151,9 +180,8 @@ class Magma
 
     def changed_attributes
       @model.attributes.map do |name,att|
-        next unless att.schema_ok?
-        next unless att.needs_column?
-        next if att.schema_unchanged?
+        next unless schema_supports_attribute?(@model,att)
+        next if schema_unchanged?(@model,att)
         column_type_entry(att.column_name, att.type)
       end.compact.flatten
     end

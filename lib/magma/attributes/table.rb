@@ -1,22 +1,6 @@
 class Magma
   class TableAttribute < Attribute
     include Magma::Link
-    def schema_ok?
-      true
-    end
-
-    def schema_unchanged? 
-      true
-    end
-
-    def needs_column?
-      nil
-    end
-
-    def tab_column?
-      nil
-    end
-
     def json_for record
       link = record[@name]
       link ? link.map(&:last) : nil
@@ -24,10 +8,6 @@ class Magma
 
     def txt_for record
       nil
-    end
-
-    def eager
-      @name
     end
 
     def update record, new_value

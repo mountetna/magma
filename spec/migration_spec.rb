@@ -48,6 +48,23 @@ EOT
 EOT
     end
 
+    it 'suggests nothing in the creation for a table or collection attribute' do
+      module Labors
+        class Olympian < Magma::Model
+          collection :victim
+          table :prize
+        end
+      end
+      migration = Labors::Olympian.migration
+      expect(migration.to_s).to eq <<EOT.chomp
+    create_table(Sequel[:labors][:olympians]) do
+      primary_key :id
+      DateTime :created_at
+      DateTime :updated_at
+    end
+EOT
+    end
+
     it 'suggests a creation migration for json attributes' do
       module Labors
         class Olympian < Magma::Model
@@ -155,6 +172,7 @@ EOT
 EOT
       remove_attribute(Labors::Prize, :monster)
     end
+
     it 'removes attributes' do
       worth = Labors::Prize.attributes[:worth]
       remove_attribute(Labors::Prize,:worth)
@@ -166,6 +184,22 @@ EOT
     end
 EOT
       Labors::Prize.attributes[:worth] = worth
+    end
+
+    it 'makes no changes when removing child, collection or table attributes' do
+      monster = Labors::Labor.attributes[:monster]
+      prize = Labors::Labor.attributes[:prize]
+      victim = Labors::Monster.attributes[:victim]
+      remove_attribute(Labors::Labor,:monster)
+      remove_attribute(Labors::Labor,:prize)
+      remove_attribute(Labors::Monster,:victim)
+
+      expect(Labors::Labor.migration).to be_empty
+      expect(Labors::Monster.migration).to be_empty
+
+      Labors::Labor.attributes[:monster] = monster
+      Labors::Labor.attributes[:prize] = prize
+      Labors::Monster.attributes[:victim] = victim
     end
 
     it 'makes multiple changes at once' do

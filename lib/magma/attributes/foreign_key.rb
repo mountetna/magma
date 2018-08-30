@@ -1,17 +1,8 @@
 class Magma
   class ForeignKeyAttribute < Attribute
     include Magma::Link
-
-    def schema_unchanged?
-      true
-    end
-
     def column_name
       foreign_id
-    end
-
-    def eager
-      @name
     end
 
     def json_for record
