@@ -29,6 +29,7 @@ class Magma
       end
 
       def dictionary(dict_model, attributes={})
+        return @dictionary unless dict_model
         @dictionary = dict_model
         @dictionary_attributes = attributes
       end
