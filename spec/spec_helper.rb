@@ -180,6 +180,12 @@ FactoryBot.define do
     to_create(&:save)
     sequence(:name) { |n| "prize#{n}" }
   end
+  factory :codex, class: Labors::Codex do
+    to_create(&:save)
+  end
+  factory :aspect, class: Labors::Aspect do
+    to_create(&:save)
+  end
 
   factory :project, class: Labors::Project do
     to_create(&:save)
