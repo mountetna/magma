@@ -21,7 +21,7 @@ class Magma
       {
         name: @name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
-        type: @type.nil? ? nil : @type.name,
+        type: @type.nil? ? nil : @type.respond_to?(:name) ? @type.name : @type,
         attribute_class: self.class.name,
         desc: @desc,
         display_name: display_name,
