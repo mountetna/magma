@@ -15,11 +15,9 @@ class Magma
   end
 
   class RecordSet < Array
-    def initialize(model, validator, loader)
+    def initialize(model, loader)
       @model = model
-      @validator = validator
       @loader = loader
-      @model_validation = @validator.model_validation(@model)
       @attribute_entries = {}
     end
 
@@ -32,19 +30,12 @@ class Magma
     end
 
     def validate(document)
-      if @model.has_identifier? && !document[@model.identity]
-        yield "Missing identifier for #{@model.name}"
-      end
-      @model_validation.validate(document) do |error|
+      @loader.validate(@model,document) do |error|
         yield error
       end
     end
 
     private
-
-    def validation
-      @validation ||= @model.validation
-    end
 
     def attribute_entries(att_name)
       @attribute_entries[att_name] ||= @model.attributes[att_name].entry.new(
@@ -176,7 +167,7 @@ class Magma
     def initialize
       @records = {}
       @temp_id_counter = 0
-      @validator = Magma::Validator.new
+      @validator = Magma::Validation.new
     end
 
     def push_record(model, document)
@@ -196,10 +187,16 @@ class Magma
     def records(model)
       return @records[model] if @records[model]
 
-      @records[model] = RecordSet.new(model, @validator, self)
+      @records[model] = RecordSet.new(model, self)
       ensure_link_models(model)
 
       @records[model]
+    end
+
+    def validate(model, document)
+      @validator.validate(model,document) do |error|
+        yield error
+      end
     end
 
     # Once we have loaded up all the records we wish to insert/update (upsert)
@@ -213,7 +210,7 @@ class Magma
 
     def reset
       @records = {}
-      @validator = Magma::Validator.new
+      @validator = Magma::Validation.new
       GC.start
     end
 

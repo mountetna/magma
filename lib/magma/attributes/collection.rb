@@ -37,19 +37,5 @@ class Magma
         link_records( removed_links ).update( self_id => nil )
       end
     end
-    class Validation < Magma::BaseAttributeValidation
-      def validate(value)
-        unless value.is_a?(Array)
-          yield "#{value} is not an Array."
-          return
-        end
-        value.each do |link|
-          next unless link
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity, link) do |error|
-            yield error
-          end
-        end
-      end
-    end
   end
 end

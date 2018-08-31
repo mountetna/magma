@@ -30,15 +30,5 @@ class Magma
         end
       end
     end
-    class Validation < Magma::BaseAttributeValidation
-      def validate(value)
-        return if value.is_a?(Magma::TempId) || value.nil?
-        if @attribute.link_identity
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity, value) do |error|
-            yield error
-          end
-        end
-      end
-    end
   end
 end

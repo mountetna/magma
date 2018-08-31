@@ -65,14 +65,6 @@ class Magma
     def update_link(record, link)
     end
 
-    def validation
-      if self.class.const_defined?(:Validation)
-        self.class.const_get(:Validation)
-      else
-        Magma::BaseAttributeValidation
-      end
-    end
-
     def entry
       if self.class.const_defined?(:Entry)
         self.class.const_get(:Entry)
@@ -90,34 +82,6 @@ class Magma
         end
       end
     end
-
-    class Validation < Magma::BaseAttributeValidation
-      def validate(value)
-        case match
-        when Regexp
-          yield format_error(value) if !match.match(value)
-        when Array
-          if !match.map(&:to_s).include?(value)
-            yield "On #{@attribute.name}, '#{value}' should be one of #{match.join(", ")}."
-          end
-        end
-      end
-
-      private
-
-      def match
-        @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
-      end
-
-      def format_error(value)
-        if @attribute.format_hint
-          "On #{@attribute.name}, '#{value}' should be like '#{@attribute.format_hint}'."
-        else
-          "On #{@attribute.name}, '#{value}' is improperly formatted."
-        end
-      end
-    end
-
     class Entry < Magma::BaseAttributeEntry
       def entry(value)
         [ @attribute.name, value ]

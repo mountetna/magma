@@ -12,7 +12,7 @@ class Magma
 
     def valid?
       @errors = []
-      @validator.model_validation(@model).validate(@revised_document) do |error|
+      @validator.validate(@model, @revised_document) do |error|
         @errors.push error
       end
 
