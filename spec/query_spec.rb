@@ -95,10 +95,10 @@ describe QueryController do
     end
 
     it 'supports ::count' do
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hind = create(:labor, name: 'Ceryneian Hind', number: 3, completed: true)
+      hydra = create(:labor, :hydra)
+      stables = create(:labor, :stables)
+      lion = create(:labor, :lion)
+      hind = create(:labor, :hind)
 
       poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
@@ -123,7 +123,7 @@ describe QueryController do
       poop = create(:prize, name: 'poop')
 
       query(['prize', ['::has', 'worth'], '::all', 'name'])
-      
+
       json = json_body(last_response.body)
       expect(json[:answer].first.last).to eq('poison')
     end

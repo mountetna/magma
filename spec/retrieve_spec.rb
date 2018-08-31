@@ -189,9 +189,9 @@ describe RetrieveController do
   end
 
   it 'can use a filter' do
-    lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-    hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-    stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+    lion = create(:labor, :lion)
+    hydra = create(:labor, :hydra)
+    stables = create(:labor, :stables)
     retrieve(
       project_name: 'labors',
       model_name: 'labor',
@@ -323,9 +323,9 @@ describe RetrieveController do
   end
 
   it 'retrieves table associations' do
-    lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-    hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-    stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+    lion = create(:labor, :lion)
+    hydra = create(:labor, :hydra)
+    stables = create(:labor, :stables)
     lion_prizes = create_list(:prize, 3, labor: lion)
     hydra_prizes = create_list(:prize, 3, labor: hydra)
     stables_prizes = create_list(:prize, 3, labor: stables)
