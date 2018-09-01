@@ -9,17 +9,26 @@ describe Magma::Validation do
   end
 
   context 'attribute validations' do
-    def set_match(new_match)
-      @orig_match = Labors::Monster.attributes[:species].match
-      Labors::Monster.attributes[:species].instance_variable_set("@match", new_match)
+    before(:each) do
+      @match_stubs = {}
+    end
+
+    def stub_match(model, att_name, new_match)
+      @match_stubs[model] ||= {}
+      @match_stubs[model][att_name] = model.attributes[att_name].match
+      model.attributes[att_name].instance_variable_set("@match", new_match)
     end
 
     after(:each) do
-      Labors::Monster.attributes[:species].instance_variable_set("@match", @orig_match)
+      @match_stubs.each do |model,atts|
+        atts.each do |att_name,old_match|
+          model.attributes[att_name].instance_variable_set("@match",old_match)
+        end
+      end
     end
 
     it 'validates a regexp' do
-      set_match(/^[a-z\s]+$/)
+      stub_match(Labors::Monster, :species, /^[a-z\s]+$/)
 
       # fails
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
@@ -31,7 +40,7 @@ describe Magma::Validation do
     end
 
     it 'validates an array' do
-      set_match(['lion', 'Panthera leo'])
+      stub_match(Labors::Monster, :species, ['lion', 'Panthera leo'])
 
       # fails
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
@@ -39,6 +48,46 @@ describe Magma::Validation do
 
       # passes
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'lion')
+      expect(errors).to be_empty
+    end
+
+    it 'validates a child identifier' do
+      stub_match(Labors::Monster, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+
+      # fails
+      errors = validate(Labors::Labor, name: 'Nemean Lion', monster: 'nemean lion')
+      expect(errors).to eq(["On monster, 'nemean lion' is improperly formatted."])
+
+      # passes
+      errors = validate(Labors::Labor, name: 'Nemean Lion', monster: 'Nemean Lion')
+      expect(errors).to be_empty
+    end
+
+    it 'validates a foreign key identifier' do
+      stub_match(Labors::Monster, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+
+      # fails
+      errors = validate(Labors::Victim, name: 'Outis Koutsonadis', monster: 'nemean lion')
+      expect(errors).to eq(["On monster, 'nemean lion' is improperly formatted."])
+
+      # passes
+      errors = validate(Labors::Victim, name: 'Outis Koutsonadis', monster: 'Nemean Lion')
+      expect(errors).to be_empty
+    end
+
+    it 'validates a collection' do
+      stub_match(Labors::Labor, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+
+      # fails
+      errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'augean stables', 'lernean hydra' ])
+      expect(errors).to eq(["On labor, 'augean stables' is improperly formatted.", "On labor, 'lernean hydra' is improperly formatted."])
+
+      # fails
+      errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: 'labors.txt')
+      expect(errors).to eq(["labors.txt is not an Array."])
+
+      # passes
+      errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'Augean Stables', 'Lernean Hydra' ])
       expect(errors).to be_empty
     end
   end

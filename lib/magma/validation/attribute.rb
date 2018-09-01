@@ -49,6 +49,22 @@ class Magma
         def validate(value)
           # do nothing
         end
+
+        private
+
+        def format_error(value)
+          if @attribute.format_hint
+            "On #{@attribute.name}, '#{value}' should be like '#{@attribute.format_hint}'."
+          else
+            "On #{@attribute.name}, '#{value}' is improperly formatted."
+          end
+        end
+
+        def link_validate(value, &block)
+          @validator.validate(@attribute.link_model, @attribute.link_model.identity => value) do |error|
+            yield format_error(value)
+          end
+        end
       end
 
       class AttributeValidation < BaseAttributeValidation
@@ -65,52 +81,37 @@ class Magma
 
         private
 
+        # memoize match to reuse across validations
         def match
           @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
         end
-
-        def format_error(value)
-          if @attribute.format_hint
-            "On #{@attribute.name}, '#{value}' should be like '#{@attribute.format_hint}'."
-          else
-            "On #{@attribute.name}, '#{value}' is improperly formatted."
-          end
-        end
       end
 
-      class ChildValidation < BaseAttributeValidation
-        def validate(value)
+      class ChildAttributeValidation < BaseAttributeValidation
+        def validate(value, &block)
           return if value.nil? || value.empty?
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity => value) do |error|
-            yield error
-          end
+          link_validate(value, &block)
         end
       end
-      class ForiegnKeyValidation < BaseAttributeValidation
-        def validate(value)
+      class ForeignKeyAttributeValidation < BaseAttributeValidation
+        def validate(value, &block)
           return if value.is_a?(Magma::TempId) || value.nil?
-          if @attribute.link_identity
-            @validator.validate(@attribute.link_model, @attribute.link_model.identity => value) do |error|
-              yield error
-            end
-          end
+          link_validate(value,&block) if @attribute.link_identity
         end
       end
-      class CollectionValidation < BaseAttributeValidation
-        def validate(value)
+      class CollectionAttributeValidation < BaseAttributeValidation
+        def validate(value, &block)
           unless value.is_a?(Array)
             yield "#{value} is not an Array."
             return
           end
           value.each do |link|
             next unless link
-            @validator.validate(@attribute.link_model, @attribute.link_model.identity => link) do |error|
-              yield error
-            end
+            link_validate(link,&block)
           end
         end
       end
-      class TableValidation < CollectionValidation; end
+      class TableAttributeValidation < CollectionAttributeValidation; end
     end
   end
 end
