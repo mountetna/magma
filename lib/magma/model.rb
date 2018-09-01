@@ -28,10 +28,9 @@ class Magma
         set_dataset dataset.order(*@order)
       end
 
-      def dictionary(dict_model, attributes={})
+      def dictionary(dict_model=nil, attributes={})
         return @dictionary unless dict_model
-        @dictionary = dict_model
-        @dictionary_attributes = attributes
+        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
       end
 
       def attribute(attr_name, opts = {})

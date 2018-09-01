@@ -4,6 +4,7 @@ require_relative 'magma/validation'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
 require_relative 'magma/attribute'
+require_relative 'magma/dictionary'
 require_relative 'magma/model'
 require_relative 'magma/revision'
 require_relative 'magma/commands'
@@ -34,6 +35,7 @@ class Magma
   def setup_db
     @db = Sequel.connect(config(:db))
     @db.extension :connection_validator
+    @db.extension :pg_json
     @db.pool.connection_validation_timeout = -1
   end
 

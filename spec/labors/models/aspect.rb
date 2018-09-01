@@ -2,10 +2,12 @@ module Labors
   class Aspect < Magma::Model
     parent :monster
 
+    # this dictionary tells us how to validate Aspect
     dictionary Labors::Codex,
+      monster: :monster,
       name: :aspect,
       source: :tome,
-      value: :values
+      value: :lore
 
     # the aspect in question
     attribute :name, type: String

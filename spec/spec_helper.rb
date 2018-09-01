@@ -226,6 +226,14 @@ FactoryBot.define do
   end
   factory :codex, class: Labors::Codex do
     to_create(&:save)
+
+    trait :lion do
+      monster { 'Nemean Lion' }
+    end
+
+    trait :hydra do
+      monster { 'Lernean Hydra' }
+    end
   end
   factory :aspect, class: Labors::Aspect do
     to_create(&:save)

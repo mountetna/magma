@@ -6,9 +6,10 @@ Sequel.migration do
       DateTime :updated_at
       foreign_key :project_id, Sequel[:labors][:projects]
       index :project_id
+      String :monster
       String :aspect
       String :tome
-      json :values
+      json :lore
     end
     create_table(Sequel[:labors][:aspects]) do
       primary_key :id

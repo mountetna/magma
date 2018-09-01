@@ -92,17 +92,174 @@ describe Magma::Validation do
     end
   end
 
-  it 'fails to validate with an empty dictionary' do
-    lion = create(:monster, :lion)
-    hydra = create(:monster, name: 'Lernean Hydra', species: 'hydra')
+  context 'dictionary validations' do
+    it 'fails to validate with an empty dictionary' do
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'hide',
+        source: 'Bullfinch',
+        value: 'fur'
+      )
 
-    errors = validate(
-      Labors::Aspect,
-      name: 'hide',
-      source: 'Bullfinch',
-      value: 'fur'
-    )
+      expect(errors).to eq(['No matching entries for dictionary Labors::Codex'])
+    end
 
-    expect(errors).not_to be_empty
+    def create_codex_set(aspect, lore)
+      [ :lion, :hydra ].each do |monster|
+        [ :bullfinch, :graves ].each do |tome|
+          lore_class, monster_lore = lore[monster][tome]
+          create(
+            :codex,
+            monster,
+            aspect: aspect,
+            tome: tome.capitalize.to_s,
+            lore: {
+              type: lore_class,
+              value: monster_lore
+            }
+          )
+        end
+      end
+    end
+
+    def build_codex
+      create_codex_set(
+        'hide',
+        lion: { bullfinch: [ String, 'fur' ], graves: [ String, 'leather' ] },
+        hydra: { bullfinch: [ String, 'scales' ], graves: [ String, 'scales' ] }
+      )
+      create_codex_set(
+        'mass_in_stones',
+        lion: { bullfinch: [ Numeric, 20000 ], graves: [ Numeric, 120 ]},
+        hydra: { bullfinch: [ Numeric, 1000 ], graves: [ Numeric, 1000 ]}
+      )
+      create_codex_set(
+        'victim_count',
+        lion: { bullfinch: [ Range, [200, 300] ], graves: [ Range, [ 2000, 10000 ] ] },
+        hydra: { bullfinch: [ Range, [500, 800] ], graves: [ Numeric, 205 ] }
+      )
+      create_codex_set(
+        'cries',
+        lion: { bullfinch: [ Regexp, '^[Rr]o+a+r$' ], graves: [ Array, [ 'roar', 'growl' ] ] },
+        hydra: { bullfinch: [ Regexp, '^[Kk]re+a+h+$' ], graves: [ Array, [ 'hiss' ] ] }
+      )
+    end
+
+    it 'validates a string match against a dictionary' do
+      build_codex
+
+      # fails
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'hide',
+        source: 'Bullfinch',
+        value: 'leather'
+      )
+      expect(errors).not_to be_empty
+
+      # passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'hide',
+        source: 'Bullfinch',
+        value: 'fur'
+      )
+      expect(errors).to be_empty
+    end
+
+    it 'validates a number match against a dictionary' do
+      build_codex
+      # fails
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'mass_in_stones',
+        source: 'Bullfinch',
+        value: 150
+      )
+      expect(errors).not_to be_empty
+
+      # passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'mass_in_stones',
+        source: 'Bullfinch',
+        value: 20000
+      )
+      expect(errors).to be_empty
+    end
+
+    it 'validates a range match against a dictionary' do
+      build_codex
+      # fails
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'victim_count',
+        source: 'Bullfinch',
+        value: 150
+      )
+      expect(errors).not_to be_empty
+
+      # passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'victim_count',
+        source: 'Bullfinch',
+        value: 200
+      )
+      expect(errors).to be_empty
+    end
+
+    it 'validates a regexp match against a dictionary' do
+      build_codex
+      # fails
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'cries',
+        source: 'Bullfinch',
+        value: 'raooor'
+      )
+      expect(errors).not_to be_empty
+
+      # passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'cries',
+        source: 'Bullfinch',
+        value: 'Roaaar'
+      )
+      expect(errors).to be_empty
+    end
+
+    it 'validates an array match against a dictionary' do
+      build_codex
+      # fails
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'cries',
+        source: 'Graves',
+        value: 'scream'
+      )
+      expect(errors).not_to be_empty
+
+      # passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'cries',
+        source: 'Graves',
+        value: 'roar'
+      )
+      expect(errors).to be_empty
+    end
   end
 end

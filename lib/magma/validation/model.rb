@@ -31,4 +31,5 @@ end
 
 require_relative 'attribute'
 require_relative 'identifier'
+require_relative 'dictionary'
 
