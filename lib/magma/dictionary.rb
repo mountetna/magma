@@ -30,8 +30,8 @@ class Magma::Dictionary
   private
 
   def matches_entry_attribute?(match_entry, document_value, match_att)
-    case match_att.type
-    when :json
+    case match_att
+    when Magma::MatchAttribute
       return json_match?(match_entry, document_value)
     else
       return match_entry == document_value
