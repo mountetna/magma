@@ -84,6 +84,10 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
+      def match(name, opts = {})
+        attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
+      end
+
       def identifier(name, opts)
         attribute(name, opts.merge(unique: true))
         @identity = name

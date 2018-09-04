@@ -90,6 +90,36 @@ describe Magma::Validation do
       errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'Augean Stables', 'Lernean Hydra' ])
       expect(errors).to be_empty
     end
+
+    it 'validates a match' do
+      # fails
+      errors = validate(
+        Labors::Codex,
+        monster: 'Nemean Lion',
+        aspect: 'hide',
+        tome: 'Bullfinch',
+        lore: {
+          tipe: 'String',
+          value: 'fur'
+        }
+      )
+      expect(errors).to eq(
+        ['{"tipe":"String","value":"fur"} is not like { type, value }.']
+      )
+
+      # passes
+      errors = validate(
+        Labors::Codex,
+        monster: 'Nemean Lion',
+        aspect: 'hide',
+        tome: 'Bullfinch',
+        lore: {
+          type: 'String',
+          value: 'fur'
+        }
+      )
+      expect(errors).to be_empty
+    end
   end
 
   context 'dictionary validations' do

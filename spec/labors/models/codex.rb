@@ -5,6 +5,6 @@ module Labors
     attribute :monster, type: String
     attribute :aspect, type: String
     attribute :tome, type: String
-    attribute :lore, type: :json
+    match :lore
   end
 end

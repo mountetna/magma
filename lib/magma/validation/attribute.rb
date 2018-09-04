@@ -93,6 +93,13 @@ class Magma
           link_validate(value, &block)
         end
       end
+      class MatchAttributeValidation < BaseAttributeValidation
+        def validate(value, &block)
+          return if value.nil? || value.empty?
+          return if value.is_a?(Hash) && value.keys.sort == [ :type, :value ]
+          yield "#{value.to_json} is not like { type, value }."
+        end
+      end
       class ForeignKeyAttributeValidation < BaseAttributeValidation
         def validate(value, &block)
           return if value.is_a?(Magma::TempId) || value.nil?
