@@ -106,9 +106,8 @@ describe Magma::Validation do
     end
 
     def create_codex_set(aspect, lore)
-      [ :lion, :hydra ].each do |monster|
-        [ :bullfinch, :graves ].each do |tome|
-          lore_class, monster_lore = lore[monster][tome]
+      lore.each do |monster, tomes|
+        tomes.each do |tome, (lore_class, monster_lore)|
           create(
             :codex,
             monster,
@@ -258,6 +257,39 @@ describe Magma::Validation do
         name: 'cries',
         source: 'Graves',
         value: 'roar'
+      )
+      expect(errors).to be_empty
+    end
+
+    it 'validates against multiple entries' do
+      build_codex
+      # fails
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Nemean Lion',
+        name: 'cries',
+        source: 'Graves',
+        value: 'scream'
+      )
+      expect(errors).not_to be_empty
+
+      # passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Lernean Hydra',
+        name: 'cries',
+        source: 'Graves',
+        value: 'hiss'
+      )
+      expect(errors).to be_empty
+
+      # also passes
+      errors = validate(
+        Labors::Aspect,
+        monster: 'Lernean Hydra',
+        name: 'cries',
+        source: 'Bullfinch',
+        value: 'Kreeaah'
       )
       expect(errors).to be_empty
     end
