@@ -10,5 +10,11 @@ class Magma
         obj[ self_id ] = record.id
       end
     end
+    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
+      def validate(value, &block)
+        return if value.nil? || value.empty?
+        link_validate(value, &block)
+      end
+    end
   end
 end

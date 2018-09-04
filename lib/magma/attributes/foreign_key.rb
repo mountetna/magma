@@ -19,6 +19,12 @@ class Magma
         record[ foreign_id ] = obj.id
       end
     end
+    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
+      def validate(value, &block)
+        return if value.is_a?(Magma::TempId) || value.nil?
+        link_validate(value,&block) if @attribute.link_identity
+      end
+    end
     class Entry < Magma::BaseAttributeEntry
       def entry value
         return nil if value.nil?

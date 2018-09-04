@@ -12,5 +12,6 @@ class Magma
 
     def update record, new_value
     end
+    class Validation < Magma::CollectionAttribute::Validation; end
   end
 end

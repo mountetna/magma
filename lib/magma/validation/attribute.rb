@@ -33,9 +33,8 @@ class Magma
       end
 
       def validation(att)
-        validation_class = :"#{att.class.to_s.split('::').last}Validation"
-        Magma::Validation::Attribute.const_defined?(validation_class) ?
-          Magma::Validation::Attribute.const_get(validation_class) :
+        att.class.const_defined?(:Validation) ?
+          att.class.const_get(:Validation) :
           Magma::Validation::Attribute::BaseAttributeValidation
       end
 
@@ -66,59 +65,6 @@ class Magma
           end
         end
       end
-
-      class AttributeValidation < BaseAttributeValidation
-        def validate(value)
-          case match
-          when Regexp
-            yield format_error(value) if !match.match(value)
-          when Array
-            if !match.map(&:to_s).include?(value)
-              yield "On #{@attribute.name}, '#{value}' should be one of #{match.join(", ")}."
-            end
-          end
-        end
-
-        private
-
-        # memoize match to reuse across validations
-        def match
-          @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
-        end
-      end
-
-      class ChildAttributeValidation < BaseAttributeValidation
-        def validate(value, &block)
-          return if value.nil? || value.empty?
-          link_validate(value, &block)
-        end
-      end
-      class MatchAttributeValidation < BaseAttributeValidation
-        def validate(value, &block)
-          return if value.nil? || value.empty?
-          return if value.is_a?(Hash) && value.keys.sort == [ :type, :value ]
-          yield "#{value.to_json} is not like { type, value }."
-        end
-      end
-      class ForeignKeyAttributeValidation < BaseAttributeValidation
-        def validate(value, &block)
-          return if value.is_a?(Magma::TempId) || value.nil?
-          link_validate(value,&block) if @attribute.link_identity
-        end
-      end
-      class CollectionAttributeValidation < BaseAttributeValidation
-        def validate(value, &block)
-          unless value.is_a?(Array)
-            yield "#{value} is not an Array."
-            return
-          end
-          value.each do |link|
-            next unless link
-            link_validate(link,&block)
-          end
-        end
-      end
-      class TableAttributeValidation < CollectionAttributeValidation; end
     end
   end
 end
