@@ -51,9 +51,7 @@ describe Magma::Client do
       )
     end.to_not raise_error(Magma::ClientError)
 
-    json = json_body(response.body)
-
-    expect(json[:models].keys).to eq([:labor])
+    expect(json_body(response)[:models].keys).to eq([:labor])
   end
 
   it 'invokes the update endpoint correctly.' do
@@ -89,9 +87,7 @@ describe Magma::Client do
       )
     end.to_not raise_error(Magma::ClientError)
 
-    json = json_body(response.body)
-
-    expect(json[:answer].length).to eq(3)
+    expect(json_body(response)[:answer].length).to eq(3)
   end
 end
 

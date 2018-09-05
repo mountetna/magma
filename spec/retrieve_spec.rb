@@ -107,7 +107,7 @@ describe RetrieveController do
         attribute_names: 'identifier'
       )
       expect(last_response.status).to eq(200)
-      json = json_body(last_response.body)
+      json = json_body
 
       # any model with an identifier returns all records
       expect(json[:models][:labor][:documents].keys).to eq(labors.map(&:name).map(&:to_sym))
@@ -129,7 +129,7 @@ describe RetrieveController do
         project_name: 'labors'
       )
 
-      json = json_body(last_response.body)
+      json = json_body
 
       expect(json[:models][:labor][:documents]).to have_key(names.first)
       expect(json[:models][:labor][:documents]).not_to have_key(names.last)
@@ -144,10 +144,7 @@ describe RetrieveController do
         attribute_names: 'all' 
       )
 
-      json = json_body(last_response.body)
-
-      expect(json[:models][:prize][:documents]).to have_key(prizes[0].id.to_s.to_sym)
-      expect(json[:models][:prize][:documents]).not_to have_key(prizes[2].id.to_s.to_sym)
+      expect(json_body[:models][:prize][:documents].keys).to eq(prizes[0..1].map(&:id).map(&:to_s).map(&:to_sym))
     end
   end
 
@@ -163,8 +160,7 @@ describe RetrieveController do
         project_name: 'labors'
       )
 
-      json = json_body(last_response.body)
-      project_doc = json[:models][:project][:documents][project.name.to_sym]
+      project_doc = json_body[:models][:project][:documents][project.name.to_sym]
 
       expect(project_doc).not_to be_nil
       expect(project_doc[:labor]).to eq(labors.map(&:name))
@@ -180,8 +176,7 @@ describe RetrieveController do
         project_name: 'labors'
       )
 
-      json = json_body(last_response.body)
-      project_doc = json[:models][:project][:documents][project.name.to_sym]
+      project_doc = json_body[:models][:project][:documents][project.name.to_sym]
 
       expect(project_doc).not_to be_nil
       expect(project_doc[:labor]).to eq([])
@@ -208,7 +203,7 @@ describe RetrieveController do
         attribute_names: [ 'prize' ]
       )
 
-      json = json_body(last_response.body)
+      json = json_body
       expect(json[:models][:labor][:documents].size).to eq(2)
       expect(json[:models][:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
     end
@@ -259,9 +254,8 @@ describe RetrieveController do
         filter: 'name~L'
       )
 
-      json = json_body(last_response.body)
       expect(last_response.status).to eq(200)
-      expect(json[:models][:labor][:documents].count).to eq(2)
+      expect(json_body[:models][:labor][:documents].count).to eq(2)
     end
 
     it 'can filter on numbers' do
@@ -279,8 +273,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
 
-      json = json_body(last_response.body)
-      prize_names = json[:models][:prize][:documents].values.map{|d| d[:name]}
+      prize_names = json_body[:models][:prize][:documents].values.map{|d| d[:name]}
       expect(prize_names).to eq(['poison', 'skin'])
     end
 
@@ -298,8 +291,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
 
-      json = json_body(last_response.body)
-      labor_names = json[:models][:labor][:documents].values.map{|d| d[:name]}
+      labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
       expect(labor_names).to eq(new_labors.map(&:name))
     end
 
@@ -320,8 +312,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
 
-      json = json_body(last_response.body)
-      labor_names = json[:models][:labor][:documents].values.map{|d| d[:name]}
+      labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
       expect(labor_names).to eq(new_labors.map(&:name))
 
       Timecop.return
@@ -342,8 +333,7 @@ describe RetrieveController do
         page_size: 3
       )
 
-      json = json_body(last_response.body)
-      expect(json[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
+      expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
     end
 
     it 'can page results with joined collections' do
@@ -363,8 +353,7 @@ describe RetrieveController do
         page_size: 3
       )
 
-      json = json_body(last_response.body)
-      expect(json[:models][:monster][:documents].keys).to eq(names.map(&:to_sym))
+      expect(json_body[:models][:monster][:documents].keys).to eq(names.map(&:to_sym))
     end
 
     it 'returns a count of total records for page 1' do
@@ -379,8 +368,7 @@ describe RetrieveController do
         page_size: 3
       )
 
-      json = json_body(last_response.body)
-      expect(json[:models][:labor][:count]).to eq(9)
+      expect(json_body[:models][:labor][:count]).to eq(9)
     end
   end
 end

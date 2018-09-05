@@ -38,10 +38,9 @@ describe UpdateController do
       }
     )
 
-    expect(Labors::Labor.count).to be(2)
-    json = json_body(last_response.body)
-    expect(json[:models][:project][:documents][:'The Two Labors of Hercules']).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
     expect(last_response.status).to eq(200)
+    expect(Labors::Labor.count).to be(2)
+    expect(json_body[:models][:project][:documents][:'The Two Labors of Hercules']).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
   end
 
   it 'fails on validation checks' do

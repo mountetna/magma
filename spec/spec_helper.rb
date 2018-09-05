@@ -248,13 +248,13 @@ def fixture(name)
   File.join(File.dirname(__FILE__), "fixtures/#{name}.txt")
 end
 
-def json_body(body)
-  JSON.parse(body, symbolize_names: true)
+def json_body(response=nil)
+  JSON.parse((response || last_response).body, symbolize_names: true)
 end
 
 AUTH_USERS = {
   editor: { 
-    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'e:labors' 
+    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors' 
   },
   viewer: {
     email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors' 
