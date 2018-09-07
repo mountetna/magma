@@ -5,97 +5,6 @@ class Magma
   Model = Class.new(Sequel::Model)
   class Model
     class << self
-      def attributes
-        @attributes ||= {}
-      end
-
-      def identity
-        @identity || primary_key
-      end
-
-      def has_identifier?
-        @identity
-      end
-
-      def display_attributes
-        attributes.select do |name|
-          attributes[name].shown?
-        end
-      end
-
-      def order(*columns)
-        @order = columns
-        set_dataset dataset.order(*@order)
-      end
-
-      def dictionary(dict_model=nil, attributes={})
-        return @dictionary unless dict_model
-        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
-      end
-
-      def attribute(attr_name, opts = {})
-
-        klass = opts.delete(:attribute_class) || Magma::Attribute
-        attributes[attr_name] = klass.new(attr_name, self, opts)
-      end
-
-      def has_attribute?(name)
-        name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
-      end
-
-      def parent name=nil, opts = {}
-        if name
-          @parent = name
-          many_to_one name
-          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
-        end
-        @parent
-      end
-
-      def child(name, opts = {})
-        one_to_one(name)
-        attribute(name, opts.merge(attribute_class: Magma::ChildAttribute))
-      end
-
-      def link(name, opts = {})
-        full_model_name = resolve_namespace(opts[:link_model] || name)
-        many_to_one(name, class: full_model_name)
-        attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
-      end
-
-      def file name, opts = {}
-        mount_uploader name, Magma::FileUploader
-        attribute name, opts.merge(attribute_class: Magma::FileAttribute)
-      end
-      alias_method :document, :file
-
-      def image name, opts = {}
-        mount_uploader name, Magma::ImageUploader
-        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
-      end
-
-      def collection(name, opts = {})
-        one_to_many(name, class: resolve_namespace(name), primary_key: :id)
-        attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
-      end
-
-      def table(name, opts = {})
-        one_to_many(name, class: resolve_namespace(name), primary_key: :id)
-        attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
-      end
-
-      def match(name, opts = {})
-        attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
-      end
-
-      def identifier(name, opts)
-        attribute(name, opts.merge(unique: true))
-        @identity = name
-
-        # Default ordering is by identifier.
-        order(name) unless @order
-      end
-
       def project_name
         name.split('::').first.snake_case.to_sym
       end
@@ -112,8 +21,104 @@ class Magma
         Magma::Migration.create(self)
       end
 
+      def order(*columns)
+        @order = columns
+        set_dataset dataset.order(*@order)
+      end
+
+      # attributes point to pieces of data, including
+      # records and collections of records
+      def attributes
+        @attributes ||= {}
+      end
+
+      # basic attribute, holds any pg data type
+      def attribute(attr_name, opts = {})
+        klass = opts.delete(:attribute_class) || Magma::Attribute
+        attributes[attr_name] = klass.new(attr_name, self, opts)
+      end
+
+      def has_attribute?(name)
+        name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
+      end
+
+      # identifier attribute, sets a unique identifier
+      def identifier(name, opts)
+        attribute(name, opts.merge(unique: true))
+        @identity = name
+
+        # Default ordering is by identifier.
+        order(name) unless @order
+      end
+
+      def identity
+        @identity || primary_key
+      end
+
+      def has_identifier?
+        @identity
+      end
+
+      # parent attribute, links to a parent record
+      def parent name=nil, opts = {}
+        if name
+          @parent = name
+          many_to_one name
+          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+        end
+        @parent
+      end
+
+      # child attribute, links to a single child record
+      def child(name, opts = {})
+        one_to_one(name)
+        attribute(name, opts.merge(attribute_class: Magma::ChildAttribute))
+      end
+
+      # link attribute, links to a single other record
+      def link(name, opts = {})
+        many_to_one(name, class: project_model(opts[:link_model] || name))
+        attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
+      end
+
+      # file attribute, holds file data
+      def file name, opts = {}
+        mount_uploader name, Magma::FileUploader
+        attribute name, opts.merge(attribute_class: Magma::FileAttribute)
+      end
+      alias_method :document, :file
+
+      # image attribute, holds image data
+      def image name, opts = {}
+        mount_uploader name, Magma::ImageUploader
+        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
+      end
+
+      # collection attribute, links to a collection by identifiers
+      def collection(name, opts = {})
+        one_to_many(name, class: project_model(name), primary_key: :id)
+        attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
+      end
+
+      # table attribute, links to a collection (table) with no identifier
+      def table(name, opts = {})
+        one_to_many(name, class: project_model(name), primary_key: :id)
+        attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
+      end
+
+      # match attribute, links to a json match object
+      def match(name, opts = {})
+        attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
+      end
+
+      # suggests dictionary entries based on
+      def dictionary(dict_model=nil, attributes={})
+        return @dictionary unless dict_model
+        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
+      end
+
+      # json template of this model
       def json_template(attribute_names = nil)
-        # Return a json template of this thing.
         attribute_names ||= attributes.keys
         {
           name: model_name,
@@ -208,32 +213,32 @@ class Magma
         end
       end
 
-      # Extract the full module name and prepend it to the incoming class name
-      # so we can get the correct Module/Class reference. This one is to 
-      # correctly format the Ruby models so they may reference eachother.
-      def resolve_namespace(name)
-        :"#{self.name.split(/::/).first}::#{name.to_s.camel_case}"
+      def project_model(name)
+        :"#{project_name.to_s.camel_case}::#{name.to_s.camel_case}"
       end
 
-      # Takes the module/class namespace and turns it into a postgres
-      # schema/table string. This one is to establish the Sequel Model to 
-      # Postgres DB connection.
-      def namespaced_table_name(subclass)
-        project_name, table_name = subclass.name.split(/::/).map(&:snake_case)
-        table_name = table_name.plural
-        Sequel[project_name.to_sym][table_name.to_sym]
-      end
-
-      def inherited(subclass)
+      def inherited(magma_model)
         # Sets the appropriate postgres schema for the model. There should be a 
         # one to one correlation between a model's module/class and a postgres
         # schema/table.
-        set_dataset(namespaced_table_name(subclass))
+        set_dataset(
+          Sequel[
+            magma_model.project_name
+          ][
+            magma_model.model_name.to_s.plural.to_sym
+          ]
+        )
 
         super
-        subclass.attribute(:created_at, type: DateTime, hide: true)
-        subclass.attribute(:updated_at, type: DateTime, hide: true)
+        magma_model.attribute(:created_at, type: DateTime, hide: true)
+        magma_model.attribute(:updated_at, type: DateTime, hide: true)
       end
+    end
+
+    # record methods
+
+    def model
+      self.class
     end
 
     def identifier
@@ -247,29 +252,17 @@ class Magma
       end
     end
 
-    def model
-      self.class
-    end
-
     def json_document(attribute_names = nil)
       # A JSON version of this record (actually a hash). Each attribute
       # reports in its own fashion
       Hash[
         (attribute_names || model.attributes.keys).map do |name|
-          [ name, json_for(name)  ]
+          [ name, model.attributes[att_name].json_for(self) ]
         end
       ].update(
         # always ensure some sort of identifier
         model.identity => identifier
       )
-    end
-
-    def json_for(att_name)
-      model.attributes[att_name].json_for(self)
-    end
-
-    def txt_for(att_name)
-      model.attributes[att_name].txt_for(self)
     end
   end
 end
