@@ -32,7 +32,7 @@ describe RetrieveController do
     )
     expect(last_response.status).to eq(200)
 
-    json_template = json_body(last_response.body)[:models][:aspect][:template]
+    json_template = json_body[:models][:aspect][:template]
 
     # all attributes are present
     expect(json_template[:attributes].keys.sort).to eq(
