@@ -25,12 +25,38 @@ describe RetrieveController do
 
   it 'calls the retrieve endpoint and returns a template.' do
     retrieve(
-      model_name: 'labor',
+      model_name: 'aspect',
       record_names: [],
       attribute_names: [],
       project_name: 'labors'
     )
     expect(last_response.status).to eq(200)
+
+    json_template = json_body(last_response.body)[:models][:aspect][:template]
+
+    # all attributes are present
+    expect(json_template[:attributes].keys.sort).to eq(
+      [ :created_at, :monster, :name, :source, :updated_at, :value ]
+    )
+
+    # attributes are well-formed
+    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_class, :display_name, :name, :shown))
+
+    # the identifier is reported
+    expect(json_template[:identifier]).to eq('id')
+
+    # the name is reported
+    expect(json_template[:name]).to eq('aspect')
+
+    # the parent model is reported
+    expect(json_template[:parent]).to eq('monster')
+
+    # the dictionary model is reported
+    expect(json_template[:dictionary]).to eq(
+      project_name: 'labors',
+      model_name: 'codex',
+      attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
+    )
   end
 
   it 'complains with missing params.' do

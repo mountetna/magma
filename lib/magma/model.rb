@@ -116,13 +116,14 @@ class Magma
         # Return a json template of this thing.
         attribute_names ||= attributes.keys
         {
-          name: model_name, 
+          name: model_name,
           attributes: Hash[
             attribute_names.map do |name|
               [ name, attributes[name].json_template ]
             end
           ],
           identifier: identity,
+          dictionary: @dictionary && @dictionary.to_hash,
           parent: @parent
         }.delete_if {|k,v| v.nil? }
       end

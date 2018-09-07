@@ -3,9 +3,6 @@ class Magma::Dictionary
     @model = model
     @dict_model = dict_model
     @attributes = attributes
-    @model_match_name, @dict_match_name = attributes.find do |model_att_name, dict_att_name|
-      @dict_model.attributes[dict_att_name].type == :json
-    end
   end
 
   def entries
@@ -25,6 +22,14 @@ class Magma::Dictionary
 
   def to_s
     @dict_model.name
+  end
+
+  def to_hash
+    {
+      project_name: @dict_model.project_name,
+      model_name: @dict_model.model_name,
+      attributes: @attributes
+    }
   end
 
   private
