@@ -371,4 +371,19 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:count]).to eq(9)
     end
   end
+
+  context 'restriction' do
+    it 'hides restricted data' do
+      restricted_victim_list = create_list(:victim, 9, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 9)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: 'all'
+      )
+      expect(json_body[:models][:victim][:documents].keys).to eq(restricted_victim_list.map(&:identifier))
+    end
+  end
 end

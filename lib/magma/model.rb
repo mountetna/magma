@@ -111,6 +111,10 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
       end
 
+      def restricted(opts= {})
+        attribute(:restricted, opts.merge(attribute_class: Magma::RestrictedAttribute, type: TrueClass))
+      end
+
       # suggests dictionary entries based on
       def dictionary(dict_model=nil, attributes={})
         return @dictionary unless dict_model
