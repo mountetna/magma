@@ -70,8 +70,8 @@ class Magma
         table = to_table(query)
         page_answer = @start_predicate.extract(table, identity)
         yield page_answer
-        end
       end
+    end
 
     def predicates
       @predicates ||= @start_predicate.flatten

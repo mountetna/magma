@@ -206,6 +206,9 @@ describe RetrieveController do
       json = json_body
       expect(json[:models][:labor][:documents].size).to eq(2)
       expect(json[:models][:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
+      expect(json[:models][:prize][:documents].values.first.keys.sort).to eq(
+        [:created_at, :id, :labor, :name, :updated_at, :worth ]
+      )
     end
   end
 

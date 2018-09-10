@@ -12,9 +12,9 @@ describe 'TSVWriter' do
         model,
         nil,
         model.attributes.values,
-        nil,
-        1,
-        2
+        filter: nil,
+        page: 1,
+        page_size: 2
     )
 
     file = StringIO.new

@@ -59,7 +59,7 @@ class UpdateController < Magma::Controller
       records = Magma::Retrieval.new(
         model,
         model_revisions.map(&:record_name),
-        attribute_names.map { |att_name| model.attributes[att_name] }
+        'all'
       ).records
 
       payload.add_records(model, records)
