@@ -14,7 +14,7 @@ class Magma
     verb '::false' do
       child TrueClass
       constraint do
-        basic_constraint(@attribute_name, false)
+        not_constraint(@attribute_name, true)
       end
     end
   end

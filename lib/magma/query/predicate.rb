@@ -34,6 +34,10 @@ class Magma
   class Predicate
     attr_reader :argument
 
+    def initialize(question)
+      @question = question
+    end
+
     def reduced_type
       if child_predicate.is_a?(Predicate)
         child_predicate.reduced_type
@@ -228,7 +232,7 @@ class Magma
 
     def terminal value
       raise ArgumentError, 'Trailing arguments after terminal value!' unless @query_args.empty?
-      Magma::TerminalPredicate.new(value)
+      Magma::TerminalPredicate.new(@question, value)
     end
   end
 end

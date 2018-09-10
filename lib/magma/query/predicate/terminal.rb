@@ -1,6 +1,7 @@
 class Magma
   class TerminalPredicate < Magma::Predicate
-    def initialize value
+    def initialize question, value
+      super(question)
       @terminal = value
     end
 

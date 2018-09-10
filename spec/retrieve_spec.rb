@@ -376,7 +376,7 @@ describe RetrieveController do
   end
 
   context 'restriction' do
-    it 'hides restricted data' do
+    it 'hides restricted records' do
       restricted_victim_list = create_list(:victim, 9, restricted: true)
       unrestricted_victim_list = create_list(:victim, 9)
 
@@ -386,7 +386,56 @@ describe RetrieveController do
         record_names: 'all',
         attribute_names: 'all'
       )
-      expect(json_body[:models][:victim][:documents].keys).to eq(restricted_victim_list.map(&:identifier))
+      expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
+    end
+
+    it 'shows restricted records to users with restricted permission' do
+      restricted_victim_list = create_list(:victim, 9, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 9)
+
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'victim',
+          record_names: 'all',
+          attribute_names: 'all'
+        },
+        :editor
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to eq(
+        (
+          unrestricted_victim_list + restricted_victim_list
+        ).map(&:identifier).map(&:to_sym).sort
+      )
+    end
+
+    it 'hides restricted attributes' do
+      victim_list = create_list(:victim, 9, country: 'thrace')
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: [ 'country' ]
+      )
+      countries = json_body[:models][:victim][:documents].values.map{|victim| victim[:country]}
+      expect(countries).to all(be_nil)
+    end
+
+    it 'shows restricted attributes to users with restricted permission' do
+      victim_list = create_list(:victim, 9, country: 'thrace')
+
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'victim',
+          record_names: 'all',
+          attribute_names: [ 'country' ]
+        },
+        :editor
+      )
+      countries = json_body[:models][:victim][:documents].values.map{|victim| victim[:country]}
+      expect(countries).to all(eq('thrace'))
     end
   end
 end

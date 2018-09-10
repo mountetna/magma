@@ -2,13 +2,14 @@ class Magma
   # just like the ModelPredicate, this keeps track of its own predicate chain.
   # Confusing... Perhaps a better concept is in order?
   class VectorPredicate < Magma::Predicate
-    def initialize model, alias_name, columns, *query_args
+    def initialize question, model, alias_name, columns, *query_args
+      super(question)
       @model = model
       @alias_name = alias_name
       raise ArgumentError, 'Column vector cannot be empty!' if columns.empty?
       @column_predicates = columns.map do |column_query|
         # now, we merely map this to a record predicate. Handy!
-        RecordPredicate.new(@model, @alias_name, *column_query)
+        RecordPredicate.new(@question, @model, @alias_name, *column_query)
       end
       process_args(query_args)
     end

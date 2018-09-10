@@ -46,13 +46,17 @@ class Magma
   class Question
     def initialize(project_name, query_args, options = {})
       @model = Magma.instance.get_model(project_name, query_args.shift)
-      @start_predicate = ModelPredicate.new(@model, *query_args)
       @options = options
+      @start_predicate = ModelPredicate.new(self, @model, *query_args)
     end
 
     # allow us to re-use the same question for a different page
     def set_page page
       @options[:page] = page
+    end
+
+    def restrict?
+      @options[:restrict]
     end
 
     def answer

@@ -123,7 +123,8 @@ class RetrieveController < Magma::Controller
       model,
       @record_names,
       @attribute_names,
-      filters: [ Magma::Retrieval::StringFilter.new(@filter) ]
+      filters: [ Magma::Retrieval::StringFilter.new(@filter) ],
+      restrict: !@user.can_see_restricted?(@project_name)
     )
 
     tsv_stream = Enumerator.new do |stream|
@@ -141,7 +142,8 @@ class RetrieveController < Magma::Controller
       attribute_names,
       filters: filters,
       page: get_tables && @page,
-      page_size: get_tables && @page_size
+      page_size: get_tables && @page_size,
+      restrict: !@user.can_see_restricted?(@project_name)
     )
 
     @payload.add_model(model, retrieval.attribute_names)

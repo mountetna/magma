@@ -10,23 +10,25 @@ class Magma
         page_size: MAX_PAGE_SIZE,
         page: 1
       }.merge(opts)
+
+      @filters = opts[:filters] || []
+      @collapse_tables = opts[:collapse_tables]
+      @page_size = opts[:page_size]
+      @page = opts[:page]
+      @restrict = opts[:restrict]
+
       @model = model
       @record_names = record_names
 
       # the retrieval filters out attributes that are not allowed
       @requested_attribute_names = attribute_names
       @attribute_names = attributes.map(&:name)
-
-      @filters = opts[:filters] || []
-      @collapse_tables = opts[:collapse_tables]
-      @page_size = opts[:page_size]
-      @page = opts[:page]
     end
 
     def attributes
       @attributes ||= begin
         attributes = @model.attributes.values.select do |att|
-          !att.is_a?(Magma::TableAttribute) && requested?(att)
+          !att.is_a?(Magma::TableAttribute) && requested?(att) && !restricted?(att)
         end
 
         # if there is no identifier, use the :id column
@@ -40,7 +42,7 @@ class Magma
 
     def table_attributes
       @table_attributes ||= @model.attributes.values.select do |att|
-        att.is_a?(Magma::TableAttribute) && requested?(att)
+        att.is_a?(Magma::TableAttribute) && requested?(att) && !restricted?(att)
       end
     end
 
@@ -69,6 +71,10 @@ class Magma
       (@requested_attribute_names.is_a?(Array) && @requested_attribute_names.include?(att.name))
     end
 
+    def restricted?(att)
+      @restrict && att.restricted
+    end
+
     def to_records(answer)
       answer.map do |name, row|
         Hash[ @attribute_names.zip(row) ]
@@ -76,7 +82,7 @@ class Magma
     end
 
     def question
-      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size)
+      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict)
     end
 
     def query
