@@ -116,6 +116,9 @@ class Magma
 
     def attribute_child(attribute_name)
       attribute = valid_attribute(attribute_name)
+      if @question.restrict? && attribute.respond_to?(:restricted) && attribute.restricted
+        raise Etna::Forbidden, "Cannot query for restricted attribute #{attribute_name}"
+      end
       case attribute
       when :id
         return Magma::NumberPredicate.new(@question, @model, alias_name, attribute, *@query_args)

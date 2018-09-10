@@ -270,4 +270,55 @@ describe QueryController do
       ])
     end
   end
+
+  context 'restriction' do
+    it 'hides restricted records' do
+      restricted_victim_list = create_list(:victim, 9, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 9)
+
+      query(
+        [ 'victim', '::all',
+          [
+            [ '::identifier' ]
+          ]
+        ]
+      )
+      expect(json_body[:answer].map(&:first).sort).to eq(unrestricted_victim_list.map(&:identifier))
+    end
+
+    it 'shows restricted records to people with permissions' do
+      restricted_victim_list = create_list(:victim, 9, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 9)
+
+      query(
+        [ 'victim', '::all',
+          [
+            [ '::identifier' ]
+          ]
+        ],
+        :editor
+      )
+      # the editor has a restricted permission
+      expect(json_body[:answer].map(&:first).sort).to eq(
+        (
+          restricted_victim_list.map(&:identifier) +
+          unrestricted_victim_list.map(&:identifier)
+        ).sort
+      )
+    end
+
+    it 'prevents queries on restricted attributes' do
+      victim_list = create_list(:victim, 9, country: 'thrace')
+
+      query([ 'victim', '::all', 'country' ])
+      expect(last_response.status).to eq(403)
+    end
+
+    it 'allows queries on restricted attributes to users with restricted permission' do
+      victim_list = create_list(:victim, 9, country: 'thrace')
+
+      query([ 'victim', '::all', 'country' ], :editor)
+      expect(json_body[:answer].map(&:last).sort).to all(eq('thrace'))
+    end
+  end
 end
