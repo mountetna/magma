@@ -63,8 +63,8 @@ RSpec.configure do |config|
   original_stderr = $stderr
   original_stdout = $stdout
   config.before(:all) do
-    $stderr = File.open(File::NULL, "w")
-    $stdout = File.open(File::NULL, "w")
+    #$stderr = File.open(File::NULL, "w")
+    #$stdout = File.open(File::NULL, "w")
   end
   config.after(:all) do
     $stderr = original_stderr
@@ -253,11 +253,14 @@ def json_body(response=nil)
 end
 
 AUTH_USERS = {
-  editor: { 
-    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors' 
+  editor: {
+    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors'
+  },
+  restricted_editor: {
+    email: 'copreus@twelve-labors.org', first: 'Copreus', perm: 'e:labors'
   },
   viewer: {
-    email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors' 
+    email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors'
   },
   non_user: {
     email: 'nessus@centaurs.org', first: 'Nessus', perm: ''

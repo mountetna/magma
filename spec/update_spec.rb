@@ -58,4 +58,90 @@ describe UpdateController do
     expect(last_response.status).to eq(422)
     expect(lion.species).to eq('lion')
   end
+
+  context 'restriction' do
+    it 'prevents updates to a restricted record by a restricted user' do
+      orig_name = 'Outis Koutsonadis'
+      new_name  = 'Outis Koutsomadis'
+      restricted_victim = create(:victim, name: orig_name, restricted: true)
+
+      update(
+        {
+          victim: {
+            orig_name => {
+              name: new_name
+            }
+          }
+        },
+        :restricted_editor
+      )
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Cannot revise restricted victim '#{orig_name}'"])
+
+      restricted_victim.refresh
+      expect(restricted_victim.name).to eq(orig_name)
+    end
+
+    it 'allows updates to a restricted record by an unrestricted user' do
+      orig_name = 'Outis Koutsonadis'
+      new_name  = 'Outis Koutsomadis'
+      restricted_victim = create(:victim, name: orig_name, restricted: true)
+
+      update(
+        {
+          victim: {
+            orig_name => {
+              name: new_name
+            }
+          }
+        },
+        :editor
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:victim][:documents][new_name.to_sym]).to eq(name: new_name)
+
+      restricted_victim.refresh
+      expect(restricted_victim.name).to eq(new_name)
+    end
+
+    it 'prevents updates to a restricted attribute by a restricted user' do
+      victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
+
+      update(
+        {
+          victim: {
+            'Outis Koutsonadis': {
+              country: 'thrace'
+            }
+          }
+        },
+        :restricted_editor
+      )
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Cannot revise restricted attribute :country on victim 'Outis Koutsonadis'"])
+
+      victim.refresh
+      expect(victim.country).to eq('nemea')
+    end
+
+    it 'allows updates to a restricted attribute by an unrestricted user' do
+      victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
+
+      update(
+        {
+          victim: {
+            'Outis Koutsonadis': {
+              country: 'thrace'
+            }
+          }
+        },
+        :editor
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:victim][:documents][:'Outis Koutsonadis'][:country]).to eq('thrace')
+
+      victim.refresh
+      expect(victim.country).to eq('thrace')
+    end
+  end
 end

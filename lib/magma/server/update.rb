@@ -24,7 +24,7 @@ class UpdateController < Magma::Controller
           model = Magma.instance.get_model(@project_name, model_name)
 
           model_revisions.map do |record_name, revision_data|
-            Magma::Revision.new(model, record_name.to_s, revision_data, validator)
+            Magma::Revision.new(model, record_name.to_s, revision_data, validator, !@user.can_see_restricted?(@project_name))
           end
         end.flatten
       end
@@ -58,8 +58,9 @@ class UpdateController < Magma::Controller
 
       records = Magma::Retrieval.new(
         model,
-        model_revisions.map(&:record_name),
-        'all'
+        model_revisions.map(&:final_record_name),
+        'all',
+        restrict: !@user.can_see_restricted?(@project_name)
       ).records
 
       payload.add_records(model, records)
