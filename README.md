@@ -158,5 +158,23 @@ Attributes describe the data elements of the model, their interactions with othe
 
 ### Migrations
 
-Magma attempts to maintain a strict adherence between its models and the database schema by suggesting migrations. These are written in the Sequel ORM's migration language, not pure SQL, so they are fairly straightforward to amend when Magma plans incorrectly.
+Magma attempts to maintain a strict adherence between its models and
+the database schema by suggesting migrations. These are written in the
+Sequel ORM's migration language, not pure SQL, so they are fairly
+straightforward to amend when Magma plans incorrectly.
 
+To plan a new set of migrations, the first step is to amend your
+models.  This also works in the case of entirely new models. Simply
+sketch them out as described above, setting out the attributes each
+model requires and creating links between them.
+
+Once you've defined your models, you can execute `bin/magma plan` to
+create a new migration. If you want to restrict your plan to a single
+project you may do `bin/magma plan <project_name>`. Magma will output
+ruby code for a migration using the Sequel ORM - you can save this in
+your project's migration folder (e.g.
+`project/my_project/migration/01_initial_migration.rb`).
+
+After your migrations are in place, you can try to run them using `bin/magma migrate`, which will
+attempt to run migrations that have not been run yet. If you change your mind, you can roll backwards (depending on how reversible your migration is)
+using `bin/magma migrate <migration version number>`.
