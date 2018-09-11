@@ -112,7 +112,7 @@ class Magma
       end
 
       def restricted(opts= {})
-        attribute(:restricted, opts.merge(attribute_class: Magma::RestrictedAttribute, type: TrueClass))
+        attribute(:restricted, opts.merge(type: TrueClass))
       end
 
       # suggests dictionary entries based on
