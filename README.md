@@ -175,6 +175,55 @@ ruby code for a migration using the Sequel ORM - you can save this in
 your project's migration folder (e.g.
 `project/my_project/migration/01_initial_migration.rb`).
 
-After your migrations are in place, you can try to run them using `bin/magma migrate`, which will
-attempt to run migrations that have not been run yet. If you change your mind, you can roll backwards (depending on how reversible your migration is)
-using `bin/magma migrate <migration version number>`.
+After your migrations are in place, you can try to run them using `bin/magma
+migrate`, which will attempt to run migrations that have not been run yet. If
+you change your mind, you can roll backwards (depending on how reversible your
+migration is) using `bin/magma migrate <migration version number>`.
+
+### Validation
+
+Magma models may define validations, which helps ensure the integrity of data
+as it enters Magma (invalid data is rejected).  Magma has two basic forms of
+validation. The first is attribute validation, which adds matchers to each
+attribute on a model, e.g.:
+
+    class MyModel < Magma::Model
+      attribute :att1, type: String, match: /[r]egexp/
+      attribute :att2, type: String, match: [ 'list', 'of', 'options' ]
+    end
+
+These validations are hard-coded into the model and may be hard to update. An
+alternative method of validation is via a Magma::Dictionary, which allows a model
+to be validated using data (records) from another model.
+
+#### Dictionaries
+
+You may define a dictionary relation as follows:
+
+    class MyModel < Magma::Model
+      attribute :att1
+      attribute :att2
+
+      dictionary DictModel, att1: :dict_att1, att2: :dict_att2
+    end
+
+A `my_model` record is valid if there is a matching entry in the dictionary
+model, i.e., where `my_record.att1` matches `dict_record.att1` and
+`my_record.att2` matches `dict_record.att2`. Here 'match' might mean
+'equality', but a dictionary may also include a 'match' attribute.
+
+    class DictModel < Magma::Model
+      attribute :dict_att1
+      match :dict_att2
+    end
+
+A match attribute contains json data like `{type,value}`. This allows us to construct more complex entries:
+
+    # match any value in this Array
+    { type: 'Array', value: [ 'x', 'y', 'z' ] }
+    # match within this Range
+    { type: 'Range', value: [ 0, 100 ] }
+    # match this Regexp
+    { type: 'Regexp', value: '^something$' }
+    # match an ordinary value
+    { type: 'String', value: 'something' }

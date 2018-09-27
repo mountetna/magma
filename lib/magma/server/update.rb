@@ -18,7 +18,7 @@ class UpdateController < Magma::Controller
   def revisions
     @revisions ||= 
       begin
-        validator = Magma::Validator.new
+        validator = Magma::Validation.new
 
         @params[:revisions].map do |model_name, model_revisions|
           model = Magma.instance.get_model(@project_name, model_name)

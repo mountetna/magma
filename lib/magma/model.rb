@@ -28,6 +28,11 @@ class Magma
         set_dataset dataset.order(*@order)
       end
 
+      def dictionary(dict_model=nil, attributes={})
+        return @dictionary unless dict_model
+        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
+      end
+
       def attribute(attr_name, opts = {})
 
         klass = opts.delete(:attribute_class) || Magma::Attribute
@@ -79,6 +84,10 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
+      def match(name, opts = {})
+        attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
+      end
+
       def identifier(name, opts)
         attribute(name, opts.merge(unique: true))
         @identity = name
@@ -107,13 +116,14 @@ class Magma
         # Return a json template of this thing.
         attribute_names ||= attributes.keys
         {
-          name: model_name, 
+          name: model_name,
           attributes: Hash[
             attribute_names.map do |name|
               [ name, attributes[name].json_template ]
             end
           ],
           identifier: identity,
+          dictionary: @dictionary && @dictionary.to_hash,
           parent: @parent
         }.delete_if {|k,v| v.nil? }
       end

@@ -19,6 +19,12 @@ class Magma
         record[ foreign_id ] = obj.id
       end
     end
+    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
+      def validate(value, &block)
+        return if value.is_a?(Magma::TempId) || value.nil?
+        link_validate(value,&block) if @attribute.link_identity
+      end
+    end
     class Entry < Magma::BaseAttributeEntry
       def entry value
         return nil if value.nil?
@@ -27,16 +33,6 @@ class Magma
           [ @attribute.foreign_id, value.real_id ]
         elsif @attribute.link_identity
           [ @attribute.foreign_id, @loader.identifier_id(@attribute.link_model, value) ]
-        end
-      end
-    end
-    class Validation < Magma::BaseAttributeValidation
-      def validate(value)
-        return if value.is_a?(Magma::TempId) || value.nil?
-        if @attribute.link_identity
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity, value) do |error|
-            yield error
-          end
         end
       end
     end

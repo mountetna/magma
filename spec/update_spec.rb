@@ -46,7 +46,6 @@ describe UpdateController do
 
   it 'fails on validation checks' do
     # The actual validation is defined in spec/labors/models/monster.rb,
-    # not sure how to move it here
     lion = create(:monster, name: 'Nemean Lion', species: 'lion')
     update(
       monster: {

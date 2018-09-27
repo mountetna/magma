@@ -164,11 +164,55 @@ FactoryBot.define do
     sequence(:name) { |n| "labor#{n}" }
     sequence(:number) { |n| n+1 }
     sequence(:completed) { |n| [2, 5].include?(number) ? false : true }
+
+    trait :lion do
+      name { 'Nemean Lion' }
+      number { 1 }
+      completed { true }
+    end
+
+    trait :hydra do
+      name { 'Lernean Hydra' }
+      number { 2 }
+      completed { false }
+    end
+
+    trait :stables do
+      name { 'Augean Stables' }
+      number { 5 }
+      completed { false }
+    end
+
+    trait :hind do
+      name { 'Ceryneian Hind' }
+      number { 3 }
+      completed { true }
+    end
   end
 
   factory :monster, class: Labors::Monster do
     to_create(&:save)
     sequence(:name) { |n| "monster#{n}" }
+
+    trait :lion do
+      name { 'Nemean Lion' }
+      species { 'lion' }
+    end
+
+    trait :hydra do
+      name { 'Lernean Hydra' }
+      species { 'hydra' }
+    end
+
+    trait :hind do
+      name { 'Ceryneian Hind' }
+      species { 'red deer' }
+    end
+
+    trait :birds do
+      name { 'Stymphalian Birds' }
+      species { 'marsh bird' }
+    end
   end
 
   factory :victim, class: Labors::Victim do
@@ -179,6 +223,20 @@ FactoryBot.define do
   factory :prize, class: Labors::Prize do
     to_create(&:save)
     sequence(:name) { |n| "prize#{n}" }
+  end
+  factory :codex, class: Labors::Codex do
+    to_create(&:save)
+
+    trait :lion do
+      monster { 'Nemean Lion' }
+    end
+
+    trait :hydra do
+      monster { 'Lernean Hydra' }
+    end
+  end
+  factory :aspect, class: Labors::Aspect do
+    to_create(&:save)
   end
 
   factory :project, class: Labors::Project do

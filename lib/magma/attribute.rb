@@ -21,7 +21,7 @@ class Magma
       {
         name: @name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
-        type: @type.nil? ? nil : @type.name,
+        type: @type.nil? ? nil : @type.respond_to?(:name) ? @type.name : @type,
         attribute_class: self.class.name,
         desc: @desc,
         display_name: display_name,
@@ -65,14 +65,6 @@ class Magma
     def update_link(record, link)
     end
 
-    def validation
-      if self.class.const_defined?(:Validation)
-        self.class.const_get(:Validation)
-      else
-        Magma::BaseAttributeValidation
-      end
-    end
-
     def entry
       if self.class.const_defined?(:Entry)
         self.class.const_get(:Entry)
@@ -90,8 +82,7 @@ class Magma
         end
       end
     end
-
-    class Validation < Magma::BaseAttributeValidation
+    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value)
         case match
         when Regexp
@@ -105,19 +96,11 @@ class Magma
 
       private
 
+      # memoize match to reuse across validations
       def match
         @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
       end
-
-      def format_error(value)
-        if @attribute.format_hint
-          "On #{@attribute.name}, '#{value}' should be like '#{@attribute.format_hint}'."
-        else
-          "On #{@attribute.name}, '#{value}' is improperly formatted."
-        end
-      end
     end
-
     class Entry < Magma::BaseAttributeEntry
       def entry(value)
         [ @attribute.name, value ]
@@ -131,5 +114,6 @@ require_relative 'attributes/child'
 require_relative 'attributes/collection'
 require_relative 'attributes/file'
 require_relative 'attributes/foreign_key'
+require_relative 'attributes/match'
 require_relative 'attributes/image'
 require_relative 'attributes/table'
