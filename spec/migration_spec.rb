@@ -125,6 +125,7 @@ EOT
     end
 EOT
       remove_attribute(Labors::Prize, :prize_code)
+      Labors::Prize.order()
     end
 
     it 'suggests an update migration for attributes' do
