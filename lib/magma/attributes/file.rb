@@ -5,10 +5,6 @@ class Magma
       @type = String
     end
 
-    def tab_column?
-      nil
-    end
-
     def update(record, new_value)
       super
       record.modified!(name)

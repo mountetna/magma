@@ -195,7 +195,7 @@ class Magma
 
     def records(model)
       return @records[model] if @records[model]
-      
+
       @records[model] = RecordSet.new(model, @validator, self)
       ensure_link_models(model)
 

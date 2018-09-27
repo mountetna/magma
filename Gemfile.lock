@@ -2,15 +2,17 @@ GEM
   remote: http://rubygems.org/
   specs:
     CFPropertyList (2.3.6)
-    activemodel (5.2.0)
-      activesupport (= 5.2.0)
-    activesupport (5.2.0)
+    activemodel (5.2.1)
+      activesupport (= 5.2.1)
+    activesupport (5.2.1)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 0.7, < 2)
       minitest (~> 5.1)
       tzinfo (~> 1.1)
+    addressable (2.5.2)
+      public_suffix (>= 2.0.2, < 4.0)
     builder (3.2.3)
-    carrierwave (1.2.2)
+    carrierwave (1.2.3)
       activemodel (>= 4.0.0)
       activesupport (>= 4.0.0)
       mime-types (>= 1.16)
@@ -19,10 +21,13 @@ GEM
       sequel
     coderay (1.1.2)
     concurrent-ruby (1.0.5)
-    curb (0.9.4)
+    connection_pool (2.2.1)
+    crack (0.4.3)
+      safe_yaml (~> 1.0.0)
+    curb (0.9.6)
     database_cleaner (1.7.0)
     diff-lcs (1.3)
-    docile (1.3.0)
+    docile (1.3.1)
     domain_name (0.5.20180417)
       unf (>= 0.0.5, < 1.0.0)
     etna (0.1.2)
@@ -31,7 +36,7 @@ GEM
       rack
     excon (0.62.0)
     extlib (0.9.16)
-    factory_bot (4.8.2)
+    factory_bot (4.11.0)
       activesupport (>= 3.0.0)
     fission (0.5.0)
       CFPropertyList (~> 2.2)
@@ -70,9 +75,9 @@ GEM
       fog-xml (~> 0.1.1)
       ipaddress (~> 0.5)
       json (~> 2.0)
-    fog-aliyun (0.2.1)
-      fog-core (~> 1.27)
-      fog-json (~> 1.0)
+    fog-aliyun (0.3.2)
+      fog-core
+      fog-json
       ipaddress (~> 0.8)
       xml-simple (~> 1.1)
     fog-atmos (0.1.0)
@@ -83,10 +88,11 @@ GEM
       fog-json (~> 1.0)
       fog-xml (~> 0.1)
       ipaddress (~> 0.8)
-    fog-brightbox (0.14.0)
+    fog-brightbox (0.15.0)
       fog-core (~> 1.22)
       fog-json
       inflecto (~> 0.0.2)
+      mime-types
     fog-cloudatcost (0.1.2)
       fog-core (~> 1.36)
       fog-json (~> 1.0)
@@ -96,10 +102,10 @@ GEM
       builder
       excon (~> 0.58)
       formatador (~> 0.2)
-    fog-digitalocean (0.3.0)
-      fog-core (~> 1.42)
-      fog-json (>= 1.0)
-      fog-xml (>= 0.1)
+    fog-digitalocean (0.4.0)
+      fog-core
+      fog-json
+      fog-xml
       ipaddress (>= 0.5)
     fog-dnsimple (1.0.0)
       fog-core (~> 1.38)
@@ -122,29 +128,29 @@ GEM
     fog-joyent (0.0.1)
       fog-core (~> 1.42)
       fog-json (>= 1.0)
-    fog-json (1.0.2)
-      fog-core (~> 1.0)
+    fog-json (1.2.0)
+      fog-core
       multi_json (~> 1.10)
     fog-local (0.5.0)
       fog-core (>= 1.27, < 3.0)
-    fog-openstack (0.1.25)
-      fog-core (~> 1.40)
+    fog-openstack (0.2.0)
+      fog-core (~> 1.45.0)
       fog-json (>= 1.0)
       ipaddress (>= 0.8)
-    fog-ovirt (1.0.3)
-      fog-core (~> 1.45)
+    fog-ovirt (1.1.1)
+      fog-core
       fog-json
-      fog-xml (~> 0.1.1)
+      fog-xml
       ovirt-engine-sdk (>= 4.1.3)
       rbovirt (~> 0.1.5)
-    fog-powerdns (0.1.1)
-      fog-core (~> 1.27)
-      fog-json (~> 1.0)
-      fog-xml (~> 0.1)
+    fog-powerdns (0.2.0)
+      fog-core
+      fog-json
+      fog-xml
     fog-profitbricks (4.1.1)
       fog-core (~> 1.42)
       fog-json (~> 1.0)
-    fog-rackspace (0.1.5)
+    fog-rackspace (0.1.6)
       fog-core (>= 1.35)
       fog-json (>= 1.0)
       fog-xml (>= 0.1)
@@ -178,7 +184,7 @@ GEM
     fog-voxel (0.1.0)
       fog-core
       fog-xml
-    fog-vsphere (2.1.1)
+    fog-vsphere (2.3.0)
       fog-core
       rbvmomi (~> 1.9)
     fog-xenserver (0.3.0)
@@ -188,38 +194,43 @@ GEM
       fog-core
       nokogiri (>= 1.5.11, < 2.0.0)
     formatador (0.2.5)
+    hashdiff (0.3.7)
     http-cookie (1.0.3)
       domain_name (~> 0.5)
-    i18n (1.0.1)
+    i18n (1.1.0)
       concurrent-ruby (~> 1.0)
     inflecto (0.0.2)
     ipaddress (0.8.3)
     json (2.1.0)
     jwt (2.1.0)
     method_source (0.9.0)
-    mime-types (3.1)
+    mime-types (3.2.2)
       mime-types-data (~> 3.2015)
-    mime-types-data (3.2016.0521)
+    mime-types-data (3.2018.0812)
     mini_magick (4.8.0)
     mini_portile2 (2.3.0)
     minitest (5.11.3)
     multi_json (1.13.1)
+    multipart-post (2.0.0)
+    net-http-persistent (3.0.0)
+      connection_pool (~> 2.2)
     netrc (0.11.0)
-    nokogiri (1.8.2)
+    nokogiri (1.8.4)
       mini_portile2 (~> 2.3.0)
     ovirt-engine-sdk (4.2.4)
       json (>= 1, < 3)
-    pg (1.0.0)
+    pg (1.1.2)
     pry (0.11.3)
       coderay (~> 1.1.0)
       method_source (~> 0.9.0)
+    public_suffix (3.0.3)
     rack (2.0.5)
-    rack-test (1.0.0)
+    rack-test (1.1.0)
       rack (>= 1.0, < 3)
-    rbovirt (0.1.5)
+    rbovirt (0.1.7)
       nokogiri
       rest-client (> 1.7.0)
-    rbvmomi (1.12.0)
+    rbvmomi (1.13.0)
       builder (~> 3.0)
       json (>= 1.8)
       nokogiri (~> 1.5)
@@ -228,36 +239,41 @@ GEM
       http-cookie (>= 1.0.2, < 2.0)
       mime-types (>= 1.16, < 4.0)
       netrc (~> 0.8)
-    rspec (3.7.0)
-      rspec-core (~> 3.7.0)
-      rspec-expectations (~> 3.7.0)
-      rspec-mocks (~> 3.7.0)
-    rspec-core (3.7.1)
-      rspec-support (~> 3.7.0)
-    rspec-expectations (3.7.0)
+    rspec (3.8.0)
+      rspec-core (~> 3.8.0)
+      rspec-expectations (~> 3.8.0)
+      rspec-mocks (~> 3.8.0)
+    rspec-core (3.8.0)
+      rspec-support (~> 3.8.0)
+    rspec-expectations (3.8.1)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.7.0)
-    rspec-mocks (3.7.0)
+      rspec-support (~> 3.8.0)
+    rspec-mocks (3.8.0)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.7.0)
-    rspec-support (3.7.1)
+      rspec-support (~> 3.8.0)
+    rspec-support (3.8.0)
     ruby-ole (1.2.12.1)
+    safe_yaml (1.0.4)
     sequel (4.49.0)
     simplecov (0.16.1)
       docile (~> 1.1)
       json (>= 1.8, < 3)
       simplecov-html (~> 0.10.0)
     simplecov-html (0.10.2)
-    spreadsheet (1.1.7)
+    spreadsheet (1.1.8)
       ruby-ole (>= 1.0)
     thread_safe (0.3.6)
     timecop (0.9.1)
-    trollop (2.1.2)
+    trollop (2.9.9)
     tzinfo (1.2.5)
       thread_safe (~> 0.1)
     unf (0.1.4)
       unf_ext
     unf_ext (0.0.7.5)
+    webmock (3.4.2)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
+      hashdiff
     xml-simple (1.1.5)
 
 PLATFORMS
@@ -273,6 +289,8 @@ DEPENDENCIES
   factory_bot
   fog
   mini_magick
+  multipart-post
+  net-http-persistent
   pg
   pry
   rack-test
@@ -281,6 +299,7 @@ DEPENDENCIES
   simplecov
   spreadsheet
   timecop
+  webmock
 
 RUBY VERSION
    ruby 2.2.2p95

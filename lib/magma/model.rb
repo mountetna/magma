@@ -1,4 +1,5 @@
 Sequel::Model.plugin :timestamps, update_on_create: true
+Sequel::Model.require_valid_table = false
 
 class Magma
   Model = Class.new(Sequel::Model)

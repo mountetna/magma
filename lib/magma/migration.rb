@@ -1,8 +1,10 @@
 class Magma
   class Migration
     class << self
+      def table_name(model)
+        "Sequel[:#{model.project_name}][:#{model.implicit_table_name}]"
+      end
       def create(model)
-        puts model.table_name
         if Magma.instance.db.table_exists?(model.table_name)
           return Magma::UpdateMigration.new(model)
         else
@@ -27,40 +29,91 @@ class Magma
 
     def to_s
       @changes.map do |key,lines|
-        str = SPC*2 + key + ' do' + "\n"
-        lines.each do |line|
-          str += SPC*3 + line + "\n"
-        end
-        str += SPC*2 + 'end' + "\n"
-        str
-      end.join('').chomp
+        [
+          space("#{key} do", 2),
+          lines.map do |line|
+            space(line,3)
+          end,
+          space('end',2)
+        ].flatten.join("\n")
+      end.join("\n").chomp
     end
 
     private
 
+    def attribute_migration(att)
+      case att
+      when Magma::ForeignKeyAttribute
+        [
+          foreign_key_entry(att.column_name, att.link_model),
+          index_entry(att.column_name)
+        ]
+      when Magma::Attribute
+        [
+          column_entry(att.column_name, att.type),
+          att.unique && unique_entry(att.column_name),
+          att.index && index_entry(att.column_name)
+        ].compact
+      else
+        nil
+      end
+    end
+
+    # this denotes a link attribute that points here (i.e.,
+    # the foreign key is in the link_model) and therefore has
+    # no column in this model
+    def foreign_attribute?(att)
+      [ Magma::ChildAttribute, Magma::CollectionAttribute, Magma::TableAttribute ].any? do |att_class|
+        att.instance_of?(att_class)
+      end
+    end
+
+    def schema_supports_attribute?(model, att)
+      if foreign_attribute?(att)
+        return true
+      else
+        return model.schema.has_key?(att.column_name)
+      end
+    end
+
+    def schema_unchanged?(model, att)
+      # we don't need to worry about models that link to us
+      return true if foreign_attribute?(att)
+      # neither can foreign keys change their type
+      return true if att.is_a?(Magma::ForeignKeyAttribute)
+
+      literal_type = att.type == DateTime ?  :"timestamp without time zone" :
+        Magma.instance.db.cast_type_literal(att.type)
+
+      return model.schema[att.column_name][:db_type].to_sym == literal_type
+    end
+
     SPC='  '
+    def space(txt, pad)
+      "#{SPC*pad}#{txt}"
+    end
 
   end
   class CreateMigration < Migration
     def initialize(model)
       super
-      tlb_nm = "create_table(:#{model.table_name})"
+      tlb_nm = "create_table(#{Magma::Migration.table_name(model)})"
       change(tlb_nm, ['primary_key :id']+new_attributes)
     end
 
     def new_attributes
       @model.attributes.map do |name,att|
-        next unless att.needs_column?
-        att.migration(self)
+        next if foreign_attribute?(att)
+        attribute_migration(att)
       end.compact.flatten
     end
 
-    def foreign_key_entry column_name, foreign_table
-      "foreign_key :#{column_name}, :#{foreign_table}"
+    def foreign_key_entry column_name, foreign_model
+      "foreign_key :#{column_name}, #{Magma::Migration.table_name(foreign_model)}"
     end
 
     def column_entry name, type
-      "#{type.name} :#{name}"
+      "#{type.respond_to?(:name) ? type.name : type} :#{name}"
     end
 
     def unique_entry name
@@ -79,15 +132,15 @@ class Magma
   class UpdateMigration < Migration
     def initialize model
       super
-      change("alter_table(:#{model.table_name})", missing_attributes) unless missing_attributes.empty?
+      change("alter_table(#{Magma::Migration.table_name(model)})", missing_attributes) unless missing_attributes.empty?
 
-      change("alter_table(:#{model.table_name})", removed_attributes) unless removed_attributes.empty?
+      change("alter_table(#{Magma::Migration.table_name(model)})", removed_attributes) unless removed_attributes.empty?
 
-      change("alter_table(:#{model.table_name})", changed_attributes) unless changed_attributes.empty?
+      change("alter_table(#{Magma::Migration.table_name(model)})", changed_attributes) unless changed_attributes.empty?
     end
 
-    def foreign_key_entry column_name, foreign_table
-      "add_foreign_key :#{column_name}, :#{foreign_table}"
+    def foreign_key_entry column_name, foreign_model
+      "add_foreign_key :#{column_name}, #{Magma::Migration.table_name(foreign_model)}"
     end
 
     def column_type_entry name, type
@@ -95,7 +148,7 @@ class Magma
     end
 
     def column_entry name, type
-      "add_column :#{name}, #{type}"
+      "add_column :#{name}, #{type.is_a?(Symbol) ? ":#{type}" : type}"
     end
 
     def remove_column_entry name
@@ -114,22 +167,21 @@ class Magma
       end
     end
 
-    private 
+    private
 
     def missing_attributes
       @model.attributes.map do |name,att|
-        next if att.schema_ok?
-        att.migration(self)
+        next if schema_supports_attribute?(@model, att)
+        attribute_migration(att)
       end.compact.flatten
     end
 
+
     def changed_attributes
       @model.attributes.map do |name,att|
-        next unless att.schema_ok?
-        next unless att.needs_column?
-        next if att.schema_unchanged?
-        column_type_entry(att.column_name, 
-                          att.type)
+        next unless schema_supports_attribute?(@model,att)
+        next if schema_unchanged?(@model,att)
+        column_type_entry(att.column_name, att.type)
       end.compact.flatten
     end
 

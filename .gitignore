@@ -11,4 +11,4 @@ config.yml
 *.gem
 *.swp
 
-/projects/ipi
+/projects

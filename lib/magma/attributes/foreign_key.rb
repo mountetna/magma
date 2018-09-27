@@ -1,24 +1,8 @@
 class Magma
   class ForeignKeyAttribute < Attribute
     include Magma::Link
-
-    def schema_unchanged? 
-      true
-    end
-
     def column_name
       foreign_id
-    end
-
-    def migration mig
-      [
-        mig.foreign_key_entry(column_name, link_model.table_name),
-        mig.index_entry(column_name)
-      ]
-    end
-
-    def eager
-      @name
     end
 
     def json_for record
