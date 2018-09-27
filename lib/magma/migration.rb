@@ -5,7 +5,6 @@ class Magma
         "Sequel[:#{model.project_name}][:#{model.implicit_table_name}]"
       end
       def create(model)
-        #puts table_name(model)
         if Magma.instance.db.table_exists?(model.table_name)
           return Magma::UpdateMigration.new(model)
         else
