@@ -5,18 +5,47 @@ class Magma
     attr_reader :attribute_names
     MAX_PAGE_SIZE=10_000
 
-    def initialize model, record_names, attributes, filter=nil, page=1, page_size=MAX_PAGE_SIZE
+    def initialize(model, record_names, attribute_names, opts={})
+      opts = {
+        page_size: MAX_PAGE_SIZE,
+        page: 1
+      }.merge(opts)
+
+      @filters = opts[:filters] || []
+      @collapse_tables = opts[:collapse_tables]
+      @page_size = opts[:page_size]
+      @page = opts[:page]
+      @restrict = opts[:restrict]
+
       @model = model
       @record_names = record_names
-      @attributes = attributes
+
+      # the retrieval filters out attributes that are not allowed
+      @requested_attribute_names = attribute_names
       @attribute_names = attributes.map(&:name)
-      @filter = filter
-      @page_size = page_size
-      @page = page
     end
 
-    # we should be able to make a PAGE BOUNDS query, after which we can specify
-    # limits on our question from outside.
+    def attributes
+      @attributes ||= begin
+        attributes = @model.attributes.values.select do |att|
+          !att.is_a?(Magma::TableAttribute) && requested?(att) && !restricted?(att)
+        end
+
+        # if there is no identifier, use the :id column
+        if !@model.has_identifier?
+          attributes.push(OpenStruct.new(name: :id))
+        end
+
+        attributes
+      end
+    end
+
+    def table_attributes
+      @table_attributes ||= @model.attributes.values.select do |att|
+        att.is_a?(Magma::TableAttribute) && requested?(att) && !restricted?(att)
+      end
+    end
+
     def records
       to_records(question.answer)
     end
@@ -33,6 +62,19 @@ class Magma
 
     private
 
+    def requested?(att)
+      # identifiers are always included
+      @model.identity == att.name ||
+      # they asked for all attribute_names
+      @requested_attribute_names == 'all' ||
+      # the attribute was requested by name
+      (@requested_attribute_names.is_a?(Array) && @requested_attribute_names.include?(att.name))
+    end
+
+    def restricted?(att)
+      @restrict && att.restricted
+    end
+
     def to_records(answer)
       answer.map do |name, row|
         Hash[ @attribute_names.zip(row) ]
@@ -40,7 +82,7 @@ class Magma
     end
 
     def question
-      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size)
+      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict)
     end
 
     def query
@@ -58,9 +100,9 @@ class Magma
         list.push [ '::identifier', '::in', @record_names ]
       end
 
-      if @filter
+      @filters.each do |filter|
         list.concat(
-          @filter.apply(@attributes)
+          filter.apply(attributes)
         )
       end
 
@@ -68,7 +110,7 @@ class Magma
     end
 
     def outputs
-      @attributes.map do |att|
+      attributes.map do |att|
         case att
         when OpenStruct
           [ '::identifier' ]

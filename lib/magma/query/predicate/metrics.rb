@@ -1,6 +1,7 @@
 class Magma
   class MetricsPredicate < Magma::Predicate
-    def initialize model, alias_name, *query_args
+    def initialize question, model, alias_name, *query_args
+      super(question)
       @model = model
       @alias_name = alias_name
       process_args(query_args)

@@ -1,13 +1,13 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    attr_reader :name, :type, :desc, :loader, :match, :format_hint, :unique, :index
+    attr_reader :name, :type, :desc, :loader, :match, :format_hint, :unique, :index, :restricted
 
 
     class << self
       def options
         [:type, :desc, :display_name, :hide, :readonly, :unique, :index, :match,
-:format_hint, :loader, :link_model]
+:format_hint, :loader, :link_model, :restricted ]
       end
     end
 
@@ -27,6 +27,7 @@ class Magma
         display_name: display_name,
         options: @match.is_a?(Array) ? @match : nil,
         match: @match.is_a?(Regexp) ? @match.source : nil,
+        restricted: @restricted,
         format_hint: @format_hint,
         read_only: read_only?,
         shown: shown?

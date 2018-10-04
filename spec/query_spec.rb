@@ -17,8 +17,7 @@ describe QueryController do
       [ 'labor', '::all', '::identifier' ]
     )
 
-    json = json_body(last_response.body)
-    expect(json[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
+    expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
   end
 
   it 'generates an error for bad arguments' do
@@ -28,8 +27,7 @@ describe QueryController do
       [ 'labor', '::ball', '::bidentifier' ]
     )
 
-    json = json_body(last_response.body)
-    expect(json[:errors]).to eq(['::ball is not a valid argument to Magma::ModelPredicate'])
+    expect(json_body[:errors]).to eq(['::ball is not a valid argument to Magma::ModelPredicate'])
     expect(last_response.status).to eq(422)
   end
 
@@ -58,8 +56,7 @@ describe QueryController do
     it 'returns a list of predicate definitions' do
       query('::predicates')
 
-      json = json_body(last_response.body)
-      expect(json[:predicates].keys).to include(:model, :record)
+      expect(json_body[:predicates].keys).to include(:model, :record)
     end
   end
 
@@ -70,8 +67,7 @@ describe QueryController do
 
       query(['prize', '::first', 'name'])
 
-      json = json_body(last_response.body)
-      expect(json[:answer]).to eq('poison')
+      expect(json_body[:answer]).to eq('poison')
     end
 
     it 'supports ::all' do
@@ -80,8 +76,7 @@ describe QueryController do
 
       query(['prize', '::all', 'name'])
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq([ 'poison', 'poop' ])
+      expect(json_body[:answer].map(&:last)).to eq([ 'poison', 'poop' ])
     end
 
     it 'supports ::any' do
@@ -90,8 +85,7 @@ describe QueryController do
 
       query(['prize', [ 'worth', '::>', 0 ], '::any' ])
 
-      json = json_body(last_response.body)
-      expect(json[:answer]).to eq(true)
+      expect(json_body[:answer]).to eq(true)
     end
 
     it 'supports ::count' do
@@ -107,8 +101,7 @@ describe QueryController do
 
       query(['labor', '::all', 'prize', '::count' ])
 
-      json = json_body(last_response.body)
-      expect(json[:answer]).to eq([
+      expect(json_body[:answer]).to eq([
         [ 'Augean Stables', 2 ],
         [ 'Ceryneian Hind', 0 ],
         [ 'Lernean Hydra', 1 ],
@@ -124,8 +117,7 @@ describe QueryController do
 
       query(['prize', ['::has', 'worth'], '::all', 'name'])
 
-      json = json_body(last_response.body)
-      expect(json[:answer].first.last).to eq('poison')
+      expect(json_body[:answer].first.last).to eq('poison')
     end
 
     it 'supports ::lacks' do
@@ -133,9 +125,8 @@ describe QueryController do
       poop = create(:prize, name: 'poop')
 
       query(['prize', ['::lacks', 'worth'], '::all', 'name'])
-      
-      json = json_body(last_response.body)
-      expect(json[:answer].first.last).to eq('poop')
+
+      expect(json_body[:answer].first.last).to eq('poop')
     end
 
     it 'can retrieve metrics' do
@@ -146,8 +137,7 @@ describe QueryController do
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
       query(['labor', '::all', '::metrics'])
 
-      json = json_body(last_response.body)
-      answer = Hash[json[:answer]]
+      answer = Hash[json_body[:answer]]
       expect(answer['Lernean Hydra'][:lucrative][:score]).to eq('success')
     end
   end
@@ -164,8 +154,7 @@ describe QueryController do
         [ 'labor', [ 'name', '::matches', 'L' ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::equals' do
@@ -173,8 +162,7 @@ describe QueryController do
         [ 'labor', [ 'name', '::equals', 'Nemean Lion' ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].first.last).to eq('Nemean Lion')
+      expect(json_body[:answer].first.last).to eq('Nemean Lion')
     end
 
     it 'supports ::not' do
@@ -182,8 +170,7 @@ describe QueryController do
         [ 'labor', [ 'name', '::not', 'Nemean Lion' ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq(['Augean Stables', 'Lernean Hydra'])
+      expect(json_body[:answer].map(&:last)).to eq(['Augean Stables', 'Lernean Hydra'])
     end
 
     it 'supports ::in' do
@@ -191,8 +178,7 @@ describe QueryController do
         [ 'labor', [ 'name', '::in', [ 'Nemean Lion', 'Lernean Hydra' ] ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::not for arrays' do
@@ -200,8 +186,7 @@ describe QueryController do
         [ 'labor', [ 'name', '::not', [ 'Nemean Lion', 'Lernean Hydra' ] ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].first.last).to eq('Augean Stables')
+      expect(json_body[:answer].first.last).to eq('Augean Stables')
     end
   end
 
@@ -221,8 +206,7 @@ describe QueryController do
         [ 'labor', [ 'prize', [ 'worth', '::!=', 0 ], '::any' ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::in' do
@@ -230,8 +214,7 @@ describe QueryController do
         [ 'labor', [ 'prize', [ 'worth', '::in', [ 5, 6 ] ], '::any' ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
     end
 
     it 'supports ::not' do
@@ -239,8 +222,7 @@ describe QueryController do
         [ 'labor', [ 'prize', [ 'worth', '::not', [ 5, 6 ] ], '::any' ], '::all', '::identifier' ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].first.last).to eq('Augean Stables')
+      expect(json_body[:answer].first.last).to eq('Augean Stables')
     end
   end
 
@@ -257,8 +239,7 @@ describe QueryController do
         ]
       )
 
-      json = json_body(last_response.body)
-      expect(json[:answer].map(&:last)).to eq([ 'Augean Stables', 'Lernean Hydra' ])
+      expect(json_body[:answer].map(&:last)).to eq([ 'Augean Stables', 'Lernean Hydra' ])
     end
   end
 
@@ -282,13 +263,62 @@ describe QueryController do
         ]
       )
 
-      json = json_body(last_response.body)
-      puts json[:errors] if json[:errors]
-      expect(json[:answer]).to eq([
+      expect(json_body[:answer]).to eq([
         ['Augean Stables', [5, false, 'poop', 0]],
         ['Lernean Hydra', [2, false, 'poison', 5]],
         ['Nemean Lion', [1, true, nil, nil]]
       ])
+    end
+  end
+
+  context 'restriction' do
+    it 'hides restricted records' do
+      restricted_victim_list = create_list(:victim, 9, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 9)
+
+      query(
+        [ 'victim', '::all',
+          [
+            [ '::identifier' ]
+          ]
+        ]
+      )
+      expect(json_body[:answer].map(&:first).sort).to eq(unrestricted_victim_list.map(&:identifier))
+    end
+
+    it 'shows restricted records to people with permissions' do
+      restricted_victim_list = create_list(:victim, 9, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 9)
+
+      query(
+        [ 'victim', '::all',
+          [
+            [ '::identifier' ]
+          ]
+        ],
+        :editor
+      )
+      # the editor has a restricted permission
+      expect(json_body[:answer].map(&:first).sort).to eq(
+        (
+          restricted_victim_list.map(&:identifier) +
+          unrestricted_victim_list.map(&:identifier)
+        ).sort
+      )
+    end
+
+    it 'prevents queries on restricted attributes' do
+      victim_list = create_list(:victim, 9, country: 'thrace')
+
+      query([ 'victim', '::all', 'country' ])
+      expect(last_response.status).to eq(403)
+    end
+
+    it 'allows queries on restricted attributes to users with restricted permission' do
+      victim_list = create_list(:victim, 9, country: 'thrace')
+
+      query([ 'victim', '::all', 'country' ], :editor)
+      expect(json_body[:answer].map(&:last).sort).to all(eq('thrace'))
     end
   end
 end

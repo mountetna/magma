@@ -134,7 +134,7 @@ EOT
 
       begin
         model = Magma.instance.get_model(project_name, model_name)
-        retrieval = Magma::Retrieval.new(model, nil, model.attributes.values, nil, 1, 100_000)
+        retrieval = Magma::Retrieval.new(model, 'all', 'all', page: 1, page_size: 100_000)
         payload = Magma::Payload.new
         Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| puts lines }
       rescue Exception => e

@@ -10,6 +10,7 @@ class Magma
       @payload.add_model(@model, @retrieval.attribute_names)
 
       yield @payload.tsv_header
+
       @retrieval.each_page do |records|
         @payload.add_records(@model, records)
         yield @payload.to_tsv

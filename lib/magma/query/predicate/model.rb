@@ -26,15 +26,23 @@ class Magma
 
     attr_reader :model
 
-    def initialize(model, *query_args)
+    def initialize(question, model, *query_args)
+      super(question)
       @model = model
       @filters = []
+
+      if question.restrict? && @model.has_attribute?(:restricted)
+        # the model can be restricted, and we should withhold restricted data
+        query_args.unshift(
+          [ 'restricted', '::false' ]
+        )
+      end
 
       # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
       while query_args.first.is_a?(Array)
-        filter = RecordPredicate.new(@model, alias_name, *query_args.shift)
+        filter = RecordPredicate.new(@question, @model, alias_name, *query_args.shift)
 
         err_msg = "Filter #{filter} does not reduce to Boolean "
         err_msg += "#{filter.argument} #{filter.reduced_type}!"
@@ -89,7 +97,7 @@ class Magma
     end
 
     def record_child
-      RecordPredicate.new(@model, alias_name, *@query_args)
+      RecordPredicate.new(@question, @model, alias_name, *@query_args)
     end
 
     def join

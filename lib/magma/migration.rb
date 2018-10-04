@@ -85,7 +85,7 @@ class Magma
       literal_type = att.type == DateTime ?  :"timestamp without time zone" :
         Magma.instance.db.cast_type_literal(att.type)
 
-      return model.schema[att.column_name][:db_type].to_sym == literal_type
+      return model.schema[att.column_name][:db_type].to_sym == literal_type.to_sym
     end
 
     SPC='  '

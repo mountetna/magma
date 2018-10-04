@@ -99,6 +99,9 @@ Attributes describe the data elements of the model, their interactions with othe
 
   **_image_** - an image, similar to a document except it allows some thumbnailing
 
+  <u>restriction</u>:
+  **_restricted_** - a boolean attribute that determines whether this record is restricted.
+
 ## JSON api
 
   **POST _/update_** - accepts a JSON post in this format:
@@ -227,3 +230,22 @@ A match attribute contains json data like `{type,value}`. This allows us to cons
     { type: 'Regexp', value: '^something$' }
     # match an ordinary value
     { type: 'String', value: 'something' }
+
+
+### Data restriction
+
+Magma will censor data from users who don't have "restricted" project access. Data can either be restricted by record or by attribute. To define a restricted model you may add a 'restricted' attribute to the model:
+
+    class MyModel < Magma::Model
+      restricted
+    end
+
+Any record where `record.restricted` is true will be censored for users without restricted access.
+
+To define a restricted attribute on a model, you may add a 'restricted' flag to the attribute:
+
+    class MyModel < Magma::Model
+      attribute :some_att, restricted: true
+    end
+
+This attribute will always be censored from every record for users without restricted access.
