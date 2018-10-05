@@ -100,7 +100,7 @@ class RetrieveController < Magma::Controller
         next if @attribute_names == 'identifier' && !model.has_identifier?
         retrieve_model(
           model, @record_names, @attribute_names,
-          [], false
+          [], true, false
         )
       end
     else
@@ -109,6 +109,7 @@ class RetrieveController < Magma::Controller
         @record_names,
         @attribute_names,
         [ Magma::Retrieval::StringFilter.new(@filter) ],
+        true,
         !@collapse_tables
       )
     end
@@ -134,15 +135,15 @@ class RetrieveController < Magma::Controller
     return [ 200, { 'Content-Type' => 'text/tsv' }, tsv_stream ]
   end
 
-  def retrieve_model(model, record_names, attribute_names, filters, get_tables=nil)
+  def retrieve_model(model, record_names, attribute_names, filters, use_pages, get_tables)
     # Extract the attributes from the model.
     retrieval = Magma::Retrieval.new(
       model,
       record_names,
       attribute_names,
       filters: filters,
-      page: get_tables && @page,
-      page_size: get_tables && @page_size,
+      page: use_pages && @page,
+      page_size: use_pages && @page_size,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 
@@ -172,6 +173,7 @@ class RetrieveController < Magma::Controller
             records.map{|r| r[model.identity]}
           )
         ],
+        false,
         false
       )
     end

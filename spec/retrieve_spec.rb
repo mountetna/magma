@@ -336,6 +336,21 @@ describe RetrieveController do
         page_size: 3
       )
 
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
+
+      # check to make sure collapse_tables doesn't mess things up
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        collapse_tables: true,
+        page: 3,
+        page_size: 3
+      )
+
+      expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
     end
 
