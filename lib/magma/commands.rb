@@ -1,4 +1,3 @@
-require 'extlib'
 require 'date'
 require 'logger'
 
