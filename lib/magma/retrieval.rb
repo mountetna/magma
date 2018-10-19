@@ -175,7 +175,7 @@ class Magma
           when "Integer", "Float"
             return [ att_name, numeric_op(operator), value.to_f ]
           when "DateTime"
-            return [ att_name, numeric_op(operator), DateTime.parse(value) ]
+            return [ att_name, numeric_op(operator), value ]
           when "String"
             return [ att_name, string_op(operator), value ]
           when "TrueClass"

@@ -4,13 +4,17 @@ class Magma
       child DateTime
     end
 
-    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], DateTime do
+    verb [ '::<=', '::<', '::>=', '::>', '::=', '::!=' ], String do
       child TrueClass
 
       constraint do
         op, date = @arguments
-        comparison_constraint(@attribute_name, op, date)
+        comparison_constraint(@attribute_name, op, DateTime.parse(date))
       end
+    end
+
+    def extract table, identity
+      table.first[column_name]&.iso8601
     end
   end
 end
