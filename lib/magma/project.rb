@@ -21,8 +21,15 @@ class Magma
       ]
     end
 
+    def ordered_models(model)
+      link_models = model.attributes.values.select do |att|
+        att.is_a?(Magma::Link) && att.link_model.parent == model.model_name
+      end.map(&:link_model)
+      link_models + link_models.map{|m| ordered_models(m)}.flatten
+    end
+
     def migrations
-      models.values.map(&:migration).reject(&:empty?)
+      ([ models[:project] ] + ordered_models(models[:project])).map(&:migration).reject(&:empty?)
     end
 
     private
