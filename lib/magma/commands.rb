@@ -155,23 +155,11 @@ EOT
 
     def execute(project_name)
       @project_name = project_name
-      @project = Magma.instance.get_project(@project_name)
       create_db if @no_db
-
-      suggest_create_project && exit unless @project
 
       create_schema unless db_namespace?
 
       puts "Database is setup. Please run `bin/magma migrate #{@project_name}`."
-    end
-
-    def suggest_create_project
-      puts <<EOT
-There is no project named #{@project_name} configured for Magma.
-Create the project repository (either with git clone
-or `magma create_project <project_name>`) and add
-the project path to the key :project_path in config.yml
-EOT
     end
 
     def db_namespace?
@@ -189,13 +177,15 @@ EOT
 
       puts "Creating database #{@db_config[:database]}"
       %x{ PGPASSWORD=#{@db_config[:password]} createdb -w -U #{@db_config[:user]} #{@db_config[:database]} }
+
+      Magma.instance.setup_db
     end
 
     def setup(config)
       super
       @db_config = Magma.instance.config(:db)
       begin
-        Magma.instance.load_models(false)
+        Magma.instance.setup_db
       rescue Sequel::DatabaseConnectionError
         @no_db = true
       end
