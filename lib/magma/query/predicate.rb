@@ -160,16 +160,15 @@ class Magma
         ]
       end
 
+      def inherited(subclass)
+        @descendants ||= []
+        @descendants << subclass unless subclass == Magma::ColumnPredicate
+      end
+
       def to_json
-        predicate_classes = ObjectSpace.each_object(Magma::Predicate.singleton_class).to_a
-
-        real_predicate_classes = predicate_classes.select do |pred_class|
-          !predicate_classes.any? { |other_pred_class| other_pred_class < pred_class }
-        end
-
         response = {
           predicates: Hash[
-            real_predicate_classes.map do |pred_class|
+            @descendants.map do |pred_class|
               [
                 pred_class.predicate_name,
                 pred_class.verbs.map do |args, block|
@@ -238,9 +237,9 @@ class Magma
 end
 
 require_relative 'verb'
+require_relative 'predicate/column'
 require_relative 'predicate/model'
 require_relative 'predicate/record'
-require_relative 'predicate/column'
 require_relative 'predicate/boolean'
 require_relative 'predicate/date_time'
 require_relative 'predicate/file'

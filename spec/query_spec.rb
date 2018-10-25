@@ -226,6 +226,32 @@ describe QueryController do
     end
   end
 
+  context Magma::DateTimePredicate do
+    before(:each) do
+      lion = create(:labor, name: 'Nemean Lion', number: 1, year: '02-01-0001', completed: true)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, year: '03-15-0002', completed: false)
+      stables = create(:labor, name: 'Augean Stables', number: 5, year: '06-07-0005', completed: false)
+    end
+
+    it 'supports comparisons' do
+      query(
+        [ 'labor', [ 'year', '::>', '03-01-0001' ], '::all', '::identifier' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([ 'Augean Stables', 'Lernean Hydra' ])
+    end
+
+    it 'returns in ISO8601 format' do
+      query(
+        [ 'labor', '::all', 'year' ]
+      )
+
+      expect(json_body[:answer].map(&:last)).to eq(Labors::Labor.select_map(:year).map(&:iso8601))
+    end
+  end
+
   context Magma::BooleanPredicate do
     it 'checks truthiness' do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)

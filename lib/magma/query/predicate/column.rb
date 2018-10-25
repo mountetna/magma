@@ -10,6 +10,10 @@ class Magma
       process_args(query_args)
     end
 
+    def self.inherited(subclass)
+      Magma::Predicate.inherited(subclass)
+    end
+
     def extract table, identity
       table.first[column_name]
     end

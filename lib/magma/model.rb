@@ -1,5 +1,6 @@
 Sequel::Model.plugin :timestamps, update_on_create: true
 Sequel::Model.require_valid_table = false
+Sequel.extension :inflector
 
 class Magma
   Model = Class.new(Sequel::Model)
@@ -156,9 +157,9 @@ class Magma
 
         db.transaction do
 
-          temp_table_name = :"bulk_update_#{project_name}_#{model_name.to_s.plural}"
+          temp_table_name = :"bulk_update_#{project_name}_#{table_name.column}"
 
-          orig_table_name = "#{project_name}.#{model_name.to_s.plural}".to_sym
+          orig_table_name = "#{project_name}.#{table_name.column}".to_sym
 
           # Create a temporary database and drop when done, also copy the source
           # table structure (by Sequel model) onto the temp table.
@@ -229,7 +230,7 @@ class Magma
           Sequel[
             magma_model.project_name
           ][
-            magma_model.model_name.to_s.plural.to_sym
+            magma_model.model_name.to_s.pluralize.to_sym
           ]
         )
 
