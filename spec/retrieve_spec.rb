@@ -203,12 +203,49 @@ describe RetrieveController do
         attribute_names: [ 'prize' ]
       )
 
-      json = json_body
-      expect(json[:models][:labor][:documents].size).to eq(2)
-      expect(json[:models][:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
-      expect(json[:models][:prize][:documents].values.first.keys.sort).to eq(
+      models = json_body[:models]
+
+      # the labor documents are received with the table identifiers filled in
+      expect(models[:labor][:documents].size).to eq(2)
+      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to eq(lion_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to eq(hydra_prizes.map(&:id))
+
+      # the prize documents are also included
+      expect(models[:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
+      expect(models[:prize][:documents].values.first.keys.sort).to eq(
         [:created_at, :id, :labor, :name, :updated_at, :worth ]
       )
+    end
+
+    it 'does not retrieve table associations with collapse_tables' do
+      lion = create(:labor, :lion)
+      hydra = create(:labor, :hydra)
+      stables = create(:labor, :stables)
+      lion_prizes = create_list(:prize, 3, labor: lion)
+      hydra_prizes = create_list(:prize, 3, labor: hydra)
+      stables_prizes = create_list(:prize, 3, labor: stables)
+
+      selected_prize_ids = (lion_prizes + hydra_prizes).map do |prize|
+        prize.send(Labors::Prize.identity).to_s
+      end.sort
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        collapse_tables: true,
+        record_names: [ 'Nemean Lion', 'Lernean Hydra' ],
+        attribute_names: [ 'prize' ]
+      )
+
+      models = json_body[:models]
+
+      # the labor documents are received without table identifiers filled in
+      expect(models[:labor][:documents].size).to eq(2)
+      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to eq(nil)
+      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to eq(nil)
+
+      # the prize documents are missing
+      expect(models[:prize]).to eq(nil)
     end
   end
 
@@ -325,6 +362,7 @@ describe RetrieveController do
   context 'pagination' do
     it 'can page results' do
       labor_list = create_list(:labor, 9)
+      prize_list = create_list(:prize, 3, labor: labor_list[7])
       names = labor_list.sort_by(&:name)[6..8].map(&:name)
 
       retrieve(
@@ -338,6 +376,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
+      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to eq(prize_list.map(&:id))
 
       # check to make sure collapse_tables doesn't mess things up
       retrieve(
@@ -352,6 +391,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
+      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to eq(nil)
     end
 
     it 'can page results with joined collections' do

@@ -28,7 +28,8 @@ class Magma
     def attributes
       @attributes ||= begin
         attributes = @model.attributes.values.select do |att|
-          !att.is_a?(Magma::TableAttribute) && requested?(att) && !restricted?(att)
+          requested?(att) && !restricted?(att) &&
+          !(att.is_a?(Magma::TableAttribute) && @collapse_tables)
         end
 
         # if there is no identifier, use the :id column
