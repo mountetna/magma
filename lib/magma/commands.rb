@@ -148,4 +148,46 @@ EOT
       Magma.instance.setup_db
     end
   end
+
+  class CreateDb < Etna::Command
+    usage '<project_name> # Attach an existing project to a magma instance, creating database and schema'
+
+    def execute(project_name)
+      @project_name = project_name
+      create_db if @no_db
+
+      create_schema unless db_namespace?
+
+      puts "Database is setup. Please run `bin/magma migrate #{@project_name}`."
+    end
+
+    def db_namespace?
+      Magma.instance.db[ "SELECT 1 FROM pg_namespace WHERE nspname='#{@project_name}'" ].count > 0
+    end
+
+    def create_schema
+      puts "Creating namespace (schema) #{@project_name} in database #{@db_config[:database]}"
+
+      Magma.instance.db.run "CREATE SCHEMA #{@project_name}"
+    end
+
+    def create_db
+      # Create the database only
+
+      puts "Creating database #{@db_config[:database]}"
+      %x{ PGPASSWORD=#{@db_config[:password]} createdb -w -U #{@db_config[:user]} #{@db_config[:database]} }
+
+      Magma.instance.setup_db
+    end
+
+    def setup(config)
+      super
+      @db_config = Magma.instance.config(:db)
+      begin
+        Magma.instance.setup_db
+      rescue Sequel::DatabaseConnectionError
+        @no_db = true
+      end
+    end
+  end
 end
