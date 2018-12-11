@@ -125,6 +125,7 @@ class RetrieveController < Magma::Controller
       @record_names,
       @attribute_names,
       filters: [ Magma::Retrieval::StringFilter.new(@filter) ],
+      collapse_tables: true,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 
@@ -142,6 +143,7 @@ class RetrieveController < Magma::Controller
       record_names,
       attribute_names,
       filters: filters,
+      collapse_tables: @collapse_tables,
       page: use_pages && @page,
       page_size: use_pages && @page_size,
       restrict: !@user.can_see_restricted?(@project_name)
