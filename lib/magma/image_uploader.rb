@@ -1,6 +1,3 @@
-require 'fog'
-require 'carrierwave/sequel'
-
 class Magma
   class ImageUploader  < CarrierWave::Uploader::Base
     include CarrierWave::MiniMagick
