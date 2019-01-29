@@ -193,6 +193,7 @@ class Magma
     # Some constraint helpers
     def comparison_constraint column_name, operator, value
       Magma::Constraint.new(
+        alias_name,
         Sequel.lit(
           "? #{operator.sub(/::/,'')} ?",
           Sequel.qualify(alias_name, column_name),
@@ -203,23 +204,25 @@ class Magma
 
     def not_null_constraint(column_name)
       Magma::Constraint.new(
-        Sequel.lit(
-          '? IS NOT NULL',
-          Sequel.qualify(alias_name, column_name)
+        alias_name,
+        Sequel.negate(
+          Sequel.qualify(alias_name, column_name) => nil
         )
       )
     end
 
     def not_constraint column_name, value
       Magma::Constraint.new(
-        Sequel.qualify(alias_name, column_name) => value
-      ).tap do |constraint|
-        constraint.invert!
-      end
+        alias_name,
+        Sequel.negate(
+          Sequel.qualify(alias_name, column_name) => value
+        )
+      )
     end
 
     def basic_constraint column_name, value
       Magma::Constraint.new(
+        alias_name,
         Sequel.qualify(alias_name, column_name) => value
       )
     end

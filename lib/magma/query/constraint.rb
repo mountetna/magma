@@ -1,20 +1,14 @@
 class Magma
   class Constraint
-    attr_reader :conditions
+    attr_reader :conditions, :table_alias
 
-    def initialize(*args)
+    def initialize(table_alias, *args)
+      @table_alias = table_alias
       @conditions = args
     end
 
     def apply(query)
-      @inverted ?
-        query.exclude(*@conditions)
-      :
-        query.where(*@conditions)
-    end
-
-    def invert!
-      @inverted = true
+      query.where(*@conditions)
     end
 
     def to_s
