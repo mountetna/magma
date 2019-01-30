@@ -117,6 +117,7 @@ describe QueryController do
 
       query(['prize', ['::has', 'worth'], '::all', 'name'])
 
+      expect(json_body[:answer].count).to eq(1)
       expect(json_body[:answer].first.last).to eq('poison')
     end
 
@@ -279,20 +280,27 @@ describe QueryController do
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
 
       query(
-        [ 'labor', '::all', 
+        [ 'labor', '::all',
+
+          # The Vector argument
           [
             [ 'number' ],
             [ 'completed' ],
-            [ 'prize', '::first', 'name' ],
-            [ 'prize', '::first', 'worth' ],
+
+            # three separate rows with the same filter
+            # allows us to test for the presence of empty
+            # (nil) cells
+            [ 'prize', [ 'name', '::equals', 'poison' ], '::first', 'worth' ],
+            [ 'prize', [ 'name', '::equals', 'poop' ], '::first', 'worth' ],
+            [ 'prize', [ 'name', '::equals', 'hide' ], '::first', 'worth' ]
           ]
         ]
       )
 
-      expect(json_body[:answer]).to eq([
-        ['Augean Stables', [5, false, 'poop', 0]],
-        ['Lernean Hydra', [2, false, 'poison', 5]],
-        ['Nemean Lion', [1, true, nil, nil]]
+      expect(json_body[:answer]).to eq( [
+        ['Augean Stables', [5, false, nil, 0, nil]],
+        ['Lernean Hydra', [2, false, 5, nil, nil]],
+        ['Nemean Lion', [1, true, nil, nil, nil]]
       ])
     end
   end
