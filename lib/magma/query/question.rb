@@ -127,11 +127,14 @@ class Magma
         Sequel.as(@model.table_name, @start_predicate.alias_name)
       ).order(@start_predicate.identity)
 
-      predicate_collect(:join).uniq.each do |join|
+      joins = predicate_collect(:join).uniq
+      constraints = predicate_collect(:constraint).uniq
+
+      joins.each do |join|
         query = join.apply(query)
       end
 
-      predicate_collect(:constraint).uniq.each do |constraint|
+      constraints.each do |constraint|
         query = constraint.apply(query)
       end
 
@@ -147,11 +150,14 @@ class Magma
         Sequel.as(@model.table_name, @start_predicate.alias_name)
       ).order(@start_predicate.identity)
 
-      @start_predicate.join.uniq.each do |join|
+      joins = @start_predicate.join.uniq
+      constraints = @start_predicate.constraint.uniq
+
+      joins.each do |join|
         query = join.apply(query)
       end
 
-      @start_predicate.constraint.uniq.each do |constraint|
+      constraints.each do |constraint|
         query = constraint.apply(query)
       end
 

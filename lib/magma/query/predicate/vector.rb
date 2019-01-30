@@ -19,9 +19,8 @@ class Magma
     end
 
     def constraint
-      @column_predicates.map do |column|
-        column.flatten.map(&:constraint).inject(&:+) || []
-      end.inject(&:+) || []
+      # all constraints will end up with joins below
+      []
     end
 
     def extract table, identity
@@ -31,10 +30,24 @@ class Magma
     end
 
     def join
-      s = @column_predicates.map do |pred|
+      constraints = @column_predicates.map do |column|
+        column.flatten.map(&:constraint).inject(&:+) || []
+      end.inject(&:+) || []
+
+      constraints = constraints.group_by(&:table_alias)
+
+      joins = @column_predicates.map do |pred|
         pred.flatten.map(&:join).inject(&:+)
       end.inject(&:+)
-      s
+
+      joins.each do |join|
+        join_constraints = constraints[join.right_table_alias]
+
+        join.constraints.concat(join_constraints.map(&:conditions).inject(&:+)) if join_constraints
+      end
+
+
+      joins
     end
 
     def select
