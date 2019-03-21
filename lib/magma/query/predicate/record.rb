@@ -95,21 +95,27 @@ class Magma
       case attribute
       when Magma::ForeignKeyAttribute
         return Magma::Join.new(
-          @child_predicate.table_name,
-          @child_predicate.alias_name,
-          :id,
+          # left table
           table_name,
           alias_name,
-          attribute.foreign_id
+          attribute.foreign_id,
+
+          #right table
+          @child_predicate.table_name,
+          @child_predicate.alias_name,
+          :id
         )
       when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
         return Magma::Join.new(
+          #left table
+          table_name,
+          alias_name,
+          :id,
+
+          #right table
           @child_predicate.table_name,
           @child_predicate.alias_name,
           attribute.self_id,
-          table_name,
-          alias_name,
-          :id
         )
       end
     end

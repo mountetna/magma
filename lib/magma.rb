@@ -1,4 +1,8 @@
 require 'sequel'
+require 'fog/aws'
+require 'carrierwave/sequel'
+require 'carrierwave/storage/fog'
+
 require_relative 'magma/project'
 require_relative 'magma/validation'
 require_relative 'magma/loader'
@@ -11,6 +15,7 @@ require_relative 'magma/commands'
 require_relative 'magma/payload'
 require_relative 'magma/metric'
 require_relative 'magma/storage'
+
 require 'singleton'
 
 class Magma
@@ -118,6 +123,8 @@ class Magma
     return unless opts
     CarrierWave.tmp_path = Magma.instance.config(:tmp_path)
     CarrierWave.configure do |config|
+      config.storage :fog
+      config.fog_provider = 'fog/aws'
       config.fog_credentials = opts[:credentials]
       config.fog_directory = opts[:directory]
       config.fog_public = false

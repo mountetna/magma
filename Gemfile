@@ -6,10 +6,10 @@ gem 'etna'
 gem 'pg'
 gem 'sequel', '4.49.0'
 gem 'mini_magick'
+gem 'fog-aws'
 gem 'carrierwave-sequel'
 gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
-gem 'fog'
 gem 'spreadsheet'
 
 group :test do

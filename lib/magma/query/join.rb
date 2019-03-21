@@ -1,38 +1,50 @@
 class Magma
   class Join
-    def initialize(t1, t1_alias, t1_id, t2, t2_alias, t2_id)
-      @table1 = t1
-      @table1_alias = t1_alias.to_sym
-      @table1_id = t1_id.to_sym
-      @table2_alias = t2_alias.to_sym
-      @table2_id = t2_id.to_sym
+    attr_reader :constraints
+
+    attr_reader :right_table_alias, :left_table_alias
+
+    def initialize(lt, lt_alias, lt_id, rt, rt_alias, rt_id)
+      @right_table = rt
+      @right_table_alias = rt_alias.to_sym
+      @right_table_id = rt_id.to_sym
+
+      @left_table = lt
+      @left_table_alias = lt_alias.to_sym
+      @left_table_id = lt_id.to_sym
+
+      @constraints = [
+        { left_table_column => right_table_column }
+      ]
     end
 
     def apply query
       query.left_outer_join(
-        Sequel.as(@table1,@table1_alias),
-        table1_column => table2_column
+        Sequel.as(@right_table,@right_table_alias),
+        Sequel.&(
+          *@constraints
+        )
       )
     end
 
     def to_s
-      {table1_column=> table2_column}.to_s
+      @constraints.to_s
     end
 
-    def table1_column
-      Sequel.qualify(@table1_alias, @table1_id)
+    def right_table_column
+      Sequel.qualify(@right_table_alias, @right_table_id)
     end
 
-    def table2_column
-      Sequel.qualify(@table2_alias, @table2_id)
+    def left_table_column
+      Sequel.qualify(@left_table_alias, @left_table_id)
     end
 
     def hash
-      table1_column.hash + table2_column.hash
+      right_table_column.hash + left_table_column.hash
     end
 
     def eql?(other)
-      table1_column == other.table1_column && table2_column == other.table2_column
+      right_table_column == other.right_table_column && left_table_column == other.left_table_column
     end
   end
 end
