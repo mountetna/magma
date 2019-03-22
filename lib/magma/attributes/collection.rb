@@ -22,9 +22,15 @@ class Magma
       new_links = added_links - existing_links
 
       if !new_links.empty?
+        now = DateTime.now
         link_model.multi_insert(
           new_links.map do |link|
-            { link_model.identity => link, self_id => record.id }
+            {
+              link_model.identity => link,
+              self_id => record.id,
+              created_at: now,
+              updated_at: now
+            }
           end
         )
       end
