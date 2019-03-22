@@ -41,6 +41,10 @@ describe UpdateController do
     expect(last_response.status).to eq(200)
     expect(Labors::Labor.count).to be(2)
     expect(json_body[:models][:project][:documents][:'The Two Labors of Hercules']).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
+
+    # check that it sets created_at and updated_at
+    expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
+    expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
   end
 
   it 'fails on validation checks' do
