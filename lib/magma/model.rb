@@ -84,14 +84,14 @@ class Magma
 
       # file attribute, holds file data
       def file name, opts = {}
-        mount_uploader name, Magma::FileUploader
+        Magma.instance.storage.setup_uploader(self, name, :file)
         attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
       alias_method :document, :file
 
       # image attribute, holds image data
       def image name, opts = {}
-        mount_uploader name, Magma::ImageUploader
+        Magma.instance.storage.setup_uploader(self, name, :image)
         attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
       end
 

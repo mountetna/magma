@@ -1,5 +1,6 @@
 class Magma
   class FileAttribute < Attribute
+
     def initialize(name, model, opts)
       super
       @type = String
@@ -14,7 +15,7 @@ class Magma
       path = record[@name]
       if path
         {
-          url: Magma.instance.storage.get_url(path),
+          url: Magma.instance.storage.download_url(@model.project_name, path),
           path: File.basename(path)
         }
       else
