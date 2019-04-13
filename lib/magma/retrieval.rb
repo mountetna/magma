@@ -121,6 +121,8 @@ class Magma
           [ att.name.to_s, '::identifier' ]
         when Magma::FileAttribute, Magma::ImageAttribute
           [ att.name.to_s, '::url' ]
+        when Magma::MatchAttribute
+          [ att.name.to_s ]
         else
           [ att.name.to_s ]
         end
