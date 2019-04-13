@@ -42,6 +42,8 @@ class Magma
       if !removed_links.empty?
         link_records( removed_links ).update( self_id => nil )
       end
+
+      return new_ids.map do |id| [id] end
     end
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)

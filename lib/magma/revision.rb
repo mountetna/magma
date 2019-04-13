@@ -11,9 +11,12 @@ class Magma
     end
     attr_reader :errors
 
+    def updated_record
+      @updated_record ||= { @model.identity => final_record_name }
+    end
 
     def final_record_name
-      @revised_document[@model.identity]
+      @model.identity == :id ? @record.id : @revised_document[@model.identity]
     end
 
     def valid?
@@ -44,7 +47,7 @@ class Magma
     def post!
       # update the record using this revision
       @revised_document.each do |name, new_value|
-        @model.attributes[name.to_sym].update @record, new_value
+        updated_record[name.to_sym] = @model.attributes[name.to_sym].update(@record, new_value)
       end
       @record.save changed: true
 

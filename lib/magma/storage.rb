@@ -77,7 +77,7 @@ class Magma
         carrier_wave_init
       end
 
-      def download_url path
+      def download_url project_name, path
         @fog.get_object_url(
           @config[:directory],
           "uploads/#{path}",
@@ -86,7 +86,7 @@ class Magma
         )
       end
 
-      def upload_url path
+      def upload_url project_name, path
         @fog.get_object_url(
           "uploads/#{path}",
           path_style: true

@@ -56,12 +56,7 @@ class UpdateController < Magma::Controller
 
       payload.add_model(model, attribute_names)
 
-      records = Magma::Retrieval.new(
-        model,
-        model_revisions.map(&:final_record_name),
-        'all',
-        restrict: !@user.can_see_restricted?(@project_name)
-      ).records
+      records = model_revisions.map(&:updated_record)
 
       payload.add_records(model, records)
     end

@@ -253,6 +253,10 @@ def json_body(response=nil)
   JSON.parse((response || last_response).body, symbolize_names: true)
 end
 
+def json_document model, record_name
+  json_body[:models][model.to_sym][:documents][record_name.to_sym]
+end
+
 AUTH_USERS = {
   editor: {
     email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors'

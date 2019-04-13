@@ -1,26 +1,36 @@
 class Magma
   class FileAttribute < Attribute
-
     def initialize(name, model, opts)
       super
       @type = String
     end
 
     def update(record, new_value)
-      super
-      record.modified!(name)
+      [ new_value ]
     end
+
+    private
+
+    def filename(record, path)
+      ext = path ? ::File.extname(path) : 'dat'
+      "#{@model.class.name.snake_case}-#{@attribute_name}-#{record.identifier}.#{ext}"
+    end
+
+    public
 
     def json_for record
       path = record[@name]
-      if path
+      return nil unless path
+
+      path.is_a?(Array) ?
+        {
+          upload_url: Magma.instance.storage.upload_url(@model.project_name, *path)
+        }
+        :
         {
           url: Magma.instance.storage.download_url(@model.project_name, path),
           path: File.basename(path)
         }
-      else
-        nil
-      end
     end
 
     def txt_for(record)
