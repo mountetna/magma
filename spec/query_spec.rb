@@ -270,7 +270,7 @@ describe QueryController do
     end
   end
 
-  context Magma::VectorPredicate do
+  context Magma::TablePredicate do
     it 'can return an arrayed result' do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
@@ -282,7 +282,7 @@ describe QueryController do
       query(
         [ 'labor', '::all',
 
-          # The Vector argument
+          # The table argument
           [
             [ 'number' ],
             [ 'completed' ],

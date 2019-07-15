@@ -74,7 +74,7 @@ class Magma
 
     verb Array do
       child do
-        Magma::VectorPredicate.new(@question, @model, alias_name, @arguments[0], *@query_args)
+        Magma::TablePredicate.new(@question, @model, alias_name, @arguments[0], *@query_args)
       end
     end
 

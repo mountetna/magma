@@ -12,7 +12,7 @@
 #                    list of attribute names 
 # ColumnPredicate  - represents a value from a database table, its arguments
 #                    are boolean tests on that value
-# VectorPredicate  - represents an array of mapped values
+# TablePredicate   - represents an array of mapped values
 # 
 # From these predicates we wish to produce a SQL query. The basic form of such
 # a query is defined by SELECT, FROM+JOIN, WHERE. Each predicate must therefore
@@ -251,4 +251,4 @@ require_relative 'predicate/number'
 require_relative 'predicate/string'
 require_relative 'predicate/terminal'
 require_relative 'predicate/metrics'
-require_relative 'predicate/vector'
+require_relative 'predicate/table'
