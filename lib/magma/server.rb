@@ -7,12 +7,10 @@ require_relative '../magma/server/update'
 
 class Magma
   class Server < Etna::Server
-    def initialize(config)
+    def initialize
       super
       application.tap do |magma|
         magma.load_models
-
-        magma.db.loggers << @logger
       end
     end
 
