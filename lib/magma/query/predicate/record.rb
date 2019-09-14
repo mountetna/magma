@@ -136,6 +136,8 @@ class Magma
         return Magma::FilePredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
       when Magma::MatchAttribute
         return Magma::MatchPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+      when Magma::MatrixAttribute
+        return Magma::MatrixPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
       else
         case attribute.type.to_s
         when 'String'

@@ -180,6 +180,25 @@ describe UpdateController do
     expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
   end
 
+  it 'updates a matrix' do
+    labor = create(:labor, name: 'Nemean Lion')
+    update(
+      'labor' => {
+        'Nemean Lion' => {
+          contributions: [
+            10, 10, 10
+          ]
+        }
+      }
+    )
+
+    expect(last_response.status).to eq(200)
+    expect(Labors::Labor.count).to be(1)
+    labor.refresh
+
+    expect(labor.contributions).to eq([10, 10, 10])
+  end
+
   it 'fails on validation checks' do
     # The actual validation is defined in spec/labors/models/monster.rb,
     lion = create(:monster, name: 'Nemean Lion', species: 'lion')

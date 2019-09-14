@@ -6,6 +6,8 @@ class UpdateController < Magma::Controller
 
     post_revisions if success?
 
+    require 'pry'
+    binding.pry
     if success?
       success(revisions_payload.to_json, 'application/json')
     else

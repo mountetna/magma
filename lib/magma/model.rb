@@ -107,9 +107,14 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
-      # match attribute, links to a json match object
+      # match attribute, contains a json match object
       def match(name, opts = {})
         attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
+      end
+
+      # matrix attribute, contains a row of data
+      def matrix(name, opts = {})
+        attribute(name, opts.merge(attribute_class: Magma::MatrixAttribute, type: :json))
       end
 
       def restricted(opts= {})

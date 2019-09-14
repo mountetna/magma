@@ -9,6 +9,9 @@ module Labors
     attribute :number, type: Integer
     attribute :completed, type: TrueClass
     attribute :year, type: DateTime
+
     table :prize
+
+    matrix :contributions, match: [ 'Athens', 'Sparta', 'Sidon', 'Thebes' ]
   end
 end
