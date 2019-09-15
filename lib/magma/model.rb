@@ -174,7 +174,6 @@ class Magma
             AS SELECT * FROM #{orig_table_name} WHERE 1=0;
           EOT
 
-          puts temp_table_query
           db.run(temp_table_query)
 
           # In the event of foreign keys we create another column in our
@@ -185,7 +184,6 @@ class Magma
           EOT
 
           unless columns.include?(src_id)
-            puts temp_table_query
             db.run(temp_table_query)
           end
 

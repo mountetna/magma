@@ -156,7 +156,6 @@ class RetrieveController < Magma::Controller
 
     time = Time.now
     records = retrieval.records
-    puts "Retrieving #{model.model_name} took #{Time.now - time} seconds"
 
     @payload.add_records( model, records )
 
