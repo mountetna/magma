@@ -79,7 +79,7 @@ class RetrieveController < Magma::Controller
   def valid_record_names?
     @record_names.is_a?(Array) &&
       (@record_names.all?{|name| name.is_a?(String)} ||
-       @record_names.all?{|name| name.is_a?(Fixnum)}) ||
+       @record_names.all?{|name| name.is_a?(Integer)}) ||
       @record_names == 'all'
   end
 

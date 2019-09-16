@@ -192,10 +192,13 @@ describe UpdateController do
       }
     )
 
+    # we get the new value back
     expect(last_response.status).to eq(200)
-    expect(Labors::Labor.count).to be(1)
-    labor.refresh
+    expect(json_document(:labor, 'Nemean Lion')[:contributions]).to eq([10, 10, 10])
 
+    # the model has the new value
+    labor.refresh
+    expect(Labors::Labor.count).to be(1)
     expect(labor.contributions).to eq([10, 10, 10])
   end
 

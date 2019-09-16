@@ -10,6 +10,11 @@ describe QueryController do
     json_post(:query, {project_name: 'labors', query: question})
   end
 
+  def update(revisions, user_type=:editor)
+    auth_header(user_type)
+    json_post(:update, {project_name: 'labors', revisions: revisions})
+  end
+
   it 'can post a basic query' do
     labors = create_list(:labor, 3)
 
@@ -267,6 +272,127 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq([ 'Augean Stables', 'Lernean Hydra' ])
+    end
+  end
+
+  context Magma::MatrixPredicate do
+    before(:each) do
+      @attribute = Labors::Labor.attributes[:contributions]
+
+      @attribute.instance_variable_set("@cached_row_json",nil)
+      @attribute.instance_variable_set("@cached_rows",nil)
+    end
+    it 'returns a table of values' do
+      matrix = [
+        [ 10, 10, 10, 10 ],
+        [ 20, 20, 20, 20 ],
+        [ 30, 30, 30, 30 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+
+      query(
+        [ 'labor',
+          '::all',
+          'contributions'
+        ]
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last)).to eq(matrix)
+    end
+
+    it 'returns a slice of the data' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+
+      query(
+        [ 'labor',
+          '::all',
+          'contributions',
+          '::slice',
+          [ 'Athens', 'Sparta' ]
+        ]
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last)).to eq(matrix.map{|r| r[0..1]})
+    end
+
+    it 'returns nil values for empty rows' do
+      stables = create(:labor, name: 'Augean Stables', number: 5)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2)
+      lion = create(:labor, name: 'Nemean Lion', number: 1)
+
+      query(
+        [ 'labor',
+          '::all',
+          'contributions'
+        ]
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last)).to eq(
+        [ [ nil ] * @attribute.match.length ] * 3
+      )
+
+      query(
+        [ 'labor',
+          '::all',
+          'contributions',
+          '::slice',
+          [ 'Athens', 'Thebes' ]
+        ]
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last)).to eq(
+        [ [ nil, nil ] ] * 3
+      )
+    end
+
+    it 'returns updated values' do
+      matrix = [
+        [ 10, 10, 10, 10 ],
+        [ 20, 20, 20, 20 ],
+        [ 30, 30, 30, 30 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+
+      query(
+        [ 'labor',
+          '::all',
+          'contributions'
+        ]
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last)).to eq(matrix)
+
+      # make an update
+      update(
+        'labor' => {
+          'Nemean Lion' => {
+            contributions: matrix[1]
+          }
+        }
+      )
+
+      # the new query should reflect the updated values
+      query(
+        [ 'labor',
+          '::all',
+          'contributions'
+        ]
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last)).to eq(matrix.values_at(0,1,1))
     end
   end
 

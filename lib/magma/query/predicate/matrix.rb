@@ -1,16 +1,65 @@
+require 'set'
+
 class Magma
-  class MatrixPredicate < Magma::ColumnPredicate
+  class MatrixPredicate < Magma::Predicate
+    def initialize question, model, alias_name, attribute_name, *query_args
+      super(question)
+      @model = model
+      @alias_name = alias_name
+      @attribute_name = attribute_name
+      @attribute = @model.attributes[@attribute_name]
+      @requested_identifiers = Set.new
+      process_args(query_args)
+    end
+
     verb '::slice', Array do
-      child do
+      child Array
+
+      extract do |table, identity|
+        @requested_identifiers << table.first[identity]
+        MatrixValue.new(self, table.first[identity], @arguments[1])
       end
     end
 
-    verb '::path' do
-      child String
+    verb nil do
+      child Array
+
+      extract do |table, identity|
+        @requested_identifiers << table.first[identity]
+        MatrixValue.new(self, table.first[identity])
+      end
     end
 
     def select
-      [ Sequel[alias_name][@attribute_name].as(column_name) ]
+      @arguments.empty? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
+    end
+    protected
+
+    def column_name
+      :"#{alias_name}_#{@attribute_name}"
+    end
+
+    def matrix_row(identifier, column_names)
+      ensure_requested_identifiers
+      @attribute.matrix_row_json(identifier, column_names)
+    end
+
+    def ensure_requested_identifiers
+      return if @requested_identifiers.empty?
+      @attribute.cache_rows(@requested_identifiers)
+      @requested_identifiers.clear
+    end
+
+    class MatrixValue
+      def initialize(predicate, identifier, column_names=nil)
+        @predicate = predicate
+        @identifier = identifier
+        @column_names = column_names
+      end
+
+      def to_json(options={})
+        @predicate.send(:matrix_row,@identifier,@column_names)
+      end
     end
   end
 end
