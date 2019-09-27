@@ -13,8 +13,8 @@ class Magma
     def update(record, new_value)
       record.set({@name=> new_value})
 
-      @cached_rows.delete(record.identifier)
-      @cached_row_json.delete(record.identifier)
+      cached_rows.delete(record.identifier)
+      cached_rows_json.delete(record.identifier)
 
       return new_value
     end
@@ -25,16 +25,19 @@ class Magma
 
       return if required_identifiers.empty?
 
-      @cached_rows.update(
+      cached_rows.update(
         @model.where( @model.identity => required_identifiers.to_a ).select_map( [ @model.identity, @name ] ).to_h
       )
     end
 
     def matrix_row_json(identifier, column_names)
-      raise unless @cached_rows.has_key?(identifier)
+      # since we want to retrieve rows in a single batch, we expect the row to
+      # have been cached already by #cache_rows
+      raise unless cached_rows.has_key?(identifier)
+
       if column_names
         indexes = column_indexes(column_names)
-        @cached_rows[identifier] ? @cached_rows[identifier].values_at(
+        cached_rows[identifier] ? cached_rows[identifier].values_at(
           *indexes
         ).to_json : indexes.map{nil}.to_json
       else
@@ -48,11 +51,12 @@ class Magma
       @cached_rows ||= {}
     end
 
-    def cached_row_json(identifier)
-      @cached_row_json ||= {}
+    def cached_rows_json
+      @cached_rows_json ||= {}
+    end
 
-      @cached_row_json[ identifier ] ||= @cached_rows[ identifier ] ?
-        @cached_rows[ identifier ].to_json : null_row_json
+    def cached_row_json(identifier)
+      cached_rows_json[ identifier ] ||= cached_rows[ identifier ] ?  cached_rows[ identifier ].to_json : null_row_json
     end
 
     def null_row_json

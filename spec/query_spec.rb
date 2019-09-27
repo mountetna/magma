@@ -279,7 +279,7 @@ describe QueryController do
     before(:each) do
       @attribute = Labors::Labor.attributes[:contributions]
 
-      @attribute.instance_variable_set("@cached_row_json",nil)
+      @attribute.instance_variable_set("@cached_rows_json",nil)
       @attribute.instance_variable_set("@cached_rows",nil)
     end
     it 'returns a table of values' do
