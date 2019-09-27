@@ -15,11 +15,11 @@ class Magma
     end
 
     # Connect to the database and get some data.
-    post '/retrieve', action: 'retrieve#action', auth: { user: { can_view?: :project_name } }
+    post '/retrieve', as: :retrieve, action: 'retrieve#action', auth: { user: { can_view?: :project_name } }
 
-    post '/query', action: 'query#action', auth: { user: { can_view?: :project_name } }
+    post '/query', as: :query, action: 'query#action', auth: { user: { can_view?: :project_name } }
 
-    post '/update', action: 'update#action', auth: { user: { can_edit?: :project_name } } 
+    post '/update', as: :update, action: 'update#action', auth: { user: { can_edit?: :project_name } } 
 
     get '/' do
       [ 200, {}, 'Magma On.' ]

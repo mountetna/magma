@@ -10,4 +10,5 @@ use Etna::CrossOrigin
 use Etna::ParseBody
 use Etna::SymbolizeParams
 use Etna::Auth
+use Etna::DescribeRoutes
 run Magma::Server.new
