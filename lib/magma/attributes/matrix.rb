@@ -4,9 +4,12 @@ class Magma
   class MatrixAttribute < Attribute
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
-        return if value.nil? || value.empty?
-        return if value.is_a?(Array) && value.all?{|v| v.is_a?(Numeric)}
-        yield "#{value.to_json} is not an array of numbers"
+        # nil is a valid value
+        return if value.nil?
+
+        # it must be an array of numbers
+        yield "Matrix value is not an array of numbers" unless value.is_a?(Array) && value.all?{|v| v.is_a?(Numeric)}
+        yield "Improper matrix row size" unless @attribute.match.size == value.size
       end
     end
 

@@ -186,7 +186,7 @@ describe UpdateController do
       'labor' => {
         'Nemean Lion' => {
           contributions: [
-            10, 10, 10
+            10, 10, 10, 10
           ]
         }
       }
@@ -194,12 +194,34 @@ describe UpdateController do
 
     # we get the new value back
     expect(last_response.status).to eq(200)
-    expect(json_document(:labor, 'Nemean Lion')[:contributions]).to eq([10, 10, 10])
+    expect(json_document(:labor, 'Nemean Lion')[:contributions]).to eq([10, 10, 10, 10])
 
     # the model has the new value
     labor.refresh
     expect(Labors::Labor.count).to be(1)
-    expect(labor.contributions).to eq([10, 10, 10])
+    expect(labor.contributions).to eq([10, 10, 10, 10])
+  end
+
+  it 'complains about incorrectly-sized matrix rows' do
+    labor = create(:labor, name: 'Nemean Lion')
+    update(
+      'labor' => {
+        'Nemean Lion' => {
+          contributions: [
+            10, 10
+          ]
+        }
+      }
+    )
+
+    # we get the new value back
+    expect(last_response.status).to eq(422)
+    expect(json_body[:errors]).to eq(["Improper matrix row size"])
+
+    # the model has the same value
+    labor.refresh
+    expect(Labors::Labor.count).to be(1)
+    expect(labor.contributions).to be_nil
   end
 
   it 'fails on validation checks' do
