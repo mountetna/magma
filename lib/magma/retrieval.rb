@@ -120,7 +120,7 @@ class Magma
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           [ att.name.to_s, '::identifier' ]
         when Magma::FileAttribute, Magma::ImageAttribute
-          [ att.name.to_s, '::url' ]
+          [ att.name.to_s, '::path' ]
         when Magma::MatchAttribute
           [ att.name.to_s ]
         else

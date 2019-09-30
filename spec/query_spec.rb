@@ -275,6 +275,36 @@ describe QueryController do
     end
   end
 
+  context Magma::FilePredicate do
+    before(:each) do
+      lion = create(:monster, name: 'Nemean Lion', stats: 'lion-stats.tsv')
+      hydra = create(:monster, name: 'Lernean Hydra', stats: 'hydra-stats.tsv')
+      stables = create(:monster, name: 'Augean Stables', stats: 'stables-stats.tsv')
+    end
+
+    it 'returns a path' do
+      query(
+        [ 'monster', '::all', 'stats', '::path' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([ 'hydra-stats.tsv', 'lion-stats.tsv', 'stables-stats.tsv' ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
+    end
+
+    it 'returns a url' do
+      query(
+        [ 'monster', '::all', 'stats', '::url' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last)).to all(match(/^https/))
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
+    end
+  end
+
   context Magma::BooleanPredicate do
     it 'checks truthiness' do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
