@@ -19,6 +19,7 @@ class Magma
         @requested_identifiers << table.first[identity]
         MatrixValue.new(self, table.first[identity], @arguments[1])
       end
+      format { [ default_format, @arguments[1] ] }
     end
 
     verb nil do
@@ -28,6 +29,7 @@ class Magma
         @requested_identifiers << table.first[identity]
         MatrixValue.new(self, table.first[identity])
       end
+      format { [ default_format, @attribute.match ] }
     end
 
     def select

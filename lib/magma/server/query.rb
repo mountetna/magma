@@ -12,7 +12,7 @@ class QueryController < Magma::Controller
       question = Magma::Question.new(@project_name, @params[:query],
                                      restrict: !@user.can_see_restricted?(@project_name),
                                      timeout: Magma.instance.config(:query_timeout))
-      return_data = {answer: question.answer, type: question.type}
+      return_data = {answer: question.answer, type: question.type, format: question.format}
       return success(return_data.to_json, 'application/json')
     rescue ArgumentError => e
       Magma.instance.logger.log_error(e)

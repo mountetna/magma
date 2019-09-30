@@ -82,5 +82,13 @@ class Magma
     def get_extract(*args)
       @predicate.instance_exec(*args, &@extract)
     end
+
+    def format(*args, &block)
+      @format = block_given? ? block : args
+    end
+
+    def get_format(*args)
+      @predicate.instance_exec(*args, &@format)
+    end
   end
 end

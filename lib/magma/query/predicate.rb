@@ -82,6 +82,22 @@ class Magma
       @child_predicate.is_a?(Predicate) ? @child_predicate.extract(table, identity) : table
     end
 
+    def format
+      if @verb && @verb.gives?(:format)
+        @verb.do(:format)
+      else
+        child_format
+      end
+    end
+
+    def child_format
+      @child_predicate.is_a?(Predicate) ? @child_predicate.format : nil
+    end
+
+    def default_format
+      "#{@model.project_name}::#{@model.model_name}##{@attribute_name || @model.identity}" if @model
+    end
+
     def to_hash
       {
         type: self.class.name,

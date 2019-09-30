@@ -29,6 +29,12 @@ class Magma
       end
     end
 
+    def format
+      @column_predicates.map do |pred|
+        pred.format
+      end
+    end
+
     def join
       constraints = @column_predicates.map do |column|
         column.flatten.map(&:constraint).inject(&:+) || []

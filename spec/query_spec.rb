@@ -23,6 +23,7 @@ describe QueryController do
     )
 
     expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
+    expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
   end
 
   it 'generates an error for bad arguments' do
@@ -73,6 +74,7 @@ describe QueryController do
       query(['prize', '::first', 'name'])
 
       expect(json_body[:answer]).to eq('poison')
+      expect(json_body[:format]).to eq('labors::prize#name')
     end
 
     it 'supports ::all' do
@@ -82,6 +84,7 @@ describe QueryController do
       query(['prize', '::all', 'name'])
 
       expect(json_body[:answer].map(&:last)).to eq([ 'poison', 'poop' ])
+      expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
     end
 
     it 'supports ::any' do
@@ -91,6 +94,7 @@ describe QueryController do
       query(['prize', [ 'worth', '::>', 0 ], '::any' ])
 
       expect(json_body[:answer]).to eq(true)
+      expect(json_body[:format]).to eq('Boolean')
     end
 
     it 'supports ::count' do
@@ -112,6 +116,7 @@ describe QueryController do
         [ 'Lernean Hydra', 1 ],
         [ 'Nemean Lion', 1 ]
       ])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'Numeric'])
     end
   end
 
@@ -124,6 +129,7 @@ describe QueryController do
 
       expect(json_body[:answer].count).to eq(1)
       expect(json_body[:answer].first.last).to eq('poison')
+      expect(json_body[:format]).to eq(['labors::prize#id', 'labors::prize#name'])
     end
 
     it 'supports ::lacks' do
@@ -133,6 +139,7 @@ describe QueryController do
       query(['prize', ['::lacks', 'worth'], '::all', 'name'])
 
       expect(json_body[:answer].first.last).to eq('poop')
+      expect(json_body[:format]).to eq(['labors::prize#id', 'labors::prize#name'])
     end
 
     it 'can retrieve metrics' do
@@ -161,6 +168,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'supports ::equals' do
@@ -169,6 +177,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].first.last).to eq('Nemean Lion')
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'supports ::not' do
@@ -177,6 +186,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq(['Augean Stables', 'Lernean Hydra'])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'supports ::in' do
@@ -185,6 +195,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'supports ::not for arrays' do
@@ -193,6 +204,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].first.last).to eq('Augean Stables')
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
   end
 
@@ -213,6 +225,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'supports ::in' do
@@ -221,6 +234,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq(['Lernean Hydra', 'Nemean Lion'])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'supports ::not' do
@@ -229,6 +243,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].first.last).to eq('Augean Stables')
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
   end
 
@@ -247,6 +262,7 @@ describe QueryController do
       expect(last_response.status).to eq(200)
 
       expect(json_body[:answer].map(&:last).sort).to eq([ 'Augean Stables', 'Lernean Hydra' ])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'returns in ISO8601 format' do
@@ -255,6 +271,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq(Labors::Labor.select_map(:year).map(&:iso8601))
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#year'])
     end
   end
 
@@ -272,6 +289,7 @@ describe QueryController do
       )
 
       expect(json_body[:answer].map(&:last)).to eq([ 'Augean Stables', 'Lernean Hydra' ])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
   end
 
@@ -279,8 +297,8 @@ describe QueryController do
     before(:each) do
       @attribute = Labors::Labor.attributes[:contributions]
 
-      @attribute.instance_variable_set("@cached_rows_json",nil)
-      @attribute.instance_variable_set("@cached_rows",nil)
+      @attribute.instance_variable_set('@cached_rows_json',nil)
+      @attribute.instance_variable_set('@cached_rows',nil)
     end
     it 'returns a table of values' do
       matrix = [
@@ -301,6 +319,7 @@ describe QueryController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:answer].map(&:last)).to eq(matrix)
+      expect(json_body[:format]).to eq(["labors::labor#name", ["labors::labor#contributions", ["Athens", "Sparta", "Sidon", "Thebes"]]])
     end
 
     it 'returns a slice of the data' do
@@ -324,6 +343,7 @@ describe QueryController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:answer].map(&:last)).to eq(matrix.map{|r| r[0..1]})
+      expect(json_body[:format]).to eq(["labors::labor#name", ["labors::labor#contributions", ["Athens", "Sparta" ]]])
     end
 
     it 'returns nil values for empty rows' do
@@ -354,6 +374,7 @@ describe QueryController do
       expect(json_body[:answer].map(&:last)).to eq(
         [ [ nil, nil ] ] * 3
       )
+      expect(json_body[:format]).to eq(["labors::labor#name", ["labors::labor#contributions", ["Athens", "Thebes"]]])
     end
 
     it 'returns updated values' do
@@ -393,12 +414,13 @@ describe QueryController do
       )
       expect(last_response.status).to eq(200)
       expect(json_body[:answer].map(&:last)).to eq(matrix.values_at(0,1,1))
+      expect(json_body[:format]).to eq(["labors::labor#name", ["labors::labor#contributions", ["Athens", "Sparta", "Sidon", "Thebes"]]])
     end
   end
 
   context Magma::TablePredicate do
     it 'can return an arrayed result' do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, contributions: [ 10, 10, 10, 10 ])
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
 
@@ -412,6 +434,7 @@ describe QueryController do
           [
             [ 'number' ],
             [ 'completed' ],
+            [ 'contributions', '::slice', [ 'Thebes' ] ],
 
             # three separate rows with the same filter
             # allows us to test for the presence of empty
@@ -424,9 +447,21 @@ describe QueryController do
       )
 
       expect(json_body[:answer]).to eq( [
-        ['Augean Stables', [5, false, nil, 0, nil]],
-        ['Lernean Hydra', [2, false, 5, nil, nil]],
-        ['Nemean Lion', [1, true, nil, nil, nil]]
+        ['Augean Stables', [5, false, [ nil ], nil, 0, nil]],
+        ['Lernean Hydra', [2, false, [ nil ], 5, nil, nil]],
+        ['Nemean Lion', [1, true, [ 10 ], nil, nil, nil]]
+      ])
+
+      expect(json_body[:format]).to eq([
+        'labors::labor#name',
+        [
+          'labors::labor#number',
+          'labors::labor#completed',
+          [ 'labors::labor#contributions', [ 'Thebes' ] ],
+          'labors::prize#worth',
+          'labors::prize#worth',
+          'labors::prize#worth'
+        ]
       ])
     end
   end

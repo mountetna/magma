@@ -18,6 +18,10 @@ class Magma
       table.first[column_name]
     end
 
+    def format
+      default_format
+    end
+
     def select
       @arguments.empty? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
     end
