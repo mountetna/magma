@@ -19,6 +19,11 @@ class Magma
       return new_value
     end
 
+    def reset_cache
+      @cached_rows_json = nil
+      @cached_rows = nil
+    end
+
     def cache_rows(identifiers)
 
       required_identifiers = identifiers - cached_rows.keys

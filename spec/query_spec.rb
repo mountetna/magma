@@ -296,9 +296,7 @@ describe QueryController do
   context Magma::MatrixPredicate do
     before(:each) do
       @attribute = Labors::Labor.attributes[:contributions]
-
-      @attribute.instance_variable_set('@cached_rows_json',nil)
-      @attribute.instance_variable_set('@cached_rows',nil)
+      @attribute.reset_cache
     end
     it 'returns a table of values' do
       matrix = [
@@ -419,6 +417,10 @@ describe QueryController do
   end
 
   context Magma::TablePredicate do
+    before(:each) do
+      Labors::Labor.attributes[:contributions].reset_cache
+    end
+
     it 'can return an arrayed result' do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, contributions: [ 10, 10, 10, 10 ])
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
