@@ -1,7 +1,4 @@
 require 'sequel'
-require 'fog/aws'
-require 'carrierwave/sequel'
-require 'carrierwave/storage/fog'
 
 require_relative 'magma/project'
 require_relative 'magma/validation'
@@ -47,11 +44,7 @@ class Magma
   def load_models(validate = true)
     setup_db
 
-    if config(:storage)
-      require_relative 'magma/file_uploader'
-      require_relative 'magma/image_uploader'
-      @storage = Magma::Storage.new
-    end
+    @storage = Magma::Storage.setup
 
     config(:project_path).split(/\s+/).each do |project_dir|
       project = Magma::Project.new(project_dir)
@@ -59,8 +52,6 @@ class Magma
     end
 
     validate_models if validate
-
-    carrier_wave_init
   end
 
   class Magma::ValidationError < StandardError
@@ -113,22 +104,6 @@ class Magma
   def find_descendents(klass)
     ObjectSpace.each_object(Class).select do |k|
       k < klass
-    end
-  end
-
-  private
-
-  def carrier_wave_init
-    opts = config(:storage)
-    return unless opts
-    CarrierWave.tmp_path = Magma.instance.config(:tmp_path)
-    CarrierWave.configure do |config|
-      config.storage :fog
-      config.fog_provider = 'fog/aws'
-      config.fog_credentials = opts[:credentials]
-      config.fog_directory = opts[:directory]
-      config.fog_public = false
-      config.fog_attributes = {'Cache-Control'=> "max-age=#{365 * 86400}"}
     end
   end
 end

@@ -64,6 +64,9 @@ class Magma
           identity
         )
       end
+      format do
+        child_format
+      end
     end
 
     verb '::all' do
@@ -76,6 +79,12 @@ class Magma
           [ identifier, child_extract(rows, identity) ]
         end.compact
       end
+      format do
+        [
+          default_format,
+          child_format
+        ]
+      end
     end
 
     verb '::any' do
@@ -85,6 +94,7 @@ class Magma
           row[identity]
         end
       end
+      format { 'Boolean' }
     end
 
     verb '::count' do
@@ -94,6 +104,7 @@ class Magma
           row[identity]
         end
       end
+      format { 'Numeric' }
     end
 
     def record_child
@@ -114,7 +125,7 @@ class Magma
       Sequel[alias_name][@model.identity]
     end
 
-    def constraint 
+    def constraint
       @filters.map do |filter|
         filter.flatten.map(&:constraint).inject(&:+) || []
       end.inject(&:+) || []

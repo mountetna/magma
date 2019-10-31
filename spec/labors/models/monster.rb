@@ -6,5 +6,6 @@ module Labors
     attribute :species, type: String, match: /^[a-z\s]+$/
     collection :victim
     table :aspect
+    file :stats
   end
 end

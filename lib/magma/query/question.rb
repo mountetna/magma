@@ -89,6 +89,10 @@ class Magma
       @start_predicate.reduced_type
     end
 
+    def format
+      @start_predicate.format
+    end
+
     def to_predicates
       predicates.map do |pred|
         pred.to_hash

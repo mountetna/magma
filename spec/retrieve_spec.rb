@@ -95,6 +95,32 @@ describe RetrieveController do
     expect(last_response.status).to eq(422)
   end
 
+  context 'files' do
+    it 'retrieves file attributes with storage links' do
+      Timecop.freeze(DateTime.new(500))
+      monster = create(:monster, :lion, stats: 'stats.txt')
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: [ 'Nemean Lion' ],
+        attribute_names: [ 'stats' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/stats.txt')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      Timecop.return
+    end
+  end
+
   context 'identifiers' do
     it 'allows grabbing the entire set of identifiers' do
       labors = create_list(:labor,3)

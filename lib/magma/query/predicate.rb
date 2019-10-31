@@ -12,7 +12,7 @@
 #                    list of attribute names 
 # ColumnPredicate  - represents a value from a database table, its arguments
 #                    are boolean tests on that value
-# VectorPredicate  - represents an array of mapped values
+# TablePredicate   - represents an array of mapped values
 # 
 # From these predicates we wish to produce a SQL query. The basic form of such
 # a query is defined by SELECT, FROM+JOIN, WHERE. Each predicate must therefore
@@ -80,6 +80,22 @@ class Magma
 
     def child_extract table, identity
       @child_predicate.is_a?(Predicate) ? @child_predicate.extract(table, identity) : table
+    end
+
+    def format
+      if @verb && @verb.gives?(:format)
+        @verb.do(:format)
+      else
+        child_format
+      end
+    end
+
+    def child_format
+      @child_predicate.is_a?(Predicate) ? @child_predicate.format : nil
+    end
+
+    def default_format
+      "#{@model.project_name}::#{@model.model_name}##{@attribute_name || @model.identity}" if @model
     end
 
     def to_hash
@@ -246,8 +262,10 @@ require_relative 'predicate/record'
 require_relative 'predicate/boolean'
 require_relative 'predicate/date_time'
 require_relative 'predicate/file'
+require_relative 'predicate/match'
 require_relative 'predicate/number'
 require_relative 'predicate/string'
 require_relative 'predicate/terminal'
 require_relative 'predicate/metrics'
-require_relative 'predicate/vector'
+require_relative 'predicate/table'
+require_relative 'predicate/matrix'

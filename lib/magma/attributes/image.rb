@@ -1,32 +1,13 @@
 class Magma
-  class ImageAttribute < Attribute
-    def initialize(name, model, opts)
-      super
-      @type = String
-    end
-
-    def update(record, new_value)
-      super
-      record.modified!(name)
-    end
-
+  class ImageAttribute < FileAttribute
     def json_for record
-      path = record[@name]
-      if path
-        thumb_path = "thumb_#{path}"
-        {
-          url: Magma.instance.storage.get_url(path),
-          path: File.basename(path),
-          thumb: Magma.instance.storage.get_url(thumb_path)
-        }
-      else
-        nil
-      end
-    end
-    
-    def txt_for record
-      image = json_for(record)
-      image ? image[:url] : nil
+      json = super
+
+      json && json[:url] ?
+        json.merge(
+          thumb: Magma.instance.storage.download_url(@model.project_name, "thumb_#{record[@name]}")
+        )
+        : nil
     end
   end
 end

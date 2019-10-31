@@ -84,14 +84,14 @@ class Magma
 
       # file attribute, holds file data
       def file name, opts = {}
-        mount_uploader name, Magma::FileUploader
+        Magma.instance.storage.setup_uploader(self, name, :file)
         attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
       alias_method :document, :file
 
       # image attribute, holds image data
       def image name, opts = {}
-        mount_uploader name, Magma::ImageUploader
+        Magma.instance.storage.setup_uploader(self, name, :image)
         attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
       end
 
@@ -107,9 +107,14 @@ class Magma
         attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
-      # match attribute, links to a json match object
+      # match attribute, contains a json match object
       def match(name, opts = {})
         attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
+      end
+
+      # matrix attribute, contains a row of data
+      def matrix(name, opts = {})
+        attribute(name, opts.merge(attribute_class: Magma::MatrixAttribute, type: :json))
       end
 
       def restricted(opts= {})
@@ -169,7 +174,6 @@ class Magma
             AS SELECT * FROM #{orig_table_name} WHERE 1=0;
           EOT
 
-          puts temp_table_query
           db.run(temp_table_query)
 
           # In the event of foreign keys we create another column in our
@@ -180,7 +184,6 @@ class Magma
           EOT
 
           unless columns.include?(src_id)
-            puts temp_table_query
             db.run(temp_table_query)
           end
 

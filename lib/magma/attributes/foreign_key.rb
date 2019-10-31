@@ -11,14 +11,17 @@ class Magma
 
     def update record, link
       if link.nil?
-        record[ foreign_id ] = nil
-        return
+        return record[ foreign_id ] = nil
       end
 
       link_model.update_or_create(link_model.identity => link) do |obj|
         record[ foreign_id ] = obj.id
+        return link
       end
+
+      return nil
     end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.is_a?(Magma::TempId) || value.nil?

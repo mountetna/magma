@@ -238,8 +238,6 @@ class Magma
     # This 'upsert' function will look at the records and either insert or
     # update them as necessary.
     def upsert
-      puts 'Attempting initial insert.'
-
       # Loop the records separate them into an insert group and an update group.
       # @records is separated out by model.
       @records.each do |model, record_set|
@@ -251,11 +249,6 @@ class Magma
         insert_records = record_set.select(&:valid_new_entry?)
         update_records = record_set.select(&:valid_update_entry?)
 
-        # Print the insert and update stats.
-        msg = "Found #{insert_records.count} records to insert and "
-        msg += "#{update_records.count} records to update for #{model}."
-        puts msg
-
         # Run the record insertion.
         insert_ids = model.multi_insert(
           insert_records.map(&:insert_entry),
@@ -263,7 +256,6 @@ class Magma
         )
 
         if insert_ids
-          puts "Updating temp records with real ids for #{model}."
           insert_records.zip(insert_ids).each do |record, real_id|
             record.real_id = real_id
           end
@@ -279,10 +271,6 @@ class Magma
       @records.each do |model, record_set|
         next if record_set.empty?
         temp_records = record_set.select(&:valid_temp_update?)
-
-        msg = "Found #{temp_records.count} records to "
-        msg += "repair temp_ids for #{model}."
-        puts msg
 
         args = {
           records: temp_records.map(&:temp_entry),

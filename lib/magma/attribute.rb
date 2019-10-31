@@ -44,6 +44,16 @@ class Magma
 
     def update(record, new_value)
       record.set({@name=> new_value})
+
+      if @type == DateTime
+        return DateTime.parse(new_value)
+      elsif @type == Float
+        return new_value.to_f
+      elsif @type == Integer
+        return new_value.to_i
+      else
+        return new_value
+      end
     end
 
     def read_only?
@@ -118,3 +128,4 @@ require_relative 'attributes/foreign_key'
 require_relative 'attributes/match'
 require_relative 'attributes/image'
 require_relative 'attributes/table'
+require_relative 'attributes/matrix'
