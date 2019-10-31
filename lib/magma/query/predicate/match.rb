@@ -2,10 +2,18 @@ class Magma
   class MatchPredicate < Magma::ColumnPredicate
     verb '::type' do
       child String
+
+      extract do |table, identity|
+        table.first[column_name]['type']
+      end
     end
 
     verb '::value' do
       child String
+
+      extract do |table, identity|
+        table.first[column_name]['value']
+      end
     end
 
     verb nil do

@@ -446,6 +446,38 @@ describe QueryController do
     end
   end
 
+  context Magma::MatchPredicate do
+    before(:each) do
+      @entry = create(:codex,
+        monster: 'Nemean Lion',
+        aspect: 'hide',
+        tome: 'Bullfinch',
+        lore: {
+          type: 'String',
+          value: 'fur'
+        }
+      )
+    end
+
+    it 'returns a match' do
+      query( [ 'codex', '::first', 'lore' ])
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer]).to eq(type: 'String', value: 'fur')
+    end
+
+    it 'returns a match type' do
+      query( [ 'codex', '::first', 'lore', '::type' ])
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer]).to eq('String')
+    end
+
+    it 'returns a match value' do
+      query( [ 'codex', '::first', 'lore', '::value' ])
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer]).to eq('fur')
+    end
+  end
+
   context Magma::TablePredicate do
     before(:each) do
       Labors::Labor.attributes[:contributions].reset_cache

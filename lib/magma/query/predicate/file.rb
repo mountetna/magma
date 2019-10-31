@@ -14,14 +14,6 @@ class Magma
       child String
     end
 
-    def extract table, identity
-      if @verb && @verb.gives?(:extract)
-        @verb.do(:extract, table, identity)
-      else
-        table.first[column_name]
-      end
-    end
-
     def select
       [ Sequel[alias_name][@attribute_name].as(column_name) ]
     end

@@ -15,7 +15,11 @@ class Magma
     end
 
     def extract table, identity
-      table.first[column_name]
+      if @verb && @verb.gives?(:extract)
+        @verb.do(:extract, table, identity)
+      else
+        table.first[column_name]
+      end
     end
 
     def format
