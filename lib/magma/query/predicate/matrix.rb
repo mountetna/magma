@@ -33,17 +33,18 @@ class Magma
     end
 
     def select
-      @arguments.empty? ? [ Sequel[alias_name][@attribute_name].as(column_name) ] : []
-    end
-    protected
-
-    def column_name
-      :"#{alias_name}_#{@attribute_name}"
+      []
     end
 
     def matrix_row(identifier, column_names)
       ensure_requested_identifiers
       @attribute.matrix_row_json(identifier, column_names)
+    end
+
+    protected
+
+    def column_name
+      :"#{alias_name}_#{@attribute_name}"
     end
 
     def ensure_requested_identifiers
@@ -60,7 +61,7 @@ class Magma
       end
 
       def to_json(options={})
-        @predicate.send(:matrix_row,@identifier,@column_names)
+        @predicate.matrix_row(@identifier,@column_names)
       end
     end
   end
