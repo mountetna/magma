@@ -6,7 +6,10 @@ class Magma
     end
 
     def update(record, new_value)
-      [ new_value ]
+      super
+      record.modified!(@name)
+
+      return record[@name]
     end
 
     private

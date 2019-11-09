@@ -87,14 +87,11 @@ class Magma
       end
 
       def upload_url project_name, path
-        @fog.get_object_url(
-          "uploads/#{path}",
-          path_style: true
-        )
-        url = fog_s3.put_object_url(
+        @fog.put_object_url(
           @config[:directory],
           "uploads/#{path}",
-          Time.now + @config[:expiration]*60
+          Time.now + @config[:expiration]*60,
+          path_style: true
         )
       end
 
