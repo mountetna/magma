@@ -20,6 +20,22 @@ class Magma
       set_options(opts)
     end
 
+    def read_only?
+      @readonly
+    end
+
+    def shown?
+      !@hide
+    end
+
+    def column_name
+      @name
+    end
+
+    def display_name
+      @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
+    end
+
     def json_template
       {
         name: @name,
@@ -37,46 +53,32 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
-    def json_for record
-      record[ @name ]
+    def json_payload(value)
+      value
     end
 
-    def txt_for(record)
-      json_for record
+    def text_payload(value)
+      json_payload(value)
     end
 
-    def update(record, new_value)
-      record.set({@name=> new_value})
-
-      if @type == DateTime
-        return DateTime.parse(new_value)
-      elsif @type == Float
-        return new_value.to_f
-      elsif @type == Integer
-        return new_value.to_i
-      else
-        return new_value
-      end
+    def update(record_name, new_value)
+      [
+        @name,
+        @type == DateTime ?
+          DateTime.parse(new_value) :
+        @type == Float ?
+          new_value.to_f :
+        @type == Integer ?
+          new_value.to_i :
+          new_value
+      ]
     end
 
-    def read_only?
-      @readonly
+    def update_links(record_name, value)
     end
 
-    def shown?
-      !@hide
-    end
-
-    def column_name
-      @name
-    end
-
-
-    def display_name
-      @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
-    end
-
-    def update_link(record, link)
+    def update_payload(record_name, value)
+      update(record_name, value)
     end
 
     def entry

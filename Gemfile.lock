@@ -141,7 +141,7 @@ DEPENDENCIES
   pry
   rack-test
   rspec
-  sequel (= 4.49.0)
+  sequel
   simplecov
   spreadsheet
   timecop

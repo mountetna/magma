@@ -169,6 +169,14 @@ class Magma
           EOT
 
           db.run(temp_table_query)
+
+
+          # Explicit drop, since ON COMMIT DROP doesn't seem to suffice
+          temp_table_query = <<-EOT
+            DROP TABLE #{temp_table_name};
+          EOT
+
+          db.run(temp_table_query)
         end
       end
 

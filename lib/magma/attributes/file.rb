@@ -7,11 +7,8 @@ class Magma
       super
     end
 
-    def update(record, new_value)
-      super
-      record.modified!(@name)
-
-      return record[@name]
+    def update(record_name, new_value)
+      [ @attribute_name, new_value ]
     end
 
     private
@@ -23,8 +20,7 @@ class Magma
 
     public
 
-    def json_for record
-      path = record[@name]
+    def json_payload(path)
       return nil unless path
 
       path.is_a?(Array) ?
@@ -38,8 +34,8 @@ class Magma
         }
     end
 
-    def txt_for(record)
-      file = json_for(record)
+    def text_payload(value)
+      file = json_payload(value)
       file ? file[:url] : nil
     end
   end

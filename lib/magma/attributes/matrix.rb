@@ -7,6 +7,11 @@ class Magma
       super
     end
 
+    class Entry < Magma::BaseAttributeEntry
+      def entry(value)
+        [ @attribute.name, value.to_json ]
+      end
+    end
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         # nil is a valid value
@@ -18,13 +23,15 @@ class Magma
       end
     end
 
-    def update(record, new_value)
-      record.set({@name=> new_value})
+    def update(record_name, new_value)
+      cached_rows.delete(record_name)
+      cached_rows_json.delete(record_name)
 
-      cached_rows.delete(record.identifier)
-      cached_rows_json.delete(record.identifier)
+      [ @name, new_value ]
+    end
 
-      return new_value
+    def update_payload(record_name, new_value)
+      [ @name, new_value ]
     end
 
     def reset_cache

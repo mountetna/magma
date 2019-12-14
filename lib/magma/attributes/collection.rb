@@ -5,51 +5,26 @@ class Magma
       model.one_to_many(name, class: model.project_model(name), primary_key: :id)
       super
     end
-    
-    def json_for record
-      link = record[@name]
+    def json_payload(link)
       link ? link.map(&:last).sort : nil
     end
 
-    def txt_for record
-      json_for(record).join(", ")
+    def text_payload(value)
+      json_payload(value).join(", ")
     end
 
-    def update record, new_ids
-      old_links = record.send(@name)
-
-      old_ids = old_links.map(&:identifier)
-
-      removed_links = old_ids - new_ids
-      added_links = new_ids - old_ids
-
-      existing_links = link_records(added_links).select_map(link_model.identity)
-      new_links = added_links - existing_links
-
-      if !new_links.empty?
-        now = DateTime.now
-        link_model.multi_insert(
-          new_links.map do |link|
-            {
-              link_model.identity => link,
-              self_id => record.id,
-              created_at: now,
-              updated_at: now
-            }
-          end
-        )
-      end
-
-      if !existing_links.empty?
-        link_records( existing_links ).update( self_id => record.id )
-      end
-
-      if !removed_links.empty?
-        link_records( removed_links ).update( self_id => nil )
-      end
-
-      return new_ids.map do |id| [id] end
+    def update(record_name, new_ids)
+      nil
     end
+
+    def update_links(record_name, new_ids)
+      yield link_model, new_ids
+    end
+
+    def update_payload(record_name, value)
+      [ @name, value.zip(value) ]
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         unless value.is_a?(Array)

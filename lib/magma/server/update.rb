@@ -2,65 +2,81 @@ require_relative 'controller'
 
 class UpdateController < Magma::Controller
   def action
-    validate_revisions
+    @loader = Magma::Loader.new
+    @censor = Magma::Censor.new(@user,@project_name)
+    @payload = Magma::Payload.new
 
-    post_revisions if success?
+    @revisions = @params[:revisions].map do |model_name, model_revisions|
+      model = Magma.instance.get_model(@project_name, model_name)
+      @payload.add_model(model)
 
-    if success?
-      success(revisions_payload.to_json, 'application/json')
-    else
-      failure(422, errors: @errors)
-    end
+      [
+        model,
+        model_revisions.map do |record_name, revision|
+          Magma::Revision.new(model, record_name, revision)
+        end
+      ]
+    end.to_h
+
+    censor_revisions
+
+    load_revisions if success?
+
+    return success_json(@payload.to_hash) if success?
+
+    return failure(422, errors: @errors)
   end
 
   private
 
-  def revisions
-    @revisions ||= 
-      begin
-        validator = Magma::Validation.new
+  def censor_revisions
+    @revisions.each do |model, model_revisions|
+      @censor.censored?(model, model_revisions) do |error|
+        @errors.push error
+      end
+    end
+  end
 
-        @params[:revisions].map do |model_name, model_revisions|
-          model = Magma.instance.get_model(@project_name, model_name)
+  def censored_revisions(model, revisions)
+    revisions.map do |record_name, revision|
+      # don't allow restricted records to be 
+      if @restrict
+        if @model.has_attribute?(:restricted) && @record[:restricted]
+          @errors.push "Cannot revise restricted #{@model.model_name} '#{@record.identifier}'"
+        end
 
-          model_revisions.map do |record_name, revision_data|
-            Magma::Revision.new(model, record_name.to_s, revision_data, validator, !@user.can_see_restricted?(@project_name))
+        revision.each do |attribute_name, value|
+          if @model.has_attribute?(attribute_name) && @model.attributes[attribute_name].restricted
+            @errors.push "Cannot revise restricted attribute :#{ attribute_name } on #{@model.model_name} '#{@record.identifier}'"
           end
-        end.flatten
+        end
       end
-  end
 
-  def validate_revisions
-    revisions.each do |revision|
-      error(revision.errors) if !revision.valid?
-    end
-  end
-
-  def post_revisions
-    revisions.each do |revision|
-      begin
-        revision.post!
-      rescue Magma::LoadFailed => m
-        log m.complaints
-        @errors.concat m.complaints
-        next
+      censored_revision = {
+        model.identity => record_name
+      }.merge(revision).select do |att_name|
+        model.has_attribute?(att_name) && !model.attributes[att_name.to_sym].read_only?
       end
     end
   end
 
-  def revisions_payload
-    payload = Magma::Payload.new
+  # fill the loader with records and create a revision payload
+  def load_revisions
+    @revisions.each do |model, model_revisions|
+      model_revisions.each do |revision|
+        @loader.push_record(model, revision.to_update)
 
-    revisions.group_by(&:model).each do |model,model_revisions|
-      attribute_names = model_revisions.first.attribute_names
+        revision.each_linked_record do |link_model, link_record|
+          @loader.push_record(link_model, link_record)
+        end
+      end
 
-      payload.add_model(model, attribute_names)
-
-      records = model_revisions.map(&:updated_record)
-
-      payload.add_records(model, records)
+      @payload.add_records(model, model_revisions.map(&:to_payload))
     end
 
-    payload.to_hash
+    @loader.dispatch_record_set
+  rescue Magma::LoadFailed => m
+    log(m.complaints)
+    @errors.concat(m.complaints)
   end
 end

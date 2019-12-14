@@ -37,6 +37,9 @@ describe UpdateController do
 
     expect(last_response.status).to eq(200)
     expect(json_document(:project, 'The Ten Labors of Hercules')).to eq(name: 'The Ten Labors of Hercules')
+    expect(Labors::Project.count).to eq(1)
+    project.refresh
+    expect(project.name).to eq('The Ten Labors of Hercules')
   end
 
   it 'updates a string attribute' do
@@ -123,39 +126,84 @@ describe UpdateController do
       }
     )
     entry.refresh
-    expect(entry.lore).to eq(new_lore)
+    expect(entry.lore.to_hash).to eq(new_lore)
 
     expect(last_response.status).to eq(200)
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
   end
 
-  it 'updates a file attribute' do
-    Timecop.freeze(DateTime.new(500))
-    lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+  context 'file attributes' do
+    it 'marks a file as blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
 
-    update(
-      monster: {
-        'Nemean Lion' => {
-          stats: 'stats.txt'
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: '::blank'
+          }
         }
-      }
-    )
+      )
 
-    # the field is NOT updated here
-    lion.refresh
-    expect(lion.stats).to be_nil
+      # the field is updated
+      lion.refresh
+      expect(lion.stats).to eq '::blank'
 
-    expect(last_response.status).to eq(200)
+      expect(last_response.status).to eq(200)
 
-    # but we do get an upload url for Metis
-    uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:upload_url])
-    params = Rack::Utils.parse_nested_query(uri.query)
-    expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
-    expect(uri.path).to eq('/labors/upload/magma/stats.txt')
-    expect(params['X-Etna-Id']).to eq('magma')
-    expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:upload_expiration]).iso8601)
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats][:path]).to eq('::blank')
+      expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
+    end
 
-    Timecop.return
+    it 'removes a file reference' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: nil
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.stats).to eq nil
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
+    end
+
+    it 'links a file from metis' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: 'metis://labors/files/lion-stats.txt'
+          }
+        }
+      )
+
+      # the field is NOT updated here
+      lion.refresh
+      expect(lion.stats).to eq 'monster-Nemean Lion-stats.txt'
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/upload/magma/stats.txt')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:upload_expiration]).iso8601)
+
+      Timecop.return
+    end
   end
 
   it 'updates a collection' do
@@ -171,13 +219,18 @@ describe UpdateController do
       }
     )
 
-    expect(last_response.status).to eq(200)
+    # we have created some new records
     expect(Labors::Labor.count).to be(2)
-    expect(json_document(:project, 'The Two Labors of Hercules')).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
-
-    # check that it sets created_at and updated_at
     expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
     expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
+
+    # the labors are linked to the project
+    project.refresh
+    expect(project.labor.count).to eq(2)
+
+    # the updated record is returned
+    expect(last_response.status).to eq(200)
+    expect(json_document(:project, 'The Two Labors of Hercules')).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
   end
 
   it 'updates a matrix' do
@@ -263,7 +316,7 @@ describe UpdateController do
       expect(restricted_victim.name).to eq(orig_name)
     end
 
-    it 'allows updates to a restricted record by an unrestricted user' do
+    it 'allows updates to a restricted record by a privileged user' do
       orig_name = 'Outis Koutsonadis'
       new_name  = 'Outis Koutsomadis'
       restricted_victim = create(:victim, name: orig_name, restricted: true)
@@ -281,6 +334,7 @@ describe UpdateController do
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,new_name)).to eq(name: new_name)
 
+      expect(Labors::Victim.count).to eq(1)
       restricted_victim.refresh
       expect(restricted_victim.name).to eq(new_name)
     end
@@ -305,7 +359,7 @@ describe UpdateController do
       expect(victim.country).to eq('nemea')
     end
 
-    it 'allows updates to a restricted attribute by an unrestricted user' do
+    it 'allows updates to a restricted attribute by a privileged user' do
       victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
 
       update(

@@ -6,16 +6,16 @@ class Magma
       super
     end
 
-    def json_for record
-      link = record[@name]
+    def json_payload(link)
       link ? link.map(&:last) : nil
     end
 
-    def txt_for record
+    def text_payload(value)
       nil
     end
 
-    def update record, new_value
+    def update(new_value)
+      nil
     end
 
     class Validation < Magma::CollectionAttribute::Validation; end

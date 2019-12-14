@@ -17,11 +17,8 @@ class Magma
       :"#{@name}_id"
     end
 
-    # The model name has the project name appended to the front to form the
-    # namespace. An example is 'Ipi::Sample'. Here we need to strip off the 
-    # project name and append '_id'.
     def self_id
-      :"#{@model.name.snake_case.split('::')[1]}_id"
+      :"#{@model.model_name}_id"
     end
 
     def link_record(identifier)
