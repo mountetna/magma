@@ -1,4 +1,5 @@
 require_relative './loader/temp_id'
+require_relative './loader/multi_update'
 require_relative './loader/record_entry'
 require_relative './loader/record_set'
 
@@ -112,13 +113,13 @@ class Magma
       # Loop the records separate them into an insert group and an update group.
       # @records is separated out by model.
       @records.each do |model, record_set|
-
         # Skip if the record_set for this model is empty.
         next if record_set.empty?
 
         # Our insert and update record groupings.
         insert_records = record_set.select(&:valid_new_entry?)
         update_records = record_set.select(&:valid_update_entry?)
+
 
         # Run the record insertion.
         multi_insert(model, insert_records)
@@ -146,7 +147,8 @@ class Magma
 
     def multi_update(model, update_records)
       by_attribute_key(update_records) do |records|
-        model.multi_update(records: records.map(&:update_entry))
+
+        MultiUpdate.new(model, records.map(&:update_entry), :id, :id).update
       end
     end
 
@@ -161,12 +163,7 @@ class Magma
         next if record_set.empty?
         temp_records = record_set.select(&:valid_temp_update?)
 
-        args = {
-          records: temp_records.map(&:temp_entry),
-          src_id: :real_id,
-          dest_id: :id
-        }
-        model.multi_update(args)
+        MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update
       end
     end
 
