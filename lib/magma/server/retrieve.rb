@@ -36,6 +36,7 @@ require 'ostruct'
 class RetrieveController < Magma::Controller
   def initialize(request, action)
     super
+
     @model_name = @params[:model_name]
     @record_names = @params[:record_names]
     @collapse_tables = @params[:collapse_tables] || @params[:format] == "tsv"
@@ -67,17 +68,16 @@ class RetrieveController < Magma::Controller
   private
 
   def validate
-    return error('No model name given') if @model_name.nil?
-    return error('No record names given') if @record_names.nil?
-    return error('Improperly formed record names') unless valid_record_names?
-    return error('Improperly formed attribute names') unless @attribute_names.is_a?(Array) || @attribute_names == 'all' || @attribute_names == 'identifier'
+    return error('`model_name` is required') if @model_name.nil?
+    return error('`record_names` must be Array, or `all`') unless valid_record_names?
+    return error('`attribute_names` must be Array, `all`, or `identifier`') unless @attribute_names.is_a?(Array) || @attribute_names == 'all' || @attribute_names == 'identifier'
     return error('Cannot retrieve by record name for all models') if @model_name == 'all' && @record_names.is_a?(Array) && !@record_names.empty?
-    return error('Can only retrieve identifiers for all records for all models') if @model_name == 'all' && @record_names == 'all' && @attribute_names != 'identifier'
-    return error('Cannot retrieve several models in tsv format') if @model_name == 'all' && @format == 'tsv'
+    return error('`attribute_name` must be `identifier` for model_name: all, record_names: all') if @model_name == 'all' && @record_names == 'all' && @attribute_names != 'identifier'
+    return error('`model_name` cannot be `all` for format: tsv ') if @model_name == 'all' && @format == 'tsv'
   end
 
   def valid_record_names?
-    @record_names.is_a?(Array) &&
+    @record_names && @record_names.is_a?(Array) &&
       (@record_names.all?{|name| name.is_a?(String)} ||
        @record_names.all?{|name| name.is_a?(Integer)}) ||
       @record_names == 'all'

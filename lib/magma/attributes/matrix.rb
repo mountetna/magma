@@ -23,14 +23,14 @@ class Magma
       end
     end
 
-    def update(record_name, new_value)
-      cached_rows.delete(record_name)
-      cached_rows_json.delete(record_name)
+    def revision_to_loader(record_name, new_value)
+      cached_rows.delete(record_name.to_s)
+      cached_rows_json.delete(record_name.to_s)
 
       [ @name, new_value ]
     end
 
-    def update_payload(record_name, new_value)
+    def revision_to_payload(record_name, new_value)
       [ @name, new_value ]
     end
 
@@ -40,7 +40,6 @@ class Magma
     end
 
     def cache_rows(identifiers)
-
       required_identifiers = identifiers - cached_rows.keys
 
       return if required_identifiers.empty?

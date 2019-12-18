@@ -120,7 +120,6 @@ class Magma
         insert_records = record_set.select(&:valid_new_entry?)
         update_records = record_set.select(&:valid_update_entry?)
 
-
         # Run the record insertion.
         multi_insert(model, insert_records)
 

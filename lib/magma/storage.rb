@@ -53,7 +53,7 @@ class Magma
             Magma.instance,
             method: method,
             host: host,
-            path: path,
+            path: URI.encode(path),
             expiration: (Time.now + expiration).iso8601,
             nonce: Magma.instance.sign.uid,
             id: :magma,

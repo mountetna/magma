@@ -53,15 +53,15 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
-    def json_payload(value)
+    def query_to_payload(value)
       value
     end
 
-    def text_payload(value)
-      json_payload(value)
+    def query_to_tsv(value)
+      query_to_payload(value)
     end
 
-    def update(record_name, new_value)
+    def revision_to_loader(record_name, new_value)
       [
         @name,
         @type == DateTime ?
@@ -74,11 +74,11 @@ class Magma
       ]
     end
 
-    def update_links(record_name, value)
+    def revision_to_links(record_name, value)
     end
 
-    def update_payload(record_name, value)
-      update(record_name, value)
+    def revision_to_payload(record_name, value)
+      revision_to_loader(record_name, value)
     end
 
     def entry

@@ -109,6 +109,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
 
+
       uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
       params = Rack::Utils.parse_nested_query(uri.query)
 

@@ -432,6 +432,9 @@ describe QueryController do
           }
         }
       )
+      expect(last_response.status).to eq(200)
+      lion.refresh
+      expect(lion.contributions).to eq(matrix[1])
 
       # the new query should reflect the updated values
       query(

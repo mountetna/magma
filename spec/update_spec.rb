@@ -188,7 +188,6 @@ describe UpdateController do
         }
       )
 
-      # the field is NOT updated here
       lion.refresh
       expect(lion.stats).to eq 'monster-Nemean Lion-stats.txt'
 
@@ -198,9 +197,9 @@ describe UpdateController do
       uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
       params = Rack::Utils.parse_nested_query(uri.query)
       expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
-      expect(uri.path).to eq('/labors/upload/magma/stats.txt')
+      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-stats.txt')
       expect(params['X-Etna-Id']).to eq('magma')
-      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:upload_expiration]).iso8601)
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
 
       Timecop.return
     end
@@ -230,7 +229,7 @@ describe UpdateController do
 
     # the updated record is returned
     expect(last_response.status).to eq(200)
-    expect(json_document(:project, 'The Two Labors of Hercules')).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
+    expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'Lernean Hydra', 'Nemean Lion' ])
   end
 
   it 'updates a matrix' do

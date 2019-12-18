@@ -6,16 +6,19 @@ class Magma
       super
     end
 
-    def json_payload(link)
-      link ? link.map(&:last) : nil
+    def query_to_payload(link)
+      link&.map(&:last)
     end
 
-    def text_payload(value)
+    def query_to_tsv(value)
       nil
     end
 
-    def update(new_value)
+    def revision_to_loader(record_name, new_value)
       nil
+    end
+
+    def revision_to_payload(record_name, value)
     end
 
     class Validation < Magma::CollectionAttribute::Validation; end

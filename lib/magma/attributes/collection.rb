@@ -5,24 +5,24 @@ class Magma
       model.one_to_many(name, class: model.project_model(name), primary_key: :id)
       super
     end
-    def json_payload(link)
+    def query_to_payload(link)
       link ? link.map(&:last).sort : nil
     end
 
-    def text_payload(value)
-      json_payload(value).join(", ")
+    def query_to_tsv(value)
+      query_to_payload(value).join(", ")
     end
 
-    def update(record_name, new_ids)
+    def revision_to_loader(record_name, new_ids)
       nil
     end
 
-    def update_links(record_name, new_ids)
+    def revision_to_links(record_name, new_ids)
       yield link_model, new_ids
     end
 
-    def update_payload(record_name, value)
-      [ @name, value.zip(value) ]
+    def revision_to_payload(record_name, value)
+      [ @name, value ]
     end
 
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation

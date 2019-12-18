@@ -64,7 +64,7 @@ class UpdateController < Magma::Controller
   def load_revisions
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
-        @loader.push_record(model, revision.to_update)
+        @loader.push_record(model, revision.to_loader)
 
         revision.each_linked_record do |link_model, link_record|
           @loader.push_record(link_model, link_record)

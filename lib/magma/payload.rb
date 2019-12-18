@@ -2,11 +2,6 @@ require 'csv'
 
 class Magma
   class Payload
-    # The payload is ONLY responsible for retrieving
-    # information from the model and turning it into JSON. It
-    # should not retrieve any data directly (except perhaps by
-    # invoking uncomputed model associations). Ideally all of
-    # the data is loaded already when passed into the payload.
     def initialize
       @models = {}
     end
@@ -98,10 +93,7 @@ class Magma
         Hash[
           @attribute_names.map do |attribute_name|
             record.has_key?(attribute_name) ?  [
-              attribute_name,
-              @model.has_attribute?(attribute_name) ?
-                @model.attributes[attribute_name].json_payload(record[attribute_name]) :
-                record[attribute_name]
+              attribute_name, record[attribute_name]
             ] : nil
           end.compact
         ]
@@ -118,7 +110,7 @@ class Magma
               if att_name == :id
                 record[att_name]
               else
-                @model.attributes[att_name].text_payload(record[att_name])
+                @model.attributes[att_name].query_to_tsv(record[att_name])
               end
             end
           end

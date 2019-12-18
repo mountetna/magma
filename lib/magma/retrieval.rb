@@ -78,7 +78,13 @@ class Magma
 
     def to_records(answer)
       answer.map do |name, row|
-        Hash[ @attribute_names.zip(row) ]
+        Hash[
+          @attribute_names.map.with_index do |attribute_name, i|
+            attribute_name == :id ?
+              [ :id, row[i] ] :
+            [ attribute_name, @model.attributes[attribute_name].query_to_payload(row[i]) ]
+          end
+        ]
       end
     end
 

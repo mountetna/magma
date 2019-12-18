@@ -6,15 +6,16 @@ class Magma
       super
     end
 
-    def json_for record
-      record[@name]
+    def query_to_payload(value)
+      value
     end
 
-    def update record, link
-      link_model.update_or_create(link_model.identity => link) do |obj|
-        obj[ self_id ] = record.id
-      end
+    def revision_to_record(record, value)
     end
+
+    def revision_to_links(record_name, value)
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.nil? || value.empty?

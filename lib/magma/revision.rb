@@ -13,19 +13,19 @@ class Magma
 
     def to_payload
       to_record do |attribute, value|
-        attribute.update_payload(record_name, value)
+        attribute.revision_to_payload(@record_name, value)
       end
     end
 
-    def to_update
+    def to_loader
       to_record do |attribute, value|
-        attribute.update(@record_name, value)
+        attribute.revision_to_loader(@record_name, value)
       end
     end
 
     def each_linked_record
       each_attribute do |attribute, value|
-        attribute.update_links(record_name, value) do |link_model, link_identifiers|
+        attribute.revision_to_links(record_name, value) do |link_model, link_identifiers|
           link_identifiers.each do |link_identifier|
             link_record = {
               link_model.identity => link_identifier,
