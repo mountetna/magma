@@ -3,10 +3,9 @@ class Magma
     attr_reader :complaints
     attr_accessor :real_id
 
-    def initialize(model, record, record_set, loader)
+    def initialize(model, record, loader)
       @record = record
       @model = model
-      @record_set = record_set
       @loader = loader
       @complaints = []
 
@@ -65,11 +64,9 @@ class Magma
     end
 
     def temp_entry
-      entry = @record.clone
-
       # Replace the entry with the appropriate values for the column.
       Hash[
-        entry.map do |att_name,value|
+        @record.map do |att_name,value|
           if att_name == :temp_id
             [ :real_id, value.real_id ]
           elsif value.is_a? Magma::TempId
@@ -98,7 +95,7 @@ class Magma
     end
 
     def check_document_validity
-      @record_set.validate(@record) do |complaint|
+      @loader.validator.validate(@model, @record) do |complaint|
         @complaints << complaint
       end
     end

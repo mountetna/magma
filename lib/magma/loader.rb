@@ -1,7 +1,6 @@
 require_relative './loader/temp_id'
 require_relative './loader/multi_update'
 require_relative './loader/record_entry'
-require_relative './loader/record_set'
 
 class Magma
   class LoadFailed < Exception
@@ -36,6 +35,8 @@ class Magma
       end
     end
 
+    attr_reader :validator
+
     def initialize
       @records = {}
       @temp_id_counter = 0
@@ -45,7 +46,7 @@ class Magma
     end
 
     def push_record(model, record)
-      records(model) << RecordEntry.new(model, record, records(model), self)
+      records(model) << RecordEntry.new(model, record, self)
     end
 
     # Once we have loaded up all the records we wish to insert/update (upsert)
@@ -73,7 +74,9 @@ class Magma
     end
 
     def identifier_id(model, identifier)
-      records(model).identifier_id[identifier]
+      @identifiers[model] ||= Hash[model.select_map([model.identity, :id])]
+
+      @identifiers[model][identifier]
     end
 
     alias_method :identifier_exists?, :identifier_id
@@ -87,7 +90,7 @@ class Magma
     def records(model)
       return @records[model] if @records[model]
 
-      @records[model] = RecordSet.new(model, self)
+      @records[model] = []
       ensure_link_models(model)
 
       @records[model]
