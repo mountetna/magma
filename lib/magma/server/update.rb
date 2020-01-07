@@ -37,30 +37,6 @@ class UpdateController < Magma::Controller
     end
   end
 
-  def censored_revisions(model, revisions)
-    revisions.map do |record_name, revision|
-      # don't allow restricted records to be 
-      if @restrict
-        if @model.has_attribute?(:restricted) && @record[:restricted]
-          @errors.push "Cannot revise restricted #{@model.model_name} '#{@record.identifier}'"
-        end
-
-        revision.each do |attribute_name, value|
-          if @model.has_attribute?(attribute_name) && @model.attributes[attribute_name].restricted
-            @errors.push "Cannot revise restricted attribute :#{ attribute_name } on #{@model.model_name} '#{@record.identifier}'"
-          end
-        end
-      end
-
-      censored_revision = {
-        model.identity => record_name
-      }.merge(revision).select do |att_name|
-        model.has_attribute?(att_name) && !model.attributes[att_name.to_sym].read_only?
-      end
-    end
-  end
-
-  # fill the loader with records and create a revision payload
   def load_revisions
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
