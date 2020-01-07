@@ -10,11 +10,17 @@ class Magma
     def revision_to_loader(record_name, new_value)
       case new_value
       when '::blank'
-        return [ @name, '::blank' ]
+        return [ @name, {
+          location: '::blank',
+          filename: '::blank'
+        }]
       when '::temp'
         return nil
       when %r!^metis://!
-        return [ @name, filename(record_name, new_value) ]
+        return [ @name, {
+          location: new_value,
+          filename: filename(record_name, new_value)
+        }]
       else
         return nil
       end
@@ -24,9 +30,13 @@ class Magma
       case new_value
       when '::temp'
         return [ @name, { path: '::temp' } ]
-      else
-        _, path = revision_to_loader(record_name, new_value)
-        return [ @name, query_to_payload(path) ]
+      when '::blank'
+        return [ @name, { path: '::blank' } ]
+      when %r!^metis://!
+        _, value = revision_to_loader(record_name, new_value)
+        return [ @name, query_to_payload(value[:filename]) ]
+      when nil
+        return [ @name, nil ]
       end
     end
 
@@ -49,6 +59,10 @@ class Magma
     def query_to_tsv(value)
       file = query_to_payload(value)
       file ? file[:url] : nil
+    end
+
+    def entry(value, loader)
+      [ name, value[:filename] ]
     end
 
     private

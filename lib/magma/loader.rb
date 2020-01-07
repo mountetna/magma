@@ -40,6 +40,8 @@ class Magma
       @records = {}
       @temp_id_counter = 0
       @validator = Magma::Validation.new
+      @attribute_entries = {}
+      @identifiers = {}
     end
 
     def push_record(model, record)
@@ -58,6 +60,8 @@ class Magma
     def reset
       @records = {}
       @validator = Magma::Validation.new
+      @attribute_entries = {}
+      @identifiers = {}
       GC.start
     end
 
@@ -77,7 +81,7 @@ class Magma
     private
 
     def attribute_entry(model, att_name, value)
-      records(model).attribute_entry(att_name,value)
+      model.attributes[att_name].entry(value, self)
     end
 
     def records(model)

@@ -5,10 +5,8 @@ class Magma
       super
     end
 
-    class Entry < Magma::BaseAttributeEntry
-      def entry(value)
-        [ @attribute.name, value.to_json ]
-      end
+    def entry(value, loader)
+      [ name, value.to_json ]
     end
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)

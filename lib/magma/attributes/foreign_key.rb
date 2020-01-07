@@ -9,6 +9,16 @@ class Magma
       [ @name, link ]
     end
 
+    def entry(value, loader)
+      return nil if value.nil?
+
+      if value.is_a? Magma::TempId
+        [ foreign_id, value.real_id ]
+      elsif link_identity
+        [ foreign_id, loader.identifier_id(link_model, value) ]
+      end
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.is_a?(Magma::TempId) || value.nil?

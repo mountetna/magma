@@ -81,12 +81,8 @@ class Magma
       revision_to_loader(record_name, value)
     end
 
-    def entry
-      if self.class.const_defined?(:Entry)
-        self.class.const_get(:Entry)
-      else
-        Magma::BaseAttributeEntry
-      end
+    def entry(value, loader)
+      [ name, value ]
     end
 
     private
@@ -115,11 +111,6 @@ class Magma
       # memoize match to reuse across validations
       def match
         @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
-      end
-    end
-    class Entry < Magma::BaseAttributeEntry
-      def entry(value)
-        [ @attribute.name, value ]
       end
     end
   end
