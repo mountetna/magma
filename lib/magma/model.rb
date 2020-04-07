@@ -4,8 +4,25 @@ Sequel.extension :inflector
 
 class Magma
   Model = Class.new(Sequel::Model)
+   
   class Model
     class << self
+      def string(attribute_name, opts = {})
+        attribute(attribute_name, opts.merge(type: String))
+      end
+
+      def integer(attribute_name, opts = {})
+        attribute(attribute_name, opts.merge(type: Integer))
+      end
+
+      def boolean(attribute_name, opts = {})
+        attribute(attribute_name, opts.merge(type: Boolean))
+      end
+
+      def date_time(attribute_name, opts = {})
+        attributes(attribute_name, opts.merge(type: DateTime))
+      end
+
       def project_name
         name.split('::').first.snake_case.to_sym
       end
@@ -31,12 +48,6 @@ class Magma
       # records and collections of records
       def attributes
         @attributes ||= {}
-      end
-
-      # basic attribute, holds any pg data type
-      def attribute(attr_name, opts = {})
-        klass = opts.delete(:attribute_class) || Magma::Attribute
-        attributes[attr_name] = klass.new(attr_name, self, opts)
       end
 
       def has_attribute?(name)
@@ -238,8 +249,16 @@ class Magma
         )
 
         super
-        magma_model.attribute(:created_at, type: DateTime, hide: true)
-        magma_model.attribute(:updated_at, type: DateTime, hide: true)
+        magma_model.send(:attribute, :created_at, type: DateTime, hide: true)
+        magma_model.send(:attribute, :updated_at, type: DateTime, hide: true)
+      end
+
+      private
+
+      # basic attribute, holds any pg data type
+      def attribute(attr_name, opts = {})
+        klass = opts.delete(:attribute_class) || Magma::Attribute
+        attributes[attr_name] = klass.new(attr_name, self, opts)
       end
     end
 

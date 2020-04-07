@@ -5,6 +5,6 @@ module Labors
     restricted
 
     identifier :name, type: String
-    attribute :country, type: String, restricted: true
+    string :country, restricted: true
   end
 end
