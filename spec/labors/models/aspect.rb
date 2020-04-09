@@ -10,10 +10,10 @@ module Labors
       value: :lore
 
     # the aspect in question
-    attribute :name, type: String
+    string :name
     # where the aspect is codified
-    attribute :source, type: String
+    string :source
     # the actual value
-    attribute :value, type: String
+    string :value
   end
 end

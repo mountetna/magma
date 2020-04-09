@@ -8,19 +8,27 @@ class Magma
   class Model
     class << self
       def string(attribute_name, opts = {})
-        attribute(attribute_name, opts.merge(type: String))
+        _attribute(attribute_name, opts.merge(type: String))
       end
 
       def integer(attribute_name, opts = {})
-        attribute(attribute_name, opts.merge(type: Integer))
+        _attribute(attribute_name, opts.merge(type: Integer))
       end
 
       def boolean(attribute_name, opts = {})
-        attribute(attribute_name, opts.merge(type: Boolean))
+        _attribute(attribute_name, opts.merge(type: TrueClass))
       end
 
       def date_time(attribute_name, opts = {})
-        attributes(attribute_name, opts.merge(type: DateTime))
+        _attribute(attribute_name, opts.merge(type: DateTime))
+      end
+
+      def json(attribute_name, opts = {})
+        _attribute(attribute_name, opts.merge(type: :json))
+      end
+
+      def float(attribute_name, opts = {})
+        _attribute(attribute_name, opts.merge(type: Float))
       end
 
       def project_name
@@ -56,7 +64,7 @@ class Magma
 
       # identifier attribute, sets a unique identifier
       def identifier(name, opts)
-        attribute(name, opts.merge(unique: true))
+        _attribute(name, opts.merge(unique: true))
         @identity = name
 
         # Default ordering is by identifier.
@@ -76,7 +84,7 @@ class Magma
         if name
           @parent = name
           many_to_one name
-          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+          _attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
         end
         @parent
       end
@@ -84,52 +92,52 @@ class Magma
       # child attribute, links to a single child record
       def child(name, opts = {})
         one_to_one(name)
-        attribute(name, opts.merge(attribute_class: Magma::ChildAttribute))
+        _attribute(name, opts.merge(attribute_class: Magma::ChildAttribute))
       end
 
       # link attribute, links to a single other record
       def link(name, opts = {})
         many_to_one(name, class: project_model(opts[:link_model] || name))
-        attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
+        _attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
       end
 
       # file attribute, holds file data
       def file name, opts = {}
         Magma.instance.storage.setup_uploader(self, name, :file)
-        attribute name, opts.merge(attribute_class: Magma::FileAttribute)
+        _attribute name, opts.merge(attribute_class: Magma::FileAttribute)
       end
       alias_method :document, :file
 
       # image attribute, holds image data
       def image name, opts = {}
         Magma.instance.storage.setup_uploader(self, name, :image)
-        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
+        _attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
       end
 
       # collection attribute, links to a collection by identifiers
       def collection(name, opts = {})
         one_to_many(name, class: project_model(name), primary_key: :id)
-        attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
+        _attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
       end
 
       # table attribute, links to a collection (table) with no identifier
       def table(name, opts = {})
         one_to_many(name, class: project_model(name), primary_key: :id)
-        attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
+        _attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
       end
 
       # match attribute, contains a json match object
       def match(name, opts = {})
-        attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
+        _attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
       end
 
       # matrix attribute, contains a row of data
       def matrix(name, opts = {})
-        attribute(name, opts.merge(attribute_class: Magma::MatrixAttribute, type: :json))
+        _attribute(name, opts.merge(attribute_class: Magma::MatrixAttribute, type: :json))
       end
 
       def restricted(opts= {})
-        attribute(:restricted, opts.merge(type: TrueClass))
+        _attribute(:restricted, opts.merge(type: TrueClass))
       end
 
       # suggests dictionary entries based on
@@ -249,14 +257,14 @@ class Magma
         )
 
         super
-        magma_model.send(:attribute, :created_at, type: DateTime, hide: true)
-        magma_model.send(:attribute, :updated_at, type: DateTime, hide: true)
+        magma_model.send(:_attribute, :created_at, type: DateTime, hide: true)
+        magma_model.send(:_attribute, :updated_at, type: DateTime, hide: true)
       end
 
       private
 
       # basic attribute, holds any pg data type
-      def attribute(attr_name, opts = {})
+      def _attribute(attr_name, opts = {})
         klass = opts.delete(:attribute_class) || Magma::Attribute
         attributes[attr_name] = klass.new(attr_name, self, opts)
       end

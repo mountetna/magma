@@ -34,7 +34,7 @@ EOT
     it 'suggests a creation migration for attributes' do
       module Labors
         class Olympian < Magma::Model
-          attribute :number, type: Integer
+          integer :number
         end
       end
       migration = Labors::Olympian.migration
@@ -68,7 +68,7 @@ EOT
     it 'suggests a creation migration for json attributes' do
       module Labors
         class Olympian < Magma::Model
-          attribute :prayers, type: :json
+          json :prayers
         end
       end
       migration = Labors::Olympian.migration
@@ -131,7 +131,7 @@ EOT
     it 'suggests an update migration for attributes' do
       module Labors
         class Prize < Magma::Model
-          attribute :weight, type: Float
+          float :weight
         end
       end
       migration = Labors::Prize.migration
@@ -146,7 +146,7 @@ EOT
     it 'suggests an update migration for json attributes' do
       module Labors
         class Prize < Magma::Model
-          attribute :dimensions, type: :json
+          json :dimensions
         end
       end
       migration = Labors::Prize.migration
@@ -208,7 +208,7 @@ EOT
       remove_attribute(Labors::Prize,:worth)
       module Labors
         class Prize < Magma::Model
-          attribute :weight, type: Float
+          float :weight
         end
       end
 
