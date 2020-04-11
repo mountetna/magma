@@ -7,28 +7,10 @@ class Magma
    
   class Model
     class << self
-      def string(attribute_name, opts = {})
-        _attribute(attribute_name, opts.merge(type: String))
-      end
-
-      def integer(attribute_name, opts = {})
-        _attribute(attribute_name, opts.merge(type: Integer))
-      end
-
-      def boolean(attribute_name, opts = {})
-        _attribute(attribute_name, opts.merge(type: TrueClass))
-      end
-
-      def date_time(attribute_name, opts = {})
-        _attribute(attribute_name, opts.merge(type: DateTime))
-      end
-
-      def json(attribute_name, opts = {})
-        _attribute(attribute_name, opts.merge(type: :json))
-      end
-
-      def float(attribute_name, opts = {})
-        _attribute(attribute_name, opts.merge(type: Float))
+      %i(string integer boolean date_time json float).each do |method_name|
+        define_method method_name do |attribute_name, opts={}|
+          attributes[attribute_name] = Magma::Attribute.set_attribute(attribute_name, self, opts, method_name)
+        end
       end
 
       def project_name
