@@ -166,7 +166,7 @@ class Magma
           end
         end
 
-        # this will raise an ArgumentError
+        # this will raise a QuestionError
         predicate.send(:invalid_argument!,query_args.first) if matching_args.nil?
 
         return [
@@ -244,12 +244,12 @@ class Magma
     end
 
     def invalid_argument! argument
-      raise ArgumentError, "Expected an argument to #{self.class.name}" if argument.nil?
-      raise ArgumentError, "#{argument} is not a valid argument to #{self.class.name}"
+      raise QuestionError, "Expected an argument to #{self.class.name}" if argument.nil?
+      raise QuestionError, "#{argument} is not a valid argument to #{self.class.name}"
     end
 
     def terminal value
-      raise ArgumentError, 'Trailing arguments after terminal value!' unless @query_args.empty?
+      raise QuestionError, 'Trailing arguments after terminal value!' unless @query_args.empty?
       Magma::TerminalPredicate.new(@question, value)
     end
   end

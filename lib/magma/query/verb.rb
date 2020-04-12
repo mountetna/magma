@@ -11,7 +11,7 @@ class Magma
       if respond_to?(:"get_#{action}", true)
         send :"get_#{action}", *args
       else
-        raise ArgumentError, "Verb for #{@predicate} cannot do #{action}"
+        raise "Verb for #{@predicate} cannot do #{action}"
       end
     end
 
@@ -42,7 +42,7 @@ class Magma
       when Class
         @predicate.send :terminal, @child
       else
-        raise ArgumentError, "Cannot determine child_predicate for #{@predicate}"
+        raise "Cannot determine child_predicate for #{@predicate}"
       end
     end
 
@@ -57,7 +57,7 @@ class Magma
       when Proc
         @predicate.instance_exec(&@join)
       else
-        raise ArgumentError, "Cannot determine join for #{@predicate}"
+        raise "Cannot determine join for #{@predicate}"
       end
     end
 
@@ -72,7 +72,7 @@ class Magma
       when Proc
         @predicate.instance_exec(&@constraint)
       else
-        raise ArgumentError, "Cannot determine constraint for #{@predicate}"
+        raise "Cannot determine constraint for #{@predicate}"
       end
     end
     def extract(*args, &block)
