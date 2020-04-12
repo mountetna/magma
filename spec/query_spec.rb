@@ -22,6 +22,7 @@ describe QueryController do
       [ 'labor', '::all', '::identifier' ]
     )
 
+    expect(last_response.status).to eq(200)
     expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
     expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
   end
@@ -328,6 +329,7 @@ describe QueryController do
       @attribute = Labors::Labor.attributes[:contributions]
       @attribute.reset_cache
     end
+
     it 'returns a table of values' do
       matrix = [
         [ 10, 10, 10, 10 ],
@@ -372,6 +374,29 @@ describe QueryController do
       expect(last_response.status).to eq(200)
       expect(json_body[:answer].map(&:last)).to eq(matrix.map{|r| r[0..1]})
       expect(json_body[:format]).to eq(["labors::labor#name", ["labors::labor#contributions", ["Athens", "Sparta" ]]])
+    end
+
+    it 'complains about invalid slices' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+
+      query(
+        [ 'labor',
+          '::all',
+          'contributions',
+          '::slice',
+          [ 'Bathens', 'Sporta' ]
+        ]
+      )
+
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(['Invalid verb arguments ::slice, Bathens, Sporta'])
     end
 
     it 'returns nil values for empty rows' do

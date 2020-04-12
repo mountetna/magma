@@ -87,6 +87,16 @@ class Magma
       @format = block_given? ? block : args
     end
 
+    def validate(&block)
+      @validate = block_given? ? block : nil
+    end
+
+    def get_validate(arguments)
+      if @validate && !@validate.call(arguments)
+        raise QuestionError, "Invalid verb arguments #{arguments.join(', ')}"
+      end
+    end
+
     def get_format(*args)
       @predicate.instance_exec(*args, &@format)
     end

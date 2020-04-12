@@ -134,6 +134,8 @@ class Magma
     def process_args(query_args)
       @verb, @arguments, @query_args = self.class.match_verbs(query_args, self)
 
+      @verb.do(:validate,@arguments)
+
       @child_predicate = @verb.do(:child)
     end
 

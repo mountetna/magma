@@ -2,6 +2,7 @@ require 'set'
 
 class Magma
   class MatrixPredicate < Magma::Predicate
+    attr_reader :attribute
     def initialize question, model, alias_name, attribute_name, *query_args
       super(question)
       @model = model
@@ -18,6 +19,9 @@ class Magma
       extract do |table, identity|
         @requested_identifiers << table.first[identity]
         MatrixValue.new(self, table.first[identity], @arguments[1])
+      end
+      validate do |_, match_list|
+        (match_list - @predicate.attribute.match).empty? && !match_list.empty?
       end
       format { [ default_format, @arguments[1] ] }
     end
