@@ -68,7 +68,7 @@ EOT
     it 'suggests a creation migration for json attributes' do
       module Labors
         class Olympian < Magma::Model
-          json :prayers
+          match :prayers
         end
       end
       migration = Labors::Olympian.migration
@@ -146,7 +146,7 @@ EOT
     it 'suggests an update migration for json attributes' do
       module Labors
         class Prize < Magma::Model
-          json :dimensions
+          match :dimensions
         end
       end
       migration = Labors::Prize.migration

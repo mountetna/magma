@@ -136,6 +136,5 @@ require_relative 'attributes/string_attribute'
 require_relative 'attributes/integer_attribute'
 require_relative 'attributes/boolean_attribute'
 require_relative 'attributes/date_time_attribute'
-require_relative 'attributes/json_attribute'
 require_relative 'attributes/float_attribute'
 
