@@ -1,5 +1,10 @@
 class Magma
   class MatchAttribute < Attribute
+    def initialize(name, model, opts)
+      opts.merge!(type: :json)
+      super
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.nil? || value.empty?

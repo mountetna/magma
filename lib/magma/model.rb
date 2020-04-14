@@ -7,22 +7,10 @@ class Magma
    
   class Model
     class << self
-      %i(string integer boolean date_time json float file collection table match matrix child foreign_key).each do |method_name|
+      %i(string integer boolean date_time float file collection table match matrix child foreign_key).each do |method_name|
         define_method method_name do |attribute_name, opts={}|
-
-          case method_name
-          when :file, :image
-            Magma.instance.storage.setup_uploader(self, attribute_name, method_name) 
-          when :collection, :table
-            one_to_many(attribute_name, class: project_model(attribute_name), primary_key: :id)
-          when :match, :matrix
-            opts.merge!(type: :json)
-          when :child
-            one_to_one(attribute_name)
-          end
-
           klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
-          attributes[attribute_name] = Magma::Attribute.set_attribute(attribute_name, self, opts, klass)
+          attributes[attribute_name] = klass.new(attribute_name, self, opts)
         end
       end
 
