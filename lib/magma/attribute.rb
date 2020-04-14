@@ -9,9 +9,8 @@ class Magma
 :format_hint, :loader, :link_model, :restricted ]
       end
 
-      def set_attribute(name, model, options, caller)
-        klass = "Magma::#{caller.to_s.capitalize}_attribute".camelcase.constantize
-        klass.new(name, model, options)
+      def set_attribute(name, model, options, attribute_class)
+        attribute_class.new(name, model, options)
       end
     end
 
