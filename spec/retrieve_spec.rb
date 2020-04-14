@@ -189,7 +189,7 @@ describe RetrieveController do
       project_doc = json_body[:models][:project][:documents][project.name.to_sym]
 
       expect(project_doc).not_to be_nil
-      expect(project_doc[:labor]).to eq(labors.map(&:name))
+      expect(project_doc[:labor]).to match_array(labors.map(&:name))
     end
 
     it 'returns an empty list for empty collections' do
@@ -402,7 +402,7 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
-      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to eq(prize_list.map(&:id))
+      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to match_array(prize_list.map(&:id))
 
       # check to make sure collapse_tables doesn't mess things up
       retrieve(
