@@ -136,8 +136,8 @@ describe RetrieveController do
       json = json_body
 
       # any model with an identifier returns all records
-      expect(json[:models][:labor][:documents].keys).to eq(labors.map(&:name).map(&:to_sym))
-      expect(json[:models][:monster][:documents].keys).to eq(monsters.map(&:name).map(&:to_sym))
+      expect(json[:models][:labor][:documents].keys).to match(labors.map(&:name).map(&:to_sym))
+      expect(json[:models][:monster][:documents].keys).to match(monsters.map(&:name).map(&:to_sym))
 
       # it does not return a model with no identifier
       expect(json[:models][:prize]).to be_nil
@@ -358,7 +358,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to eq(new_labors.map(&:name))
+      expect(labor_names).to match(new_labors.map(&:name))
     end
 
     it 'can filter on updated_at, created_at' do
@@ -379,7 +379,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to eq(new_labors.map(&:name))
+      expect(labor_names).to match(new_labors.map(&:name))
 
       Timecop.return
     end
