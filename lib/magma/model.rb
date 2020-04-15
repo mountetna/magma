@@ -7,7 +7,7 @@ class Magma
    
   class Model
     class << self
-      %i(string integer boolean date_time float file collection table match matrix child foreign_key).each do |method_name|
+      %i(string integer boolean date_time float file image collection table match matrix child foreign_key).each do |method_name|
         define_method method_name do |attribute_name, opts={}|
           klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
           attributes[attribute_name] = klass.new(attribute_name, self, opts)
