@@ -6,9 +6,9 @@ module Labors
 
     child :monster
 
-    attribute :number, type: Integer
-    attribute :completed, type: TrueClass
-    attribute :year, type: DateTime
+    integer :number
+    boolean :completed
+    date_time :year
 
     table :prize
 

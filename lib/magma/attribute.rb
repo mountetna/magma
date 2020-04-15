@@ -3,11 +3,14 @@ class Magma
     DISPLAY_ONLY = [:child, :collection]
     attr_reader :name, :type, :desc, :loader, :match, :format_hint, :unique, :index, :restricted
 
-
     class << self
       def options
         [:type, :desc, :display_name, :hide, :readonly, :unique, :index, :match,
 :format_hint, :loader, :link_model, :restricted ]
+      end
+
+      def set_attribute(name, model, options, attribute_class)
+        attribute_class.new(name, model, options)
       end
     end
 
@@ -129,3 +132,9 @@ require_relative 'attributes/match'
 require_relative 'attributes/image'
 require_relative 'attributes/table'
 require_relative 'attributes/matrix'
+require_relative 'attributes/string_attribute'
+require_relative 'attributes/integer_attribute'
+require_relative 'attributes/boolean_attribute'
+require_relative 'attributes/date_time_attribute'
+require_relative 'attributes/float_attribute'
+

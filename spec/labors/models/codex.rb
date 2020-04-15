@@ -2,9 +2,9 @@ module Labors
   class Codex < Magma::Model
     parent :project
 
-    attribute :monster, type: String
-    attribute :aspect, type: String
-    attribute :tome, type: String
+    string :monster
+    string :aspect
+    string :tome
     match :lore
   end
 end

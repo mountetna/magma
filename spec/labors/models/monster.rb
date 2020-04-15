@@ -3,7 +3,7 @@ module Labors
     parent :labor
 
     identifier :name, type: String
-    attribute :species, type: String, match: /^[a-z\s]+$/
+    string :species, match: /^[a-z\s]+$/
     collection :victim
     table :aspect
     file :stats

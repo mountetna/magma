@@ -2,6 +2,11 @@ require 'set'
 
 class Magma
   class MatrixAttribute < Attribute
+    def initialize(name, model, opts)
+      opts.merge!(type: :json)
+      super
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         # nil is a valid value

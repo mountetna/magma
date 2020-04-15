@@ -4,8 +4,18 @@ Sequel.extension :inflector
 
 class Magma
   Model = Class.new(Sequel::Model)
+   
   class Model
     class << self
+      %i(string integer boolean date_time float file image collection table match matrix child foreign_key).each do |method_name|
+        define_method method_name do |attribute_name, opts={}|
+          klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
+          attributes[attribute_name] = klass.new(attribute_name, self, opts)
+        end
+      end
+
+      alias_method :document, :file
+
       def project_name
         name.split('::').first.snake_case.to_sym
       end
@@ -33,19 +43,13 @@ class Magma
         @attributes ||= {}
       end
 
-      # basic attribute, holds any pg data type
-      def attribute(attr_name, opts = {})
-        klass = opts.delete(:attribute_class) || Magma::Attribute
-        attributes[attr_name] = klass.new(attr_name, self, opts)
-      end
-
       def has_attribute?(name)
         name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
       end
 
       # identifier attribute, sets a unique identifier
       def identifier(name, opts)
-        attribute(name, opts.merge(unique: true))
+        string(name, opts.merge(unique: true))
         @identity = name
 
         # Default ordering is by identifier.
@@ -65,60 +69,19 @@ class Magma
         if name
           @parent = name
           many_to_one name
-          attribute name, opts.merge(attribute_class: Magma::ForeignKeyAttribute)
+          foreign_key(name, opts)
         end
         @parent
-      end
-
-      # child attribute, links to a single child record
-      def child(name, opts = {})
-        one_to_one(name)
-        attribute(name, opts.merge(attribute_class: Magma::ChildAttribute))
       end
 
       # link attribute, links to a single other record
       def link(name, opts = {})
         many_to_one(name, class: project_model(opts[:link_model] || name))
-        attribute(name, opts.merge(attribute_class: Magma::ForeignKeyAttribute))
-      end
-
-      # file attribute, holds file data
-      def file name, opts = {}
-        Magma.instance.storage.setup_uploader(self, name, :file)
-        attribute name, opts.merge(attribute_class: Magma::FileAttribute)
-      end
-      alias_method :document, :file
-
-      # image attribute, holds image data
-      def image name, opts = {}
-        Magma.instance.storage.setup_uploader(self, name, :image)
-        attribute name, opts.merge(attribute_class: Magma::ImageAttribute)
-      end
-
-      # collection attribute, links to a collection by identifiers
-      def collection(name, opts = {})
-        one_to_many(name, class: project_model(name), primary_key: :id)
-        attribute(name, opts.merge(attribute_class: Magma::CollectionAttribute))
-      end
-
-      # table attribute, links to a collection (table) with no identifier
-      def table(name, opts = {})
-        one_to_many(name, class: project_model(name), primary_key: :id)
-        attribute(name, opts.merge(attribute_class: Magma::TableAttribute))
-      end
-
-      # match attribute, contains a json match object
-      def match(name, opts = {})
-        attribute(name, opts.merge(attribute_class: Magma::MatchAttribute, type: :json))
-      end
-
-      # matrix attribute, contains a row of data
-      def matrix(name, opts = {})
-        attribute(name, opts.merge(attribute_class: Magma::MatrixAttribute, type: :json))
+        foreign_key(name, opts)
       end
 
       def restricted(opts= {})
-        attribute(:restricted, opts.merge(type: TrueClass))
+        attributes[:restricted] = Magma::BooleanAttribute.new(:restricted, self, opts)
       end
 
       # suggests dictionary entries based on
@@ -238,8 +201,9 @@ class Magma
         )
 
         super
-        magma_model.attribute(:created_at, type: DateTime, hide: true)
-        magma_model.attribute(:updated_at, type: DateTime, hide: true)
+        %i(created_at updated_at).each do |timestamp|
+          magma_model.date_time(timestamp, {hide: true})
+        end
       end
     end
 

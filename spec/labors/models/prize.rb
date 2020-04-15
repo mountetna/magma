@@ -2,7 +2,9 @@ module Labors
   class Prize < Magma::Model
     parent :labor
 
-    attribute :name, type: String
-    attribute :worth, type: Integer
+    string :name
+    integer :worth
   end
 end
+
+
