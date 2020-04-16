@@ -174,7 +174,7 @@ class Magma
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           return [ att_name, '::identifier', string_op(operator), value ]
         when Magma::Attribute
-          case att.type.name
+          case att._type.name
           when "Integer", "Float"
             return [ att_name, numeric_op(operator), value.to_f ]
           when "DateTime"
