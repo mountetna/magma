@@ -167,25 +167,19 @@ class Magma
 
         att = attributes.find{|a| a.name == att_name.to_sym}
         raise ArgumentError, "#{att_name} is not an attribute" unless att.is_a?(Magma::Attribute)
-
         case att
         when Magma::CollectionAttribute, Magma::TableAttribute
           raise ArgumentError, "Cannot filter on collection attributes"
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           return [ att_name, '::identifier', string_op(operator), value ]
-        when Magma::Attribute
-          case att._type.name
-          when "Integer", "Float"
-            return [ att_name, numeric_op(operator), value.to_f ]
-          when "DateTime"
-            return [ att_name, numeric_op(operator), value ]
-          when "String"
-            return [ att_name, string_op(operator), value ]
-          when "TrueClass"
-            return [ att_name, boolean_op(operator, value) ]
-          else
-            raise ArgumentError, "Unknown type for attribute"
-          end
+        when Magma::IntegerAttribute, Magma::FloatAttribute
+          return [ att_name, numeric_op(operator), value.to_f ]
+        when Magma::DateTimeAttribute
+          return [ att_name, numeric_op(operator), value ]
+        when Magma::StringAttribute
+          return [ att_name, string_op(operator), value ]
+        when Magma::BooleanAttribute
+          return [ att_name, boolean_op(operator, value) ]
         else
           raise ArgumentError, "Cannot query for #{att_name}"
         end
