@@ -138,19 +138,16 @@ class Magma
         return Magma::MatchPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
       when Magma::MatrixAttribute
         return Magma::MatrixPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+      when Magma::StringAttribute
+        return Magma::StringPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+      when Magma::IntegerAttribute, Magma::FloatAttribute
+        return Magma::NumberPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+      when Magma::DateTimeAttribute
+        return Magma::DateTimePredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+      when Magma::BooleanAttribute
+        return Magma::BooleanPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
       else
-        case attribute.type.to_s
-        when 'String'
-          return Magma::StringPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
-        when 'Integer', 'Float'
-          return Magma::NumberPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
-        when 'DateTime'
-          return Magma::DateTimePredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
-        when 'TrueClass'
-          return Magma::BooleanPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
-        else
-          invalid_argument! attribute.name
-        end
+        invalid_argument! attribute.name
       end
     end
 
