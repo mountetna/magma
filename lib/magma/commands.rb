@@ -38,6 +38,28 @@ class Magma
     end
   end
 
+  class GlobalMigrate < Etna::Command
+    usage "Run database wide migrations"
+
+    def execute(version = nil)
+      Sequel.extension(:migration)
+      db = Magma.instance.db
+
+      if version
+        puts "Migrating to version #{version}"
+        Sequel::Migrator.run(db, File.join("db", "migrations"), target: version.to_i)
+      else
+        puts 'Migrating to latest'
+        Sequel::Migrator.run(db, File.join("db", "migrations"))
+      end
+    end
+
+    def setup(config)
+      super
+      Magma.instance.setup_db
+    end
+  end
+
   # When building migrations from scratch this command does not output
   # an order that respects foreign key constraints. i.e. The order in which the
   # migration creates tries to create the tables is out of whack and causes 
