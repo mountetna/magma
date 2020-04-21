@@ -91,15 +91,43 @@ class Magma
       end
     end
 
+    def update_option(opt, new_value)
+      opt = opt.to_sym
+
+      Magma.instance.db[:attributes].insert(
+        project_name: @model.project_name.to_s,
+        model_name: @model.model_name.to_s,
+        attribute_name: name.to_s,
+        "#{opt}": new_value
+      )
+
+      new_value = Regexp.new(new_value) if opt == :match
+      instance_variable_set("@#{opt}", new_value)
+    end
+
     private
 
     def set_options(opts)
       opts.each do |opt,value|
         if self.class.options.include?(opt)
+          value = fetch_value(opt) || value
           instance_variable_set("@#{opt}", value)
         end
       end
     end
+
+    def fetch_value(opt)
+      return unless [:desc, :display_name, :match, :format_hint].include?(opt)
+
+      Magma.instance.db[:attributes].
+        select(opt).
+        where_single_value(
+          project_name: @model.project_name.to_s,
+          model_name: @model.model_name.to_s,
+          attribute_name: name.to_s
+        )
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value)
         case match
