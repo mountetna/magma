@@ -77,7 +77,9 @@ class Magma
 
 
     def display_name
-      @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
+      @display_name ||= (
+        fetch_value(:display_name) || name.to_s.split(/_/).map(&:capitalize).join(' ')
+      )
     end
 
     def update_link(record, link)
