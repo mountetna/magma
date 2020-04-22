@@ -97,11 +97,13 @@ class Magma
       Magma.instance.db[:attributes].
         insert_conflict(
           target: [:project_name, :model_name, :attribute_name],
-          update: { "#{opt}": new_value }
+          update: { "#{opt}": new_value, updated_at: Time.now }
         ).insert(
           project_name: @model.project_name.to_s,
           model_name: @model.model_name.to_s,
           attribute_name: name.to_s,
+          created_at: Time.now,
+          updated_at: Time.now,
           "#{opt}": new_value
         )
 
