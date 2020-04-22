@@ -94,12 +94,16 @@ class Magma
     def update_option(opt, new_value)
       opt = opt.to_sym
 
-      Magma.instance.db[:attributes].insert(
-        project_name: @model.project_name.to_s,
-        model_name: @model.model_name.to_s,
-        attribute_name: name.to_s,
-        "#{opt}": new_value
-      )
+      Magma.instance.db[:attributes].
+        insert_conflict(
+          target: [:project_name, :model_name, :attribute_name],
+          update: { "#{opt}": new_value }
+        ).insert(
+          project_name: @model.project_name.to_s,
+          model_name: @model.model_name.to_s,
+          attribute_name: name.to_s,
+          "#{opt}": new_value
+        )
 
       new_value = Regexp.new(new_value) if opt == :match
       instance_variable_set("@#{opt}", new_value)

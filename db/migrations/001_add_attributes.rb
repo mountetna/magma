@@ -10,6 +10,8 @@ Sequel.migration do
       String :format_hint
       DateTime :created_at
       DateTime :updated_at
+
+      index [:project_name, :model_name, :attribute_name], unique: true
     end
   end
 end
