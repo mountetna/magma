@@ -16,15 +16,5 @@ describe Magma::Model do
       expect(template.values_at(:name, :identifier, :parent)).to eq([:monster, :name, :labor])
       expect(template[:attributes].keys).to include(:created_at, :updated_at, :labor, :name, :species)
     end
-
-    it "includes updated attributes" do
-      Labors::Monster.attributes[:species].update_option(:match, ".*")
-      Labors::Monster.attributes[:species].update_option(:desc, "Scary monsters!")
-
-      template = Labors::Monster.json_template
-
-      expect(template[:attributes][:species][:match]).to eq(".*")
-      expect(template[:attributes][:species][:desc]).to eq("Scary monsters!")
-    end
   end
 end
