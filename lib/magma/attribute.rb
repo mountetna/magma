@@ -1,6 +1,8 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
+    EDITABLE_OPTIONS = [:desc, :display_name, :format_hint]
+
     attr_reader :name, :desc, :loader, :match, :format_hint, :unique, :index, :restricted
 
     class << self
@@ -95,6 +97,7 @@ class Magma
 
     def update_option(opt, new_value)
       opt = opt.to_sym
+      return unless EDITABLE_OPTIONS.include?(opt)
 
       Magma.instance.db[:attributes].
         insert_conflict(
@@ -109,7 +112,6 @@ class Magma
           "#{opt}": new_value
         )
 
-      new_value = Regexp.new(new_value) if opt == :match
       instance_variable_set("@#{opt}", new_value)
     end
 
@@ -125,7 +127,7 @@ class Magma
     end
 
     def fetch_value(opt)
-      return unless [:desc, :display_name, :match, :format_hint].include?(opt)
+      return unless EDITABLE_OPTIONS.include?(opt)
 
       Magma.instance.db[:attributes].
         select(opt).

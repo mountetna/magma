@@ -6,7 +6,6 @@ Sequel.migration do
       String :attribute_name
       String :desc
       String :display_name
-      String :match
       String :format_hint
       DateTime :created_at
       DateTime :updated_at
