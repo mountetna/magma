@@ -79,9 +79,7 @@ class Magma
 
 
     def display_name
-      @display_name ||= (
-        fetch_value(:display_name) || name.to_s.split(/_/).map(&:capitalize).join(' ')
-      )
+      @display_name ||= name.to_s.split(/_/).map(&:capitalize).join(' ')
     end
 
     def description
@@ -122,24 +120,23 @@ class Magma
     private
 
     def set_options(opts)
+      opts = opts.merge(persisted_attribute_options)
+
       opts.each do |opt,value|
         if self.class.options.include?(opt)
-          value = fetch_value(opt) || value
           instance_variable_set("@#{opt}", value)
         end
       end
     end
 
-    def fetch_value(opt)
-      return unless EDITABLE_OPTIONS.include?(opt)
+    def persisted_attribute_options
+      persisted_attribute = Magma.instance.db[:attributes].first(
+        project_name: @model.project_name.to_s,
+        model_name: @model.model_name.to_s,
+        attribute_name: name.to_s
+      )
 
-      Magma.instance.db[:attributes].
-        select(opt).
-        where_single_value(
-          project_name: @model.project_name.to_s,
-          model_name: @model.model_name.to_s,
-          attribute_name: name.to_s
-        )
+      persisted_attribute&.slice(*EDITABLE_OPTIONS) || {}
     end
 
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation

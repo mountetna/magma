@@ -2,6 +2,47 @@ require_relative '../lib/magma'
 require 'yaml'
 
 describe Magma::Attribute do
+  describe "#initialize" do
+    it "sets options that only exist in the database" do
+      Magma.instance.db[:attributes].insert(
+        project_name: "project",
+        model_name: "model",
+        attribute_name: "name",
+        created_at: Time.now,
+        updated_at: Time.now,
+        format_hint: "First M Last"
+      )
+
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, {})
+
+      expect(attribute.format_hint).to eq("First M Last")
+    end
+
+    it "sets options that only exist on the attribute" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, { format_hint: "Last, First M" })
+
+      expect(attribute.format_hint).to eq("Last, First M")
+    end
+
+    it "defers to options defined in the database when setting options" do
+      Magma.instance.db[:attributes].insert(
+        project_name: "project",
+        model_name: "model",
+        attribute_name: "name",
+        created_at: Time.now,
+        updated_at: Time.now,
+        format_hint: "First M Last"
+      )
+
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, { format_hint: "Last, First M" })
+
+      expect(attribute.format_hint).to eq("First M Last")
+    end
+  end
+
   describe "#json_template" do
     it "includes attribute defaults" do
       model = double("model", project_name: :project, model_name: :model)
