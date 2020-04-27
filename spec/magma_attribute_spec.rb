@@ -33,9 +33,9 @@ describe Magma::Attribute do
 
     it "includes updated attributes" do
       model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { desc: "Old name" })
+      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
 
-      attribute.update_option(:desc, "New name")
+      attribute.update_option(:description, "New name")
       template = attribute.json_template
 
       expect(template[:desc]).to eq("New name")
@@ -45,11 +45,11 @@ describe Magma::Attribute do
   describe "#update_option" do
     it "updates editable options" do
       model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { desc: "Old name" })
+      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
 
-      attribute.update_option(:desc, "New name")
+      attribute.update_option(:description, "New name")
 
-      expect(attribute.desc).to eq("New name")
+      expect(attribute.description).to eq("New name")
     end
 
     it "doesn't update non-editable options" do
