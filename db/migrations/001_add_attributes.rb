@@ -4,7 +4,7 @@ Sequel.migration do
       String :project_name
       String :model_name
       String :attribute_name
-      String :desc
+      String :description
       String :display_name
       String :format_hint
       DateTime :created_at

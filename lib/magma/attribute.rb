@@ -1,13 +1,13 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    EDITABLE_OPTIONS = [:desc, :display_name, :format_hint]
+    EDITABLE_OPTIONS = [:description, :display_name, :format_hint]
 
-    attr_reader :name, :desc, :loader, :match, :format_hint, :unique, :index, :restricted
+    attr_reader :name, :description, :loader, :match, :format_hint, :unique, :index, :restricted
 
     class << self
       def options
-        [:type, :desc, :display_name, :hide, :readonly, :unique, :index, :match,
+        [:type, :description, :display_name, :hide, :readonly, :unique, :index, :match,
 :format_hint, :loader, :link_model, :restricted ]
       end
 
@@ -32,7 +32,7 @@ class Magma
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: @type.nil? ? nil : @type.respond_to?(:name) ? @type.name : @type,
         attribute_class: self.class.name,
-        desc: @desc,
+        desc: @description,
         display_name: display_name,
         options: @match.is_a?(Array) ? @match : nil,
         match: @match.is_a?(Regexp) ? @match.source : nil,
