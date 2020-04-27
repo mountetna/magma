@@ -3,12 +3,12 @@ class Magma
     DISPLAY_ONLY = [:child, :collection]
     EDITABLE_OPTIONS = [:description, :display_name, :format_hint]
 
-    attr_reader :name, :description, :loader, :match, :format_hint, :unique, :index, :restricted
+    attr_reader :name, :loader, :match, :format_hint, :unique, :index, :restricted
 
     class << self
       def options
         [:type, :description, :display_name, :hide, :readonly, :unique, :index, :match,
-:format_hint, :loader, :link_model, :restricted ]
+:format_hint, :loader, :link_model, :restricted, :desc ]
       end
 
       def set_attribute(name, model, options, attribute_class)
@@ -32,7 +32,7 @@ class Magma
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: @type.nil? ? nil : @type.respond_to?(:name) ? @type.name : @type,
         attribute_class: self.class.name,
-        desc: @description,
+        desc: description,
         display_name: display_name,
         options: @match.is_a?(Array) ? @match : nil,
         match: @match.is_a?(Regexp) ? @match.source : nil,
@@ -82,6 +82,10 @@ class Magma
       @display_name ||= (
         fetch_value(:display_name) || name.to_s.split(/_/).map(&:capitalize).join(' ')
       )
+    end
+
+    def description
+      @description || @desc
     end
 
     def update_link(record, link)

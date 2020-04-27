@@ -40,6 +40,14 @@ describe Magma::Attribute do
 
       expect(template[:desc]).to eq("New name")
     end
+
+    it "uses desc as a fallback for description" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, { desc: "Old name" })
+      template = attribute.json_template
+
+      expect(template[:desc]).to eq("Old name")
+    end
   end
 
   describe "#update_option" do
