@@ -1,7 +1,20 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation, :link_model_name]
+
+    EDITABLE_OPTIONS = [
+      :description,
+      :display_name,
+      :format_hint,
+      :hide,
+      :index,
+      :link_model_name,
+      :loader,
+      :readonly,
+      :restricted,
+      :unique,
+      :validation
+    ]
 
     attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name
 
@@ -127,23 +140,11 @@ class Magma
     private
 
     def set_options(opts)
-      opts = opts.merge(persisted_attribute_options)
-
       opts.each do |opt,value|
         if self.class.options.include?(opt)
           instance_variable_set("@#{opt}", value)
         end
       end
-    end
-
-    def persisted_attribute_options
-      persisted_attribute = Magma.instance.db[:attributes].first(
-        project_name: @model.project_name.to_s,
-        model_name: @model.model_name.to_s,
-        attribute_name: name.to_s
-      )
-
-      persisted_attribute&.slice(*EDITABLE_OPTIONS) || {}
     end
 
     MAGMA_ATTRIBUTES = [

@@ -21,6 +21,21 @@ class Magma
 
       alias_method :document, :file
 
+      def load_attributes
+        attributes = Magma.instance.db[:attributes].where(
+          project_name: project_name.to_s,
+          model_name: model_name.to_s
+        )
+
+        attributes.each do |attribute|
+          send(
+            attribute[:type],
+            attribute[:attribute_name].to_sym,
+            attribute.slice(*Magma::Attribute::EDITABLE_OPTIONS)
+          )
+        end
+      end
+
       def project_name
         name.split('::').first.snake_case.to_sym
       end
