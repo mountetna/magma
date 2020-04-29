@@ -1,6 +1,6 @@
 module Labors
   class Project < Magma::Model
-    identifier :name, type: String, desc: 'Name for this project'
+    identifier :name, type: String, description: 'Name for this project'
 
     collection :labor
 

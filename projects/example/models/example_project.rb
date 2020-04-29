@@ -3,6 +3,6 @@ module Example
     string :description
     identifier :name,
       type:String,
-      desc: 'A name for this project.'
+      description: 'A name for this project.'
   end
 end
