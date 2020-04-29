@@ -4,7 +4,7 @@ module Labors
 
     restricted
 
-    identifier :name, type: String
+    identifier :name
     string :country, restricted: true
   end
 end
