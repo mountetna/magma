@@ -2,9 +2,8 @@ require 'set'
 
 class Magma
   class MatrixAttribute < Attribute
-    def initialize(name, model, opts)
-      opts.merge!(type: :json)
-      super
+    def _type
+      :json
     end
 
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation

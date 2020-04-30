@@ -1,7 +1,7 @@
 class Magma
   class IntegerAttribute < Attribute
-    def initialize(name, model, opts)
-      super(name, model, opts.merge(type: Integer))
+    def _type
+      Integer
     end
   end
 end
