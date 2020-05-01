@@ -21,12 +21,7 @@ class Magma
 
       alias_method :document, :file
 
-      def load_attributes
-        attributes = Magma.instance.db[:attributes].where(
-          project_name: project_name.to_s,
-          model_name: model_name.to_s
-        )
-
+      def load_attributes(attributes = {})
         attributes.each do |attribute|
           send(
             attribute[:type],

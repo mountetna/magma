@@ -47,6 +47,20 @@ class Magma
         require_files('loaders')
         require_files('metrics')
       end
+
+      load_model_attributes
+    end
+
+    def load_model_attributes
+      model_attributes = Magma.instance.db[:attributes].
+        where(project_name: @project_name.to_s).
+        to_a.
+        group_by { |attribute| attribute[:model_name].to_sym }
+
+      model_attributes.each do |model_name, attributes|
+        model = models[model_name]
+        model.load_attributes(attributes)
+      end
     end
 
     def require_files folder
