@@ -1,6 +1,6 @@
 class Magma
   class DateTimeAttribute < Attribute
-    def _type
+    def database_type
       DateTime
     end
   end

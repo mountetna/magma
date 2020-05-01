@@ -6,7 +6,7 @@ class Magma
       super
     end
 
-    def _type
+    def database_type
       String
     end
 

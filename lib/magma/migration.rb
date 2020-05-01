@@ -50,7 +50,7 @@ class Magma
         ]
       when Magma::Attribute
         [
-          column_entry(att.column_name, att._type),
+          column_entry(att.column_name, att.database_type),
           att.unique && unique_entry(att.column_name),
           att.index && index_entry(att.column_name)
         ].compact
@@ -83,7 +83,7 @@ class Magma
       return true if att.is_a?(Magma::ForeignKeyAttribute)
 
       literal_type = att.is_a?(DateTimeAttribute)?  :"timestamp without time zone" :
-        Magma.instance.db.cast_type_literal(att._type)
+        Magma.instance.db.cast_type_literal(att.database_type)
 
       return model.schema[att.column_name][:db_type].to_sym == literal_type.to_sym
     end
@@ -181,7 +181,7 @@ class Magma
       @model.attributes.map do |name,att|
         next unless schema_supports_attribute?(@model,att)
         next if schema_unchanged?(@model,att)
-        column_type_entry(att.column_name, att._type)
+        column_type_entry(att.column_name, att.database_type)
       end.compact.flatten
     end
 

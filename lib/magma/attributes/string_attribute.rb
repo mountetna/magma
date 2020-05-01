@@ -1,6 +1,6 @@
 class Magma
   class StringAttribute < Attribute
-    def _type
+    def database_type
       String
     end
   end

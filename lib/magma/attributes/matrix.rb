@@ -2,7 +2,7 @@ require 'set'
 
 class Magma
   class MatrixAttribute < Attribute
-    def _type
+    def database_type
       :json
     end
 

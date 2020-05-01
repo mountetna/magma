@@ -1,6 +1,6 @@
 class Magma
   class FloatAttribute < Attribute
-    def _type
+    def database_type
       Float
     end
   end

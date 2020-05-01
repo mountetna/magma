@@ -1,6 +1,6 @@
 class Magma
   class MatchAttribute < Attribute
-    def _type
+    def database_type
       :json
     end
 

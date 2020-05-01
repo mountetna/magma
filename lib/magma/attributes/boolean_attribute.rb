@@ -1,6 +1,6 @@
 class Magma
   class BooleanAttribute < Attribute
-    def _type
+    def database_type
       TrueClass
     end
   end

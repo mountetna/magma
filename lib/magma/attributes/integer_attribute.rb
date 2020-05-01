@@ -1,6 +1,6 @@
 class Magma
   class IntegerAttribute < Attribute
-    def _type
+    def database_type
       Integer
     end
   end
