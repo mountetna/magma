@@ -7,7 +7,7 @@ class Magma
 
     class << self
       def options
-        [:type, :description, :display_name, :hide, :readonly, :unique, :index, :match,
+        [:description, :display_name, :hide, :readonly, :unique, :index, :match,
 :format_hint, :loader, :link_model, :restricted, :desc ]
       end
 
@@ -22,15 +22,15 @@ class Magma
       set_options(opts)
     end
 
-    def _type
-      @type
+    def database_type
+      nil
     end
 
     def json_template
       {
         name: @name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
-        type: @type.nil? ? nil : @type.respond_to?(:name) ? @type.name : @type,
+        type: database_type.respond_to?(:name) ? database_type.name : database_type,
         attribute_class: self.class.name,
         desc: description,
         display_name: display_name,
@@ -54,11 +54,11 @@ class Magma
     def update(record, new_value)
       record.set({@name=> new_value})
 
-      if @type == DateTime
+      if database_type == DateTime
         return DateTime.parse(new_value)
-      elsif @type == Float
+      elsif database_type == Float
         return new_value.to_f
-      elsif @type == Integer
+      elsif database_type == Integer
         return new_value.to_i
       else
         return new_value

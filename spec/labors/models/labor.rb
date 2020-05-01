@@ -2,7 +2,7 @@ module Labors
   class Labor < Magma::Model
     parent :project
 
-    identifier :name, type: String
+    identifier :name
 
     child :monster
 

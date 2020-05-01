@@ -48,7 +48,7 @@ class Magma
       end
 
       # identifier attribute, sets a unique identifier
-      def identifier(name, opts)
+      def identifier(name, opts = {})
         string(name, opts.merge(unique: true))
         @identity = name
 
