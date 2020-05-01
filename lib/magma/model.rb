@@ -7,10 +7,11 @@ class Magma
    
   class Model
     class << self
-      %i(string integer boolean date_time float file image collection table match matrix child foreign_key).each do |method_name|
-        define_method method_name do |attribute_name, opts={}|
+      %i(string integer boolean date_time float file image collection table match matrix child foreign_key identifier parent link).each do |method_name|
+        define_method method_name do |attribute_name=nil, opts={}|
           klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
           attributes[attribute_name] = klass.new(attribute_name, self, opts)
+          @parent = attribute_name if method_name == :parent
         end
       end
 
@@ -47,37 +48,20 @@ class Magma
         name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
       end
 
-      # identifier attribute, sets a unique identifier
-      def identifier(name, opts = {})
-        string(name, opts.merge(unique: true))
-        @identity = name
-
-        # Default ordering is by identifier.
-        order(name) unless @order
-      end
-
       def identity
         @identity || primary_key
+      end
+
+      def identity=(identity)
+        @identity = (identity)
       end
 
       def has_identifier?
         @identity
       end
 
-      # parent attribute, links to a parent record
-      def parent name=nil, opts = {}
-        if name
-          @parent = name
-          many_to_one name
-          foreign_key(name, opts)
-        end
+      def parent_model
         @parent
-      end
-
-      # link attribute, links to a single other record
-      def link(name, opts = {})
-        many_to_one(name, class: project_model(opts[:link_model] || name))
-        foreign_key(name, opts)
       end
 
       def restricted(opts= {})
@@ -102,7 +86,7 @@ class Magma
           ],
           identifier: identity,
           dictionary: @dictionary && @dictionary.to_hash,
-          parent: @parent
+          parent: parent_model
         }.delete_if {|k,v| v.nil? }
       end
 
