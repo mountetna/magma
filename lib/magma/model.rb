@@ -6,12 +6,12 @@ class Magma
   Model = Class.new(Sequel::Model)
    
   class Model
-    ATTRIBUTES = [
+    ATTRIBUTES_TYPES = [
       :string, :integer, :boolean, :date_time, :float, :file, :image, 
       :collection, :table, :match, :matrix, :child, :identifier, :parent, :link
     ].freeze
     class << self
-      ATTRIBUTES.each do |method_name|
+      ATTRIBUTES_TYPES.each do |method_name|
         define_method method_name do |attribute_name=nil, opts={}|
           klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
           @parent = attribute_name if method_name == :parent
