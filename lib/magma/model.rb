@@ -6,12 +6,16 @@ class Magma
   Model = Class.new(Sequel::Model)
    
   class Model
+    ATTRIBUTES = [
+      :string, :integer, :boolean, :date_time, :float, :file, :image, 
+      :collection, :table, :match, :matrix, :child, :identifier, :parent, :link
+    ].freeze
     class << self
-      %i(string integer boolean date_time float file image collection table match matrix child foreign_key identifier parent link).each do |method_name|
+      ATTRIBUTES.each do |method_name|
         define_method method_name do |attribute_name=nil, opts={}|
           klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
-          attributes[attribute_name] = klass.new(attribute_name, self, opts)
           @parent = attribute_name if method_name == :parent
+          attributes[attribute_name] = klass.new(attribute_name, self, opts)
         end
       end
 
@@ -60,7 +64,7 @@ class Magma
         @identity
       end
 
-      def parent_model
+      def parent_model_name
         @parent
       end
 
@@ -86,7 +90,7 @@ class Magma
           ],
           identifier: identity,
           dictionary: @dictionary && @dictionary.to_hash,
-          parent: parent_model
+          parent: parent_model_name
         }.delete_if {|k,v| v.nil? }
       end
 

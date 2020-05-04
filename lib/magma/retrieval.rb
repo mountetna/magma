@@ -133,13 +133,13 @@ class Magma
       def initialize child, parent, parent_ids
         @child = child
         @parent = parent
-        raise unless @child.attributes[@child.parent_model].link_model == @parent
+        raise unless @child.attributes[@child.parent_model_name].link_model == @parent
         @parent_ids = parent_ids
       end
 
       def apply(attributes)
         [
-          [ @child.parent_model, '::identifier', '::in', @parent_ids ]
+          [ @child.parent_model_name, '::identifier', '::in', @parent_ids ]
         ]
       end
     end
