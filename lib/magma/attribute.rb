@@ -180,4 +180,7 @@ require_relative 'attributes/integer_attribute'
 require_relative 'attributes/boolean_attribute'
 require_relative 'attributes/date_time_attribute'
 require_relative 'attributes/float_attribute'
+require_relative 'attributes/identifier_attribute'
+require_relative 'attributes/parent_attribute'
+require_relative 'attributes/link_attribute'
 

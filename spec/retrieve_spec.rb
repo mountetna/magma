@@ -379,7 +379,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to match(new_labors.map(&:name))
+      expect(labor_names).to match_array(new_labors.map(&:name))
 
       Timecop.return
     end
