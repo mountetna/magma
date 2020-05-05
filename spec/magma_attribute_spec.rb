@@ -118,11 +118,11 @@ describe Magma::Attribute do
 
     it "doesn't update non-editable options" do
       model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { match: "[A-z]" })
+      attribute = Magma::Attribute.new("name", model, { validation: "[A-z]" })
 
-      attribute.update_option(:match, ".*")
+      attribute.update_option(:validation, ".*")
 
-      expect(attribute.match).to eq("[A-z]")
+      expect(attribute.validation).to eq("[A-z]")
     end
   end
 end

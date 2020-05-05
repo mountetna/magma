@@ -412,7 +412,7 @@ describe QueryController do
       )
       expect(last_response.status).to eq(200)
       expect(json_body[:answer].map(&:last)).to eq(
-        [ [ nil ] * @attribute.match.length ] * 3
+        [ [ nil ] * @attribute.validation.length ] * 3
       )
 
       query(

@@ -12,6 +12,6 @@ module Labors
 
     table :prize
 
-    matrix :contributions, match: [ 'Athens', 'Sparta', 'Sidon', 'Thebes' ]
+    matrix :contributions, validation: [ 'Athens', 'Sparta', 'Sidon', 'Thebes' ]
   end
 end
