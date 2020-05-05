@@ -8,7 +8,7 @@ describe Magma::Validation do
     errors
   end
 
-  context 'attribute validations' do
+  context 'string attribute validations' do
     before(:each) do
       @validation_stubs = {}
     end
@@ -119,6 +119,49 @@ describe Magma::Validation do
         }
       )
       expect(errors).to be_empty
+    end
+  end
+
+  context 'integer attribute validations' do
+    before(:each) do
+      @validation_stubs = {}
+    end
+
+    def stub_validation(model, att_name, new_validation)
+      @validation_stubs[model] ||= {}
+      @validation_stubs[model][att_name] = model.attributes[att_name].validation
+      model.attributes[att_name].instance_variable_set("@validation", new_validation)
+    end
+
+    after(:each) do
+      @validation_stubs.each do |model,atts|
+        atts.each do |att_name, old_validation|
+          model.attributes[att_name].instance_variable_set("@validation", old_validation)
+        end
+      end
+    end
+
+    it 'validates a range' do
+      stub_validation(Labors::Labor, :number, { type: "Range", begin: 1, end: 5 })
+
+      # fails
+      errors = validate(Labors::Labor, name: "Rick", number: 10)
+      expect(errors).to eq(["On number, 10 should be between 1 and 5."])
+
+      # passes
+      errors = validate(Labors::Labor, name: "Rick", number: 3)
+      expect(errors).to be_empty
+    end
+
+    it 'validates a range that excludes the end' do
+      stub_validation(
+        Labors::Labor,
+        :number,
+        { type: "Range", begin: 1, end: 5, exclude_end: true }
+      )
+
+      errors = validate(Labors::Labor, name: "Rick", number: 5)
+      expect(errors).to eq(["On number, 5 should be between 1 and 4."])
     end
   end
 
