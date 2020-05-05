@@ -28,7 +28,7 @@ describe Magma::Validation do
     end
 
     it 'validates a regexp' do
-      stub_validation(Labors::Monster, :species, /^[a-z\s]+$/)
+      stub_validation(Labors::Monster, :species, { type: "Regexp", value: /^[a-z\s]+$/ })
 
       # fails
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
@@ -40,7 +40,9 @@ describe Magma::Validation do
     end
 
     it 'validates an array' do
-      stub_validation(Labors::Monster, :species, ['lion', 'Panthera leo'])
+      stub_validation(Labors::Monster, :species, {
+        type: "Array", value: ['lion', 'Panthera leo']
+      })
 
       # fails
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
@@ -52,7 +54,9 @@ describe Magma::Validation do
     end
 
     it 'validates a child identifier' do
-      stub_validation(Labors::Monster, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+      stub_validation(Labors::Monster, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
 
       # fails
       errors = validate(Labors::Labor, name: 'Nemean Lion', monster: 'nemean lion')
@@ -64,7 +68,9 @@ describe Magma::Validation do
     end
 
     it 'validates a foreign key identifier' do
-      stub_validation(Labors::Monster, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+      stub_validation(Labors::Monster, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
 
       # fails
       errors = validate(Labors::Victim, name: 'Outis Koutsonadis', monster: 'nemean lion')
@@ -76,7 +82,9 @@ describe Magma::Validation do
     end
 
     it 'validates a collection' do
-      stub_validation(Labors::Labor, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+      stub_validation(Labors::Labor, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
 
       # fails
       errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'augean stables', 'lernean hydra' ])
