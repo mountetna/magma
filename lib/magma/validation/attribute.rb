@@ -65,6 +65,24 @@ class Magma
           end
         end
       end
+
+      class RangeValidation < BaseAttributeValidation
+        def validate(value)
+          return unless @attribute.validation
+
+          range = @attribute.validation[:type].constantize.new(
+            @attribute.validation[:begin],
+            @attribute.validation[:end],
+            !!@attribute.validation[:exclude_end]
+          )
+
+          return if range.include?(value)
+
+          end_expression = range.exclude_end? ? "less than" : "less than or equal to"
+
+          yield "On #{@attribute.name}, #{value} should be greater than or equal to #{range.begin} and #{end_expression} #{range.end}."
+        end
+      end
     end
   end
 end

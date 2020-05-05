@@ -122,7 +122,7 @@ describe Magma::Validation do
     end
   end
 
-  context 'integer attribute validations' do
+  context 'attribute range validations' do
     before(:each) do
       @validation_stubs = {}
     end
@@ -146,7 +146,9 @@ describe Magma::Validation do
 
       # fails
       errors = validate(Labors::Labor, name: "Rick", number: 10)
-      expect(errors).to eq(["On number, 10 should be between 1 and 5."])
+      expect(errors).to eq([
+        "On number, 10 should be greater than or equal to 1 and less than or equal to 5."
+      ])
 
       # passes
       errors = validate(Labors::Labor, name: "Rick", number: 3)
@@ -161,7 +163,9 @@ describe Magma::Validation do
       )
 
       errors = validate(Labors::Labor, name: "Rick", number: 5)
-      expect(errors).to eq(["On number, 5 should be between 1 and 4."])
+      expect(errors).to eq([
+        "On number, 5 should be greater than or equal to 1 and less than 5."
+      ])
     end
   end
 
