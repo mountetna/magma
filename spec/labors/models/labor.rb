@@ -12,6 +12,9 @@ module Labors
 
     table :prize
 
-    matrix :contributions, validation: [ 'Athens', 'Sparta', 'Sidon', 'Thebes' ]
+    matrix :contributions, validation: {
+      type: "Array",
+      value: ['Athens', 'Sparta', 'Sidon', 'Thebes']
+    }
   end
 end
