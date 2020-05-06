@@ -8,15 +8,16 @@ describe Magma::Validation do
     errors
   end
 
+  def stub_validation(model, att_name, new_validation)
+    @validation_stubs[model] ||= {}
+    @validation_stubs[model][att_name] = model.attributes[att_name].validation
+    model.attributes[att_name].instance_variable_set("@validation", new_validation)
+    model.attributes[att_name].instance_variable_set("@validation_object", nil)
+  end
+
   context 'string attribute validations' do
     before(:each) do
       @validation_stubs = {}
-    end
-
-    def stub_validation(model, att_name, new_validation)
-      @validation_stubs[model] ||= {}
-      @validation_stubs[model][att_name] = model.attributes[att_name].validation
-      model.attributes[att_name].instance_variable_set("@validation", new_validation)
     end
 
     after(:each) do
@@ -133,12 +134,6 @@ describe Magma::Validation do
   context 'attribute range validations' do
     before(:each) do
       @validation_stubs = {}
-    end
-
-    def stub_validation(model, att_name, new_validation)
-      @validation_stubs[model] ||= {}
-      @validation_stubs[model][att_name] = model.attributes[att_name].validation
-      model.attributes[att_name].instance_variable_set("@validation", new_validation)
     end
 
     after(:each) do

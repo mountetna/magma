@@ -26,6 +26,11 @@ class Magma
       nil
     end
 
+    def validation_object
+      return unless @validation
+      @validation_object ||= validation_class.new(*validation_arguments)
+    end
+
     def json_template
       {
         name: @name,
@@ -34,8 +39,8 @@ class Magma
         attribute_class: attribute_class_name,
         desc: description,
         display_name: display_name,
-        options: @validation.is_a?(Array) ? @validation : nil,
-        match: @validation.is_a?(Regexp) ? @validation.source : nil,
+        options: validation_object.is_a?(Array) ? validation_object : nil,
+        match: validation_object.is_a?(Regexp) ? validation_object.source : nil,
         restricted: @restricted,
         format_hint: @format_hint,
         read_only: read_only?,
@@ -162,6 +167,13 @@ class Magma
       else
         self.class.name
       end
+
+    def validation_class
+      @validation[:type].constantize
+    end
+
+    def validation_arguments
+      [@validation[:value]]
     end
 
     class Entry < Magma::BaseAttributeEntry

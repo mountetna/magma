@@ -49,6 +49,10 @@ class Magma
           # do nothing
         end
 
+        def validation_object
+          @attribute.validation_object
+        end
+
         private
 
         def format_error(value)
@@ -68,19 +72,12 @@ class Magma
 
       class RangeValidation < BaseAttributeValidation
         def validate(value)
-          return unless @attribute.validation
+          return unless validation_object.is_a?(Range)
+          return if validation_object.include?(value)
 
-          range = @attribute.validation[:type].constantize.new(
-            @attribute.validation[:begin],
-            @attribute.validation[:end],
-            !!@attribute.validation[:exclude_end]
-          )
+          end_expression = validation_object.exclude_end? ? "less than" : "less than or equal to"
 
-          return if range.include?(value)
-
-          end_expression = range.exclude_end? ? "less than" : "less than or equal to"
-
-          yield "On #{@attribute.name}, #{value} should be greater than or equal to #{range.begin} and #{end_expression} #{range.end}."
+          yield "On #{@attribute.name}, #{value} should be greater than or equal to #{validation_object.begin} and #{end_expression} #{validation_object.end}."
         end
       end
     end
