@@ -1,7 +1,7 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation]
+    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation,  :link_model]
 
     attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted
 
