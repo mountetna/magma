@@ -34,10 +34,6 @@ class Magma
       @name
     end
 
-    def display_name
-      @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
-    end
-
     def database_type
       nil
     end
@@ -103,10 +99,6 @@ class Magma
 
     def entry(value, loader)
       [ name, value ]
-    end
-
-    def column_name
-      @name
     end
 
     def display_name
