@@ -1,4 +1,3 @@
-require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -47,7 +46,6 @@ class UpdateController < Magma::Controller
           @loader.push_record(link_model, link_record)
         end
       end
-      binding.pry
 
       @payload.add_records(model, model_revisions.map(&:to_payload))
     end

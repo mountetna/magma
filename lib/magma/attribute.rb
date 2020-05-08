@@ -1,5 +1,3 @@
-require 'pry'
-
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
@@ -66,7 +64,6 @@ class Magma
     end
 
     def revision_to_loader(record_name, new_value)
-      binding.pry
       [
         @name,
         database_type == DateTime ?
@@ -141,6 +138,31 @@ class Magma
       )
 
       persisted_attribute&.slice(*EDITABLE_OPTIONS) || {}
+    end
+
+    MAGMA_ATTRIBUTES = [
+      "Magma::BooleanAttribute",
+      "Magma::DateTimeAttribute",
+      "Magma::FloatAttribute",
+      "Magma::IdentifierAttribute",
+      "Magma::IntegerAttribute",
+      "Magma::StringAttribute"
+    ]
+
+    FOREIGN_KEY_ATTRIBUTES = [
+      "Magma::LinkAttribute",
+      "Magma::ParentAttribute"
+    ]
+
+    def attribute_class_name
+      case self.class.name
+      when *MAGMA_ATTRIBUTES
+        "Magma::Attribute"
+      when *FOREIGN_KEY_ATTRIBUTES
+        "Magma::ForeignKeyAttribute"
+      else
+        self.class.name
+      end
     end
 
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
