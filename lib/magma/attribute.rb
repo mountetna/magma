@@ -1,14 +1,14 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation,  :link_model]
+    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation, :link_model_name]
 
-    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted
+    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name
 
     class << self
       def options
         [:description, :display_name, :hide, :readonly, :unique, :index, :validation,
-:format_hint, :loader, :link_model, :restricted, :desc ]
+:format_hint, :loader, :link_model_name, :restricted, :desc ]
       end
 
       def set_attribute(name, model, options, attribute_class)

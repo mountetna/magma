@@ -102,6 +102,7 @@ describe UpdateController do
     )
     monster.refresh
     hydra.refresh
+
     expect(monster.labor).to eq(hydra)
 
     expect(last_response.status).to eq(200)

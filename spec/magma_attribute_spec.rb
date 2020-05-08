@@ -33,13 +33,14 @@ describe Magma::Attribute do
         attribute_name: "name",
         created_at: Time.now,
         updated_at: Time.now,
-        format_hint: "First M Last"
+        format_hint: "First M Last",
+        link_model_name: "Link::Model"
       )
 
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { format_hint: "Last, First M" })
-
+      model = double("model", project_name: :project, model_name: :model, link_model: "Model::Link")
+      attribute = Magma::Attribute.new("name", model, { format_hint: "Last, First M", link_model_name: "Model::Link" })
       expect(attribute.format_hint).to eq("First M Last")
+      expect(attribute.link_model_name).to eq("Link::Model")
     end
   end
 
