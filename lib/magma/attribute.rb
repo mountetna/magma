@@ -55,14 +55,6 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
-    def json_for record
-      record[ @name ]
-    end
-
-    def txt_for(record)
-      json_for record
-    end
-
     def query_to_payload(value)
       value
     end
@@ -82,20 +74,6 @@ class Magma
           new_value.to_i :
           new_value
       ]
-    end
-
-    def update(record, new_value)
-      record.set({@name=> new_value})
-
-      if database_type == DateTime
-        return DateTime.parse(new_value)
-      elsif database_type == Float
-        return new_value.to_f
-      elsif database_type == Integer
-        return new_value.to_i
-      else
-        return new_value
-      end
     end
 
     def revision_to_links(record_name, value)
