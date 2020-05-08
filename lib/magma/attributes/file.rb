@@ -1,9 +1,8 @@
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
-      @type = String
       file_type = self.is_a?(Magma::ImageAttribute) ? :image : :file
-      Magma.instance.storage.setup_uploader(model, name, file_type) 
+      Magma.instance.storage.setup_uploader(model, name, file_type)
       super
     end
 
@@ -24,6 +23,17 @@ class Magma
       else
         return nil
       end
+    end
+
+    def database_type
+      String
+    end
+
+    def update(record, new_value)
+      super
+      record.modified!(@name)
+
+      return record[@name]
     end
 
     def revision_to_payload(record_name, new_value)

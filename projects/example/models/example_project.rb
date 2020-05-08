@@ -1,9 +1,8 @@
 module Example
   class ExampleProject < Magma::Model
-    attribute :description,
-      type: String
+    string :description
     identifier :name,
       type:String,
-      desc: 'A name for this project.'
+      description: 'A name for this project.'
   end
 end

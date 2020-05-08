@@ -14,8 +14,7 @@ class QueryController < Magma::Controller
                                      timeout: Magma.instance.config(:query_timeout))
       return_data = {answer: question.answer, type: question.type, format: question.format}
       return success(return_data.to_json, 'application/json')
-    rescue ArgumentError => e
-      Magma.instance.logger.log_error(e)
+    rescue Magma::QuestionError => e
       return failure(422, errors: [ e.message ])
     rescue Sequel::DatabaseError => e
       Magma.instance.logger.log_error(e)

@@ -43,6 +43,8 @@ require_relative 'query_executor'
 # [ "sample", [ "sample_name", "::matches", "Sample[4-5]" ], "::all", "patient", "experiment", "name" ]
 
 class Magma
+  class QuestionError < StandardError
+  end
   class Question
     def initialize(project_name, query_args, options = {})
       @model = Magma.instance.get_model(project_name, query_args.shift)
@@ -172,7 +174,7 @@ class Magma
 
     # get page bounds for this question using @options[:page] and @options[:page_size]
     def bounds_query
-      raise ArgumentError, 'Page size must be greater than 1' unless @options[:page_size] > 1
+      raise QuestionError, 'Page size must be greater than 1' unless @options[:page_size] > 1
       count_query.from_self.select(
         # add row_numbers to the count query
         @start_predicate.identity,
@@ -229,11 +231,11 @@ class Magma
     end
 
     def paged_query(query)
-      raise ArgumentError, 'Page must start at 1' unless @options[:page] > 0
+      raise QuestionError, 'Page must start at 1' unless @options[:page] > 0
       bounds = to_table(page_bounds_query).map do |row|
         row[@start_predicate.identity]
       end
-      raise ArgumentError, "Page #{@options[:page]} not found" if bounds.empty?
+      raise QuestionError, "Page #{@options[:page]} not found" if bounds.empty?
 
       apply_bounds(query, bounds[0], bounds[1])
     end

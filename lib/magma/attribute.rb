@@ -1,12 +1,14 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    attr_reader :name, :type, :desc, :loader, :match, :format_hint, :unique, :index, :restricted
+    EDITABLE_OPTIONS = [:description, :display_name, :format_hint]
+
+    attr_reader :name, :loader, :match, :format_hint, :unique, :index, :restricted
 
     class << self
       def options
-        [:type, :desc, :display_name, :hide, :readonly, :unique, :index, :match,
-:format_hint, :loader, :link_model, :restricted ]
+        [:description, :display_name, :hide, :readonly, :unique, :index, :match,
+:format_hint, :loader, :link_model, :restricted, :desc ]
       end
 
       def set_attribute(name, model, options, attribute_class)
@@ -20,6 +22,7 @@ class Magma
       set_options(opts)
     end
 
+<<<<<<< HEAD
     def read_only?
       @readonly
     end
@@ -34,15 +37,19 @@ class Magma
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
+=======
+    def database_type
+      nil
+>>>>>>> master
     end
 
     def json_template
       {
         name: @name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
-        type: @type.nil? ? nil : @type.respond_to?(:name) ? @type.name : @type,
+        type: database_type.respond_to?(:name) ? database_type.name : database_type,
         attribute_class: self.class.name,
-        desc: @desc,
+        desc: description,
         display_name: display_name,
         options: @match.is_a?(Array) ? @match : nil,
         match: @match.is_a?(Regexp) ? @match.source : nil,
@@ -74,6 +81,20 @@ class Magma
       ]
     end
 
+    def update(record, new_value)
+      record.set({@name=> new_value})
+
+      if database_type == DateTime
+        return DateTime.parse(new_value)
+      elsif database_type == Float
+        return new_value.to_f
+      elsif database_type == Integer
+        return new_value.to_i
+      else
+        return new_value
+      end
+    end
+
     def revision_to_links(record_name, value)
     end
 
@@ -85,15 +106,64 @@ class Magma
       [ name, value ]
     end
 
+    def column_name
+      @name
+    end
+
+
+    def display_name
+      @display_name ||= name.to_s.split(/_/).map(&:capitalize).join(' ')
+    end
+
+    def description
+      @description || @desc
+    end
+
+    def update_link(record, link)
+    end
+
+    def update_option(opt, new_value)
+      opt = opt.to_sym
+      return unless EDITABLE_OPTIONS.include?(opt)
+
+      Magma.instance.db[:attributes].
+        insert_conflict(
+          target: [:project_name, :model_name, :attribute_name],
+          update: { "#{opt}": new_value, updated_at: Time.now }
+        ).insert(
+          project_name: @model.project_name.to_s,
+          model_name: @model.model_name.to_s,
+          attribute_name: name.to_s,
+          created_at: Time.now,
+          updated_at: Time.now,
+          "#{opt}": new_value
+        )
+
+      instance_variable_set("@#{opt}", new_value)
+    end
+
     private
 
     def set_options(opts)
+      opts = opts.merge(persisted_attribute_options)
+
       opts.each do |opt,value|
         if self.class.options.include?(opt)
           instance_variable_set("@#{opt}", value)
         end
       end
     end
+
+    def persisted_attribute_options
+      persisted_attribute = Magma.instance.db[:attributes].first(
+        project_name: @model.project_name.to_s,
+        model_name: @model.model_name.to_s,
+        attribute_name: name.to_s
+      )
+
+      persisted_attribute&.slice(*EDITABLE_OPTIONS) || {}
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value)
         case match
@@ -130,4 +200,7 @@ require_relative 'attributes/integer_attribute'
 require_relative 'attributes/boolean_attribute'
 require_relative 'attributes/date_time_attribute'
 require_relative 'attributes/float_attribute'
+require_relative 'attributes/identifier_attribute'
+require_relative 'attributes/parent_attribute'
+require_relative 'attributes/link_attribute'
 

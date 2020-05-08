@@ -224,8 +224,8 @@ EOT
     end
 
     it 'changes column types' do
-      worth = Labors::Prize.attributes[:worth]
-      worth.instance_variable_set("@type",Float)
+      original_attribute = Labors::Prize.attributes.delete(:worth)
+      Labors::Prize.attributes[:worth] = Magma::Model.float(:worth)
 
       migration = Labors::Prize.migration
       expect(migration.to_s).to eq <<EOT.chomp
@@ -233,7 +233,7 @@ EOT
       set_column_type :worth, Float
     end
 EOT
-      worth.instance_variable_set("@type",Integer)
+      Labors::Prize.attributes[:worth] = original_attribute
     end
   end
 end
