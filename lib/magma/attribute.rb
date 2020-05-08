@@ -22,7 +22,6 @@ class Magma
       set_options(opts)
     end
 
-<<<<<<< HEAD
     def read_only?
       @readonly
     end
@@ -37,10 +36,10 @@ class Magma
 
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
-=======
+    end
+
     def database_type
       nil
->>>>>>> master
     end
 
     def json_template
@@ -109,7 +108,6 @@ class Magma
     def column_name
       @name
     end
-
 
     def display_name
       @display_name ||= name.to_s.split(/_/).map(&:capitalize).join(' ')
