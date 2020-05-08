@@ -45,6 +45,17 @@ class Magma
         )
       end
 
+      def copy_url project_name, path
+        # Return the Metis copy URL, HMAC signed
+        # Assumes the copy bucket is named "magma"
+        hmac_url(
+          'POST',
+          @config[:host],
+          "/#{project_name}/file/copy/magma/#{path}",
+          @config[:upload_expiration]
+        )
+      end
+
       private
 
       def hmac_url(method, host, path, expiration=0)
