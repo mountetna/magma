@@ -89,6 +89,21 @@ describe Magma::Attribute do
 
       expect(template[:desc]).to eq("Old name")
     end
+
+    it "continues reporting attribute_class as 'Magma::Attribute' for old Magma::Attributes" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::BooleanAttribute.new("name", model, {})
+      template = attribute.json_template
+
+      expect(template[:attribute_class]).to eq("Magma::Attribute")
+    end
+
+    it "continues reporting attribute_class as 'Magma::ForeignKeyAttribute' for old Magma::ForeignKeyAttributes" do
+      attribute = Labors::Monster.attributes[:labor]
+      template = attribute.json_template
+
+      expect(template[:attribute_class]).to eq("Magma::ForeignKeyAttribute")
+    end
   end
 
   describe "#update_option" do
