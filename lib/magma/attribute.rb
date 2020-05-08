@@ -31,7 +31,7 @@ class Magma
         name: @name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: database_type.respond_to?(:name) ? database_type.name : database_type,
-        attribute_class: self.class.name,
+        attribute_class: attribute_class_name,
         desc: description,
         display_name: display_name,
         options: @match.is_a?(Array) ? @match : nil,
@@ -137,6 +137,31 @@ class Magma
       )
 
       persisted_attribute&.slice(*EDITABLE_OPTIONS) || {}
+    end
+
+    MAGMA_ATTRIBUTES = [
+      "Magma::BooleanAttribute",
+      "Magma::DateTimeAttribute",
+      "Magma::FloatAttribute",
+      "Magma::IdentifierAttribute",
+      "Magma::IntegerAttribute",
+      "Magma::StringAttribute"
+    ]
+
+    FOREIGN_KEY_ATTRIBUTES = [
+      "Magma::LinkAttribute",
+      "Magma::ParentAttribute"
+    ]
+
+    def attribute_class_name
+      case self.class.name
+      when *MAGMA_ATTRIBUTES
+        "Magma::Attribute"
+      when *FOREIGN_KEY_ATTRIBUTES
+        "Magma::ForeignKeyAttribute"
+      else
+        self.class.name
+      end
     end
 
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
