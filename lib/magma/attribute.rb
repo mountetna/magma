@@ -55,6 +55,14 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
+    def json_for record
+      record[ @name ]
+    end
+
+    def txt_for(record)
+      json_for record
+    end
+
     def query_to_payload(value)
       value
     end
