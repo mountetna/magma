@@ -20,6 +20,7 @@ group :test do
   gem 'rspec'
   gem 'database_cleaner'
   gem 'pry'
+  gem 'pry-byebug'
   gem 'timecop'
   gem 'net-http-persistent'
   gem 'multipart-post'
