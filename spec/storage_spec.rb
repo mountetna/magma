@@ -10,7 +10,7 @@ describe 'Magma::Storage' do
     it 'returns a copy URL.' do
         # The test config is usually Metis storage, but
         #   let's make this conditional just in case not.
-        if Magma.instance.storage.instance_of? Magma::Storage::Metis
+        if Magma.instance.config(:storage).fetch(:provider).downcase == 'metis'
             copy_url = Magma.instance.storage.copy_url('foo', 'root/path/to/file').to_s
             expect(copy_url.include? 'foo/file/copy/magma/root/path/to/file').to be true
 
@@ -31,7 +31,7 @@ describe 'Magma::Storage' do
     it 'returns a download URL.' do
         # The test config is usually Metis storage, but
         #   let's make this conditional just in case not.
-        if Magma.instance.storage.instance_of? Magma::Storage::Metis
+        if Magma.instance.config(:storage).fetch(:provider).downcase == 'metis'
             download_url = Magma.instance.storage.download_url('foo', 'root/path/to/file').to_s
             expect(download_url.include? 'foo/download/magma/root/path/to/file').to be true
 
@@ -52,7 +52,7 @@ describe 'Magma::Storage' do
     it 'returns an upload URL.' do
         # The test config is usually Metis storage, but
         #   let's make this conditional just in case not.
-        if Magma.instance.storage.instance_of? Magma::Storage::Metis
+        if Magma.instance.config(:storage).fetch(:provider).downcase == 'metis'
             upload_url = Magma.instance.storage.upload_url('foo', 'root/path/to/file').to_s
             expect(upload_url.include? 'foo/upload/magma/root/path/to/file').to be true
 
