@@ -48,6 +48,7 @@ class Magma
       def copy_url project_name, path
         # Return the Metis copy URL, HMAC signed
         # Assumes the copy bucket is named "magma"
+        #  -- is that a bad assumption?
         hmac_url(
           'POST',
           @config[:host],
