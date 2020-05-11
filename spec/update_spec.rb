@@ -1,6 +1,13 @@
 describe UpdateController do
   include Rack::Test::Methods
 
+  before(:each) do
+    # Need to include this stub because Magma attempts to copy files
+    #   when Metis is used as the storage mechanism in update.rb
+    stub_request(:options, "https://metis.test/").
+    to_return(status: 200, body: "{}", headers: {'Content-Type': 'application/json'})
+  end
+
   def app
     OUTER_APP
   end

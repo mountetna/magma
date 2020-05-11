@@ -1,6 +1,12 @@
 describe QueryController do
   include Rack::Test::Methods
 
+  before(:each) do
+    stub_request(:options, 'https://metis.test/').
+      to_return(status: 200, body: "{}", headers: {'Content-Type': 'application/json'})
+    @token = Base64.strict_encode64(AUTH_USERS[:editor].to_json)
+  end
+
   def app
     OUTER_APP
   end
