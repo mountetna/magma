@@ -22,6 +22,8 @@ class UpdateController < Magma::Controller
 
     load_revisions if success?
 
+    update_any_file_links if success?
+
     return success_json(@payload.to_hash) if success?
 
     return failure(422, errors: @errors)
@@ -54,5 +56,37 @@ class UpdateController < Magma::Controller
   rescue Magma::LoadFailed => m
     log(m.complaints)
     @errors.concat(m.complaints)
+  end
+
+  def update_any_file_links
+    # Here, if there are any File attributes in the revisions and
+    #   the storage is configured to use Metis instead of AWS,
+    #   we'll send a request to the Metis "copy" route, using the
+    #   Etna::Client.
+    if Magma.instance.config(:storage).fetch(:provider).downcase == 'metis'
+
+      # Etna::Client.new throws an exception if the host config includes protocol,
+      # i.e. https://metis-dev.etna-development.org will throw an exception
+      raise Etna::BadRequest, 'Storage host should not include protocol' if
+        Magma.instance.config(:storage).fetch(:host).start_with? 'http'
+
+      # Do we get the token from config?
+      client = Etna::Client.new(
+        "https://#{Magma.instance.config(:storage).fetch(:host)}",
+        Magma.instance.config(:token) ? Magma.instance.config(:token) : 'token')
+
+      @revisions.each do |model, model_revisions|
+        model_revisions.each do |revision|
+          if revision.is_a?(File)
+            # copy_url = Magma.instance.storage.copy_url(
+            #   @project_name,
+            #   revision. # Where do I just pull out the path from?
+            # )
+
+            # Use the Etna::Client to make a POST call to Metis's copy_url?
+          end
+        end
+      end
+    end
   end
 end
