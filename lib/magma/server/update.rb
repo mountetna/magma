@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -77,10 +78,12 @@ class UpdateController < Magma::Controller
 
       @revisions.each do |model, model_revisions|
         model_revisions.each do |revision|
-          if revision.is_a?(File)
+
+          # The below test seems brittle -- anything better?
+          if revision.to_loader.key?(:stats)
             # copy_url = Magma.instance.storage.copy_url(
             #   @project_name,
-            #   revision. # Where do I just pull out the path from?
+            #   revision.to_payload[:stats][:path]  <-- this way seems brittle. What would be better?
             # )
 
             # Use the Etna::Client to make a POST call to Metis's copy_url?
