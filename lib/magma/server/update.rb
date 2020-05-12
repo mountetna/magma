@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -85,7 +86,7 @@ class UpdateController < Magma::Controller
 
           client = Etna::Client.new(
             "https://#{host}",
-            @request.cookies[Magma.instance.config(:token_name)] || auth.send('auth', *[@request, :magma]))
+            @request.cookies[Magma.instance.config(:token_name)] || auth.send('auth', *[@request, :etna]))
 
           copy_route = ''
 
@@ -100,38 +101,25 @@ class UpdateController < Magma::Controller
             next
           end
 
-          path = client.send('route_path', *[copy_route, {:project_name => "foo", :bucket_name => "magma", :file_path => "test.txt"}])
+          path = client.send(
+            'route_path',
+            *[copy_route, {:project_name => @project_name, :bucket_name => "magma", :file_path => "test.txt"}])
 
-          hmac_signature = auth.send('etna_param', *[@request, :signature])
-
-          return false unless hmac_signature
-
-          return false unless headers = auth.send('etna_param', *[@request, :headers])
-
-          headers = headers.split(/,/).map do |header|
-            [ header.to_sym, auth.send('etna_param', *[@request, header]) ]
-          end.to_h
-
-          # Now expect the standard headers
+          # Now populate the standard headers
           hmac_params = {
             method: 'post',
             host: host,
             path: path,
 
-            expiration: auth.send('etna_param', *[@request, :expiration]),
-            id: auth.send('etna_param', *[@request, :id]),
-            nonce: auth.send('etna_param', *[@request, :nonce]),
-            headers: headers,
-            test_signature: hmac_signature
+            expiration: (DateTime.now + 10).iso8601,
+            id: 'magma',
+            nonce: SecureRandom.hex,
+            headers: { project_name: @project_name, action: 'copy' },
           }
 
-          hmac = Etna::Hmac.new(application, hmac_params)
+          hmac = Etna::Hmac.new(Magma.instance, hmac_params)
 
-          # request.env['etna.hmac'] = hmac
-
-          return nil unless hmac.valid?
-
-          client.post(hmac.url_params[:path], hmac.url_params[:query])
+          client.send('post', *[hmac.url_params[:path], hmac.url_params[:query]])
         end
       end
     end
