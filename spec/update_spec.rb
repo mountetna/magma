@@ -146,6 +146,10 @@ describe UpdateController do
 
     expect(last_response.status).to eq(200)
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
+
+    # Make sure the Metis copy endpoint was not  called
+    assert_not_requested(:post, "https://metis.test/labors/file/copy/magma/test.txt")
+
   end
 
   context 'file attributes' do
