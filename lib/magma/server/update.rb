@@ -73,33 +73,33 @@ class UpdateController < Magma::Controller
     # raise Etna::BadRequest, 'Storage host should not include protocol' if
     #   Magma.instance.config(:storage).fetch(:host).start_with? 'http'
 
-    auth = Etna::Auth.new(:magma)
-
-    host = Magma.instance.config(:storage).fetch(:host)
-
-    client = Etna::Client.new(
-      "https://#{host}",
-      @request.cookies[Magma.instance.config(:token_name)] || auth.send('auth', *[@request, :magma]))
-
-    copy_route = ''
-
-    client.routes.each do |route|
-      if route[:name] == 'copy'
-        copy_route = route
-        break
-      end
-    end
-
-    if copy_route == ''
-      return
-    end
-
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
 
         # The below test for :stats as a File indicator seems
         #   brittle -- anything better?
         if revision.to_loader.key?(:stats)
+          auth = Etna::Auth.new(:magma)
+
+          host = Magma.instance.config(:storage).fetch(:host)
+
+          client = Etna::Client.new(
+            "https://#{host}",
+            @request.cookies[Magma.instance.config(:token_name)] || auth.send('auth', *[@request, :magma]))
+
+          copy_route = ''
+
+          client.routes.each do |route|
+            if route[:name] == 'copy'
+              copy_route = route
+              break
+            end
+          end
+
+          if copy_route == ''
+            next
+          end
+
           path = client.send('route_path', *[copy_route, {:project_name => "foo", :bucket_name => "magma", :file_path => "test.txt"}])
 
           hmac_signature = auth.send('etna_param', *[@request, :signature])
