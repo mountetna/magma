@@ -1,4 +1,3 @@
-require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
