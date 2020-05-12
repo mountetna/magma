@@ -13,6 +13,12 @@ describe UpdateController do
     ])
     stub_request(:options, 'https://metis.test').
     to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+    route_payload = JSON.generate([
+      {:success=>true}
+    ])
+    stub_request(:post, "https://metis.test/labors/file/copy/magma/test.txt").
+    to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
   end
 
   def update(revisions, user_type=:editor)
@@ -210,6 +216,10 @@ describe UpdateController do
       expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-stats.txt')
       expect(params['X-Etna-Id']).to eq('magma')
       expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      # Make sure the Metis copy endpoint was called
+      assert_requested(:post, "https://metis.test/labors/file/copy/magma/test.txt",
+        times: 1)
 
       Timecop.return
     end
