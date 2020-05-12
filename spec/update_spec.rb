@@ -1,8 +1,18 @@
+require 'json'
+
 describe UpdateController do
   include Rack::Test::Methods
 
   def app
     OUTER_APP
+  end
+
+  before(:each) do
+    route_payload = JSON.generate([
+      {:method=>"POST", :route=>"/:project_name/file/copy/:bucket_name/:file_path", :name=>"copy", :params=>["project_name", "bucket_name", "file_path"]}
+    ])
+    stub_request(:options, 'https://metis.test').
+    to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
   end
 
   def update(revisions, user_type=:editor)
