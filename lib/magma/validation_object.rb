@@ -88,5 +88,15 @@ class Magma
     def match
       @object.source
     end
+
+    private
+
+    def object_args(options)
+      if options[:value].respond_to?(:call)
+        [options[:value].call]
+      else
+        super
+      end
+    end
   end
 end

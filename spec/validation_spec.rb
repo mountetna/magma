@@ -41,6 +41,21 @@ describe Magma::Validation do
       expect(errors).to be_empty
     end
 
+    it 'validates a regexp proc' do
+      stub_validation(Labors::Monster, :species, {
+        type: "Regexp",
+        value: Proc.new { /#{2.times.map{ "[a-z\s]" }.join(" ")}/ }
+      })
+
+      # fails
+      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'leo')
+      expect(errors).to eq(["On species, 'leo' is improperly formatted."])
+
+      # passes
+      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'panthera leo')
+      expect(errors).to be_empty
+    end
+
     it 'validates an array' do
       stub_validation(Labors::Monster, :species, {
         type: "Array", value: ['lion', 'Panthera leo']
