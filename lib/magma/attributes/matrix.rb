@@ -13,7 +13,7 @@ class Magma
 
         # it must be an array of numbers
         yield "Matrix value is not an array of numbers" unless value.is_a?(Array) && value.all?{|v| v.is_a?(Numeric)}
-        yield "Improper matrix row size" unless validation_object.size == value.size
+        yield "Improper matrix row size" unless validation_object.options.size == value.size
       end
     end
 
@@ -72,11 +72,11 @@ class Magma
     end
 
     def null_row_json
-      @null_row_json ||= validation_object.map{nil}.to_json
+      @null_row_json ||= validation_object.options.map{nil}.to_json
     end
 
     def column_indexes(names)
-      @column_indexes ||= validation_object.map.with_index{|name,i| [ name, i ]}.to_h
+      @column_indexes ||= validation_object.options.map.with_index{|name,i| [ name, i ]}.to_h
 
       @column_indexes.values_at(*names)
     end

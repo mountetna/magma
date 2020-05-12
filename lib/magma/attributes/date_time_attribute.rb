@@ -4,13 +4,7 @@ class Magma
       DateTime
     end
 
-    class Validation < Magma::Validation::Attribute::RangeValidation
-    end
-
-    private
-
-    def validation_arguments
-      @validation.values_at(:begin, :end, :exclude_end)
+    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
     end
   end
 end

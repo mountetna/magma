@@ -46,7 +46,8 @@ class Magma
         end
 
         def validate(value)
-          # do nothing
+          return if validation_object.validate(value)
+          yield validation_object.error_message(@attribute.name, value, @attribute.format_hint)
         end
 
         def validation_object
@@ -67,17 +68,6 @@ class Magma
           @validator.validate(@attribute.link_model, @attribute.link_model.identity => value) do |error|
             yield format_error(value)
           end
-        end
-      end
-
-      class RangeValidation < BaseAttributeValidation
-        def validate(value)
-          return unless validation_object.is_a?(Range)
-          return if validation_object.include?(value)
-
-          end_expression = validation_object.exclude_end? ? "less than" : "less than or equal to"
-
-          yield "On #{@attribute.name}, #{value} should be greater than or equal to #{validation_object.begin} and #{end_expression} #{validation_object.end}."
         end
       end
     end

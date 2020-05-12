@@ -24,6 +24,7 @@ describe Magma::Validation do
       @validation_stubs.each do |model,atts|
         atts.each do |att_name, old_validation|
           model.attributes[att_name].instance_variable_set("@validation", old_validation)
+          model.attributes[att_name].instance_variable_set("@validation_object", nil)
         end
       end
     end

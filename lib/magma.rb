@@ -2,6 +2,7 @@ require 'sequel'
 
 require_relative 'magma/project'
 require_relative 'magma/validation'
+require_relative 'magma/validation_object'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
 require_relative 'magma/attribute'
