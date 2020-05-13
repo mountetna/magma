@@ -8,25 +8,29 @@ describe Magma::Validation do
     errors
   end
 
+  def validation_stubs
+    @validation_stubs ||= {}
+  end
+
   def stub_validation(model, att_name, new_validation)
-    @validation_stubs[model] ||= {}
-    @validation_stubs[model][att_name] = model.attributes[att_name].validation
+    validation_stubs[model] ||= {}
+    validation_stubs[model][att_name] = model.attributes[att_name].validation
     model.attributes[att_name].instance_variable_set("@validation", new_validation)
     model.attributes[att_name].instance_variable_set("@validation_object", nil)
   end
 
-  context 'string attribute validations' do
-    before(:each) do
-      @validation_stubs = {}
-    end
-
-    after(:each) do
-      @validation_stubs.each do |model,atts|
-        atts.each do |att_name, old_validation|
-          model.attributes[att_name].instance_variable_set("@validation", old_validation)
-          model.attributes[att_name].instance_variable_set("@validation_object", nil)
-        end
+  def remove_validation_stubs
+    validation_stubs.each do |model,atts|
+      atts.each do |att_name, old_validation|
+        model.attributes[att_name].instance_variable_set("@validation", old_validation)
+        model.attributes[att_name].instance_variable_set("@validation_object", nil)
       end
+    end
+  end
+
+  context 'string attribute validations' do
+    after(:each) do
+      remove_validation_stubs
     end
 
     it 'validates a regexp' do
@@ -148,16 +152,8 @@ describe Magma::Validation do
   end
 
   context 'attribute range validations' do
-    before(:each) do
-      @validation_stubs = {}
-    end
-
     after(:each) do
-      @validation_stubs.each do |model,atts|
-        atts.each do |att_name, old_validation|
-          model.attributes[att_name].instance_variable_set("@validation", old_validation)
-        end
-      end
+      remove_validation_stubs
     end
 
     it 'validates a range' do
