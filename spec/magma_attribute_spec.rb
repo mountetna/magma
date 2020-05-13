@@ -104,6 +104,26 @@ describe Magma::Attribute do
 
       expect(template[:attribute_class]).to eq("Magma::ForeignKeyAttribute")
     end
+
+    it "includes validation arrays as options" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("fruits", model, {
+        validation: { type: "Array", value: ["apple", "banana"] }
+      })
+      template = attribute.json_template
+
+      expect(template[:options]).to eq(["apple", "banana"])
+    end
+
+    it "includes validation regexes as match" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("fruits", model, {
+        validation: { type: "Regexp", value: /.*/ }
+      })
+      template = attribute.json_template
+
+      expect(template[:match]).to eq(".*")
+    end
   end
 
   describe "#update_option" do
@@ -118,11 +138,11 @@ describe Magma::Attribute do
 
     it "doesn't update non-editable options" do
       model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { match: "[A-z]" })
+      attribute = Magma::Attribute.new("name", model, { validation: "[A-z]" })
 
-      attribute.update_option(:match, ".*")
+      attribute.update_option(:validation, ".*")
 
-      expect(attribute.match).to eq("[A-z]")
+      expect(attribute.validation).to eq("[A-z]")
     end
   end
 end

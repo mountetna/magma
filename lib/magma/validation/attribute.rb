@@ -46,7 +46,12 @@ class Magma
         end
 
         def validate(value)
-          # do nothing
+          return if validation_object.validate(value)
+          yield validation_object.error_message(@attribute.name, value, @attribute.format_hint)
+        end
+
+        def validation_object
+          @attribute.validation_object
         end
 
         private

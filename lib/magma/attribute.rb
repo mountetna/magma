@@ -3,11 +3,11 @@ class Magma
     DISPLAY_ONLY = [:child, :collection]
     EDITABLE_OPTIONS = [:description, :display_name, :format_hint]
 
-    attr_reader :name, :loader, :match, :format_hint, :unique, :index, :restricted
+    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted
 
     class << self
       def options
-        [:description, :display_name, :hide, :readonly, :unique, :index, :match,
+        [:description, :display_name, :hide, :readonly, :unique, :index, :validation,
 :format_hint, :loader, :link_model, :restricted, :desc ]
       end
 
@@ -26,6 +26,10 @@ class Magma
       nil
     end
 
+    def validation_object
+      @validation_object ||= Magma::ValidationObject.build(@validation)
+    end
+
     def json_template
       {
         name: @name,
@@ -34,8 +38,8 @@ class Magma
         attribute_class: attribute_class_name,
         desc: description,
         display_name: display_name,
-        options: @match.is_a?(Array) ? @match : nil,
-        match: @match.is_a?(Regexp) ? @match.source : nil,
+        options: validation_object.options,
+        match: validation_object.match,
         restricted: @restricted,
         format_hint: @format_hint,
         read_only: read_only?,
@@ -164,25 +168,6 @@ class Magma
       end
     end
 
-    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
-      def validate(value)
-        case match
-        when Regexp
-          yield format_error(value) if !match.match(value)
-        when Array
-          if !match.map(&:to_s).include?(value)
-            yield "On #{@attribute.name}, '#{value}' should be one of #{match.join(", ")}."
-          end
-        end
-      end
-
-      private
-
-      # memoize match to reuse across validations
-      def match
-        @match ||= @attribute.match.is_a?(Proc) ? @attribute.match.call : @attribute.match
-      end
-    end
     class Entry < Magma::BaseAttributeEntry
       def entry(value)
         [ @attribute.name, value ]
