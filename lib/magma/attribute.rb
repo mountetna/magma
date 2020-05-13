@@ -1,7 +1,7 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    EDITABLE_OPTIONS = [:description, :display_name, :format_hint]
+    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation]
 
     attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted
 
@@ -27,7 +27,7 @@ class Magma
     end
 
     def validation_object
-      @validation_object ||= Magma::ValidationObject.build(@validation)
+      @validation_object ||= Magma::ValidationObject.build(@validation&.symbolize_keys)
     end
 
     def json_template
@@ -105,20 +105,23 @@ class Magma
       opt = opt.to_sym
       return unless EDITABLE_OPTIONS.include?(opt)
 
+      database_value = new_value.is_a?(Hash) ? Sequel.pg_json_wrap(new_value) : new_value
+
       Magma.instance.db[:attributes].
         insert_conflict(
           target: [:project_name, :model_name, :attribute_name],
-          update: { "#{opt}": new_value, updated_at: Time.now }
+          update: { "#{opt}": database_value, updated_at: Time.now }
         ).insert(
           project_name: @model.project_name.to_s,
           model_name: @model.model_name.to_s,
           attribute_name: name.to_s,
           created_at: Time.now,
           updated_at: Time.now,
-          "#{opt}": new_value
+          "#{opt}": database_value
         )
 
       instance_variable_set("@#{opt}", new_value)
+      @validation_object = nil if opt == :validation
     end
 
     private
