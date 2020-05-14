@@ -1,4 +1,4 @@
-require 'pry'
+require 'logger'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -88,11 +88,11 @@ class UpdateController < Magma::Controller
           if is_file_attribute(revision.model, attribute)
 
             if !revision.to_loader[attribute]  # nil
-              remove_copy_on_metis(revision)
+              remove_copy_on_metis(revision, attribute)
             elsif revision.to_loader[attribute][:location].start_with? 'metis:'
-              copy_file_on_metis(revision)
+              copy_file_on_metis(revision, attribute)
             elsif revision.to_loader[attribute][:location] == '::blank'
-              remove_copy_on_metis(revision)
+              remove_copy_on_metis(revision, attribute)
             end
           end
         end
@@ -100,7 +100,7 @@ class UpdateController < Magma::Controller
     end
   end
 
-  def remove_copy_on_metis(revision)
+  def remove_copy_on_metis(revision, attribute)
     # First get the current value of the file attribute,
     #   so we can get the file extension.
     # When we need to construct the link filename
@@ -110,14 +110,14 @@ class UpdateController < Magma::Controller
     return
   end
 
-  def copy_file_on_metis(revision)
+  def copy_file_on_metis(revision, attribute)
     host = Magma.instance.config(:storage).fetch(:host)
 
     client = Etna::Client.new(
       "https://#{host}",
       @user.token)
 
-    copy_route = client.routes.find { |r| r[:name] == 'copy' }
+    copy_route = client.routes.find { |r| r[:name] == 'file_copy' }
 
     return unless copy_route
 
@@ -126,8 +126,8 @@ class UpdateController < Magma::Controller
     #   metis://<project>/<bucket>/<folder path>/<file name>
     # Splitting the above produces
     #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
-    metis_file_location_parts = revision.to_loader[:stats][:location].split('/')
-    new_file_name = revision.to_loader[:stats][:filename]
+    metis_file_location_parts = revision.to_loader[attribute][:location].split('/')
+    new_file_name = revision.to_loader[attribute][:filename]
 
     # At some point, when Metis supports changing project names,
     # this parameter should be the old file project name (metis_file_location_parts[2]))
@@ -150,15 +150,15 @@ class UpdateController < Magma::Controller
       nonce: SecureRandom.hex,
       headers: {
         new_bucket_name: 'magma',
-        new_file_name: new_file_name
+        new_file_path: new_file_name
       },
     }
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
-
-    client.send('post', *[hmac.url_params[:path], hmac.url_params[:query]])
-  rescue StandardError => e
-    log(e.complaints)
-    @errors.concat(m.complaints)
+    puts hmac.url_params
+    client.send('post', hmac.url_params[:path], hmac.url_params[:query])
+    puts 'Copy command sent to metis ' + hmac.url_params[:path] + ' with ' + hmac.url_params[:query]
+  rescue Etna::Error => e
+    log(e)
   end
 end
