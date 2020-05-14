@@ -1,4 +1,3 @@
-require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -66,6 +65,7 @@ class UpdateController < Magma::Controller
     # Here, if there are any File attributes in the revisions,
     #   we'll send a request to the Metis "copy" route, using the
     #   Etna::Client.
+    # For ::blank or ::nil revisions, we remove the link in Metis.
     # Assumes a conversion to Metis storage and no other
     #   provider will be set.
 
@@ -80,54 +80,73 @@ class UpdateController < Magma::Controller
         # The below test for :stats as a File indicator seems
         #   brittle -- anything better?
         if revision.to_loader.key?(:stats)
-          host = Magma.instance.config(:storage).fetch(:host)
-
-          client = Etna::Client.new(
-            "https://#{host}",
-            @user.token)
-          binding.pry
-          copy_route = client.routes.find { |r| r[:name] == 'copy' }
-
-          next unless copy_route
-
-          # We need to make an assumption that the Metis path follows
-          # a convention of
-          #   metis://<project>/<bucket>/<folder path>/<file name>
-          # Splitting the above produces
-          #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
-          metis_file_location_parts = revision.to_loader[:stats][:location].split('/')
-          new_file_name = revision.to_loader[:stats][:filename]
-
-          # At some point, when Metis supports changing project names,
-          # this parameter should be the old file project name (metis_file_location_parts[2]))
-          # and the new project name in the HMAC headers should
-          # be @project_name
-          path = client.route_path(
-            copy_route,
-            project_name: @project_name,
-            bucket_name: metis_file_location_parts[3],
-            file_path: metis_file_location_parts[4..-1].join('/'))
-
-          # Now populate the standard headers
-          hmac_params = {
-            method: 'post',
-            host: host,
-            path: path,
-
-            expiration: (DateTime.now + 10).iso8601,
-            id: 'magma',
-            nonce: SecureRandom.hex,
-            headers: {
-              new_bucket_name: 'magma',
-              new_file_name: new_file_name
-            },
-          }
-
-          hmac = Etna::Hmac.new(Magma.instance, hmac_params)
-
-          client.send('post', *[hmac.url_params[:path], hmac.url_params[:query]])
+          case revision.to_loader[:stats][:location]
+          when /^metis:/
+            copy_file_on_metis(revision)
+          when '::blank'
+            remove_copy_on_metis(revision)
+          end
         end
       end
     end
+  end
+
+  def remove_copy_on_metis(revision)
+    # First get the current value of the file attribute,
+    #   so we can get the file extension.
+    # When we need to construct the link filename
+    #   in the format <model>-<record_name>-stats.<ext>,
+    #   so we can construct the right URL on Metis.
+    # Then call the Metis "remove" route.
+    return
+  end
+
+  def copy_file_on_metis(revision)
+    host = Magma.instance.config(:storage).fetch(:host)
+
+    client = Etna::Client.new(
+      "https://#{host}",
+      @user.token)
+
+    copy_route = client.routes.find { |r| r[:name] == 'copy' }
+
+    return unless copy_route
+
+    # We need to make an assumption that the Metis path follows
+    # a convention of
+    #   metis://<project>/<bucket>/<folder path>/<file name>
+    # Splitting the above produces
+    #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
+    metis_file_location_parts = revision.to_loader[:stats][:location].split('/')
+    new_file_name = revision.to_loader[:stats][:filename]
+
+    # At some point, when Metis supports changing project names,
+    # this parameter should be the old file project name (metis_file_location_parts[2]))
+    # and the new project name in the HMAC headers should
+    # be @project_name
+    path = client.route_path(
+      copy_route,
+      project_name: @project_name,
+      bucket_name: metis_file_location_parts[3],
+      file_path: metis_file_location_parts[4..-1].join('/'))
+
+    # Now populate the standard headers
+    hmac_params = {
+      method: 'post',
+      host: host,
+      path: path,
+
+      expiration: (DateTime.now + 10).iso8601,
+      id: 'magma',
+      nonce: SecureRandom.hex,
+      headers: {
+        new_bucket_name: 'magma',
+        new_file_name: new_file_name
+      },
+    }
+
+    hmac = Etna::Hmac.new(Magma.instance, hmac_params)
+
+    client.send('post', *[hmac.url_params[:path], hmac.url_params[:query]])
   end
 end
