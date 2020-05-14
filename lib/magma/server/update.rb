@@ -1,4 +1,3 @@
-require 'logger'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
