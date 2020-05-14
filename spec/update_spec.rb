@@ -228,7 +228,10 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was called
       assert_requested(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt",
-        times: 1)
+        times: 1) { |req| req.body == JSON.generate({
+          'new_bucket_name': 'magma',
+          'new_file_path': 'monster-Nemean Lion-stats.txt'
+        })}
 
       Timecop.return
     end
