@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -61,6 +62,12 @@ class UpdateController < Magma::Controller
     @errors.concat(m.complaints)
   end
 
+  private
+
+  def is_file_attribute(model, attribute)
+    return model.attributes[attribute].instance_of? Magma::FileAttribute
+  end
+
   def update_any_file_links
     # Here, if there are any File attributes in the revisions,
     #   we'll send a request to the Metis "copy" route, using the
@@ -77,14 +84,16 @@ class UpdateController < Magma::Controller
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
 
-        # The below test for :stats as a File indicator seems
-        #   brittle -- anything better?
-        if revision.to_loader.key?(:stats)
-          case revision.to_loader[:stats][:location]
-          when /^metis:/
-            copy_file_on_metis(revision)
-          when '::blank'
-            remove_copy_on_metis(revision)
+        revision.attribute_names.each do |attribute|
+          if is_file_attribute(revision.model, attribute)
+
+            if !revision.to_loader[attribute]  # nil
+              remove_copy_on_metis(revision)
+            elsif revision.to_loader[attribute][:location].start_with? 'metis:'
+              copy_file_on_metis(revision)
+            elsif revision.to_loader[attribute][:location] == '::blank'
+              remove_copy_on_metis(revision)
+            end
           end
         end
       end
@@ -148,5 +157,8 @@ class UpdateController < Magma::Controller
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
 
     client.send('post', *[hmac.url_params[:path], hmac.url_params[:query]])
+  rescue StandardError => e
+    log(e.complaints)
+    @errors.concat(m.complaints)
   end
 end
