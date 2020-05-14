@@ -139,6 +139,11 @@ class UpdateController < Magma::Controller
       bucket_name: metis_file_location_parts[3],
       file_path: metis_file_location_parts[4..-1].join('/'))
 
+    copy_params = {
+      new_bucket_name: 'magma',
+      new_file_path: new_file_name
+    }
+
     # Now populate the standard headers
     hmac_params = {
       method: 'post',
@@ -148,16 +153,12 @@ class UpdateController < Magma::Controller
       expiration: (DateTime.now + 10).iso8601,
       id: 'magma',
       nonce: SecureRandom.hex,
-      headers: {
-        new_bucket_name: 'magma',
-        new_file_path: new_file_name
-      },
+      headers: copy_params,
     }
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
-    puts hmac.url_params
-    client.send('post', hmac.url_params[:path], hmac.url_params[:query])
-    puts 'Copy command sent to metis ' + hmac.url_params[:path] + ' with ' + hmac.url_params[:query]
+    full_path = hmac.url_params[:path] + '?' + hmac.url_params[:query]
+    client.send('post', full_path, copy_params)
   rescue Etna::Error => e
     log(e)
   end
