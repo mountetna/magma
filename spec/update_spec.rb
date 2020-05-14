@@ -1,4 +1,3 @@
-require 'pry'
 require 'json'
 
 describe UpdateController do
@@ -174,6 +173,9 @@ describe UpdateController do
       # but we do get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:stats][:path]).to eq('::blank')
       expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      assert_not_requested(:post, "/metis.test\/labors\/file\/copy/")
     end
 
     it 'removes a file reference' do
@@ -195,10 +197,12 @@ describe UpdateController do
 
       # but we do get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      assert_not_requested(:post, "/metis.test\/labors\/file\/copy/")
     end
 
     it 'links a file from metis' do
-      binding.pry
       Timecop.freeze(DateTime.new(500))
       lion = create(:monster, name: 'Nemean Lion', species: 'lion')
       update(
