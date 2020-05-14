@@ -137,8 +137,8 @@ describe RetrieveController do
       json = json_body
 
       # any model with an identifier returns all records
-      expect(json[:models][:labor][:documents].keys).to match(labors.map(&:name).map(&:to_sym))
-      expect(json[:models][:monster][:documents].keys).to match(monsters.map(&:name).map(&:to_sym))
+      expect(json[:models][:labor][:documents].keys).to match_array(labors.map(&:name).map(&:to_sym))
+      expect(json[:models][:monster][:documents].keys).to match_array(monsters.map(&:name).map(&:to_sym))
 
       # it does not return a model with no identifier
       expect(json[:models][:prize]).to be_nil
@@ -168,7 +168,7 @@ describe RetrieveController do
         project_name: 'labors',
         model_name: 'prize',
         record_names: prizes[0..1].map(&:id),
-        attribute_names: 'all' 
+        attribute_names: 'all'
       )
 
       expect(json_body[:models][:prize][:documents].keys).to eq(prizes[0..1].map(&:id).map(&:to_s).map(&:to_sym))
