@@ -1,3 +1,4 @@
+require 'pry'
 require 'json'
 
 describe UpdateController do
@@ -17,7 +18,7 @@ describe UpdateController do
     route_payload = JSON.generate([
       {:success=>true}
     ])
-    stub_request(:post, "https://metis.test/labors/file/copy/magma/test.txt").
+    stub_request(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt").
     to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
   end
 
@@ -147,8 +148,8 @@ describe UpdateController do
     expect(last_response.status).to eq(200)
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
 
-    # Make sure the Metis copy endpoint was not  called
-    assert_not_requested(:post, "https://metis.test/labors/file/copy/magma/test.txt")
+    # Make sure the Metis copy endpoint was not called
+    assert_not_requested(:post, "/metis.test\/labors\/file\/copy/")
 
   end
 
@@ -197,9 +198,9 @@ describe UpdateController do
     end
 
     it 'links a file from metis' do
+      binding.pry
       Timecop.freeze(DateTime.new(500))
       lion = create(:monster, name: 'Nemean Lion', species: 'lion')
-
       update(
         monster: {
           'Nemean Lion' => {
@@ -222,7 +223,7 @@ describe UpdateController do
       expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
 
       # Make sure the Metis copy endpoint was called
-      assert_requested(:post, "https://metis.test/labors/file/copy/magma/test.txt",
+      assert_requested(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt",
         times: 1)
 
       Timecop.return

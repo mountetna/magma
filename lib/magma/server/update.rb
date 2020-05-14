@@ -85,9 +85,7 @@ class UpdateController < Magma::Controller
           client = Etna::Client.new(
             "https://#{host}",
             @user.token)
-
-          copy_route = ''
-
+          binding.pry
           copy_route = client.routes.find { |r| r[:name] == 'copy' }
 
           next unless copy_route
