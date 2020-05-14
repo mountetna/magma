@@ -1,3 +1,4 @@
+require 'pry'
 require_relative 'controller'
 
 class UpdateController < Magma::Controller
@@ -79,30 +80,35 @@ class UpdateController < Magma::Controller
         # The below test for :stats as a File indicator seems
         #   brittle -- anything better?
         if revision.to_loader.key?(:stats)
-          auth = Etna::Auth.new(:magma)
-
           host = Magma.instance.config(:storage).fetch(:host)
 
           client = Etna::Client.new(
             "https://#{host}",
-            @request.cookies[Magma.instance.config(:token_name)] || auth.send('auth', *[@request, :etna]))
+            @user.token)
 
           copy_route = ''
 
-          client.routes.each do |route|
-            if route[:name] == 'copy'
-              copy_route = route
-              break
-            end
-          end
+          copy_route = client.routes.find { |r| r[:name] == 'copy' }
 
-          if copy_route == ''
-            next
-          end
+          next unless copy_route
 
-          path = client.send(
-            'route_path',
-            *[copy_route, {:project_name => @project_name, :bucket_name => "magma", :file_path => "test.txt"}])
+          # We need to make an assumption that the Metis path follows
+          # a convention of
+          #   metis://<project>/<bucket>/<folder path>/<file name>
+          # Splitting the above produces
+          #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
+          metis_file_location_parts = revision.to_loader[:stats][:location].split('/')
+          new_file_name = revision.to_loader[:stats][:filename]
+
+          # At some point, when Metis supports changing project names,
+          # this parameter should be the old file project name (metis_file_location_parts[2]))
+          # and the new project name in the HMAC headers should
+          # be @project_name
+          path = client.route_path(
+            copy_route,
+            project_name: @project_name,
+            bucket_name: metis_file_location_parts[3],
+            file_path: metis_file_location_parts[4..-1].join('/'))
 
           # Now populate the standard headers
           hmac_params = {
@@ -113,7 +119,10 @@ class UpdateController < Magma::Controller
             expiration: (DateTime.now + 10).iso8601,
             id: 'magma',
             nonce: SecureRandom.hex,
-            headers: { project_name: @project_name, action: 'copy' },
+            headers: {
+              new_bucket_name: 'magma',
+              new_file_name: new_file_name
+            },
           }
 
           hmac = Etna::Hmac.new(Magma.instance, hmac_params)
