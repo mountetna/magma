@@ -16,7 +16,6 @@ describe 'Magma::Storage' do
 
             # While we won't validate the HMAC results, let's make sure
             #   the right params are included
-            expect(download_url.include? 'X-Etna-Authorization').to be true
             expect(download_url.include? 'X-Etna-Expiration').to be true
             expect(download_url.include? 'X-Etna-Nonce').to be true
             expect(download_url.include? 'X-Etna-Id').to be true
@@ -37,7 +36,6 @@ describe 'Magma::Storage' do
 
             # While we won't validate the HMAC results, let's make sure
             #   the right params are included
-            expect(upload_url.include? 'X-Etna-Authorization').to be true
             expect(upload_url.include? 'X-Etna-Expiration').to be true
             expect(upload_url.include? 'X-Etna-Nonce').to be true
             expect(upload_url.include? 'X-Etna-Id').to be true
