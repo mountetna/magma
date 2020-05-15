@@ -7,6 +7,10 @@ class Magma
       @revision = revision
     end
 
+    def [](k)
+      @revision[k]
+    end
+
     def attribute_names
       @revision.keys
     end

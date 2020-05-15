@@ -83,16 +83,15 @@ class UpdateController < Magma::Controller
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
 
-        revision.attribute_names.each do |attribute|
-          if is_file_attribute(revision.model, attribute)
-
-            if !revision.to_loader[attribute]  # nil
-              remove_copy_on_metis(revision, attribute)
-            elsif revision.to_loader[attribute][:location].start_with? 'metis:'
-              copy_file_on_metis(revision, attribute)
-            elsif revision.to_loader[attribute][:location] == '::blank'
-              remove_copy_on_metis(revision, attribute)
-            end
+        revision.attribute_names.select {
+          |attribute| is_file_attribute(revision.model, attribute)
+        }.each do |attribute|
+          if !revision[attribute]  # nil
+            remove_copy_on_metis(revision, attribute)
+          elsif revision[attribute].start_with? 'metis:'
+            copy_file_on_metis(revision, attribute)
+          elsif revision[attribute] == '::blank'
+            remove_copy_on_metis(revision, attribute)
           end
         end
       end
@@ -125,7 +124,9 @@ class UpdateController < Magma::Controller
     #   metis://<project>/<bucket>/<folder path>/<file name>
     # Splitting the above produces
     #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
-    metis_file_location_parts = revision.to_loader[attribute][:location].split('/')
+    metis_file_location_parts = revision[attribute].split('/')
+
+    # We need the filename here, so we call to_loader
     new_file_name = revision.to_loader[attribute][:filename]
 
     # At some point, when Metis supports changing project names,
