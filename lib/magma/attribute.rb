@@ -10,7 +10,7 @@ class Magma
       :index,
       :link_model_name,
       :loader,
-      :readonly,
+      :read_only,
       :restricted,
       :unique,
       :validation
@@ -20,7 +20,7 @@ class Magma
 
     class << self
       def options
-        [:description, :display_name, :hidden, :readonly, :unique, :index, :validation,
+        [:description, :display_name, :hidden, :read_only, :unique, :index, :validation,
 :format_hint, :loader, :link_model_name, :restricted, :desc ]
       end
 
@@ -83,7 +83,7 @@ class Magma
     end
 
     def read_only?
-      @readonly
+      @read_only
     end
 
     def shown?
