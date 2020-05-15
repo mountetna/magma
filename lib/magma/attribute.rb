@@ -16,12 +16,12 @@ class Magma
       :validation
     ]
 
-    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name
+    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name, :description
 
     class << self
       def options
         [:description, :display_name, :hidden, :read_only, :unique, :index, :validation,
-:format_hint, :loader, :link_model_name, :restricted, :desc ]
+:format_hint, :loader, :link_model_name, :restricted]
       end
 
       def set_attribute(name, model, options, attribute_class)
@@ -97,10 +97,6 @@ class Magma
 
     def display_name
       @display_name ||= name.to_s.split(/_/).map(&:capitalize).join(' ')
-    end
-
-    def description
-      @description || @desc
     end
 
     def update_link(record, link)
