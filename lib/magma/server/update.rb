@@ -145,7 +145,7 @@ class UpdateController < Magma::Controller
 
     # Now populate the standard headers
     hmac_params = {
-      method: 'post',
+      method: 'POST',
       host: host,
       path: path,
 
@@ -156,9 +156,14 @@ class UpdateController < Magma::Controller
     }
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
-    full_path = hmac.url_params[:path] + '?' + hmac.url_params[:query]
-    client.send('post', full_path, copy_params)
-  rescue Etna::Error => e
-    log(e)
+
+    # For the params to show up on the other end in Metis,
+    #   need to include them in the request body. For POST
+    #   requests, the URL query params are ignored and
+    #   won't make it to the receiving route.
+    hmac_params = Rack::Utils.parse_query(
+      hmac.url_params[:query]).map { |k,v| [k.to_sym, v] }.to_h
+
+    client.send('post', hmac.url_params[:path], copy_params.merge(hmac_params))
   end
 end
