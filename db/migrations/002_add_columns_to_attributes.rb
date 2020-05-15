@@ -7,7 +7,6 @@ Sequel.migration do
       add_column :unique, "boolean", default: "false"
       add_column :index, "boolean", default: "false"
       add_column :loader, String
-      add_column :link_model, String
       add_column :restricted, "boolean", default: "false"
     end
   end
