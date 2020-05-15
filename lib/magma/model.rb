@@ -200,7 +200,7 @@ class Magma
 
         super
         %i(created_at updated_at).each do |timestamp|
-          magma_model.date_time(timestamp, {hide: true})
+          magma_model.date_time(timestamp, {hidden: true})
         end
       end
     end

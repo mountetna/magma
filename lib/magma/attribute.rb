@@ -6,7 +6,7 @@ class Magma
       :description,
       :display_name,
       :format_hint,
-      :hide,
+      :hidden,
       :index,
       :link_model_name,
       :loader,
@@ -20,7 +20,7 @@ class Magma
 
     class << self
       def options
-        [:description, :display_name, :hide, :readonly, :unique, :index, :validation,
+        [:description, :display_name, :hidden, :readonly, :unique, :index, :validation,
 :format_hint, :loader, :link_model_name, :restricted, :desc ]
       end
 
@@ -87,7 +87,7 @@ class Magma
     end
 
     def shown?
-      !@hide
+      !@hidden
     end
 
     def column_name
