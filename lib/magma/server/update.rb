@@ -84,21 +84,21 @@ class UpdateController < Magma::Controller
       model_revisions.each do |revision|
 
         revision.attribute_names.select {
-          |attribute| is_file_attribute(revision.model, attribute)
-        }.each do |attribute|
-          if !revision[attribute]  # nil
-            remove_copy_on_metis(revision, attribute)
-          elsif revision[attribute].start_with? 'metis:'
-            copy_file_on_metis(revision, attribute)
-          elsif revision[attribute] == '::blank'
-            remove_copy_on_metis(revision, attribute)
+          |attribute_name| is_file_attribute(revision.model, attribute_name)
+        }.each do |attribute_name|
+          if !revision[attribute_name]  # nil
+            remove_copy_on_metis(revision, attribute_name)
+          elsif revision[attribute_name].start_with? 'metis:'
+            copy_file_on_metis(revision, attribute_name)
+          elsif revision[attribute_name] == '::blank'
+            remove_copy_on_metis(revision, attribute_name)
           end
         end
       end
     end
   end
 
-  def remove_copy_on_metis(revision, attribute)
+  def remove_copy_on_metis(revision, attribute_name)
     # First get the current value of the file attribute,
     #   so we can get the file extension.
     # When we need to construct the link filename
@@ -108,7 +108,7 @@ class UpdateController < Magma::Controller
     return
   end
 
-  def copy_file_on_metis(revision, attribute)
+  def copy_file_on_metis(revision, attribute_name)
     host = Magma.instance.config(:storage).fetch(:host)
 
     client = Etna::Client.new(
@@ -124,10 +124,10 @@ class UpdateController < Magma::Controller
     #   metis://<project>/<bucket>/<folder path>/<file name>
     # Splitting the above produces
     #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
-    metis_file_location_parts = revision[attribute].split('/')
+    metis_file_location_parts = revision[attribute_name].split('/')
 
     # We need the filename here, so we call to_loader
-    new_file_name = revision.to_loader[attribute][:filename]
+    new_file_name = revision.to_loader[attribute_name][:filename]
 
     # At some point, when Metis supports changing project names,
     # this parameter should be the old file project name (metis_file_location_parts[2]))
