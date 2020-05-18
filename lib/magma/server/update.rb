@@ -166,5 +166,8 @@ class UpdateController < Magma::Controller
       hmac.url_params[:query]).map { |k,v| [k.to_sym, v] }.to_h
 
     client.send('post', hmac.url_params[:path], copy_params.merge(hmac_params))
+  rescue Etna::Error => e
+    log(e.message)
+    @errors.concat([e.message])
   end
 end

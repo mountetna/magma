@@ -159,7 +159,7 @@ describe UpdateController do
 
       # May be overkill ... but making sure each of the anticipated
       #   exceptions from Metis copy results in a failed Magma update.
-      bad_request_statuses = [400, 404, 403, 500]
+      bad_request_statuses = [400, 403, 404, 422, 500]
       req_counter = 0
       bad_request_statuses.each do |status|
         stub_request(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt").
@@ -175,7 +175,7 @@ describe UpdateController do
         req_counter += 1
         lion.refresh
         expect(lion.stats).to eq nil  # Did not change from the create state
-        expect(last_response.status).to eq(status)
+        expect(last_response.status).to eq(422)
 
         # Make sure the Metis copy endpoint was called
         assert_requested(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt",
