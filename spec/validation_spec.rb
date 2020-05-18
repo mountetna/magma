@@ -28,7 +28,7 @@ describe Magma::Validation do
     end
   end
 
-  context 'string attribute validations' do
+  context 'attribute validations' do
     after(:each) do
       remove_validation_stubs
     end
@@ -148,12 +148,6 @@ describe Magma::Validation do
         }
       )
       expect(errors).to be_empty
-    end
-  end
-
-  context 'attribute range validations' do
-    after(:each) do
-      remove_validation_stubs
     end
 
     it 'validates a range' do
