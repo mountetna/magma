@@ -9,7 +9,6 @@ class Magma
       :hidden,
       :index,
       :link_model_name,
-      :loader,
       :read_only,
       :restricted,
       :unique,

@@ -37,24 +37,6 @@ describe Magma::Project do
       expect(color_attribute.description).to eq("What color is it?")
     end
 
-    it "loads loaders on the project's models from the database" do
-      Magma.instance.db[:attributes].insert(
-        project_name: "labors",
-        model_name: "monster",
-        attribute_name: "origin_story",
-        type: "file",
-        created_at: Time.now,
-        updated_at: Time.now,
-        loader: "custom_origin_story_loader"
-      )
-
-      project = Magma::Project.new("./labors")
-      # Fetch and delete test attribute so it doesn't affect other tests
-      attribute = Labors::Monster.attributes.delete(:origin_story)
-
-      expect(attribute.loader).to eq("custom_origin_story_loader")
-    end
-
     it "gives database model attributes precedence over those defined in Ruby" do
       original_attribute = Labors::Monster.attributes[:name]
 
