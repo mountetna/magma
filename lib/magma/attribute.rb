@@ -26,6 +26,10 @@ class Magma
       def set_attribute(name, model, options, attribute_class)
         attribute_class.new(name, model, options)
       end
+
+      def attribute_type
+        @attribute_type ||= name.match("Magma::(.*)Attribute")[1].underscore
+      end
     end
 
     def initialize(name, model, opts)
@@ -36,10 +40,6 @@ class Magma
 
     def database_type
       nil
-    end
-
-    def type
-      @type ||= self.class.name.match("Magma::(.*)Attribute")[1].underscore
     end
 
     def validation_object
@@ -127,7 +127,7 @@ class Magma
           project_name: @model.project_name.to_s,
           model_name: @model.model_name.to_s,
           attribute_name: name.to_s,
-          type: type,
+          type: self.class.attribute_type,
           created_at: Time.now,
           updated_at: Time.now,
           "#{opt}": database_value

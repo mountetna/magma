@@ -6,18 +6,15 @@ class Magma
   Model = Class.new(Sequel::Model)
    
   class Model
-    ATTRIBUTES_TYPES = [
-      :string, :integer, :boolean, :date_time, :float, :file, :image, 
-      :collection, :table, :match, :matrix, :child, :identifier, :parent, :link
-    ].freeze
     class << self
-      ATTRIBUTES_TYPES.each do |method_name|
-        define_method method_name do |attribute_name=nil, opts={}|
-          klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
-          @parent = attribute_name if method_name == :parent
-          attributes[attribute_name] = klass.new(attribute_name, self, opts)
+      Magma::Attribute.descendants.
+        reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
+        each do |attribute|
+          define_method attribute.attribute_type do |attribute_name=nil, opts={}|
+            @parent = attribute_name if attribute == Magma::ParentAttribute
+            attributes[attribute_name] = attribute.new(attribute_name, self, opts)
+          end
         end
-      end
 
       alias_method :document, :file
 
