@@ -1,4 +1,5 @@
 require 'json'
+require 'pry'
 
 describe UpdateController do
   include Rack::Test::Methods
@@ -153,6 +154,41 @@ describe UpdateController do
   end
 
   context 'file attributes' do
+    it 'fails the update when the link request fails' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      # May be overkill ... but making sure each of the anticipated
+      #   exceptions from Metis copy results in a failed Magma update.
+      bad_request_statuses = [400, 404, 403, 500]
+      req_counter = 0
+      bad_request_statuses.each do |status|
+        stub_request(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt").
+        to_return(status: status)
+
+        update(
+          monster: {
+            'Nemean Lion' => {
+              stats: 'metis://labors/files/lion-stats.txt'
+            }
+          }
+        )
+        req_counter += 1
+        lion.refresh
+        expect(lion.stats).to eq nil  # Did not change from the create state
+        expect(last_response.status).to eq(status)
+
+        # Make sure the Metis copy endpoint was called
+        assert_requested(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt",
+          times: req_counter) do |req|
+            (req.body.include? 'new_bucket_name') &&
+            (req.body.include? 'new_file_path') &&
+            (req.body.include? 'X-Etna-Signature')
+          end
+      end
+
+      Timecop.return
+    end
+
     it 'marks a file as blank' do
       lion = create(:monster, name: 'Nemean Lion', species: 'lion')
 
