@@ -57,5 +57,19 @@ describe Magma::Project do
 
       Labors::Monster.attributes[:name] = original_attribute
     end
+
+    it "raises an error when the database has attributes for a model that doesn't exist" do
+      Magma.instance.db[:attributes].insert(
+        project_name: "labors",
+        model_name: "ghost",
+        attribute_name: "name",
+        type: "string",
+        created_at: Time.now,
+        updated_at: Time.now,
+        description: "There isn't a Labors::Ghost model"
+      )
+
+      expect { Magma::Project.new("./labors") }.to raise_error(Magma::Project::LoadError)
+    end
   end
 end
