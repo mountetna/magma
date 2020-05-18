@@ -85,11 +85,11 @@ describe Magma::Attribute do
 
     it "doesn't update non-editable options" do
       model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { restricted: true })
+      attribute = Magma::Attribute.new("name", model, {})
 
-      attribute.update_option(:restricted, false)
+      attribute.update_option(:loader, "foo")
 
-      expect(attribute.restricted).to eq(true)
+      expect(attribute.loader).to be_nil
     end
   end
 
@@ -99,6 +99,7 @@ describe Magma::Attribute do
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
+        type: "string",
         created_at: Time.now,
         updated_at: Time.now,
         validation: Sequel.pg_json_wrap(
@@ -126,6 +127,7 @@ describe Magma::Attribute do
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
+        type: "integer",
         created_at: Time.now,
         updated_at: Time.now,
         validation: Sequel.pg_json_wrap(
@@ -153,6 +155,7 @@ describe Magma::Attribute do
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
+        type: "string",
         created_at: Time.now,
         updated_at: Time.now,
         validation: Sequel.pg_json_wrap(
