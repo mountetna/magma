@@ -10,6 +10,7 @@ describe Magma::Loader do
     loader.push_record(Labors::Labor, name: 'Nemean Lion', number: 1, completed: true)
     loader.push_record(Labors::Labor, name: 'Lernean Hydra', number: 2, completed: false)
     loader.push_record(Labors::Labor, name: 'Augean Stables', number: 5, completed: false)
+
     loader.dispatch_record_set
 
     expect(Labors::Labor.count).to eq(3)
