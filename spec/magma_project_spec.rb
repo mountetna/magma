@@ -37,6 +37,24 @@ describe Magma::Project do
       expect(color_attribute.description).to eq("What color is it?")
     end
 
+    it "loads link models defined in the database" do
+      Magma.instance.db[:attributes].insert(
+        project_name: "labors",
+        model_name: "monster",
+        attribute_name: "alter_ego",
+        type: "link",
+        created_at: Time.now,
+        updated_at: Time.now,
+        link_model_name: "monster"
+      )
+
+      project = Magma::Project.new("./labors")
+      # Fetch and delete test attributes so they don't affect other tests
+      attribute = Labors::Monster.attributes.delete(:alter_ego)
+
+      expect(attribute.link_model).to eq(Labors::Monster)
+    end
+
     it "gives database model attributes precedence over those defined in Ruby" do
       original_attribute = Labors::Monster.attributes[:name]
 
