@@ -23,8 +23,8 @@ class Magma
 
     def ordered_models(model)
       link_models = model.attributes.values.select do |att|
-        att.is_a?(Magma::Link) && att.link_model.parent_model_name == model.model_name
-      end.map(&:link_model)
+        att.is_a?(Magma::Link) && att.link_model_name.parent_model_name == model.model_name
+      end.map(&:link_model_name)
       link_models + link_models.map{|m| ordered_models(m)}.flatten
     end
 

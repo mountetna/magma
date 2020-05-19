@@ -6,8 +6,8 @@ class Magma
     # variable for for model retrieval. Otherwise the '@name' variable will
     # contain the appropriate model type for a link.
     def link_model
-      if @link_model
-        return Magma.instance.get_model(@model.project_name, @link_model)
+      if @link_model_name
+        return Magma.instance.get_model(@model.project_name, @link_model_name)
       else
         return Magma.instance.get_model(@model.project_name, @name)
       end
