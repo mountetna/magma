@@ -1,5 +1,19 @@
 class Magma
   class Project
+    class AttributeLoadError < StandardError
+      def initialize(project_name, model_name, attributes)
+        attribute_names = attributes.
+          map { |attribute| attribute[:attribute_name] }.
+          join(", ")
+
+        project_model = "#{project_name.to_s.camel_case}::#{model_name.to_s.camel_case}"
+
+        msg = "Tried to load attributes (#{attribute_names}) from the database on #{project_model} but #{project_model} doesn't exist"
+
+        super(msg)
+      end
+    end
+
     attr_reader :project_name
 
     def initialize project_dir
@@ -46,6 +60,21 @@ class Magma
         require_files('models')
         require_files('loaders')
         require_files('metrics')
+      end
+
+      load_model_attributes
+    end
+
+    def load_model_attributes
+      model_attributes = Magma.instance.db[:attributes].
+        where(project_name: @project_name.to_s).
+        to_a.
+        group_by { |attribute| attribute[:model_name].to_sym }
+
+      model_attributes.each do |model_name, attributes|
+        model = models[model_name]
+        raise AttributeLoadError.new(@project_name, model_name, attributes) unless model
+        model.load_attributes(attributes)
       end
     end
 

@@ -1,18 +1,34 @@
 class Magma
   class Attribute
     DISPLAY_ONLY = [:child, :collection]
-    EDITABLE_OPTIONS = [:description, :display_name, :format_hint, :validation, :link_model_name]
 
-    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name
+    EDITABLE_OPTIONS = [
+      :description,
+      :display_name,
+      :format_hint,
+      :hidden,
+      :index,
+      :link_model_name,
+      :read_only,
+      :restricted,
+      :unique,
+      :validation
+    ]
+
+    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name, :description
 
     class << self
       def options
-        [:description, :display_name, :hide, :readonly, :unique, :index, :validation,
-:format_hint, :loader, :link_model_name, :restricted, :desc ]
+        [:description, :display_name, :hidden, :read_only, :unique, :index, :validation,
+:format_hint, :loader, :link_model_name, :restricted]
       end
 
       def set_attribute(name, model, options, attribute_class)
         attribute_class.new(name, model, options)
+      end
+
+      def attribute_type
+        @attribute_type ||= name.match("Magma::(.*)Attribute")[1].underscore
       end
     end
 
@@ -70,11 +86,11 @@ class Magma
     end
 
     def read_only?
-      @readonly
+      @read_only
     end
 
     def shown?
-      !@hide
+      !@hidden
     end
 
     def column_name
@@ -84,10 +100,6 @@ class Magma
 
     def display_name
       @display_name ||= name.to_s.split(/_/).map(&:capitalize).join(' ')
-    end
-
-    def description
-      @description || @desc
     end
 
     def update_link(record, link)
@@ -115,6 +127,7 @@ class Magma
           project_name: @model.project_name.to_s,
           model_name: @model.model_name.to_s,
           attribute_name: name.to_s,
+          type: self.class.attribute_type,
           created_at: Time.now,
           updated_at: Time.now,
           "#{opt}": database_value
@@ -127,23 +140,11 @@ class Magma
     private
 
     def set_options(opts)
-      opts = opts.merge(persisted_attribute_options)
-
       opts.each do |opt,value|
         if self.class.options.include?(opt)
           instance_variable_set("@#{opt}", value)
         end
       end
-    end
-
-    def persisted_attribute_options
-      persisted_attribute = Magma.instance.db[:attributes].first(
-        project_name: @model.project_name.to_s,
-        model_name: @model.model_name.to_s,
-        attribute_name: name.to_s
-      )
-
-      persisted_attribute&.slice(*EDITABLE_OPTIONS) || {}
     end
 
     MAGMA_ATTRIBUTES = [
