@@ -87,7 +87,9 @@ describe Magma::Project do
         description: "There isn't a Labors::Ghost model"
       )
 
-      expect { Magma::Project.new("./labors") }.to raise_error(Magma::Project::LoadError)
+      expect { Magma::Project.new("./labors") }.to(
+        raise_error(Magma::Project::AttributeLoadError)
+      )
     end
   end
 end
