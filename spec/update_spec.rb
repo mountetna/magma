@@ -129,7 +129,7 @@ describe UpdateController do
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
   end
 
-  it 'updates a file attribute' do
+  xit 'updates a file attribute' do
     Timecop.freeze(DateTime.new(500))
     lion = create(:monster, name: 'Nemean Lion', species: 'lion')
 
