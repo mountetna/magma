@@ -11,7 +11,7 @@ class Magma
     end
 
     def update record, link
-      link_model_name.update_or_create(link_model_name.identity => link) do |obj|
+      link_model.update_or_create(link_model.identity => link) do |obj|
         obj[ self_id ] = record.id
       end
     end
