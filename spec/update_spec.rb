@@ -149,8 +149,10 @@ describe UpdateController do
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
 
     # Make sure the Metis copy endpoint was not called
-    assert_not_requested(:post, "/metis.test\/labors\/file\/copy/")
-
+    expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+    with(query: hash_including({
+      "X-Etna-Headers": "revisions"
+    }))
   end
 
   context 'file attributes' do
@@ -203,7 +205,10 @@ describe UpdateController do
       expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
 
       # Make sure the Metis copy endpoint was not called
-      assert_not_requested(:post, "/metis.test\/labors\/file\/copy/")
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'removes a file reference' do
@@ -227,7 +232,10 @@ describe UpdateController do
       expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
 
       # Make sure the Metis copy endpoint was not called
-      assert_not_requested(:post, "/metis.test\/labors\/file\/bulk_copy/")
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'removes a file reference using ::blank' do
@@ -253,7 +261,10 @@ describe UpdateController do
       })
 
       # Make sure the Metis copy endpoint was not called
-      assert_not_requested(:post, "/metis.test\/labors\/file\/bulk_copy/")
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'links a file from metis' do
