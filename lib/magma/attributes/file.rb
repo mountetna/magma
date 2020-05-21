@@ -1,9 +1,10 @@
+require 'pry'
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
       @type = String
       file_type = self.is_a?(Magma::ImageAttribute) ? :image : :file
-      Magma.instance.storage.setup_uploader(model, name, file_type) 
+      Magma.instance.storage.setup_uploader(model, name, file_type)
       super
     end
 
@@ -15,14 +16,18 @@ class Magma
           filename: '::blank'
         }]
       when '::temp'
-        return nil
+        return nil  # Here we should generate a temporary location?
       when %r!^metis://!
         return [ @name, {
           location: new_value,
           filename: filename(record_name, new_value)
         }]
       else
-        return nil
+        # return nil --> This didn't seem to save to the database?
+        return [ @name, {
+          location: nil,
+          filename: nil
+        }]
       end
     end
 
