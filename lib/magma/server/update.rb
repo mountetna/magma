@@ -80,68 +80,70 @@ class UpdateController < Magma::Controller
     # raise Etna::BadRequest, 'Storage host should not include protocol' if
     #   Magma.instance.config(:storage).fetch(:host).start_with? 'http'
 
+    copy_revisions = []
+
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
 
         revision.attribute_names.select {
           |attribute_name| is_file_attribute(revision.model, attribute_name)
         }.each do |attribute_name|
-          if !revision[attribute_name]  # nil
-            remove_copy_on_metis(revision, attribute_name)
-          elsif revision[attribute_name].start_with? 'metis:'
-            copy_file_on_metis(revision, attribute_name)
-          elsif revision[attribute_name] == '::blank'
-            remove_copy_on_metis(revision, attribute_name)
+          # For the remove operations, have to figure
+          #   out the "current" link name in Metis,
+          #   using the stored Magma value.
+          if !revision[attribute_name] || revision[attribute_name] == '::blank'
+            retrieval = Magma::Retrieval.new(
+              revision.model,
+              [revision.record_name.to_s],
+              [attribute_name],
+              restrict: !@user.can_see_restricted?(@project_name)
+            )
+
+            retrieval.records.each do |record|
+              # Only add a link to remove on Metis if a copy already exists.
+              # If the attribute hasn't been set before, we'll ignore this.
+              if record[attribute_name]
+                # This Metis route isn't active yet, so don't do anything
+                # link_revisions.push({
+                #   source: "metis://#{@project_name}/magma/#{record[attribute_name][:path]}",
+                #   dest: nil
+                # })
+              end
+            end
+          elsif revision[attribute_name].start_with? 'metis://'
+            copy_revisions.push({
+              source: revision[attribute_name],
+              dest: "metis://#{@project_name}/magma/#{revision.to_loader[attribute_name][:filename]}"
+            })
           end
         end
       end
     end
+
+    execute_bulk_copy_on_metis(copy_revisions)
   end
 
-  def remove_copy_on_metis(revision, attribute_name)
-    # First get the current value of the file attribute,
-    #   so we can get the file extension.
-    # When we need to construct the link filename
-    #   in the format <model>-<record_name>-stats.<ext>,
-    #   so we can construct the right URL on Metis.
-    # Then call the Metis "remove" route.
-    return
-  end
-
-  def copy_file_on_metis(revision, attribute_name)
+  def execute_bulk_copy_on_metis(revisions)
     host = Magma.instance.config(:storage).fetch(:host)
 
     client = Etna::Client.new(
       "https://#{host}",
       @user.token)
 
-    copy_route = client.routes.find { |r| r[:name] == 'file_copy' }
+    bulk_copy_route = client.routes.find { |r| r[:name] == 'file_bulk_copy' }
 
-    return unless copy_route
-
-    # We need to make an assumption that the Metis path follows
-    # a convention of
-    #   metis://<project>/<bucket>/<folder path>/<file name>
-    # Splitting the above produces
-    #   ["metis", "", "<project>", "<bucket>", "<folder path>" ... "file name"]
-    metis_file_location_parts = revision[attribute_name].split('/')
-
-    # We need the filename here, so we call to_loader
-    new_file_name = revision.to_loader[attribute_name][:filename]
+    return unless bulk_copy_route
 
     # At some point, when Metis supports changing project names,
     # this parameter should be the old file project name (metis_file_location_parts[2]))
     # and the new project name in the HMAC headers should
     # be @project_name
     path = client.route_path(
-      copy_route,
-      project_name: @project_name,
-      bucket_name: metis_file_location_parts[3],
-      file_path: metis_file_location_parts[4..-1].join('/'))
+      bulk_copy_route,
+      project_name: @project_name)
 
-    copy_params = {
-      new_bucket_name: 'magma',
-      new_file_path: new_file_name
+    bulk_copy_params = {
+      revisions: revisions
     }
 
     # Now populate the standard headers
@@ -153,7 +155,7 @@ class UpdateController < Magma::Controller
       expiration: (DateTime.now + 10).iso8601,
       id: 'magma',
       nonce: SecureRandom.hex,
-      headers: copy_params,
+      headers: bulk_copy_params,
     }
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
@@ -165,7 +167,11 @@ class UpdateController < Magma::Controller
     hmac_params = Rack::Utils.parse_query(
       hmac.url_params[:query]).map { |k,v| [k.to_sym, v] }.to_h
 
-    client.send('post', hmac.url_params[:path], copy_params.merge(hmac_params))
+    client.send(
+      'query_request',
+      Net::HTTP::Post,
+      "#{hmac.url_params[:path]}?#{hmac.url_params[:query]}",
+      hmac_params)
   rescue Etna::Error => e
     log(e.message)
     @errors.concat([e.message])

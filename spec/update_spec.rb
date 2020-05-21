@@ -10,7 +10,7 @@ describe UpdateController do
 
   before(:each) do
     route_payload = JSON.generate([
-      {:method=>"POST", :route=>"/:project_name/file/copy/:bucket_name/:file_path", :name=>"file_copy", :params=>["project_name", "bucket_name", "file_path"]}
+      {:method=>"POST", :route=>"/:project_name/file/bulk_copy", :name=>"file_bulk_copy", :params=>["project_name"]}
     ])
     stub_request(:options, 'https://metis.test').
     to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
@@ -18,8 +18,8 @@ describe UpdateController do
     route_payload = JSON.generate([
       {:success=>true}
     ])
-    stub_request(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt").
-    to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+    stub_request(:post, /https:\/\/metis.test\/labors\/file\/bulk_copy?/).
+      to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
   end
 
   def update(revisions, user_type=:editor)
@@ -154,16 +154,16 @@ describe UpdateController do
   end
 
   context 'file attributes' do
-    it 'fails the update when the link request fails' do
+    it 'fails the update when the bulk copy request fails' do
       lion = create(:monster, name: 'Nemean Lion', species: 'lion')
 
       # May be overkill ... but making sure each of the anticipated
-      #   exceptions from Metis copy results in a failed Magma update.
+      #   exceptions from Metis bulk_copy results in a failed Magma update.
       bad_request_statuses = [400, 403, 404, 422, 500]
       req_counter = 0
       bad_request_statuses.each do |status|
-        stub_request(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt").
-        to_return(status: status)
+        stub_request(:post, /https:\/\/metis.test\/labors\/file\/bulk_copy?/).
+          to_return(status: status)
 
         update(
           monster: {
@@ -176,14 +176,6 @@ describe UpdateController do
         lion.refresh
         expect(lion.stats).to eq nil  # Did not change from the create state
         expect(last_response.status).to eq(422)
-
-        # Make sure the Metis copy endpoint was called
-        assert_requested(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt",
-          times: req_counter) do |req|
-            (req.body.include? 'new_bucket_name') &&
-            (req.body.include? 'new_file_path') &&
-            (req.body.include? 'X-Etna-Signature')
-          end
       end
 
       Timecop.return
@@ -215,7 +207,7 @@ describe UpdateController do
     end
 
     it 'removes a file reference' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: 'monster-Nemean Lion-lion-stats.txt')
 
       update(
         monster: {
@@ -235,7 +227,33 @@ describe UpdateController do
       expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
 
       # Make sure the Metis copy endpoint was not called
-      assert_not_requested(:post, "/metis.test\/labors\/file\/copy/")
+      assert_not_requested(:post, "/metis.test\/labors\/file\/bulk_copy/")
+    end
+
+    it 'removes a file reference using ::blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: 'monster-Nemean Lion-lion-stats.txt')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: '::blank'
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.stats).to eq('::blank')
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats]).to eq({
+        path: '::blank'
+      })
+
+      # Make sure the Metis copy endpoint was not called
+      assert_not_requested(:post, "/metis.test\/labors\/file\/bulk_copy/")
     end
 
     it 'links a file from metis' do
@@ -263,12 +281,10 @@ describe UpdateController do
       expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
 
       # Make sure the Metis copy endpoint was called
-      assert_requested(:post, "https://metis.test/labors/file/copy/files/lion-stats.txt",
-        times: 1) do |req|
-          (req.body.include? 'new_bucket_name') &&
-          (req.body.include? 'new_file_path') &&
-          (req.body.include? 'X-Etna-Signature')
-        end
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
 
       Timecop.return
     end
