@@ -11,6 +11,13 @@ describe Magma::Client do
     stub_request(:post, 'https://magma.test/retrieve').to_rack(app)
     stub_request(:post, 'https://magma.test/query').to_rack(app)
     stub_request(:post, 'https://magma.test/update').to_rack(app)
+
+    route_payload = JSON.generate([
+      {:success=>true}
+    ])
+    stub_request(:any, /https:\/\/metis.test/).
+      to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
     @token = Base64.strict_encode64(AUTH_USERS[:editor].to_json)
   end
 

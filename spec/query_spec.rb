@@ -5,6 +5,14 @@ describe QueryController do
     OUTER_APP
   end
 
+  before(:each) do
+    route_payload = JSON.generate([
+      {:success=>true}
+    ])
+    stub_request(:any, /https:\/\/metis.test/).
+      to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+  end
+
   def query(question,user_type=:viewer)
     auth_header(user_type)
     json_post(:query, {project_name: 'labors', query: question})
