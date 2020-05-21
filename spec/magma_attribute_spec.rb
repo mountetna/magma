@@ -177,5 +177,14 @@ describe Magma::Attribute do
 
       expect(attribute.validation_object.validate("A")).to eq(true)
     end
+
+    it "contains a ValidationOjbect" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, {
+        validation: { type: "Regexp", value: /^[a-zA-Z]{1}$/ }
+      })
+
+      expect(attribute.json_template[:validation_object]).to be_a(Magma::RegexpValidationObject)
+    end
   end
 end

@@ -59,7 +59,8 @@ class Magma
         restricted: @restricted,
         format_hint: @format_hint,
         read_only: read_only?,
-        shown: shown?
+        shown: shown?,
+        validation_object: validation_object
       }.delete_if {|k,v| v.nil? }
     end
 
