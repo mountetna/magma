@@ -1,4 +1,3 @@
-require 'pry'
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
