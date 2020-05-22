@@ -162,18 +162,16 @@ class UpdateController < Magma::Controller
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
 
-    # For the params to show up on the other end in Metis,
-    #   need to include them in the request body. For POST
-    #   requests, the URL query params are ignored and
-    #   won't make it to the receiving route.
+    # These get re-encoded into query string by Etna Client
     hmac_params = Rack::Utils.parse_query(
       hmac.url_params[:query]).map { |k,v| [k.to_sym, v] }.to_h
 
     client.send(
-      'query_request',
+      'body_request_with_query_params',
       Net::HTTP::Post,
-      "#{hmac.url_params[:path]}?#{hmac.url_params[:query]}",
-      hmac_params)
+      hmac.url_params[:path],
+      hmac_params,
+      bulk_copy_params)
   rescue Etna::Error => e
     log(e.message)
     @errors.concat([e.message])
