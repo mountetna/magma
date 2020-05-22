@@ -145,7 +145,7 @@ class UpdateController < Magma::Controller
       project_name: @project_name)
 
     bulk_copy_params = {
-      revisions: revisions
+      revisions: JSON.generate(revisions)
     }
 
     # Now populate the standard headers
@@ -167,11 +167,10 @@ class UpdateController < Magma::Controller
       hmac.url_params[:query]).map { |k,v| [k.to_sym, v] }.to_h
 
     client.send(
-      'body_request_with_query_params',
+      'query_request',
       Net::HTTP::Post,
       hmac.url_params[:path],
-      hmac_params,
-      bulk_copy_params)
+      hmac_params.merge(bulk_copy_params))
   rescue Etna::Error => e
     log(e.message)
     @errors.concat([e.message])
