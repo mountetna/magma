@@ -6,6 +6,7 @@ class Magma
     end
 
     def initialize(options = {})
+      @options = options
       type = options.fetch(:type).constantize
       args = object_args(options)
       @object = type.new(*args)
@@ -21,6 +22,10 @@ class Magma
     end
 
     def match
+    end
+
+    def as_json
+      @options.to_json
     end
 
     private
