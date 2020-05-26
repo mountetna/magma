@@ -45,4 +45,4 @@ jobs:
         bin/magma global_migrate
     - name: Run RSpec test suite
       run: |
-        rspec spec/
+        bundle exec rspec spec/
