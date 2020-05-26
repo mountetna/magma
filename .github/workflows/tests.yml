@@ -7,6 +7,7 @@ jobs:
       db:
         image: postgres
         env:
+          POSTGRES_USER: developer
           POSTGRES_PASSWORD: password
         ports: ['5432:5432']
         options: >-
@@ -23,7 +24,7 @@ jobs:
     - name: Setup deps and run RSpec test suite
       env:
         PGHOST: 127.0.0.1
-        PGUSER: postgres
+        PGUSER: developer
         MAGMA_ENV: test
       run: |
         gem install bundler -v 2.1.4
