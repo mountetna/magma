@@ -32,12 +32,17 @@ rescue => error
 end
 
 truncate_attributes_table_on_error do
-  Magma.instance.db.run(<<~SQL
-    COPY attributes (project_name, model_name, attribute_name, type, description, restricted, validation)
-    FROM '#{File.absolute_path("./spec/fixtures/labors_model_attributes.csv")}'
-    WITH (FORMAT csv, HEADER true)
-  SQL
-  )
+  YAML.load(File.read("./spec/fixtures/labors_model_attributes.yml")).each do |model_name, attributes|
+    attributes.each do |attribute_name, options|
+      row = options.merge(
+        project_name: "labors",
+        model_name: model_name,
+        attribute_name: attribute_name
+      )
+
+      Magma.instance.db[:attributes].insert(row)
+    end
+  end
 end
 
 OUTER_APP = Rack::Builder.new do
