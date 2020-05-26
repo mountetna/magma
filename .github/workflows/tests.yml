@@ -28,6 +28,7 @@ jobs:
       run: |
         gem install bundler -v 2.1.4
         bundle install --jobs 4 --retry 3
+        cp config.yml.test config.yml
         bin/magma create_db labors
         bin/magma migrate
         bin/magma global_migrate
