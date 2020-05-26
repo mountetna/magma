@@ -15,22 +15,34 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+    env:
+      MAGMA_ENV: test
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/cache@v2
+      with:
+        path: vendor/bundle
+        key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-gems-
     - name: Set up Ruby 2.5
       uses: actions/setup-ruby@v1
       with:
         ruby-version: 2.5
-    - name: Setup deps and run RSpec test suite
+    - name: Bundle install
+      run: |
+        gem install bundler -v 2.1.4
+        bundle config path vendor/bundle
+        bundle install --jobs 4 --retry 3
+    - name: Set up database
       env:
         PGHOST: 127.0.0.1
         PGUSER: developer
-        MAGMA_ENV: test
       run: |
-        gem install bundler -v 2.1.4
-        bundle install --jobs 4 --retry 3
         cp config.yml.test config.yml
         bin/magma create_db labors
         bin/magma migrate
         bin/magma global_migrate
+    - name: Run RSpec test suite
+      run: |
         rspec spec/
