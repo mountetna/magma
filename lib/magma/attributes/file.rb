@@ -14,7 +14,8 @@ class Magma
       when '::blank'
         return [ @name, {
           location: '::blank',
-          filename: '::blank'
+          filename: '::blank',
+          original_filename: '::blank'
         }]
       when '::temp'
         # Here we should generate a temporary location on Metis
@@ -22,13 +23,15 @@ class Magma
       when %r!^metis://!
         return [ @name, {
           location: new_value,
-          filename: filename(record_name, new_value)
+          filename: filename(record_name, new_value),
+          original_filename: new_value.split('/')[-1]
         }]
       else
         # return nil --> This didn't seem to save to the database?
         return [ @name, {
           location: nil,
-          filename: nil
+          filename: nil,
+          original_filename: nil
         }]
       end
     end
@@ -50,12 +53,13 @@ class Magma
     def query_to_payload(path)
       return nil unless path
 
-      case path
+      case JSON.parse(path)[:filename]
       when '::blank'
         return { path: path }
       when '::temp'
         return { path: path }
       else
+        # Do we need to / want to return the original filename here?
         return {
           url: Magma.instance.storage.download_url(@model.project_name, path),
           path: path
@@ -69,7 +73,8 @@ class Magma
     end
 
     def entry(value, loader)
-      [ name, value[:filename] ]
+      # value is a hash, from revision_to_loader?
+      [ name, value.to_json ]
     end
 
     private
