@@ -1,3 +1,5 @@
+![Run tests](https://github.com/mountetna/magma/workflows/Run%20tests/badge.svg)
+
 Magma is a data warehouse.
 
 Data comes into Magma via JSON api (the /update and /loader endpoints) and command-line data loaders.
