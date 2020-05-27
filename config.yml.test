@@ -10,6 +10,7 @@
   :project_path: ./spec/labors/
   :host: https://magma.test
   :log_file: /dev/stdout
+  :log_level: error
   :hmac_keys:
     :magma: haggis
   :storage:
