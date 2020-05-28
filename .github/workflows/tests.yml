@@ -43,6 +43,11 @@ jobs:
         bin/magma create_db labors
         bin/magma migrate
         bin/magma global_migrate
-    - name: Run RSpec test suite
+    - name: Run test suite
+      id: first_test_run
+      run: |
+        bundle exec rspec spec/
+    - name: Run test suite again to detect flaky failures
+      if: ${{ steps.first_test_run.outcome == "success" }}
       run: |
         bundle exec rspec spec/
