@@ -37,6 +37,7 @@ class Magma
   end
 
   def setup_db
+    return if @db
     @db = Sequel.connect(config(:db))
     @db.extension :connection_validator
     @db.extension :pg_json
