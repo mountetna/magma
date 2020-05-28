@@ -48,6 +48,6 @@ jobs:
       run: |
         bundle exec rspec spec/
     - name: Run test suite again to detect flaky failures
-      if: ${{ steps.first_test_run.outcome == "success" }}
+      if: ${{ steps.first_test_run.outcome == 'success' }}
       run: |
         bundle exec rspec spec/
