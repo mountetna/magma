@@ -3,7 +3,7 @@ require 'securerandom'
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
-      @type = String
+      @type = JSON
       file_type = self.is_a?(Magma::ImageAttribute) ? :image : :file
       Magma.instance.storage.setup_uploader(model, name, file_type)
       super
@@ -44,22 +44,22 @@ class Magma
         return [ @name, { path: '::blank' } ]
       when %r!^metis://!
         _, value = revision_to_loader(record_name, new_value)
-        return [ @name, query_to_payload(value[:filename]) ]
+        return [ @name, query_to_payload(value) ]
       when nil
         return [ @name, nil ]
       end
     end
 
-    def query_to_payload(path)
+    def query_to_payload(data)
+      path = JSON.parse(data)[:filename]
       return nil unless path
 
-      case JSON.parse(path)[:filename]
+      case path
       when '::blank'
         return { path: path }
       when '::temp'
         return { path: path }
       else
-        # Do we need to / want to return the original filename here?
         return {
           url: Magma.instance.storage.download_url(@model.project_name, path),
           path: path
@@ -74,6 +74,7 @@ class Magma
 
     def entry(value, loader)
       # value is a hash, from revision_to_loader?
+      puts "we are here in entry"
       [ name, value.to_json ]
     end
 
