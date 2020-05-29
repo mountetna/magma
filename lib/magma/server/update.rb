@@ -169,6 +169,7 @@ class UpdateController < Magma::Controller
       bulk_copy_params)
   rescue Etna::Error => e
     log(e.message)
-    @errors.concat([e.message])
+    # We receive a stringified JSON error from Metis
+    @errors.push(JSON.parse(e.message))
   end
 end
