@@ -288,7 +288,7 @@ describe RetrieveController do
       )
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
-      expect(header).to eq(required_atts)
+      expect(header).to match_array(required_atts)
       expect(table.length).to eq(12)
     end
 
