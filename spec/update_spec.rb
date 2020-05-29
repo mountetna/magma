@@ -10,7 +10,7 @@ describe UpdateController do
 
   before(:each) do
     route_payload = JSON.generate([
-      {:method=>"POST", :route=>"/:project_name/file/bulk_copy", :name=>"file_bulk_copy", :params=>["project_name"]}
+      {:method=>"POST", :route=>"/:project_name/files/copy", :name=>"file_bulk_copy", :params=>["project_name"]}
     ])
     stub_request(:options, 'https://metis.test').
     to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
@@ -18,7 +18,7 @@ describe UpdateController do
     route_payload = JSON.generate([
       {:success=>true}
     ])
-    stub_request(:post, /https:\/\/metis.test\/labors\/file\/bulk_copy?/).
+    stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
       to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
   end
 
@@ -149,7 +149,7 @@ describe UpdateController do
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
 
     # Make sure the Metis copy endpoint was not called
-    expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+    expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
     with(query: hash_including({
       "X-Etna-Headers": "revisions"
     }))
@@ -164,7 +164,7 @@ describe UpdateController do
       bad_request_statuses = [400, 403, 404, 422, 500]
       req_counter = 0
       bad_request_statuses.each do |status|
-        stub_request(:post, /https:\/\/metis.test\/labors\/file\/bulk_copy?/).
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
           to_return(status: status)
 
         update(
@@ -205,7 +205,7 @@ describe UpdateController do
       expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
 
       # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
       with(query: hash_including({
         "X-Etna-Headers": "revisions"
       }))
@@ -232,7 +232,7 @@ describe UpdateController do
       expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
 
       # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
       with(query: hash_including({
         "X-Etna-Headers": "revisions"
       }))
@@ -261,7 +261,7 @@ describe UpdateController do
       })
 
       # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
       with(query: hash_including({
         "X-Etna-Headers": "revisions"
       }))
@@ -292,7 +292,7 @@ describe UpdateController do
       expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
 
       # Make sure the Metis copy endpoint was called
-      expect(WebMock).to have_requested(:post, "https://metis.test/labors/file/bulk_copy").
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
         with(query: hash_including({
           "X-Etna-Headers": "revisions"
         }))
