@@ -388,8 +388,9 @@ describe RetrieveController do
   context 'pagination' do
     it 'can page results' do
       labor_list = create_list(:labor, 9)
-      prize_list = create_list(:prize, 3, labor: labor_list[7])
-      names = labor_list.sort_by(&:name)[6..8].map(&:name)
+      third_page_labors = labor_list.sort_by(&:name)[6..8]
+      labor_with_prize = third_page_labors[1]
+      prize_list = create_list(:prize, 3, labor: labor_with_prize)
 
       retrieve(
         project_name: 'labors',
@@ -400,9 +401,11 @@ describe RetrieveController do
         page_size: 3
       )
 
+      names = third_page_labors.map(&:name).map(&:to_sym)
+
       expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
-      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to match_array(prize_list.map(&:id))
+      expect(json_body[:models][:labor][:documents].keys).to eq(names)
+      expect(json_body[:models][:labor][:documents][labor_with_prize.name.to_sym][:prize]).to match_array(prize_list.map(&:id))
 
       # check to make sure collapse_tables doesn't mess things up
       retrieve(
@@ -416,8 +419,8 @@ describe RetrieveController do
       )
 
       expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
-      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to eq(nil)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names)
+      expect(json_body[:models][:labor][:documents][labor_with_prize.name.to_sym][:prize]).to eq(nil)
     end
 
     it 'can page results with joined collections' do
