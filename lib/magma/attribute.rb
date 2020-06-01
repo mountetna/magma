@@ -49,6 +49,7 @@ class Magma
     def json_template
       {
         name: @name,
+        attribute_name: @name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         link_model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: database_type.respond_to?(:name) ? database_type.name : database_type,
@@ -60,8 +61,9 @@ class Magma
         restricted: @restricted,
         format_hint: @format_hint,
         read_only: read_only?,
-        shown: shown?,
-        validation_object: validation_object
+        hidden: hidden?,
+        validation: validation_object.as_json,
+        attribute_type: self.class.attribute_type
       }.delete_if {|k,v| v.nil? }
     end
 
@@ -93,6 +95,10 @@ class Magma
 
     def shown?
       !@hidden
+    end
+
+    def hidden?
+      @hidden
     end
 
     def column_name

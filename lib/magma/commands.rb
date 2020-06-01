@@ -2,6 +2,50 @@ require 'date'
 require 'logger'
 
 class Magma
+  class LoadProject < Etna::Command
+    usage '[project_name, path/to/file.json] # Import attributes into database for given project name from JSON file'
+
+    ATTRIBUTES_OPTIONS = [
+      'attribute_name',
+      'description',
+      'display_name',
+      'format_hint',
+      'created_at',
+      'updated_at',
+      'validation',
+      'link_model_name',
+      'type',
+      'hidden',
+      'read_only',
+      'unique',
+      'index',
+      'restricted'
+    ]
+
+    def execute(project_name, file_name)
+      file = File.open(file_name)
+      file_data = JSON.parse(JSON.parse(file.read))
+
+      db = Magma.instance.db
+      models = file_data["models"]
+
+      models.keys.each do |model|
+        model_name = models[model]["template"]["name"]
+        attributes = models[model]["template"]["attributes"]
+        attributes.values.each do |attribute|
+          attribute_type = attribute["attribute_type"]
+          attribute.slice!(*ATTRIBUTES_OPTIONS)
+          attribute.merge!(
+            "project_name" => project_name, 
+            "model_name" => model_name,
+            "type" => attribute_type
+          )
+          db[:attributes].insert(attribute)
+        end
+      end
+    end
+  end
+
   class Help < Etna::Command
     usage 'List this help'
 
