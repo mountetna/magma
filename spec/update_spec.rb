@@ -267,6 +267,34 @@ describe UpdateController do
       }))
     end
 
+    it 'returns a temporary Metis path when using ::temp' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: '::temp'
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.stats).to eq(nil)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats][:path].
+        start_with?('metis://labors/tmp/'))
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
     it 'links a file from metis' do
       Timecop.freeze(DateTime.new(500))
       lion = create(:monster, name: 'Nemean Lion', species: 'lion')

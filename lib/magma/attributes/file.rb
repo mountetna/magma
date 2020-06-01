@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
@@ -15,7 +17,8 @@ class Magma
           filename: '::blank'
         }]
       when '::temp'
-        return nil  # Here we should generate a temporary location?
+        # Here we should generate a temporary location on Metis
+        return nil
       when %r!^metis://!
         return [ @name, {
           location: new_value,
@@ -33,7 +36,7 @@ class Magma
     def revision_to_payload(record_name, new_value)
       case new_value
       when '::temp'
-        return [ @name, { path: '::temp' } ]
+        return [ @name, { path: temporary_filepath } ]
       when '::blank'
         return [ @name, { path: '::blank' } ]
       when %r!^metis://!
@@ -75,6 +78,10 @@ class Magma
       ext = path ? ::File.extname(path) : ''
       ext = '.dat' if ext.empty?
       "#{@model.model_name}-#{record_name}-#{@name}#{ext}"
+    end
+
+    def temporary_filepath
+      "metis://#{@model.project_name}/tmp/#{SecureRandom.uuid}"
     end
   end
 end
