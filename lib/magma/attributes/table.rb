@@ -18,6 +18,10 @@ class Magma
     def update record, new_value
     end
 
+    def missing_column?
+      false
+    end
+
     class Validation < Magma::CollectionAttribute::Validation; end
   end
 end

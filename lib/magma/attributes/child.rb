@@ -15,6 +15,11 @@ class Magma
         obj[ self_id ] = record.id
       end
     end
+
+    def missing_column?
+      false
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.nil? || value.empty?

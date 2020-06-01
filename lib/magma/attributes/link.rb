@@ -35,9 +35,5 @@ class Magma
     def link_identity
       link_model.attributes[link_model.identity]
     end
-
-    def missing_column?
-      false
-    end
   end
 end

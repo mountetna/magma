@@ -50,6 +50,11 @@ class Magma
 
       return new_ids.map do |id| [id] end
     end
+
+    def missing_column?
+      false
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         unless value.is_a?(Array)

@@ -43,7 +43,7 @@ class Magma
     end
 
     def missing_column?
-      !@model.columns.include?(@name)
+      !@model.columns.include?(column_name)
     end
 
     def validation_object
