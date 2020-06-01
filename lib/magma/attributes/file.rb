@@ -81,7 +81,8 @@ class Magma
     end
 
     def temporary_filepath
-      "metis://#{@model.project_name}/tmp/#{SecureRandom.uuid}"
+      Magma.instance.storage.upload_url(
+        @model.project_name, "tmp/#{SecureRandom.uuid}")
     end
   end
 end

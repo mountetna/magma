@@ -285,8 +285,11 @@ describe UpdateController do
       expect(last_response.status).to eq(200)
 
       # but we do get an upload url for Metis
-      expect(json_document(:monster, 'Nemean Lion')[:stats][:path].
-        start_with?('metis://labors/tmp/'))
+      upload_url = json_document(:monster, 'Nemean Lion')[:stats][:path]
+      expect(upload_url.
+        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+      expect(upload_url.
+        include?('X-Etna-Signature=')).to eq(true)
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
