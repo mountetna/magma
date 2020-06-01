@@ -233,8 +233,8 @@ describe RetrieveController do
 
       # the labor documents are received with the table identifiers filled in
       expect(models[:labor][:documents].size).to eq(2)
-      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to eq(lion_prizes.map(&:id))
-      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to eq(hydra_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to match_array(lion_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to match_array(hydra_prizes.map(&:id))
 
       # the prize documents are also included
       expect(models[:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
@@ -358,7 +358,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to match(new_labors.map(&:name))
+      expect(labor_names).to match_array(new_labors.map(&:name))
     end
 
     it 'can filter on updated_at, created_at' do
