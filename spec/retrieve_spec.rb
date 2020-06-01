@@ -278,7 +278,7 @@ describe RetrieveController do
   context 'tsv format' do
     it 'can retrieve a TSV of data from the endpoint' do
       labor_list = create_list(:labor, 12)
-      required_atts = ['name', 'number', 'completed']
+      required_atts = ['name', 'completed', 'number']
       retrieve(
         model_name: 'labor',
         record_names: 'all',
@@ -288,7 +288,7 @@ describe RetrieveController do
       )
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
-      expect(header).to match_array(required_atts)
+      expect(header).to eq(required_atts)
       expect(table.length).to eq(12)
     end
 
