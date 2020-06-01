@@ -165,7 +165,7 @@ describe UpdateController do
       req_counter = 0
       bad_request_statuses.each do |status|
         stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
-          to_return(status: status)
+          to_return(status: status, body: '{}')
 
         update(
           monster: {
