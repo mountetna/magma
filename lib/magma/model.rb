@@ -80,9 +80,14 @@ class Magma
       end
 
       # suggests dictionary entries based on
-      def dictionary(dict_model=nil, attributes={})
-        return @dictionary unless dict_model
-        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
+      def dictionary(dictionary_json = {})
+        return @dictionary unless dictionary_json[:dictionary_model]
+
+        @dictionary = Magma::Dictionary.new(
+          self,
+          dictionary_json.delete(:dictionary_model).constantize,
+          dictionary_json
+        )
       end
 
       # json template of this model
