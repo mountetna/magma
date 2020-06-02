@@ -62,7 +62,21 @@ class Magma
         require_files('metrics')
       end
 
+      load_models
       load_model_attributes
+    end
+
+    def load_models
+      Magma.instance.db[:models].where(project_name: @project_name.to_s).each do |model|
+        model_class = Class.new(Magma::Model) do
+          set_schema(
+            model[:project_name].to_sym,
+            model[:model_name].pluralize.to_sym
+          )
+        end
+
+        project_container.const_set(model[:model_name].classify, model_class)
+      end
     end
 
     def load_model_attributes

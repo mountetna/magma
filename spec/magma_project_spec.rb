@@ -91,6 +91,30 @@ describe Magma::Project do
         raise_error(Magma::Project::AttributeLoadError)
       )
     end
+
+    it "loads the project model's from the database" do
+      Magma.instance.db[:models].insert(
+        project_name: "labors",
+        model_name: "hero",
+        created_at: Time.now,
+        updated_at: Time.now
+      )
+
+      Magma.instance.db[:attributes].insert(
+        project_name: "labors",
+        model_name: "hero",
+        attribute_name: "name",
+        type: "string",
+        created_at: Time.now,
+        updated_at: Time.now,
+        description: "The hero's name"
+      )
+
+      project = Magma::Project.new("./labors")
+
+      expect(project.models[:hero]).to eq(Labors::Hero)
+      expect(Labors::Hero.attributes[:name].description).to eq("The hero's name")
+    end
   end
 
   describe '.ordered_models' do
