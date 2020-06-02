@@ -3,14 +3,12 @@ require 'securerandom'
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
-      @type = JSON
-      file_type = self.is_a?(Magma::ImageAttribute) ? :image : :file
-      Magma.instance.storage.setup_uploader(model, name, file_type)
+      opts.merge!(type: :json)
       super
     end
 
     def revision_to_loader(record_name, new_value)
-      case new_value
+      case new_value[:path]
       when '::blank'
         return [ @name, {
           location: '::blank',
@@ -22,9 +20,9 @@ class Magma
         return nil
       when %r!^metis://!
         return [ @name, {
-          location: new_value,
-          filename: filename(record_name, new_value),
-          original_filename: new_value.split('/')[-1]
+          location: new_value[:path],
+          filename: filename(record_name, new_value[:path]),
+          original_filename: new_value[:original_filename]
         }]
       else
         # return nil --> This didn't seem to save to the database?
@@ -37,7 +35,7 @@ class Magma
     end
 
     def revision_to_payload(record_name, new_value)
-      case new_value
+      case new_value[:path]
       when '::temp'
         return [ @name, { path: temporary_filepath } ]
       when '::blank'
@@ -51,7 +49,7 @@ class Magma
     end
 
     def query_to_payload(data)
-      path = JSON.parse(data)[:filename]
+      path = data[:filename]
       return nil unless path
 
       case path
@@ -62,7 +60,8 @@ class Magma
       else
         return {
           url: Magma.instance.storage.download_url(@model.project_name, path),
-          path: path
+          path: path,
+          original_filename: data[:original_filename]
         }
       end
     end
@@ -73,8 +72,6 @@ class Magma
     end
 
     def entry(value, loader)
-      # value is a hash, from revision_to_loader?
-      puts "we are here in entry"
       [ name, value.to_json ]
     end
 

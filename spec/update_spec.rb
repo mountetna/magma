@@ -273,7 +273,9 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            stats: '::temp'
+            stats: {
+              path: '::temp'
+            }
           }
         }
       )
@@ -304,23 +306,29 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            stats: 'metis://labors/files/lion-stats.txt'
+            stats: {
+              path: 'metis://labors/files/lion-stats.txt',
+              original_filename: 'original-file.txt'
+            }
           }
         }
       )
 
       lion.refresh
-      expect(lion.stats).to eq 'monster-Nemean Lion-stats.txt'
+      expect(lion.stats).to eq("{\"location\":\"metis://labors/files/lion-stats.txt\",\"filename\":\"monster-Nemean Lion-stats.txt\",\"original_filename\":\"original-file.txt\"}")
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # but we do get an download url for Metis
       uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
       params = Rack::Utils.parse_nested_query(uri.query)
       expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
       expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-stats.txt')
       expect(params['X-Etna-Id']).to eq('magma')
       expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      expect(json_document(:monster, 'Nemean Lion')[:stats].key?(:path)).to eq (true)
+      expect(json_document(:monster, 'Nemean Lion')[:stats].key?(:original_filename)).to eq (true)
 
       # Make sure the Metis copy endpoint was called
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").

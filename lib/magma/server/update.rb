@@ -91,7 +91,7 @@ class UpdateController < Magma::Controller
           # For the remove operations, have to figure
           #   out the "current" link name in Metis,
           #   using the stored Magma value.
-          if !revision[attribute_name] || revision[attribute_name] == '::blank'
+          if !revision[attribute_name] || revision[attribute_name][:path] == '::blank'
             retrieval = Magma::Retrieval.new(
               revision.model,
               [revision.record_name.to_s],
@@ -102,7 +102,7 @@ class UpdateController < Magma::Controller
             retrieval.records.each do |record|
               # Only add a link to remove on Metis if a copy already exists.
               # If the attribute hasn't been set before, we'll ignore this.
-              if record[attribute_name]
+              if record[attribute_name][:path]
                 # This Metis route isn't active yet, so don't do anything
                 # link_revisions.push({
                 #   source: "metis://#{@project_name}/magma/#{record[attribute_name][:path]}",
@@ -110,9 +110,9 @@ class UpdateController < Magma::Controller
                 # })
               end
             end
-          elsif revision[attribute_name].start_with? 'metis://'
+          elsif revision[attribute_name][:path].start_with? 'metis://'
             copy_revisions.push({
-              source: revision[attribute_name],
+              source: revision[attribute_name][:path],
               dest: "metis://#{@project_name}/magma/#{revision.to_loader[attribute_name][:filename]}"
             })
           end
