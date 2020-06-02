@@ -32,6 +32,16 @@ class Magma
           !(att.is_a?(Magma::TableAttribute) && @collapse_tables)
         end
 
+        if @requested_attribute_names != "all"
+          attributes.sort_by! do |att|
+            if att.name == @model.identity
+              -1
+            else
+              @requested_attribute_names.index(att.name)
+            end
+          end
+        end
+
         # if there is no identifier, use the :id column
         if !@model.has_identifier?
           attributes.push(OpenStruct.new(name: :id))
