@@ -74,3 +74,5 @@ victim:
   country:
     type: string
     restricted: true
+  restricted:
+    type: boolean

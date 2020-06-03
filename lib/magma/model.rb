@@ -75,10 +75,6 @@ class Magma
         @parent
       end
 
-      def restricted(opts= {})
-        attributes[:restricted] = Magma::BooleanAttribute.new(:restricted, self, opts)
-      end
-
       # suggests dictionary entries based on
       def dictionary(dictionary_json = {})
         return @dictionary unless dictionary_json[:dictionary_model]
