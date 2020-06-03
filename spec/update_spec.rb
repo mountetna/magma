@@ -1,5 +1,4 @@
 require 'json'
-require 'pry'
 
 describe UpdateController do
   include Rack::Test::Methods
@@ -170,7 +169,9 @@ describe UpdateController do
         update(
           monster: {
             'Nemean Lion' => {
-              stats: 'metis://labors/files/lion-stats.txt'
+              stats: {
+                path: 'metis://labors/files/lion-stats.txt'
+              }
             }
           }
         )
@@ -189,14 +190,20 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            stats: '::blank'
+            stats: {
+              path: '::blank'
+            }
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.stats).to eq '::blank'
+      expect(lion.stats.to_json).to eq({
+        "location": "::blank",
+        "filename": "::blank",
+        "original_filename": "::blank"
+      }.to_json)
 
       expect(last_response.status).to eq(200)
 
@@ -212,23 +219,29 @@ describe UpdateController do
     end
 
     it 'removes a file reference' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: 'monster-Nemean Lion-lion-stats.txt')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: '{"filename": "monster-Nemean Lion-lion-stats.txt", "original_filename": ""}')
 
       update(
         monster: {
           'Nemean Lion' => {
-            stats: nil
+            stats: {
+              path: nil
+            }
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.stats).to eq nil
+      expect(lion.stats.to_json).to eq({
+        "location": nil,
+        "filename": nil,
+        "original_filename": nil
+      }.to_json)
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
 
       # Make sure the Metis copy endpoint was not called
@@ -239,23 +252,29 @@ describe UpdateController do
     end
 
     it 'removes a file reference using ::blank' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: 'monster-Nemean Lion-lion-stats.txt')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: '{"filename": "monster-Nemean Lion-lion-stats.txt", "original_filename": ""}')
 
       update(
         monster: {
           'Nemean Lion' => {
-            stats: '::blank'
+            stats: {
+              path: '::blank'
+            }
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.stats).to eq('::blank')
+      expect(lion.stats.to_json).to eq({
+        "location": "::blank",
+        "filename": "::blank",
+        "original_filename": "::blank"
+      }.to_json)
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:stats]).to eq({
         path: '::blank'
       })
@@ -315,7 +334,11 @@ describe UpdateController do
       )
 
       lion.refresh
-      expect(lion.stats).to eq("{\"location\":\"metis://labors/files/lion-stats.txt\",\"filename\":\"monster-Nemean Lion-stats.txt\",\"original_filename\":\"original-file.txt\"}")
+      expect(lion.stats.to_json).to eq({
+        "location": "metis://labors/files/lion-stats.txt",
+        "filename": "monster-Nemean Lion-stats.txt",
+        "original_filename": "original-file.txt"
+      }.to_json)
 
       expect(last_response.status).to eq(200)
 

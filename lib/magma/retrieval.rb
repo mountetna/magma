@@ -126,7 +126,9 @@ class Magma
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           [ att.name.to_s, '::identifier' ]
         when Magma::FileAttribute, Magma::ImageAttribute
-          [ att.name.to_s, '::path' ]
+          # Change to ::all because File.query_to_payload
+          #   now expects a hash
+          [ att.name.to_s, '::all' ]
         when Magma::MatchAttribute
           [ att.name.to_s ]
         else

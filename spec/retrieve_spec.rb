@@ -1,3 +1,5 @@
+require 'pry'
+
 describe RetrieveController do
   include Rack::Test::Methods
 
@@ -98,7 +100,7 @@ describe RetrieveController do
   context 'files' do
     it 'retrieves file attributes with storage links' do
       Timecop.freeze(DateTime.new(500))
-      monster = create(:monster, :lion, stats: 'stats.txt')
+      monster = create(:monster, :lion, stats: '{"filename": "stats.txt", "original_filename": ""}')
 
       retrieve(
         project_name: 'labors',
@@ -108,8 +110,6 @@ describe RetrieveController do
       )
 
       expect(last_response.status).to eq(200)
-
-
       uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
       params = Rack::Utils.parse_nested_query(uri.query)
 
@@ -359,7 +359,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to match(new_labors.map(&:name))
+      expect(labor_names).to match_array(new_labors.map(&:name))
     end
 
     it 'can filter on updated_at, created_at' do

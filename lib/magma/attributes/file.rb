@@ -49,6 +49,8 @@ class Magma
     end
 
     def query_to_payload(data)
+      return nil unless data
+
       path = data[:filename]
       return nil unless path
 

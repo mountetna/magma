@@ -1,5 +1,3 @@
-require 'pry'
-
 describe QueryController do
   include Rack::Test::Methods
 
@@ -287,9 +285,9 @@ describe QueryController do
 
   context Magma::FilePredicate do
     before(:each) do
-      lion = create(:monster, name: 'Nemean Lion', stats: '{"path": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}')
-      hydra = create(:monster, name: 'Lernean Hydra', stats: '{"path": "hydra-stats.tsv", "original_filename": "alpha-hydra.tsv"}')
-      stables = create(:monster, name: 'Augean Stables', stats: '{"path": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}')
+      lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}')
+      hydra = create(:monster, name: 'Lernean Hydra', stats: '{"filename": "hydra-stats.tsv", "original_filename": "alpha-hydra.tsv"}')
+      stables = create(:monster, name: 'Augean Stables', stats: '{"filename": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}')
     end
 
     it 'returns a path' do
@@ -322,6 +320,21 @@ describe QueryController do
       expect(last_response.status).to eq(200)
 
       expect(json_body[:answer].map(&:last).sort).to eq([ 'alpha-hydra.tsv', 'alpha-lion.tsv', 'alpha-stables.tsv' ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
+    end
+
+    it 'returns all the file data' do
+      query(
+        [ 'monster', '::all', 'stats', '::all' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort_by { |hsh| hsh[:filename] }).
+        to eq([
+          {original_filename: "alpha-hydra.tsv", filename: "hydra-stats.tsv"},
+          {original_filename: "alpha-lion.tsv", filename: "lion-stats.tsv"},
+          {original_filename: "alpha-stables.tsv", filename: "stables-stats.tsv"}])
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
     end
   end

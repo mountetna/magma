@@ -5,7 +5,8 @@ class Magma
 
       extract do |table, identity|
         Magma.instance.storage.download_url(
-          @model.project_name, JSON.parse(table.first[column_name])["path"]
+          @model.project_name,
+          table.first[column_name] ? table.first[column_name]["filename"] : nil
         )
       end
     end
@@ -14,7 +15,7 @@ class Magma
       child String
 
       extract do |table, identity|
-        JSON.parse(table.first[column_name])["path"]
+        table.first[column_name] ? table.first[column_name]["filename"] : nil
       end
     end
 
@@ -22,7 +23,15 @@ class Magma
       child String
 
       extract do |table, identity|
-        JSON.parse(table.first[column_name])["original_filename"]
+        table.first[column_name] ? table.first[column_name]["original_filename"] : nil
+      end
+    end
+
+    verb '::all' do
+      child String
+
+      extract do |table, identity|
+        table.first[column_name] ? table.first[column_name].symbolize_keys : nil
       end
     end
 
