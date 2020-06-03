@@ -1,4 +1,5 @@
 aspect:
+  dictionary: '{"dictionary_model":"Labors::Codex", "monster":"monster", "name":"aspect", "source":"tome", "value":"lore"}'
   monster:
     type: parent
   name:

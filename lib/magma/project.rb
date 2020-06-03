@@ -67,16 +67,20 @@ class Magma
     end
 
     def load_models
-      Magma.instance.db[:models].where(project_name: @project_name.to_s).each do |model|
-        model_class = Class.new(Magma::Model) do
-          set_schema(
-            model[:project_name].to_sym,
-            model[:model_name].pluralize.to_sym
-          )
-        end
+      Magma.instance.db[:models].where(project_name: @project_name.to_s).
+        reject { |model| project_container.const_defined?(model[:model_name].classify) }.
+        each do |model|
+          model_class = Class.new(Magma::Model) do
+            set_schema(
+              model[:project_name].to_sym,
+              model[:model_name].pluralize.to_sym
+            )
 
-        project_container.const_set(model[:model_name].classify, model_class)
-      end
+            dictionary(model[:dictionary].symbolize_keys) if model[:dictionary]
+          end
+
+          project_container.const_set(model[:model_name].classify, model_class)
+        end
     end
 
     def load_model_attributes

@@ -33,6 +33,12 @@ end
 
 truncate_attributes_table_on_error do
   YAML.load(File.read("./spec/fixtures/labors_model_attributes.yml")).each do |model_name, attributes|
+    Magma.instance.db[:models].insert(
+      project_name: "labors",
+      model_name: model_name,
+      dictionary: attributes.delete("dictionary")
+    )
+
     attributes.each do |attribute_name, options|
       row = options.merge(
         project_name: "labors",

@@ -2,7 +2,7 @@ class Magma::Dictionary
   def initialize model, dict_model, attributes
     @model = model
     @dict_model = dict_model
-    @attributes = attributes
+    @attributes = attributes.transform_values(&:to_sym)
   end
 
   def entries
