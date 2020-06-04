@@ -42,6 +42,10 @@ class Magma
       nil
     end
 
+    def missing_column?
+      !@model.columns.include?(column_name)
+    end
+
     def validation_object
       @validation_object ||= Magma::ValidationObject.build(@validation&.symbolize_keys)
     end
