@@ -7,12 +7,13 @@ describe 'Magma Commands' do
     let(:attributes) { Magma.instance.db[:attributes] }
 
     it 'loads attributes into the database' do
-      json_attributes = JSON.parse(JSON.parse(File.open(json_file).read))["models"]["aspect"]["template"]["attributes"]
-      model_json_template = JSON.parse(Labors::Aspect.json_template.to_json)["attributes"]
-
+      file = File.open(json_file).read
+      json_attributes = JSON.parse(file)["models"]["monster"]["template"]["attributes"]
+      model_json_template = JSON.parse(Labors::Monster.json_template.to_json)["attributes"]
+      require 'pry'; binding.pry
       expect {
         load_project
-      }.to change { attributes.count }.by(6)
+      }.to change { attributes.count }.by(8)
       expect(json_attributes).to eq(model_json_template)
     end
   end

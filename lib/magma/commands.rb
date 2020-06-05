@@ -24,7 +24,7 @@ class Magma
 
     def execute(project_name, file_name)
       file = File.open(file_name)
-      file_data = JSON.parse(JSON.parse(file.read))
+      file_data = JSON.parse(file.read)
 
       db = Magma.instance.db
       models = file_data["models"]
