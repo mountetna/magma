@@ -3,49 +3,49 @@
     "monster": {
       "documents": {
         "monster7": {
-          "created_at": "2020-06-05T16:11:52-06:00",
-          "updated_at": "2020-06-05T16:11:52-06:00",
+          "created_at": "2020-06-08T10:46:57-06:00",
+          "updated_at": "2020-06-08T10:46:57-06:00",
           "labor": null,
           "name": "monster7",
           "species": null,
-          "aspect": [
-
-          ],
-          "stats": null,
           "victim": [
             "victim115",
             "victim116"
-          ]
+          ],
+          "aspect": [
+
+          ],
+          "stats": null
         },
         "monster8": {
-          "created_at": "2020-06-05T16:11:52-06:00",
-          "updated_at": "2020-06-05T16:11:52-06:00",
+          "created_at": "2020-06-08T10:46:57-06:00",
+          "updated_at": "2020-06-08T10:46:57-06:00",
           "labor": null,
           "name": "monster8",
           "species": null,
-          "aspect": [
-
-          ],
-          "stats": null,
           "victim": [
             "victim117",
             "victim118"
-          ]
-        },
-        "monster9": {
-          "created_at": "2020-06-05T16:11:52-06:00",
-          "updated_at": "2020-06-05T16:11:52-06:00",
-          "labor": null,
-          "name": "monster9",
-          "species": null,
+          ],
           "aspect": [
 
           ],
-          "stats": null,
+          "stats": null
+        },
+        "monster9": {
+          "created_at": "2020-06-08T10:46:57-06:00",
+          "updated_at": "2020-06-08T10:46:57-06:00",
+          "labor": null,
+          "name": "monster9",
+          "species": null,
           "victim": [
             "victim119",
             "victim120"
-          ]
+          ],
+          "aspect": [
+
+          ],
+          "stats": null
         }
       },
       "template": {
@@ -58,7 +58,6 @@
             "attribute_class": "Magma::Attribute",
             "display_name": "Created At",
             "hidden": true,
-            "validation": "null",
             "attribute_type": "date_time"
           },
           "updated_at": {
@@ -68,7 +67,6 @@
             "attribute_class": "Magma::Attribute",
             "display_name": "Updated At",
             "hidden": true,
-            "validation": "null",
             "attribute_type": "date_time"
           },
           "labor": {
@@ -81,7 +79,6 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
-            "validation": "null",
             "attribute_type": "parent"
           },
           "name": {
@@ -93,7 +90,6 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
-            "validation": "null",
             "attribute_type": "identifier"
           },
           "species": {
@@ -106,33 +102,11 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
-            "validation": "{\"type\":\"Regexp\",\"value\":\"^[a-z\\\\s]+$\"}",
+            "validation": {
+              "type": "Regexp",
+              "value": "^[a-z\\s]+$"
+            },
             "attribute_type": "string"
-          },
-          "aspect": {
-            "name": "aspect",
-            "attribute_name": "aspect",
-            "model_name": "aspect",
-            "link_model_name": "aspect",
-            "attribute_class": "Magma::CollectionAttribute",
-            "display_name": "Aspect",
-            "restricted": false,
-            "read_only": false,
-            "hidden": false,
-            "validation": "null",
-            "attribute_type": "collection"
-          },
-          "stats": {
-            "name": "stats",
-            "attribute_name": "stats",
-            "type": "String",
-            "attribute_class": "Magma::FileAttribute",
-            "display_name": "Stats",
-            "restricted": false,
-            "read_only": false,
-            "hidden": false,
-            "validation": "null",
-            "attribute_type": "file"
           },
           "victim": {
             "name": "victim",
@@ -144,8 +118,30 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
-            "validation": "null",
             "attribute_type": "collection"
+          },
+          "aspect": {
+            "name": "aspect",
+            "attribute_name": "aspect",
+            "model_name": "aspect",
+            "link_model_name": "aspect",
+            "attribute_class": "Magma::CollectionAttribute",
+            "display_name": "Aspect",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "attribute_type": "collection"
+          },
+          "stats": {
+            "name": "stats",
+            "attribute_name": "stats",
+            "type": "String",
+            "attribute_class": "Magma::FileAttribute",
+            "display_name": "Stats",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "attribute_type": "file"
           }
         },
         "identifier": "name",

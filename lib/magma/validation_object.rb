@@ -24,8 +24,8 @@ class Magma
     def match
     end
 
-    def as_json
-      @options.to_json
+    def to_hash
+      @options&.to_hash
     end
 
     private

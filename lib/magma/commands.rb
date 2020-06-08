@@ -12,7 +12,6 @@ class Magma
       'format_hint',
       'created_at',
       'updated_at',
-      'validation',
       'link_model_name',
       'type',
       'hidden',
@@ -38,7 +37,8 @@ class Magma
           attribute.merge!(
             "project_name" => project_name, 
             "model_name" => model_name,
-            "type" => attribute_type
+            "type" => attribute_type,
+            "validation" => Sequel.pg_json_wrap(attribute["validation"])
           )
           db[:attributes].insert(attribute)
         end

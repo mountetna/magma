@@ -185,7 +185,7 @@ describe Magma::Attribute do
       })
       json_validation_object = attribute.json_template[:validation]
 
-      expect(json_validation_object).to be_a(Magma::RegexpValidationObject)
+      expect(json_validation_object).to eq({:type=>"Regexp", :value=>/^[a-zA-Z]{1}$/})
     end
   end
 end

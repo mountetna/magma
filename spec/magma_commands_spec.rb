@@ -10,7 +10,6 @@ describe 'Magma Commands' do
       file = File.open(json_file).read
       json_attributes = JSON.parse(file)["models"]["monster"]["template"]["attributes"]
       model_json_template = JSON.parse(Labors::Monster.json_template.to_json)["attributes"]
-      require 'pry'; binding.pry
       expect {
         load_project
       }.to change { attributes.count }.by(8)
