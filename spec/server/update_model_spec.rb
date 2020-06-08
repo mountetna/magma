@@ -21,5 +21,10 @@ describe UpdateModelController do
     expect(last_response.status).to eq(200)
     expect(Labors::Monster.attributes[:name].description).to eq("The monster's name")
     expect(Labors::Monster.attributes[:name].display_name).to eq("NAME")
+
+    response_json = JSON.parse(last_response.body)
+    attribute_json = response_json["models"]["monster"]["template"]["attributes"]["name"]
+    expect(attribute_json["desc"]).to eq("The monster's name")
+    expect(attribute_json["display_name"]).to eq("NAME")
   end
 end
