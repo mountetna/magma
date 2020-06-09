@@ -5,8 +5,24 @@ describe UpdateModelController do
     OUTER_APP
   end
 
-  it "updates attribute options" do
+  it "rejects requests from non-superusers" do
     auth_header(:editor)
+
+    json_post(:update_model, {
+      project_name: "labors",
+      actions: [
+        action_name: "update_attribute",
+        model_name: "monster",
+        attribute_name: "name",
+        description: "The monster's name",
+      ]
+    })
+
+    expect(last_response.status).to eq(403)
+  end
+
+  it "updates attribute options" do
+    auth_header(:superuser)
     json_post(:update_model, {
       project_name: "labors",
       actions: [
