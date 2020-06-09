@@ -11,6 +11,7 @@
             "attribute_class": "Magma::Attribute",
             "display_name": "Created At",
             "hidden": true,
+            "validation": null,
             "attribute_type": "date_time"
           },
           "updated_at": {
@@ -20,6 +21,7 @@
             "attribute_class": "Magma::Attribute",
             "display_name": "Updated At",
             "hidden": true,
+            "validation": null,
             "attribute_type": "date_time"
           },
           "labor": {
@@ -32,6 +34,7 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
+            "validation": null,
             "attribute_type": "parent"
           },
           "name": {
@@ -43,6 +46,7 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
+            "validation": null,
             "attribute_type": "identifier"
           },
           "species": {
@@ -71,6 +75,7 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
+            "validation": null,
             "attribute_type": "collection"
           },
           "aspect": {
@@ -83,6 +88,7 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
+            "validation": null,
             "attribute_type": "collection"
           },
           "stats": {
@@ -94,6 +100,7 @@
             "restricted": false,
             "read_only": false,
             "hidden": false,
+            "validation": null,
             "attribute_type": "file"
           }
         },

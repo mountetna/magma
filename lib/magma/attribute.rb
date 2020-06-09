@@ -62,7 +62,7 @@ class Magma
         format_hint: @format_hint,
         read_only: read_only?,
         hidden: hidden?,
-        validation: validation_object.to_json,
+        validation: validation_object,
         attribute_type: self.class.attribute_type
       }.delete_if {|k,v| v.nil? }
     end
