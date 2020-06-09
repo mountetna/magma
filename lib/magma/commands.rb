@@ -5,40 +5,28 @@ class Magma
   class LoadProject < Etna::Command
     usage '[project_name, path/to/file.json] # Import attributes into database for given project name from JSON file'
 
-    ATTRIBUTES_OPTIONS = [
-      'attribute_name',
-      'description',
-      'display_name',
-      'format_hint',
-      'created_at',
-      'updated_at',
-      'link_model_name',
-      'type',
-      'hidden',
-      'read_only',
-      'unique',
-      'index',
-      'restricted'
-    ]
+    def options
+      Magma::Attribute.options - [:loader] + [:created_at, :updated_at, :attribute_name]
+    end
 
     def execute(project_name, file_name)
       file = File.open(file_name)
-      file_data = JSON.parse(file.read)
+      file_data = JSON.parse(file.read, symbolize_names: true)
 
       db = Magma.instance.db
-      models = file_data["models"]
+      models = file_data[:models]
 
       models.keys.each do |model|
-        model_name = models[model]["template"]["name"]
-        attributes = models[model]["template"]["attributes"]
+        model_name = models[model][:template][:name]
+        attributes = models[model][:template][:attributes]
         attributes.values.each do |attribute|
-          attribute_type = attribute["attribute_type"]
-          attribute.slice!(*ATTRIBUTES_OPTIONS)
+          attribute_type = attribute[:attribute_type]
+          attribute.slice!(*options)
           attribute.merge!(
-            "project_name" => project_name, 
-            "model_name" => model_name,
-            "type" => attribute_type,
-            "validation" => Sequel.pg_json_wrap(attribute["validation"])
+            project_name: project_name, 
+            model_name: model_name,
+            type: attribute_type,
+            validation: Sequel.pg_json_wrap(attribute[:validation])
           )
           db[:attributes].insert(attribute)
         end
