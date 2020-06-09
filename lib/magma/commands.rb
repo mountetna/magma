@@ -6,7 +6,7 @@ class Magma
     usage '[project_name, path/to/file.json] # Import attributes into database for given project name from JSON file'
 
     def options
-      Magma::Attribute.options - [:loader] + [:created_at, :updated_at, :attribute_name]
+      Magma::Attribute.options - [:loader] + [:created_at, :updated_at]
     end
 
     def execute(project_name, file_name)
@@ -19,15 +19,17 @@ class Magma
       models.keys.each do |model|
         model_name = models[model][:template][:name]
         attributes = models[model][:template][:attributes]
-        attributes.values.each do |attribute|
+        attributes.each do |attribute_name, attribute|
           attribute_type = attribute[:attribute_type]
           attribute.slice!(*options)
           attribute.merge!(
             project_name: project_name, 
             model_name: model_name,
             type: attribute_type,
-            validation: Sequel.pg_json_wrap(attribute[:validation])
+            validation: Sequel.pg_json_wrap(attribute[:validation]),
+            attribute_name: attribute_name.to_s
           )
+
           db[:attributes].insert(attribute)
         end
       end
