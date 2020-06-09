@@ -24,7 +24,7 @@ class Magma
     def match
     end
 
-    def as_json
+    def to_json(options = nil)
       @options.to_json
     end
 

@@ -1,0 +1,112 @@
+{
+  "models": {
+    "monster": {
+      "template": {
+        "name": "monster",
+        "attributes": {
+          "created_at": {
+            "name": "created_at",
+            "attribute_name": "created_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Created At",
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "updated_at": {
+            "name": "updated_at",
+            "attribute_name": "updated_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Updated At",
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "labor": {
+            "name": "labor",
+            "attribute_name": "labor",
+            "model_name": "labor",
+            "link_model_name": "labor",
+            "attribute_class": "Magma::ForeignKeyAttribute",
+            "display_name": "Labor",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "parent"
+          },
+          "name": {
+            "name": "name",
+            "attribute_name": "name",
+            "type": "String",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Name",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "identifier"
+          },
+          "species": {
+            "name": "species",
+            "attribute_name": "species",
+            "type": "String",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Species",
+            "match": "^[a-z\\s]+$",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": {
+              "type": "Regexp",
+              "value": "^[a-z\\s]+$"
+            },
+            "attribute_type": "string"
+          },
+          "victim": {
+            "name": "victim",
+            "attribute_name": "victim",
+            "model_name": "victim",
+            "link_model_name": "victim",
+            "attribute_class": "Magma::CollectionAttribute",
+            "display_name": "Victim",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "collection"
+          },
+          "aspect": {
+            "name": "aspect",
+            "attribute_name": "aspect",
+            "model_name": "aspect",
+            "link_model_name": "aspect",
+            "attribute_class": "Magma::CollectionAttribute",
+            "display_name": "Aspect",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "collection"
+          },
+          "stats": {
+            "name": "stats",
+            "attribute_name": "stats",
+            "type": "String",
+            "attribute_class": "Magma::FileAttribute",
+            "display_name": "Stats",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "file"
+          }
+        },
+        "identifier": "name",
+        "parent": "labor"
+      }
+    }
+  }
+}
