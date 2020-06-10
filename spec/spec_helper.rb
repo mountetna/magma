@@ -286,6 +286,9 @@ def json_document model, record_name
 end
 
 AUTH_USERS = {
+  superuser: {
+    email: 'zeus@twelve-labors.org', first: 'Zeus', perm: 'a:administration'
+  },
   editor: {
     email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors'
   },
