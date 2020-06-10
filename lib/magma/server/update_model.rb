@@ -8,9 +8,7 @@ class UpdateModelController < Magma::Controller
       action_class.new(@project_name, action_params)
     end
 
-
-    if actions.all? { |action| action.validate } 
-      actions.each(&:perform)
+    if actions.all?(&:validate) && actions.all?(&:perform)
       @payload = Magma::Payload.new
 
       Magma.instance.get_project(@project_name).models.each do |model_name, model|
@@ -18,9 +16,9 @@ class UpdateModelController < Magma::Controller
         @payload.add_model(model, retrieval.attribute_names)
       end
 
-      return success(@payload.to_hash.to_json, 'application/json')
+      success(@payload.to_hash.to_json, 'application/json')
     else
-      failure({}, 'application/json')
+      failure(422, errors: actions.flat_map(&:errors))
     end
   end
 end
