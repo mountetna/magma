@@ -59,8 +59,10 @@ describe UpdateModelController do
         display_name: "NAME"
       }]
     })
-    
-    expect(last_response.status).to eq(500)
+
+    response_json = JSON.parse(last_response.body)
+    expect(last_response.status).to eq(422)
+    expect(response_json['errors'][0]['message']).to eq('Attribute does not exist')
   end
 
 
@@ -71,12 +73,15 @@ describe UpdateModelController do
       actions: [{
         action_name: "update_attribute",
         model_name: "monster",
-        attribute_name: 123,
-        description: "The monster's name",
-        display_name: "NAME"
+        attribute_name: proper_name,
+        description: 123,
+        display_name: "NAME",
+        hidden: 'something'
       }]
     })
 
-    expect(last_response.status).to eq(500)
+    response_json = JSON.parse(last_response.body)
+    expect(last_response.status).to eq(422)
+    expect(response_json['errors'][0]['message']).to eq("Update attribute failed")
   end
 end

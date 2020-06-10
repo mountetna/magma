@@ -1,14 +1,20 @@
+require 'magma/actions/action_error'
+
 class Magma
   class UpdateAttribute
     def initialize(project_name, action_params = {})
       @project_name = project_name
       @action_params = action_params
+      @errors = []
     end
 
     def perform
       @action_params.slice(*Magma::Attribute::EDITABLE_OPTIONS).each do |option, value|
         attribute.update_option(option, value)
+      rescue => e
+        @errors << Magma::ActionError.new(message: 'Update attribute failed', source: @action_params.slice(:attribute_name, :model_name), reason: e)
       end
+      return @errors.empty?
     end
 
     def model
@@ -23,10 +29,20 @@ class Magma
     end
 
     def validate
-      return false unless attribute
-      @action_params.except(:action_name, :model_name, :attribute_name).keys.all? do |option|
-        attribute.respond_to?(option)
+      if attribute
+        @action_params.except(:action_name, :model_name, :attribute_name).keys.all? do |option|
+          unless attribute.respond_to?(option)
+            @errors << Magma::ActionError.new(message: "Attribute does not implement #{option}", source: @action_params.slice(:action_name, :model_name, :attribute_name))
+          end
+        end
+      else
+        @errors << Magma::ActionError.new(message: 'Attribute does not exist', source: @action_params.slice(:attribute_name, :model_name))
       end
+      return @errors.empty?
+    end
+
+    def errors
+      @errors.map(&:to_h)
     end
   end
 end
