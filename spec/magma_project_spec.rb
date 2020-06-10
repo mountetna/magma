@@ -26,7 +26,7 @@ describe Magma::Project do
         description: "What color is it?",
       )
 
-      project = Magma::Project.new("./labors")
+      project = Magma::Project.new(project_dir: "./labors")
       # Fetch and delete test attributes so they don't affect other tests
       size_attribute = Labors::Monster.attributes.delete(:size)
       color_attribute = Labors::Monster.attributes.delete(:color)
@@ -48,7 +48,7 @@ describe Magma::Project do
         link_model_name: "monster"
       )
 
-      project = Magma::Project.new("./labors")
+      project = Magma::Project.new(project_dir: "./labors")
       # Fetch and delete test attributes so they don't affect other tests
       attribute = Labors::Monster.attributes.delete(:alter_ego)
 
@@ -68,7 +68,7 @@ describe Magma::Project do
         description: "Only something I would know"
       )
 
-      project = Magma::Project.new("./labors")
+      project = Magma::Project.new(project_dir: "./labors")
       attribute = Labors::Monster.attributes[:name]
 
       expect(attribute.description).to eq("Only something I would know")
@@ -87,21 +87,21 @@ describe Magma::Project do
         description: "There isn't a Labors::Ghost model"
       )
 
-      expect { Magma::Project.new("./labors") }.to(
+      expect { Magma::Project.new(project_dir: "./labors") }.to(
         raise_error(Magma::Project::AttributeLoadError)
       )
     end
 
     it "loads the project model's from the database" do
       Magma.instance.db[:models].insert(
-        project_name: "labors",
+        project_name: "movies",
         model_name: "hero",
         created_at: Time.now,
         updated_at: Time.now
       )
 
       Magma.instance.db[:attributes].insert(
-        project_name: "labors",
+        project_name: "movies",
         model_name: "hero",
         attribute_name: "name",
         type: "string",
@@ -110,10 +110,10 @@ describe Magma::Project do
         description: "The hero's name"
       )
 
-      project = Magma::Project.new("./labors")
+      project = Magma::Project.new(project_name: :movies)
 
-      expect(project.models[:hero]).to eq(Labors::Hero)
-      expect(Labors::Hero.attributes[:name].description).to eq("The hero's name")
+      expect(project.models[:hero]).to eq(Movies::Hero)
+      expect(Movies::Hero.attributes[:name].description).to eq("The hero's name")
     end
   end
 
