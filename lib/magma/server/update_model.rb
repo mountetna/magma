@@ -4,7 +4,7 @@ require_relative '../actions/update_attribute'
 class UpdateModelController < Magma::Controller
   def action
     actions = @params[:actions].map do |action_params|
-      action_class = "Magma::#{action_params[:action_name].classify}".constantize
+      action_class = "Magma::#{action_params[:action_name].classify}Action".constantize
       action_class.new(@project_name, action_params)
     end
 

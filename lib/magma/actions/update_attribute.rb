@@ -1,7 +1,7 @@
 require 'magma/actions/action_error'
 
 class Magma
-  class UpdateAttribute
+  class UpdateAttributeAction
     def initialize(project_name, action_params = {})
       @project_name = project_name
       @action_params = action_params
