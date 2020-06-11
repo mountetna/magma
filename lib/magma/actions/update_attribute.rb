@@ -31,6 +31,8 @@ class Magma
     def validate
       if attribute
         @action_params.except(:action_name, :model_name, :attribute_name).keys.all? do |option|
+          next if check_restricted_attributes(option)
+
           unless attribute.respond_to?(option)
             @errors << Magma::ActionError.new(message: "Attribute does not implement #{option}", source: @action_params.slice(:action_name, :model_name, :attribute_name))
           end
@@ -43,6 +45,16 @@ class Magma
 
     def errors
       @errors.map(&:to_h)
+    end
+
+    private
+
+    def check_restricted_attributes(option)
+      if option == :name || option == :new_attribute_name
+        @errors << Magma::ActionError.new(message: "#{option.to_s} cannot be changed", source: @action_params.slice(:action_name, :model_name, :attribute_name))
+        true
+      end
+      false
     end
   end
 end
