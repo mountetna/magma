@@ -81,7 +81,9 @@ describe UpdateModelController do
     })
 
     response_json = JSON.parse(last_response.body)
+
     expect(last_response.status).to eq(422)
     expect(response_json['errors'][0]['message']).to eq("Update attribute failed")
+    expect(response_json['errors'][0]['reason']).to include("PG::InvalidTextRepresentation: ERROR:  invalid input syntax for type boolean:")
   end
 end
