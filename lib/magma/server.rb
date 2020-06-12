@@ -4,6 +4,7 @@ require_relative '../magma'
 require_relative '../magma/server/retrieve'
 require_relative '../magma/server/query'
 require_relative '../magma/server/update'
+require_relative '../magma/server/update_model'
 
 class Magma
   class Server < Etna::Server
@@ -20,6 +21,8 @@ class Magma
     post '/query', as: :query, action: 'query#action', auth: { user: { can_view?: :project_name } }
 
     post '/update', as: :update, action: 'update#action', auth: { user: { can_edit?: :project_name } } 
+
+    post '/update_model', action: 'update_model#action', auth: { user: { is_superuser?: :project_name } }
 
     get '/' do
       [ 200, {}, [ 'Magma is available.' ] ]
