@@ -1,12 +1,11 @@
 class Magma::Dictionary
-  def initialize model, dict_model, attributes
-    @model = model
-    @dict_model = dict_model
-    @attributes = attributes
+  def initialize(options = {})
+    @dict_model_name = options.delete(:dictionary_model)
+    @attributes = options.transform_values(&:to_sym)
   end
 
   def entries
-    @dict_model.all
+    dict_model.all
   end
 
   # checks the given document to see if it conforms to the given dictionary entry
@@ -15,24 +14,28 @@ class Magma::Dictionary
       matches_entry_attribute?(
         entry[dict_att_name],
         document[model_att_name],
-        @dict_model.attributes[dict_att_name]
+        dict_model.attributes[dict_att_name]
       )
     end
   end
 
   def to_s
-    @dict_model.name
+    @dict_model_name
   end
 
   def to_hash
     {
-      project_name: @dict_model.project_name,
-      model_name: @dict_model.model_name,
+      project_name: dict_model.project_name,
+      model_name: dict_model.model_name,
       attributes: @attributes
     }
   end
 
   private
+
+  def dict_model
+    @dict_model ||= @dict_model_name.constantize
+  end
 
   def matches_entry_attribute?(match_entry, document_value, match_att)
     case match_att

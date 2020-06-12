@@ -75,14 +75,10 @@ class Magma
         @parent
       end
 
-      def restricted(opts= {})
-        attributes[:restricted] = Magma::BooleanAttribute.new(:restricted, self, opts)
-      end
-
       # suggests dictionary entries based on
-      def dictionary(dict_model=nil, attributes={})
-        return @dictionary unless dict_model
-        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
+      def dictionary(dictionary_json = {})
+        return @dictionary unless dictionary_json[:dictionary_model]
+        @dictionary = Magma::Dictionary.new(dictionary_json)
       end
 
       # json template of this model
@@ -184,21 +180,27 @@ class Magma
       end
 
       def inherited(magma_model)
-        # Sets the appropriate postgres schema for the model. There should be a 
-        # one to one correlation between a model's module/class and a postgres
-        # schema/table.
-        set_dataset(
-          Sequel[
-            magma_model.project_name
-          ][
+        # Only call set_schema for models that are loaded from file. Models that
+        # are loaded from the database get created as anonymous Ruby classes,
+        # and anonymous classes don't have names.
+        if magma_model.name
+          set_schema(
+            magma_model.project_name,
             magma_model.model_name.to_s.pluralize.to_sym
-          ]
-        )
+          )
+        end
 
         super
         %i(created_at updated_at).each do |timestamp|
           magma_model.date_time(timestamp, {hidden: true})
         end
+      end
+
+      # Sets the appropriate postgres schema for the model. There should be a
+      # one to one correlation between a model's module/class and a postgres
+      # schema/table.
+      def set_schema(project_name, table_name)
+        set_dataset(Sequel[project_name][table_name])
       end
     end
 

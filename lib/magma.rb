@@ -50,7 +50,7 @@ class Magma
     @storage = Magma::Storage.setup
 
     config(:project_path).split(/\s+/).each do |project_dir|
-      project = Magma::Project.new(project_dir)
+      project = Magma::Project.new(project_dir: project_dir)
       magma_projects[ project.project_name ] = project
     end
 
