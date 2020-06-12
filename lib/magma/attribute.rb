@@ -15,7 +15,7 @@ class Magma
       :validation
     ]
 
-    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name, :description
+    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name, :description, :hidden
 
     class << self
       def options
