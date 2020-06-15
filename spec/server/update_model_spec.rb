@@ -25,6 +25,8 @@ describe UpdateModelController do
   end
 
   it "updates attribute options" do
+    original_attribute = Labors::Monster.attributes[:name].dup
+
     auth_header(:superuser)
     json_post(:update_model, {
       project_name: "labors",
@@ -45,10 +47,14 @@ describe UpdateModelController do
     attribute_json = response_json["models"]["monster"]["template"]["attributes"]["name"]
     expect(attribute_json["desc"]).to eq("The monster's name")
     expect(attribute_json["display_name"]).to eq("NAME")
+
+    Labors::Monster.attributes[:name] = original_attribute
   end
 
   describe "does not update" do
     it "does not update attribute options with invalid attribute name" do
+      original_attribute = Labors::Monster.attributes[:name].dup
+
       auth_header(:superuser)
       json_post(:update_model, {
         project_name: "labors",
@@ -64,10 +70,13 @@ describe UpdateModelController do
       response_json = JSON.parse(last_response.body)
       expect(last_response.status).to eq(422)
       expect(response_json['errors'][0]['message']).to eq('Attribute does not exist')
+
+      Labors::Monster.attributes[:name] = original_attribute
     end
 
-
     it "does not update attribute options with the incorrect data type" do
+      original_attribute = Labors::Monster.attributes[:name].dup
+
       auth_header(:superuser)
       json_post(:update_model, {
         project_name: "labors",
@@ -86,6 +95,8 @@ describe UpdateModelController do
       expect(last_response.status).to eq(422)
       expect(response_json['errors'][0]['message']).to eq("Update attribute failed")
       expect(response_json['errors'][0]['reason']).to include("PG::InvalidTextRepresentation: ERROR:  invalid input syntax for type boolean:")
+
+      Labors::Monster.attributes[:name] = original_attribute
     end
 
     it "does not update attribute_name" do
