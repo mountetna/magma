@@ -56,11 +56,12 @@ describe Magma::Project do
     end
 
     it "gives database model attributes precedence over those defined in Ruby" do
-      original_attribute = Labors::Monster.attributes[:name]
+      project = Magma::Project.new(project_dir: "./spec/fixtures/movies")
+      original_attribute = Movies::Villain.attributes[:name]
 
       Magma.instance.db[:attributes].insert(
-        project_name: "labors",
-        model_name: "monster",
+        project_name: "movies",
+        model_name: "villain",
         attribute_name: "name",
         type: "string",
         created_at: Time.now,
@@ -68,12 +69,12 @@ describe Magma::Project do
         description: "Only something I would know"
       )
 
-      project = Magma::Project.new(project_dir: "./labors")
-      attribute = Labors::Monster.attributes[:name]
+      project = Magma::Project.new(project_dir: "./spec/movies")
+      attribute = Movies::Villain.attributes[:name]
 
       expect(attribute.description).to eq("Only something I would know")
 
-      Labors::Monster.attributes[:name] = original_attribute
+      Movies::Villain.attributes[:name] = original_attribute
     end
 
     it "raises an error when the database has attributes for a model that doesn't exist" do
