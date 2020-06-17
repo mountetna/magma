@@ -22,27 +22,31 @@ require_relative '../lib/magma'
 
 Magma.instance.configure(YAML.load(File.read('config.yml')))
 
-Magma.instance.setup_db
-Magma.instance.db[:attributes].truncate
-Magma.instance.db[:models].truncate
+def load_labors_project
+  Magma.instance.db[:attributes].truncate
+  Magma.instance.db[:models].truncate
 
-YAML.load(File.read("./spec/fixtures/labors_model_attributes.yml")).each do |model_name, attributes|
-  Magma.instance.db[:models].insert(
-    project_name: "labors",
-    model_name: model_name,
-    dictionary: attributes.delete("dictionary")
-  )
-
-  attributes.each do |attribute_name, options|
-    row = options.merge(
+  YAML.load(File.read("./spec/fixtures/labors_model_attributes.yml")).each do |model_name, attributes|
+    Magma.instance.db[:models].insert(
       project_name: "labors",
       model_name: model_name,
-      attribute_name: attribute_name
+      dictionary: attributes.delete("dictionary")
     )
 
-    Magma.instance.db[:attributes].insert(row)
+    attributes.each do |attribute_name, options|
+      row = options.merge(
+        project_name: "labors",
+        model_name: model_name,
+        attribute_name: attribute_name
+      )
+
+      Magma::Attribute.create(row)
+    end
   end
 end
+
+Magma.instance.setup_db
+load_labors_project
 
 OUTER_APP = Rack::Builder.new do
   use Etna::ParseBody
@@ -174,7 +178,7 @@ RSpec.configure do |config|
     FactoryBot.find_definitions
     DatabaseCleaner[:sequel].db = Magma.instance.db
     DatabaseCleaner.strategy = :transaction
-    DatabaseCleaner.clean_with(:truncation)
+    DatabaseCleaner.clean_with(:truncation, except: ["models", "attributes"])
   end
 
   config.around(:each) do |example|
