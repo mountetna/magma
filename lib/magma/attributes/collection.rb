@@ -1,13 +1,18 @@
 class Magma
   class CollectionAttribute < Attribute
     include Magma::Link
-    def initialize(name, model, opts)
-      model.one_to_many(name, class: model.project_model(name), primary_key: :id)
+    def initialize(opts = {})
       super
+      set_one_to_many if @magma_model
+    end
+
+    def magma_model=(new_magma_model)
+      super
+      set_one_to_many
     end
     
     def json_for record
-      link = record[@name]
+      link = record[name]
       link ? link.map(&:last).sort : nil
     end
 
@@ -15,8 +20,8 @@ class Magma
       json_for(record).join(", ")
     end
 
-    def update record, new_ids
-      old_links = record.send(@name)
+    def update_record record, new_ids
+      old_links = record.send(name)
 
       old_ids = old_links.map(&:identifier)
 
@@ -66,6 +71,14 @@ class Magma
           link_validate(link,&block)
         end
       end
+    end
+
+    def set_one_to_many
+      @magma_model.one_to_many(
+        attribute_name.to_sym,
+        class: @magma_model.project_model(attribute_name),
+        primary_key: :id
+      )
     end
   end
 end

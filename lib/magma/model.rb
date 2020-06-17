@@ -1,7 +1,3 @@
-Sequel::Model.plugin :timestamps, update_on_create: true
-Sequel::Model.require_valid_table = false
-Sequel.extension :inflector
-
 class Magma
   Model = Class.new(Sequel::Model)
    
@@ -12,7 +8,9 @@ class Magma
         each do |attribute|
           define_method attribute.attribute_type do |attribute_name=nil, opts={}|
             @parent = attribute_name if attribute == Magma::ParentAttribute
-            attributes[attribute_name] = attribute.new(attribute_name, self, opts)
+            attributes[attribute_name] = attribute.new(
+              opts.merge(attribute_name: attribute_name, magma_model: self)
+            )
           end
         end
 
@@ -20,11 +18,10 @@ class Magma
 
       def load_attributes(attributes = {})
         attributes.each do |attribute|
-          send(
-            attribute[:type],
-            attribute[:attribute_name].to_sym,
-            attribute.slice(*Magma::Attribute::EDITABLE_OPTIONS)
-          )
+          attribute_name = attribute.attribute_name.to_sym
+          @parent = attribute_name if attribute.is_a?(Magma::ParentAttribute)
+          attribute.magma_model = self
+          self.attributes[attribute_name] = attribute
         end
       end
 

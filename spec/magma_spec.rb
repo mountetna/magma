@@ -80,7 +80,10 @@ describe Magma do
     end
 
     it "raises an error if a model has an attribute that isn't backed by a column in the model's table" do
-      Labors::Monster.attributes[:size] = Magma::IntegerAttribute.new(:size, Labors::Monster, {})
+      Labors::Monster.attributes[:size] = Magma::IntegerAttribute.new(
+        attribute_name: "size",
+        magma_model: Labors::Monster
+      )
 
       expect{ Magma.instance.validate_models }.to raise_error(Magma::ValidationError)
 

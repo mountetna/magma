@@ -6,9 +6,7 @@ require_relative 'magma/validation'
 require_relative 'magma/validation_object'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
-require_relative 'magma/attribute'
 require_relative 'magma/dictionary'
-require_relative 'magma/model'
 require_relative 'magma/revision'
 require_relative 'magma/commands'
 require_relative 'magma/payload'
@@ -42,6 +40,13 @@ class Magma
     @db.extension :connection_validator
     @db.extension :pg_json
     @db.pool.connection_validation_timeout = -1
+
+    Sequel::Model.plugin :timestamps, update_on_create: true
+    Sequel::Model.require_valid_table = false
+    Sequel.extension :inflector
+
+    require_relative 'magma/attribute'
+    require_relative 'magma/model'
   end
 
   def load_models(validate = true)

@@ -1,5 +1,24 @@
 class Magma
-  class Attribute
+  class Attribute < Sequel::Model
+    plugin :single_table_inheritance, :type, model_map: {
+      "parent" => "Magma::ParentAttribute",
+      "string" => "Magma::StringAttribute",
+      "match" => "Magma::MatchAttribute",
+      "identifier" => "Magma::IdentifierAttribute",
+      "child" => "Magma::ChildAttribute",
+      "integer" => "Magma::IntegerAttribute",
+      "boolean" => "Magma::BooleanAttribute",
+      "date_time" => "Magma::DateTimeAttribute",
+      "table" => "Magma::TableAttribute",
+      "matrix" => "Magma::MatrixAttribute",
+      "collection" => "Magma::CollectionAttribute",
+      "file" => "Magma::FileAttribute",
+      "link" => "Magma::LinkAttribute"
+    }
+
+    set_primary_key [:project_name, :model_name, :attribute_name]
+    unrestrict_primary_key
+
     DISPLAY_ONLY = [:child, :collection]
 
     EDITABLE_OPTIONS = [
@@ -15,7 +34,8 @@ class Magma
       :validation
     ]
 
-    attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name, :description
+    attr_accessor :magma_model
+    attr_reader :loader
 
     class << self
       def options
@@ -32,10 +52,13 @@ class Magma
       end
     end
 
-    def initialize(name, model, opts)
-      @name = name
-      @model = model
-      set_options(opts)
+    def initialize(opts = {})
+      @magma_model = opts.delete(:magma_model)
+      super
+    end
+
+    def name
+      attribute_name.to_sym
     end
 
     def database_type
@@ -43,17 +66,17 @@ class Magma
     end
 
     def missing_column?
-      !@model.columns.include?(column_name)
+      !@magma_model.columns.include?(column_name)
     end
 
     def validation_object
-      @validation_object ||= Magma::ValidationObject.build(@validation&.symbolize_keys)
+      Magma::ValidationObject.build(validation&.symbolize_keys)
     end
 
     def json_template
       {
-        name: @name,
-        attribute_name: @name,
+        name: attribute_name,
+        attribute_name: attribute_name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         link_model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         type: database_type.respond_to?(:name) ? database_type.name : database_type,
@@ -62,8 +85,8 @@ class Magma
         display_name: display_name,
         options: validation_object.options,
         match: validation_object.match,
-        restricted: @restricted,
-        format_hint: @format_hint,
+        restricted: restricted,
+        format_hint: format_hint,
         read_only: read_only?,
         hidden: hidden?,
         validation: validation_object,
@@ -72,15 +95,15 @@ class Magma
     end
 
     def json_for record
-      record[ @name ]
+      record[ name ]
     end
 
     def txt_for(record)
       json_for record
     end
 
-    def update(record, new_value)
-      record.set({@name=> new_value})
+    def update_record(record, new_value)
+      record.set({name=> new_value})
 
       if database_type == DateTime
         return DateTime.parse(new_value)
@@ -94,24 +117,23 @@ class Magma
     end
 
     def read_only?
-      @read_only
+      read_only
     end
 
     def shown?
-      !@hidden
+      !hidden
     end
 
     def hidden?
-      @hidden
+      hidden
     end
 
     def column_name
-      @name
+      attribute_name.to_sym
     end
 
-
     def display_name
-      @display_name ||= name.to_s.split(/_/).map(&:capitalize).join(' ')
+      super || name.to_s.split(/_/).map(&:capitalize).join(' ')
     end
 
     def update_link(record, link)
@@ -136,8 +158,8 @@ class Magma
           target: [:project_name, :model_name, :attribute_name],
           update: { "#{opt}": database_value, updated_at: Time.now }
         ).insert(
-          project_name: @model.project_name.to_s,
-          model_name: @model.model_name.to_s,
+          project_name: @magma_model.project_name.to_s,
+          model_name: @magma_model.model_name.to_s,
           attribute_name: name.to_s,
           type: self.class.attribute_type,
           created_at: Time.now,
@@ -150,14 +172,6 @@ class Magma
     end
 
     private
-
-    def set_options(opts)
-      opts.each do |opt,value|
-        if self.class.options.include?(opt)
-          instance_variable_set("@#{opt}", value)
-        end
-      end
-    end
 
     MAGMA_ATTRIBUTES = [
       "Magma::BooleanAttribute",

@@ -4,8 +4,11 @@ require 'yaml'
 describe Magma::Attribute do
   describe "#json_template" do
     it "includes attribute defaults" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { format_hint: "Hint" })
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
+        format_hint: "Hint"
+      )
+
       template = attribute.json_template
 
       expect(template[:display_name]).to eq("Name")
@@ -13,18 +16,21 @@ describe Magma::Attribute do
     end
 
     it "includes updated attributes" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+      attribute = Magma::StringAttribute.new(
+        project_name: "projects",
+        model_name: "model",
+        attribute_name: "name",
+        description: "Old name"
+      )
 
-      attribute.update_option(:description, "New name")
+      attribute.update(description: "New name")
       template = attribute.json_template
 
       expect(template[:desc]).to eq("New name")
     end
 
     it "continues reporting attribute_class as 'Magma::Attribute' for old Magma::Attributes" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::BooleanAttribute.new("name", model, {})
+      attribute = Magma::BooleanAttribute.new(attribute_name: "name")
       template = attribute.json_template
 
       expect(template[:attribute_class]).to eq("Magma::Attribute")
@@ -38,23 +44,36 @@ describe Magma::Attribute do
     end
 
     it "includes validation arrays as options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("fruits", model, {
+      attribute = Magma::Attribute.new(
+        attribute_name: "fruits",
         validation: { type: "Array", value: ["apple", "banana"] }
-      })
+      )
+
       template = attribute.json_template
 
       expect(template[:options]).to eq(["apple", "banana"])
     end
 
     it "includes validation regexes as match" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("fruits", model, {
+      attribute = Magma::Attribute.new(
+        attribute_name: "fruits",
         validation: { type: "Regexp", value: /.*/ }
-      })
+      )
+
       template = attribute.json_template
 
       expect(template[:match]).to eq(".*")
+    end
+
+    it "contains a ValidationOjbect" do
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
+        validation: { type: "Regexp", value: /^[a-zA-Z]{1}$/ }
+      )
+
+      json_validation_object = attribute.json_template[:validation]
+
+      expect(json_validation_object.to_json).to eq("{\"type\":\"Regexp\",\"value\":\"(?-mix:^[a-zA-Z]{1}$)\"}")
     end
   end
 
@@ -95,97 +114,63 @@ describe Magma::Attribute do
 
   describe "#validation_object" do
     it "builds ArrayValidationObjects using validation options from the database" do
-      Magma.instance.db[:attributes].insert(
+      attribute = Magma::StringAttribute.create(
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
-        type: "string",
-        created_at: Time.now,
-        updated_at: Time.now,
-        validation: Sequel.pg_json_wrap(
-          { type: "Array", value: ["a", "b", "c"] }
-        )
+        validation: { type: "Array", value: ["a", "b", "c"] }
       )
-
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {})
 
       expect(attribute.validation_object.validate("a")).to eq(true)
     end
 
     it "builds ArrayValidationObjects using validation options defined on the attribute" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
         validation: { type: "Array", value: ["a", "b", "c"] }
-      })
+      )
 
       expect(attribute.validation_object.validate("a")).to eq(true)
     end
 
     it "builds RangeValidationObjects using validation options from the database" do
-      Magma.instance.db[:attributes].insert(
+      attribute = Magma::IntegerAttribute.create(
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
-        type: "integer",
-        created_at: Time.now,
-        updated_at: Time.now,
-        validation: Sequel.pg_json_wrap(
-          { type: "Range", begin: 1, end: 10 }
-        )
+        validation: { type: "Range", begin: 1, end: 10 }
       )
-
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {})
 
       expect(attribute.validation_object.validate(5)).to eq(true)
     end
 
     it "builds RangeValidationObjects using validation options defined on the attribute" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
         validation: { type: "Range", begin: 1, end: 10 }
-      })
+      )
 
       expect(attribute.validation_object.validate(5)).to eq(true)
     end
 
     it "builds RegexpValidationObjects using validation options from the database" do
-      Magma.instance.db[:attributes].insert(
+      attribute = Magma::StringAttribute.create(
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
-        type: "string",
-        created_at: Time.now,
-        updated_at: Time.now,
-        validation: Sequel.pg_json_wrap(
-          { type: "Regexp", value: "^[a-zA-Z]{1}$" }
-        )
+        validation: { type: "Regexp", value: "^[a-zA-Z]{1}$" }
       )
-
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {})
 
       expect(attribute.validation_object.validate("A")).to eq(true)
     end
 
     it "builds RegexpValidationObjects using validation options defined on the attribute" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
         validation: { type: "Regexp", value: /^[a-zA-Z]{1}$/ }
-      })
+      )
 
       expect(attribute.validation_object.validate("A")).to eq(true)
-    end
-
-    it "contains a ValidationOjbect" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
-        validation: { type: "Regexp", value: /^[a-zA-Z]{1}$/ }
-      })
-      json_validation_object = attribute.json_template[:validation]
-
-      expect(json_validation_object.to_json).to eq("{\"type\":\"Regexp\",\"value\":\"(?-mix:^[a-zA-Z]{1}$)\"}")
     end
   end
 end
