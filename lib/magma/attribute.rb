@@ -150,30 +150,6 @@ class Magma
       end
     end
 
-    def update_option(opt, new_value)
-      opt = opt.to_sym
-      return unless EDITABLE_OPTIONS.include?(opt)
-
-      database_value = new_value.is_a?(Hash) ? Sequel.pg_json_wrap(new_value) : new_value
-
-      Magma.instance.db[:attributes].
-        insert_conflict(
-          target: [:project_name, :model_name, :attribute_name],
-          update: { "#{opt}": database_value, updated_at: Time.now }
-        ).insert(
-          project_name: @magma_model.project_name.to_s,
-          model_name: @magma_model.model_name.to_s,
-          attribute_name: name.to_s,
-          type: self.class.attribute_type,
-          created_at: Time.now,
-          updated_at: Time.now,
-          "#{opt}": database_value
-        )
-
-      instance_variable_set("@#{opt}", new_value)
-      @validation_object = nil if opt == :validation
-    end
-
     private
 
     MAGMA_ATTRIBUTES = [

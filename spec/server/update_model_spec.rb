@@ -74,31 +74,6 @@ describe UpdateModelController do
       Labors::Monster.attributes[:name] = original_attribute
     end
 
-    it "does not update attribute options with the incorrect data type" do
-      original_attribute = Labors::Monster.attributes[:name].dup
-
-      auth_header(:superuser)
-      json_post(:update_model, {
-        project_name: "labors",
-        actions: [{
-          action_name: "update_attribute",
-          model_name: "monster",
-          attribute_name: proper_name,
-          description: 123,
-          display_name: "NAME",
-          hidden: 'something'
-        }]
-      })
-
-      response_json = JSON.parse(last_response.body)
-
-      expect(last_response.status).to eq(422)
-      expect(response_json['errors'][0]['message']).to eq("Update attribute failed")
-      expect(response_json['errors'][0]['reason']).to include("PG::InvalidTextRepresentation: ERROR:  invalid input syntax for type boolean:")
-
-      Labors::Monster.attributes[:name] = original_attribute
-    end
-
     it "does not update attribute_name" do
       expected = {
         :message=>"new_attribute_name cannot be changed", 

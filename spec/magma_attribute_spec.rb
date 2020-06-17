@@ -77,41 +77,6 @@ describe Magma::Attribute do
     end
   end
 
-  describe "#update_option" do
-    it "updates editable string backed options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
-
-      attribute.update_option(:description, "New name")
-
-      expect(attribute.description).to eq("New name")
-    end
-
-    it "updates editable JSON backed options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
-        validation: { type: "Array", value: [1, 2, 3] }
-      })
-
-      # Call attribute#validation_object to verify the cached validation_object
-      # gets reset
-      attribute.validation_object
-
-      attribute.update_option(:validation, { type: "Array", value: [4, 5, 6] })
-
-      expect(attribute.validation_object.options).to eq([4, 5, 6])
-    end
-
-    it "doesn't update non-editable options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {})
-
-      attribute.update_option(:loader, "foo")
-
-      expect(attribute.loader).to be_nil
-    end
-  end
-
   describe "#validation_object" do
     it "builds ArrayValidationObjects using validation options from the database" do
       attribute = Magma::StringAttribute.create(
