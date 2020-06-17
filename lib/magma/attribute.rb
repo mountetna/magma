@@ -54,6 +54,9 @@ class Magma
 
     def initialize(opts = {})
       @magma_model = opts.delete(:magma_model)
+      @loader = opts.delete(:loader)
+      # Some Ipi models set the group option but it doesn't seem to be used anywhere
+      opts.delete(:group)
       super
     end
 
