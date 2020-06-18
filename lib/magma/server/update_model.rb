@@ -1,5 +1,5 @@
 require_relative 'controller'
-require 'magma/actions/model_update_actions'
+require_relative '../actions/model_update_actions'
 
 class UpdateModelController < Magma::Controller
   def action
