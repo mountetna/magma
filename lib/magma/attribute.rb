@@ -43,10 +43,6 @@ class Magma
 :format_hint, :loader, :link_model_name, :restricted]
       end
 
-      def set_attribute(name, model, options, attribute_class)
-        attribute_class.new(name, model, options)
-      end
-
       def attribute_type
         @attribute_type ||= name.match("Magma::(.*)Attribute")[1].underscore
       end
