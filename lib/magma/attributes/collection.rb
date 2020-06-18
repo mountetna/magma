@@ -1,16 +1,6 @@
 class Magma
   class CollectionAttribute < Attribute
     include Magma::Link
-    def initialize(opts = {})
-      super
-      set_one_to_many if @magma_model
-    end
-
-    def magma_model=(new_magma_model)
-      super
-      set_one_to_many
-    end
-    
     def json_for record
       link = record[name]
       link ? link.map(&:last).sort : nil
@@ -73,7 +63,7 @@ class Magma
       end
     end
 
-    def set_one_to_many
+    def after_magma_model_set
       @magma_model.one_to_many(
         attribute_name.to_sym,
         class: @magma_model.project_model(attribute_name),

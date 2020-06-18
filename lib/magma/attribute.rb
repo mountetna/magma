@@ -34,7 +34,6 @@ class Magma
       :validation
     ]
 
-    attr_accessor :magma_model
     attr_reader :loader
 
     class << self
@@ -49,11 +48,20 @@ class Magma
     end
 
     def initialize(opts = {})
-      @magma_model = opts.delete(:magma_model)
-      @loader = opts.delete(:loader)
       # Some Ipi models set the group option but it doesn't seem to be used anywhere
       opts.delete(:group)
-      super
+
+      super(opts.except(:magma_model, :loader))
+      self.magma_model = opts[:magma_model]
+      @loader = opts[:loader]
+    end
+
+    def magma_model=(new_magma_model)
+      @magma_model = new_magma_model
+      after_magma_model_set
+    end
+
+    def after_magma_model_set
     end
 
     def name

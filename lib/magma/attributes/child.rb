@@ -1,16 +1,6 @@
 class Magma
   class ChildAttribute < Attribute
     include Magma::Link
-    def initialize(opts = {})
-      super
-      set_one_to_one if @magma_model
-    end
-
-    def magma_model=(new_magma_model)
-      super
-      set_one_to_one
-    end
-
     def json_for record
       record[name]
     end
@@ -34,7 +24,7 @@ class Magma
 
     private
 
-    def set_one_to_one
+    def after_magma_model_set
       @magma_model.one_to_one(attribute_name.to_sym)
     end
   end
