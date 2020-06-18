@@ -17,4 +17,31 @@ describe Magma::Model do
       expect(template[:attributes].keys).to include(:created_at, :updated_at, :labor, :name, :species)
     end
   end
+
+  describe '#create_attribute' do
+    let(:model) { Labors::Monster }
+    let(:attribute_options) do
+      {
+        project_name: 'Labors',
+        model_name: 'Monster',
+        attribute_name: 'new_attribute_name',
+        description: "description",
+        display_name: "name",
+        format_hint: "incoming format hint",
+        hidden: true,
+        index: false,
+        link_model_name: "species",
+        read_only: true,
+        restricted: false,
+        unique: true,
+        type: "string",
+        validation: {"type": "Regexp", "value": "^[a-z\\s]+$"}
+      }
+    end
+
+    it 'creates an attribute'  do
+      model.create_attribute(attribute_options)
+      expect(model.attributes[:new_attribute_name]).not_to be_nil
+    end
+  end
 end

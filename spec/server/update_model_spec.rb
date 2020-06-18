@@ -1,5 +1,18 @@
 describe UpdateModelController do
   include Rack::Test::Methods
+  after(:all) do
+    auth_header(:superuser)
+    json_post(:update_model, {
+      project_name: "labors",
+      actions: [{
+        action_name: "update_attribute",
+        model_name: "monster",
+        attribute_name: 'name',
+        description: nil,
+        display_name: "Name"
+      }]
+    })
+  end
 
   def app
     OUTER_APP

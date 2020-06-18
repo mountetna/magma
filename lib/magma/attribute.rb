@@ -15,6 +15,11 @@ class Magma
       :validation
     ]
 
+    CREATEABLE_OPTIONS = EDITABLE_OPTIONS + [
+      :attribute_name,
+      :project_name
+    ]
+
     attr_reader :name, :loader, :validation, :format_hint, :unique, :index, :restricted, :link_model_name, :description, :hidden
 
     class << self
@@ -29,6 +34,14 @@ class Magma
 
       def attribute_type
         @attribute_type ||= name.match("Magma::(.*)Attribute")[1].underscore
+      end
+
+      def editable_options(options)
+        options.slice(*EDITABLE_OPTIONS)
+      end
+
+      def creatable_options(options)
+        options.slice(*CREATEABLE_OPTIONS)
       end
     end
 

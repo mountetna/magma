@@ -18,14 +18,26 @@ class Magma
 
       alias_method :document, :file
 
-      def load_attributes(attributes = {})
+      def load_attributes(attributes)
         attributes.each do |attribute|
           send(
             attribute[:type],
             attribute[:attribute_name].to_sym,
-            attribute.slice(*Magma::Attribute::EDITABLE_OPTIONS)
+            Magma::Attribute.editable_options(attribute)
           )
         end
+      end
+
+      def create_attribute(attribute_options)
+        attribute_options.merge!(validation: Sequel.pg_json_wrap(attribute_options[:validation]))
+        Magma.instance.db[:attributes].insert(attribute_options)
+        new_attribute = Magma.instance.db[:attributes].where(
+          project_name: attribute_options[:project_name],
+          model_name: attribute_options[:model_name],
+          attribute_name: attribute_options[:attribute_name]
+        ).first
+
+        load_attributes([new_attribute])
       end
 
       def project_name

@@ -46,6 +46,25 @@ describe Magma::ModelUpdateActions do
         expect(actions.errors).to eq([])
       end
 
+      describe 'for add_attribute' do
+        let(:action_name) { "add_attribute" }
+        let(:add_attribute_action) { double('add_attribute') }
+
+        before do
+          allow(Magma::AddAttributeAction).to receive(:new).and_return(add_attribute_action)
+          allow(add_attribute_action).to receive(:validate).and_return(validate_return)
+          allow(add_attribute_action).to receive(:perform).and_return(perform_return)
+          allow(add_attribute_action).to receive(:errors).and_return(action_errors)
+        end
+
+        it 'calls validate and perform' do
+          expect(actions.perform).to eq(true) 
+          expect(add_attribute_action).to have_received(:validate).once
+          expect(add_attribute_action).to have_received(:perform).once
+          expect(actions.errors).to eq([])
+        end
+      end
+
       describe 'when action#validate fails' do
         let(:validate_return) { false } 
 

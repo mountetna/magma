@@ -1,4 +1,5 @@
 require 'magma/actions/update_attribute'
+require 'magma/actions/add_attribute'
 
 class Magma
   class ModelUpdateActions
