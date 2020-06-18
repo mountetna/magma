@@ -1,7 +1,5 @@
 class Magma
-  Model = Class.new(Sequel::Model)
-   
-  class Model
+  class Model < Sequel::Model
     class << self
       Magma::Attribute.descendants.
         reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
@@ -18,10 +16,9 @@ class Magma
 
       def load_attributes(attributes = {})
         attributes.each do |attribute|
-          attribute_name = attribute.attribute_name.to_sym
-          @parent = attribute_name if attribute.is_a?(Magma::ParentAttribute)
+          @parent = attribute.name if attribute.is_a?(Magma::ParentAttribute)
           attribute.magma_model = self
-          self.attributes[attribute_name] = attribute
+          self.attributes[attribute.name] = attribute
         end
       end
 
