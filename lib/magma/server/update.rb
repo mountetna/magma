@@ -64,7 +64,7 @@ class UpdateController < Magma::Controller
   private
 
   def is_file_attribute(model, attribute)
-    return model.attributes[attribute].instance_of? Magma::FileAttribute
+    return model.attributes[attribute].is_a? Magma::FileAttribute
   end
 
   def update_any_file_links

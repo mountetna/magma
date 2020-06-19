@@ -7,5 +7,6 @@ module Labors
     collection :victim
     table :aspect
     file :stats
+    image :selfie
   end
 end

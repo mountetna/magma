@@ -1,7 +1,7 @@
 Sequel.migration do
-    change do
-      alter_table(Sequel[:labors][:monsters]) do
-        set_column_type :stats, :json
-      end
-    end
-  end
+  up{run 'UPDATE labors.monsters SET stats=\'{"filename":"\' || stats || \'", "original_filename": ""}\';'\
+         'alter table labors.monsters alter column stats type json using stats::json;'}
+  down{run 'UPDATE labors.monsters SET stats=stats::json->\'filename\';'\
+           'alter table labors.monsters alter column stats type text;'\
+           'UPDATE labors.monsters SET stats=TRIM(\'"\' FROM stats);'}
+end
