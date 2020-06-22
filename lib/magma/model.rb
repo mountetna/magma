@@ -6,9 +6,12 @@ class Magma
         each do |attribute|
           define_method attribute.attribute_type do |attribute_name=nil, opts={}|
             @parent = attribute_name if attribute == Magma::ParentAttribute
-            attributes[attribute_name] = attribute.new(
-              opts.merge(attribute_name: attribute_name, magma_model: self)
-            )
+            attributes[attribute_name] = attribute.new(opts.merge(
+              project_name: project_name,
+              model_name: model_name,
+              attribute_name: attribute_name,
+              magma_model: self
+            ))
           end
         end
 
@@ -46,7 +49,26 @@ class Magma
       # attributes point to pieces of data, including
       # records and collections of records
       def attributes
-        @attributes ||= {}
+        @attributes ||= base_attributes
+      end
+
+      def base_attributes
+        {
+          created_at: Magma::DateTimeAttribute.new(
+            attribute_name: :created_at,
+            project_name: project_name,
+            model_name: model_name,
+            magma_model: self,
+            hidden: true
+          ),
+          updated_at: Magma::DateTimeAttribute.new(
+            attribute_name: :updated_at,
+            project_name: project_name,
+            model_name: model_name,
+            magma_model: self,
+            hidden: true
+          )
+        }
       end
 
       def has_attribute?(name)
@@ -185,9 +207,6 @@ class Magma
         end
 
         super
-        %i(created_at updated_at).each do |timestamp|
-          magma_model.date_time(timestamp, {hidden: true})
-        end
       end
 
       # Sets the appropriate postgres schema for the model. There should be a
