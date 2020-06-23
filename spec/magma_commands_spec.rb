@@ -1,19 +1,40 @@
 describe 'Magma Commands' do
   describe Magma::LoadProject do
-    let(:json_file) { './spec/fixtures/template.json' }
+    let(:template_file) { './spec/fixtures/template.json' }
 
-    subject(:load_project) { described_class.new.execute('project_name', json_file) }
+    let(:template_file_json) do
+      file = File.open(template_file).read
+      JSON.parse(file)
+    end
 
-    let(:attributes) { Magma.instance.db[:attributes] }
+    subject(:load_project) { described_class.new.execute('project_name', template_file) }
 
-    it 'loads attributes into the database' do
-      file = File.open(json_file).read
-      json_attributes = JSON.parse(file)["models"]["monster"]["template"]["attributes"]
-      model_json_template = JSON.parse(Labors::Monster.json_template.to_json)["attributes"]
-      expect {
-        load_project
-      }.to change { attributes.count }.by(8)
-      expect(json_attributes).to eq(model_json_template)
+    it "loads a project's models and attributes into the database" do
+      load_project
+
+      # Verify the command's results by loading the project and comparing
+      # generated templates against the original template file.
+      project = Magma::Project.new(project_name: "project_name")
+
+      # Add the loaded project into Magma's collections of projects so templates
+      # can be generated
+      Magma.instance.magma_projects[:project_name] = project
+
+      parent_model_template_json_file = template_file_json["models"]["parent_model"]["template"]
+      parent_model_template_json_ruby = JSON.parse(ProjectName::ParentModel.json_template.to_json)
+      expect(parent_model_template_json_ruby).to eq(parent_model_template_json_file)
+
+      model_one_template_json_file = template_file_json["models"]["model_one"]["template"]
+      model_one_template_json_ruby = JSON.parse(ProjectName::ModelOne.json_template.to_json)
+      expect(model_one_template_json_ruby).to eq(model_one_template_json_file)
+
+      model_two_template_json_file = template_file_json["models"]["model_two"]["template"]
+      model_two_template_json_ruby = JSON.parse(ProjectName::ModelTwo.json_template.to_json)
+      expect(model_two_template_json_ruby).to eq(model_two_template_json_file)
+
+      # Delete the loaded project from Magma's colleciton of projects so it
+      # doesn't exist in other tests
+      Magma.instance.magma_projects.delete(:project_name)
     end
   end
 

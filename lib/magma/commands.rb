@@ -5,10 +5,6 @@ class Magma
   class LoadProject < Etna::Command
     usage '[project_name, path/to/file.json] # Import attributes into database for given project name from JSON file'
 
-    def options
-      Magma::Attribute.options - [:loader] + [:created_at, :updated_at]
-    end
-
     def execute(project_name, file_name)
       file = File.open(file_name)
       file_data = JSON.parse(file.read, symbolize_names: true)
@@ -18,6 +14,21 @@ class Magma
 
       models.keys.each do |model|
         model_name = models[model][:template][:name]
+
+        dictionary_json = models[model][:template][:dictionary]
+
+        dictionary_data = if dictionary_json
+          dictionary_json[:attributes].merge(dictionary_model: dictionary_json[:dictionary_model])
+        else
+          nil
+        end
+
+        db[:models].insert(
+          project_name: project_name,
+          model_name: model_name,
+          dictionary: Sequel.pg_json_wrap(dictionary_data),
+        )
+
         attributes = models[model][:template][:attributes]
         attributes.each do |attribute_name, attribute|
           attribute_type = attribute[:attribute_type]
@@ -33,6 +44,12 @@ class Magma
           db[:attributes].insert(attribute)
         end
       end
+    end
+
+    private
+
+    def options
+      @options ||= Magma::Attribute.options - [:loader] + [:created_at, :updated_at]
     end
   end
 

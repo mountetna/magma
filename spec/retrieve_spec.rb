@@ -53,6 +53,7 @@ describe RetrieveController do
 
     # the dictionary model is reported
     expect(json_template[:dictionary]).to eq(
+      dictionary_model: "Labors::Codex",
       project_name: 'labors',
       model_name: 'codex',
       attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
