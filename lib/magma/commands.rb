@@ -9,47 +9,51 @@ class Magma
       file = File.open(file_name)
       file_data = JSON.parse(file.read, symbolize_names: true)
 
-      db = Magma.instance.db
-      models = file_data[:models]
+      file_data[:models].each do |model_name, model_json|
+        model_name = model_name.to_s
+        template = model_json[:template]
 
-      models.keys.each do |model|
-        model_name = models[model][:template][:name]
+        load_model(project_name, model_name, template)
 
-        dictionary_json = models[model][:template][:dictionary]
-
-        dictionary_data = if dictionary_json
-          dictionary_json[:attributes].merge(dictionary_model: dictionary_json[:dictionary_model])
-        else
-          nil
-        end
-
-        db[:models].insert(
-          project_name: project_name,
-          model_name: model_name,
-          dictionary: Sequel.pg_json_wrap(dictionary_data),
-        )
-
-        attributes = models[model][:template][:attributes]
-        attributes.each do |attribute_name, attribute|
-          attribute_type = attribute[:attribute_type]
-          attribute.slice!(*options)
-          attribute.merge!(
-            project_name: project_name, 
-            model_name: model_name,
-            type: attribute_type,
-            validation: Sequel.pg_json_wrap(attribute[:validation]),
-            attribute_name: attribute_name.to_s
-          )
-
-          db[:attributes].insert(attribute)
+        template[:attributes].each do |attribute_name, attribute|
+          load_attribute(project_name, model_name, attribute)
         end
       end
     end
 
     private
 
+    def load_model(project_name, model_name, template)
+      dictionary_json = if template[:dictionary]
+        template[:dictionary][:attributes].merge(
+          dictionary_model: template[:dictionary][:dictionary_model]
+        )
+      else
+        nil
+      end
+
+      Magma.instance.db[:models].insert(
+        project_name: project_name,
+        model_name: model_name,
+        dictionary: Sequel.pg_json_wrap(dictionary_json),
+      )
+    end
+
+    def load_attribute(project_name, model_name, attribute)
+      row = attribute.
+        slice(*options).
+        merge(
+          project_name: project_name,
+          model_name: model_name,
+          type: attribute[:attribute_type],
+          validation: Sequel.pg_json_wrap(attribute[:validation]),
+        )
+
+      Magma.instance.db[:attributes].insert(row)
+    end
+
     def options
-      @options ||= Magma::Attribute.options - [:loader] + [:created_at, :updated_at]
+      @options ||= Magma::Attribute.options - [:loader] + [:created_at, :updated_at, :attribute_name]
     end
   end
 
