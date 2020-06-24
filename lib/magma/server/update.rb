@@ -145,7 +145,10 @@ class UpdateController < Magma::Controller
       project_name: @project_name)
 
     bulk_copy_params = {
-      revisions: revisions
+      revisions: revisions,
+      email: @user.email,
+      first: @user.first,
+      last: @user.last
     }
 
     # Now populate the standard headers
@@ -162,11 +165,18 @@ class UpdateController < Magma::Controller
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
 
+    cgi_string = CGI.parse(hmac.url_params[:query])
+
+    # This only keeps the first revision in `X-Etna-Revisions`, but
+    # should be okay since Etna prioritizes the `revisions` key
+    #    in the body.
+    hmac_params_hash = Hash[cgi_string.map {|key,values| [key.to_sym, values[0]||true]}]
     client.send(
       'body_request',
       Net::HTTP::Post,
-      hmac.url_params[:path] + '?' + hmac.url_params[:query],
-      bulk_copy_params)
+      hmac.url_params[:path],
+      bulk_copy_params.merge(hmac_params_hash))
+
   rescue Etna::Error => e
     log(e.message)
     # We receive a stringified JSON error from Metis
