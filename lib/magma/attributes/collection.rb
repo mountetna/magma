@@ -21,7 +21,7 @@ class Magma
       yield link_model, new_ids
     end
 
-    def revision_to_payload(record_name, value)
+    def revision_to_payload(record_name, value, user)
       [ @name, value ]
     end
 

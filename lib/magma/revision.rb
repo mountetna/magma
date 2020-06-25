@@ -15,9 +15,9 @@ class Magma
       @revision.keys
     end
 
-    def to_payload
+    def to_payload(user)
       to_record do |attribute, value|
-        attribute.revision_to_payload(@record_name, value)
+        attribute.revision_to_payload(@record_name, value, user)
       end
     end
 

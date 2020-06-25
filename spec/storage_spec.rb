@@ -31,7 +31,14 @@ describe 'Magma::Storage' do
         # The test config is usually Metis storage, but
         #   let's make this conditional just in case not.
         if Magma.instance.config(:storage).fetch(:provider).downcase == 'metis'
-            upload_url = Magma.instance.storage.upload_url('foo', 'root/path/to/file').to_s
+            upload_url = Magma.instance.storage.upload_url(
+                'foo',
+                'root/path/to/file',
+                Etna::User.new(
+                    email: 'heracles@mountolympus.org',
+                    first: 'Heracles',
+                    last: 'of Thebes')
+                ).to_s
             expect(upload_url.include? 'foo/upload/magma/root/path/to/file').to be true
 
             # While we won't validate the HMAC results, let's make sure

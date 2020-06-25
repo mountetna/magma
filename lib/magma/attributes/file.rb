@@ -34,10 +34,10 @@ class Magma
       end
     end
 
-    def revision_to_payload(record_name, new_value)
+    def revision_to_payload(record_name, new_value, user)
       case new_value[:path]
       when '::temp'
-        return [ @name, { path: temporary_filepath } ]
+        return [ @name, { path: temporary_filepath(user) } ]
       when '::blank'
         return [ @name, { path: '::blank' } ]
       when %r!^metis://!
@@ -85,9 +85,9 @@ class Magma
       "#{@model.model_name}-#{record_name}-#{@name}#{ext}"
     end
 
-    def temporary_filepath
+    def temporary_filepath(user)
       Magma.instance.storage.upload_url(
-        @model.project_name, "tmp/#{SecureRandom.uuid}")
+        @model.project_name, "tmp/#{SecureRandom.uuid}", user)
     end
   end
 end

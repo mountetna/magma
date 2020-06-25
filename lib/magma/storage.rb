@@ -36,18 +36,23 @@ class Magma
         )
       end
 
-      def upload_url project_name, path
+      def upload_url project_name, path, user
         hmac_url(
           'POST',
           @config[:host],
           "/#{project_name}/upload/magma/#{path}",
-          @config[:upload_expiration]
+          @config[:upload_expiration],
+          {
+            email: user.email,
+            first: user.first,
+            last: user.last
+          }
         )
       end
 
       private
 
-      def hmac_url(method, host, path, expiration=0)
+      def hmac_url(method, host, path, expiration=0, headers={})
         URI::HTTPS.build(
           Etna::Hmac.new(
             Magma.instance,
@@ -57,7 +62,7 @@ class Magma
             expiration: (Time.now + expiration).iso8601,
             nonce: Magma.instance.sign.uid,
             id: :magma,
-            headers: { }
+            headers: headers
           ).url_params
         )
       end

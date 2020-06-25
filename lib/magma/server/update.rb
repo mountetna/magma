@@ -52,7 +52,7 @@ class UpdateController < Magma::Controller
         end
       end
 
-      @payload.add_records(model, model_revisions.map(&:to_payload))
+      @payload.add_records(model, model_revisions.map{ |rev| rev.to_payload(@user) })
     end
 
     @loader.dispatch_record_set
@@ -145,10 +145,7 @@ class UpdateController < Magma::Controller
       project_name: @project_name)
 
     bulk_copy_params = {
-      revisions: revisions,
-      email: @user.email,
-      first: @user.first,
-      last: @user.last
+      revisions: revisions
     }
 
     # Now populate the standard headers
@@ -165,17 +162,15 @@ class UpdateController < Magma::Controller
 
     hmac = Etna::Hmac.new(Magma.instance, hmac_params)
 
-    cgi_string = CGI.parse(hmac.url_params[:query])
+    cgi_hash = CGI.parse(hmac.url_params[:query])
+    cgi_hash.delete('X-Etna-Revisions') # this could be too long for URI
 
-    # This only keeps the first revision in `X-Etna-Revisions`, but
-    # should be okay since Etna prioritizes the `revisions` key
-    #    in the body.
-    hmac_params_hash = Hash[cgi_string.map {|key,values| [key.to_sym, values[0]||true]}]
+    hmac_params_hash = Hash[cgi_hash.map {|key,values| [key.to_sym, values[0]||true]}]
     client.send(
       'body_request',
       Net::HTTP::Post,
-      hmac.url_params[:path],
-      bulk_copy_params.merge(hmac_params_hash))
+      hmac.url_params[:path] + '?' + URI.encode_www_form(cgi_hash),
+      bulk_copy_params)
 
   rescue Etna::Error => e
     log(e.message)
