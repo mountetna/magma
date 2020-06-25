@@ -18,7 +18,7 @@ class Magma
       nil
     end
 
-    def revision_to_payload(record_name, value)
+    def revision_to_payload(record_name, value, user)
     end
 
     def missing_column?

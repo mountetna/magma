@@ -150,10 +150,9 @@ describe UpdateController do
 
     # Make sure the Metis copy endpoint was not called
     expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-      with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-    # with(query: hash_including({
-    #   "X-Etna-Headers": "revisions"
-    # }))
+    with(query: hash_including({
+      "X-Etna-Headers": "revisions"
+    }))
   end
 
   context 'file attributes' do
@@ -207,10 +206,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'removes a file reference' do
@@ -235,10 +233,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'removes a file reference using ::blank' do
@@ -265,10 +262,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'returns a temporary Metis path when using ::temp' do
@@ -297,10 +293,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'links a file from metis' do
@@ -329,10 +324,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was called
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-        # with(query: hash_including({
-        #   "X-Etna-Headers": "revisions"
-        # }))
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
 
       Timecop.return
     end
@@ -389,10 +383,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'removes an image reference' do
@@ -417,10 +410,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'removes an image reference using ::blank' do
@@ -446,10 +438,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'returns a temporary Metis path when using ::temp' do
@@ -478,10 +469,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-      # with(query: hash_including({
-      #   "X-Etna-Headers": "revisions"
-      # }))
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
     end
 
     it 'links an image from metis' do
@@ -512,10 +502,9 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was called
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
-        with { |req| req.body.include? 'X-Etna-Headers":"revisions' }
-        # with(body: hash_including({
-        #   "X-Etna-Headers": "revisions"
-        # }))
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
 
       Timecop.return
     end
