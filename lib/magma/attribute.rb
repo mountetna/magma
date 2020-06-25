@@ -19,6 +19,21 @@ class Magma
     set_primary_key [:project_name, :model_name, :attribute_name]
     unrestrict_primary_key
 
+    plugin :dirty
+    plugin :auto_validations
+
+    def validate
+      super
+      validate_validation_json
+    end
+
+    def validate_validation_json
+      return unless validation
+      validation_object
+    rescue => e
+      errors.add(:validation, "is not properly formatted")
+    end
+
     DISPLAY_ONLY = [:child, :collection]
 
     EDITABLE_OPTIONS = [
