@@ -40,7 +40,7 @@ def load_labors_project
         attribute_name: attribute_name
       )
 
-      Magma::Attribute.create(row)
+      Magma.instance.db[:attributes].insert(row)
     end
   end
 end

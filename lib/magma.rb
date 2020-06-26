@@ -40,17 +40,11 @@ class Magma
     @db.extension :connection_validator
     @db.extension :pg_json
     @db.pool.connection_validation_timeout = -1
-
-    Sequel::Model.plugin :timestamps, update_on_create: true
-    Sequel::Model.require_valid_table = false
-    Sequel.extension :inflector
-
-    require_relative 'magma/attribute'
-    require_relative 'magma/model'
   end
 
   def load_models(validate = true)
     setup_db
+    setup_sequel
 
     @storage = Magma::Storage.setup
 
@@ -60,6 +54,14 @@ class Magma
     end
 
     validate_models if validate
+  end
+
+  def setup_sequel
+    Sequel::Model.plugin :timestamps, update_on_create: true
+    Sequel::Model.require_valid_table = false
+    Sequel.extension :inflector
+    require_relative 'magma/attribute'
+    require_relative 'magma/model'
   end
 
   class Magma::ValidationError < StandardError
