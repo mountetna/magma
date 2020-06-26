@@ -1,5 +1,3 @@
-require 'magma/actions/model_update_actions'
-
 describe Magma::ModelUpdateActions do
   let(:actions) do
     Magma::ModelUpdateActions.build(
