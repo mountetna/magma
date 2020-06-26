@@ -155,7 +155,7 @@ class Magma
     end
 
     def display_name
-      super || name.to_s.split(/_/).map(&:capitalize).join(' ')
+      super || (attribute_name && attribute_name.split(/_/).map(&:capitalize).join(' '))
     end
 
     def update_link(record, link)
