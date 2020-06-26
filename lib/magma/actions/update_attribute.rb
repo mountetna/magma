@@ -1,4 +1,4 @@
-require 'magma/actions/action_error'
+require_relative 'action_error'
 
 class Magma
   class UpdateAttributeAction
@@ -35,9 +35,8 @@ class Magma
 
     def validate
       if attribute
-        @action_params.except(:action_name, :model_name, :attribute_name).keys.all? do |option|
+        @action_params.except(:action_name, :model_name, :attribute_name).keys.each do |option|
           next if check_restricted_attributes(option)
-
           unless attribute.respond_to?(option)
             @errors << Magma::ActionError.new(message: "Attribute does not implement #{option}", source: @action_params.slice(:action_name, :model_name, :attribute_name))
           end

@@ -25,6 +25,7 @@ class Magma::Dictionary
 
   def to_hash
     {
+      dictionary_model: @dict_model_name,
       project_name: dict_model.project_name,
       model_name: dict_model.model_name,
       attributes: @attributes
