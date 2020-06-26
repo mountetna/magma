@@ -1,14 +1,13 @@
-require 'magma/actions/update_attribute'
+require_relative 'update_attribute'
 
 class Magma
   class ModelUpdateActions
     def self.build(project_name, actions_list)
-      new(project_name, actions_list) 
+      new(project_name, actions_list)
     end
 
     def perform
-      return false unless valid?
-      @actions.all?(&:perform)
+      valid? && @actions.all?(&:perform)
     end
 
     def errors
@@ -24,13 +23,19 @@ class Magma
     def initialize(project_name, actions_list)
       @errors = []
       @actions = []
+
       actions_list.each do |action_params|
-        action_class = "Magma::#{action_params[:action_name].classify}Action".constantize
-        @actions << action_class.new(project_name, action_params)
-      rescue NameError => e
-        @errors << ActionError.new(message: "Invalid action type", source: action_params[:action_name]) 
+        action_class = "Magma::#{action_params[:action_name].classify}Action".safe_constantize
+
+        if action_class
+          @actions << action_class.new(project_name, action_params)
+        else
+          @errors << ActionError.new(
+            message: "Invalid action type",
+            source: action_params[:action_name]
+          )
+        end
       end
     end
   end
 end
-
