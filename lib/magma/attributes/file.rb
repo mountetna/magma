@@ -87,7 +87,7 @@ class Magma
 
     def temporary_filepath(user)
       Magma.instance.storage.upload_url(
-        @model.project_name, "tmp/#{Magma.instance.sign.uid}")
+        @model.project_name, "tmp/#{Magma.instance.sign.uid}", user)
     end
   end
 end
