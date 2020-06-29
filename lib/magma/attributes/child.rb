@@ -16,6 +16,10 @@ class Magma
     def revision_to_links(record_name, value)
     end
 
+    def missing_column?
+      false
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.nil? || value.empty?

@@ -40,7 +40,7 @@ describe RetrieveController do
     )
 
     # attributes are well-formed
-    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_class, :display_name, :name, :shown))
+    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_class, :display_name, :name, :hidden))
 
     # the identifier is reported
     expect(json_template[:identifier]).to eq('id')
@@ -53,6 +53,7 @@ describe RetrieveController do
 
     # the dictionary model is reported
     expect(json_template[:dictionary]).to eq(
+      dictionary_model: "Labors::Codex",
       project_name: 'labors',
       model_name: 'codex',
       attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
@@ -234,8 +235,8 @@ describe RetrieveController do
 
       # the labor documents are received with the table identifiers filled in
       expect(models[:labor][:documents].size).to eq(2)
-      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to eq(lion_prizes.map(&:id))
-      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to eq(hydra_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to match_array(lion_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to match_array(hydra_prizes.map(&:id))
 
       # the prize documents are also included
       expect(models[:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
@@ -279,7 +280,7 @@ describe RetrieveController do
   context 'tsv format' do
     it 'can retrieve a TSV of data from the endpoint' do
       labor_list = create_list(:labor, 12)
-      required_atts = ['name', 'number', 'completed']
+      required_atts = ['name', 'completed', 'number']
       retrieve(
         model_name: 'labor',
         record_names: 'all',
@@ -359,7 +360,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to match(new_labors.map(&:name))
+      expect(labor_names).to match_array(new_labors.map(&:name))
     end
 
     it 'can filter on updated_at, created_at' do
@@ -380,7 +381,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to match(new_labors.map(&:name))
+      expect(labor_names).to match_array(new_labors.map(&:name))
 
       Timecop.return
     end
@@ -389,8 +390,9 @@ describe RetrieveController do
   context 'pagination' do
     it 'can page results' do
       labor_list = create_list(:labor, 9)
-      prize_list = create_list(:prize, 3, labor: labor_list[7])
-      names = labor_list.sort_by(&:name)[6..8].map(&:name)
+      third_page_labors = labor_list.sort_by(&:name)[6..8]
+      labor_with_prize = third_page_labors[1]
+      prize_list = create_list(:prize, 3, labor: labor_with_prize)
 
       retrieve(
         project_name: 'labors',
@@ -401,9 +403,11 @@ describe RetrieveController do
         page_size: 3
       )
 
+      names = third_page_labors.map(&:name).map(&:to_sym)
+
       expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
-      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to match_array(prize_list.map(&:id))
+      expect(json_body[:models][:labor][:documents].keys).to eq(names)
+      expect(json_body[:models][:labor][:documents][labor_with_prize.name.to_sym][:prize]).to match_array(prize_list.map(&:id))
 
       # check to make sure collapse_tables doesn't mess things up
       retrieve(
@@ -417,8 +421,8 @@ describe RetrieveController do
       )
 
       expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].keys).to eq(names.map(&:to_sym))
-      expect(json_body[:models][:labor][:documents][labor_list[7][:name].to_sym][:prize]).to eq(nil)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names)
+      expect(json_body[:models][:labor][:documents][labor_with_prize.name.to_sym][:prize]).to eq(nil)
     end
 
     it 'can page results with joined collections' do

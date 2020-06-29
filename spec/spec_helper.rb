@@ -22,11 +22,34 @@ require_relative '../lib/magma'
 
 Magma.instance.configure(YAML.load(File.read('config.yml')))
 
+Magma.instance.setup_db
+Magma.instance.db[:attributes].truncate
+Magma.instance.db[:models].truncate
+
+YAML.load(File.read("./spec/fixtures/labors_model_attributes.yml")).each do |model_name, attributes|
+  Magma.instance.db[:models].insert(
+    project_name: "labors",
+    model_name: model_name,
+    dictionary: attributes.delete("dictionary")
+  )
+
+  attributes.each do |attribute_name, options|
+    row = options.merge(
+      project_name: "labors",
+      model_name: model_name,
+      attribute_name: attribute_name
+    )
+
+    Magma.instance.db[:attributes].insert(row)
+  end
+end
+
 OUTER_APP = Rack::Builder.new do
   use Etna::ParseBody
   use Etna::SymbolizeParams
 
   use Etna::TestAuth
+
   run Magma::Server.new
 end
 
@@ -260,6 +283,9 @@ def json_document model, record_name
 end
 
 AUTH_USERS = {
+  superuser: {
+    email: 'zeus@twelve-labors.org', first: 'Zeus', perm: 'a:administration'
+  },
   editor: {
     email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors'
   },

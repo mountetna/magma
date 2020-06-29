@@ -32,6 +32,16 @@ class Magma
           !(att.is_a?(Magma::TableAttribute) && @collapse_tables)
         end
 
+        if @requested_attribute_names != "all"
+          attributes.sort_by! do |att|
+            if att.name == @model.identity
+              -1
+            else
+              @requested_attribute_names.index(att.name)
+            end
+          end
+        end
+
         # if there is no identifier, use the :id column
         if !@model.has_identifier?
           attributes.push(OpenStruct.new(name: :id))
@@ -139,13 +149,13 @@ class Magma
       def initialize child, parent, parent_ids
         @child = child
         @parent = parent
-        raise unless @child.attributes[@child.parent].link_model == @parent
+        raise unless @child.attributes[@child.parent_model_name].link_model == @parent
         @parent_ids = parent_ids
       end
 
       def apply(attributes)
         [
-          [ @child.parent, '::identifier', '::in', @parent_ids ]
+          [ @child.parent_model_name, '::identifier', '::in', @parent_ids ]
         ]
       end
     end
@@ -173,25 +183,19 @@ class Magma
 
         att = attributes.find{|a| a.name == att_name.to_sym}
         raise ArgumentError, "#{att_name} is not an attribute" unless att.is_a?(Magma::Attribute)
-
         case att
         when Magma::CollectionAttribute, Magma::TableAttribute
           raise ArgumentError, "Cannot filter on collection attributes"
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           return [ att_name, '::identifier', string_op(operator), value ]
-        when Magma::Attribute
-          case att.type.name
-          when "Integer", "Float"
-            return [ att_name, numeric_op(operator), value.to_f ]
-          when "DateTime"
-            return [ att_name, numeric_op(operator), value ]
-          when "String"
-            return [ att_name, string_op(operator), value ]
-          when "TrueClass"
-            return [ att_name, boolean_op(operator, value) ]
-          else
-            raise ArgumentError, "Unknown type for attribute"
-          end
+        when Magma::IntegerAttribute, Magma::FloatAttribute
+          return [ att_name, numeric_op(operator), value.to_f ]
+        when Magma::DateTimeAttribute
+          return [ att_name, numeric_op(operator), value ]
+        when Magma::StringAttribute
+          return [ att_name, string_op(operator), value ]
+        when Magma::BooleanAttribute
+          return [ att_name, boolean_op(operator, value) ]
         else
           raise ArgumentError, "Cannot query for #{att_name}"
         end

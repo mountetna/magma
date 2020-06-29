@@ -1,14 +1,27 @@
-describe 'Magma::Server' do
+describe Magma::Server do
   include Rack::Test::Methods
 
   def app
     OUTER_APP
   end
 
-  it 'shows little at the root.' do
+  def retrieve(post, user_type=:viewer)
+    auth_header(user_type)
+    json_post(:retrieve, post)
+  end
+
+  it 'fails for non-users' do
+    get('/')
+
+    expect(last_response.status).to eq(401)
+  end
+
+  it 'shows magma is available for users' do
     auth_header(:viewer)
-    get '/'
-    expect(last_response).to(be_ok)
-    expect(last_response.body).to(eq('Magma On.'))
+    get('/')
+
+    expect(last_response.status).to eq(200)
+    expect(last_response.body).to eq('Magma is available.')
   end
 end
+

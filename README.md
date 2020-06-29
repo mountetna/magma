@@ -1,3 +1,5 @@
+![Run tests](https://github.com/mountetna/magma/workflows/Run%20tests/badge.svg)
+
 Magma is a data warehouse.
 
 Data comes into Magma via JSON api (the /update and /loader endpoints) and command-line data loaders.
@@ -63,8 +65,8 @@ Here is an example Magma model:
 
     module Pancan
       class Sample < Magma::Model
-        identifier :name, desc: 'PANCAN id'
-        attribute :mass, type: Float, desc: 'Mass in grams'
+        identifier :name, description: 'PANCAN id'
+        attribute :mass, type: Float, description: 'Mass in grams'
       end
     end
 

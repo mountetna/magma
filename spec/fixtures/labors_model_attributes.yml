@@ -1,0 +1,78 @@
+aspect:
+  dictionary: '{"dictionary_model":"Labors::Codex", "monster":"monster", "name":"aspect", "source":"tome", "value":"lore"}'
+  monster:
+    type: parent
+  name:
+    type: string
+  source:
+    type: string
+  value:
+    type: string
+codex:
+  project:
+    type: parent
+  monster:
+    type: string
+  aspect:
+    type: string
+  tome:
+    type: string
+  lore:
+    type: match
+labor:
+  project:
+    type: parent
+  name:
+    type: identifier
+  monster:
+    type: child
+  number:
+    type: integer
+  completed:
+    type: boolean
+  year:
+    type: date_time
+  prize:
+    type: table
+  contributions:
+    type: matrix
+    validation: '{"type":"Array", "value":["Athens","Sparta","Sidon","Thebes"]}'
+monster:
+  labor:
+    type: parent
+  name:
+    type: identifier
+  species:
+    type: string
+    validation: '{"type":"Regexp", "value":"^[a-z\\s]+$"}'
+  victim:
+    type: collection
+  aspect:
+    type: collection
+  stats:
+    type: file
+prize:
+  labor:
+    type: parent
+  name:
+    type: string
+  worth:
+    type: integer
+project:
+  name:
+    type: identifier
+    description: "Name for this project"
+  labor:
+    type: collection
+  codex:
+    type: table
+victim:
+  monster:
+    type: parent
+  name:
+    type: identifier
+  country:
+    type: string
+    restricted: true
+  restricted:
+    type: boolean

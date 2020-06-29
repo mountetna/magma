@@ -21,6 +21,10 @@ class Magma
     def revision_to_payload(record_name, value)
     end
 
+    def missing_column?
+      false
+    end
+
     class Validation < Magma::CollectionAttribute::Validation; end
   end
 end
