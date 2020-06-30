@@ -20,7 +20,6 @@ class Magma
           filename: '::blank'
         }]
       when '::temp'
-        # Here we should generate a temporary location on Metis
         return nil
       when %r!^metis://!
         return [ @name, {
@@ -28,7 +27,6 @@ class Magma
           filename: filename(record_name, new_value)
         }]
       else
-        # return nil --> This didn't seem to save to the database?
         return [ @name, {
           location: nil,
           filename: nil
