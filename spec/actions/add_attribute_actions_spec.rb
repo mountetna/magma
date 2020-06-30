@@ -35,15 +35,17 @@ describe Magma::AddAttributeAction do
         expect(action.perform).to eq(true)
         expect(action.errors).to be_empty
         expect(Labors::Monster.attributes[attribute_name.to_sym].display_name).to eq("name")
+        expect(Labors::Monster.dataset.columns!).to include(attribute_name.to_sym)
       end
     end
 
     context 'when it fails' do
       let(:project_name) { nil }
 
-      it 'captures an error' do
+      it "captures the error and doesn't add the attribute" do
         expect(action.perform).to eq(false)
         expect(action.errors).not_to be_empty
+        expect(Labors::Monster.attributes[attribute_name.to_sym]).to be_nil
       end
     end
   end
