@@ -347,9 +347,7 @@ describe UpdateController do
         update(
           monster: {
             'Nemean Lion' => {
-              selfie: {
-                path: 'metis://labors/files/lion-stats.txt'
-              }
+              selfie: 'metis://labors/files/lion-stats.txt'
             }
           }
         )
@@ -368,20 +366,14 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: {
-              path: '::blank'
-            }
+            selfie: '::blank'
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.selfie.to_json).to eq({
-        "location": "::blank",
-        "filename": "::blank",
-        "original_filename": "::blank"
-      }.to_json)
+      expect(lion.selfie).to eq("::blank")
 
       expect(last_response.status).to eq(200)
 
@@ -397,25 +389,19 @@ describe UpdateController do
     end
 
     it 'removes an image reference' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"filename": "lion.jpg", "original_filename": ""}')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: 'https://metis.test/labors/Nemean Lion/headshot.png')
 
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: {
-              path: nil
-            }
+            selfie: nil
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.selfie.to_json).to eq({
-        "location": nil,
-        "filename": nil,
-        "original_filename": nil
-      }.to_json)
+      expect(lion.selfie).to eq(nil)
 
       expect(last_response.status).to eq(200)
 
@@ -430,32 +416,25 @@ describe UpdateController do
     end
 
     it 'removes an image reference using ::blank' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"filename": "lion.jpg", "original_filename": ""}')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: 'https://metis.test/labors/Nemean Lion/headshot.png')
 
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: {
-              path: '::blank'
-            }
+            selfie: '::blank'
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.selfie.to_json).to eq({
-        "location": "::blank",
-        "filename": "::blank",
-        "original_filename": "::blank"
-      }.to_json)
+      expect(lion.selfie).to eq("::blank")
 
       expect(last_response.status).to eq(200)
 
       # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:selfie]).to eq({
-        path: '::blank'
-      })
+        path: '::blank'})
 
       # Make sure the Metis copy endpoint was not called
       expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
@@ -470,9 +449,7 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: {
-              path: '::temp'
-            }
+            selfie: '::temp'
           }
         }
       )
@@ -503,20 +480,13 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: {
-              path: 'metis://labors/files/lion.jpg',
-              original_filename: 'closeup.jpg'
-            }
+            selfie: 'metis://labors/files/lion.jpg'
           }
         }
       )
 
       lion.refresh
-      expect(lion.selfie.to_json).to eq({
-        "location": "metis://labors/files/lion.jpg",
-        "filename": "monster-Nemean Lion-selfie.jpg",
-        "original_filename": "closeup.jpg"
-      }.to_json)
+      expect(lion.selfie).to eq("monster-Nemean Lion-selfie.jpg")
 
       expect(last_response.status).to eq(200)
 
@@ -529,7 +499,6 @@ describe UpdateController do
       expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
 
       expect(json_document(:monster, 'Nemean Lion')[:selfie].key?(:path)).to eq (true)
-      expect(json_document(:monster, 'Nemean Lion')[:selfie].key?(:original_filename)).to eq (true)
 
       # Make sure the Metis copy endpoint was called
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").

@@ -51,6 +51,8 @@ monster:
     type: collection
   stats:
     type: file
+  selfie:
+    type: image
 prize:
   labor:
     type: parent
