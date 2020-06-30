@@ -12,7 +12,7 @@ describe Magma::ChildAttribute do
         .and_return true
     end
 
-    it 'calls update or create on the link_model' do
+    xit 'calls update or create on the link_model' do
       child_attribute.revision_to_record(record, link)
 
       expect(link_model).to have_received(:update_or_create).once
