@@ -11,6 +11,9 @@ class Magma
     end
 
     def revision_to_record(record, value)
+      link_model.update_or_create(link_model.identity => value) do |obj|
+        obj[ self_id ] = record.id
+      end
     end
 
     def revision_to_links(record_name, value)

@@ -8,6 +8,10 @@ class Magma
       super
     end
 
+    def database_type
+      String
+    end
+
     def revision_to_loader(record_name, new_value)
       case new_value
       when '::blank'

@@ -39,11 +39,15 @@ class Magma
     end
 
     def read_only?
-      @readonly
+      @read_only
     end
 
     def shown?
-      !@hide
+      !@hidden
+    end
+
+    def hidden?
+      @hidden
     end
 
     def column_name
@@ -53,7 +57,7 @@ class Magma
     def display_name
       @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
     end
-    
+
     def database_type
       nil
     end
@@ -98,11 +102,11 @@ class Magma
     def revision_to_loader(record_name, new_value)
       [
         @name,
-        @type == DateTime ?
+        database_type == DateTime ?
           DateTime.parse(new_value) :
-        @type == Float ?
+        database_type == Float ?
           new_value.to_f :
-        @type == Integer ?
+        database_type == Integer ?
           new_value.to_i :
           new_value
       ]
