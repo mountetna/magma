@@ -120,7 +120,7 @@ class UpdateController < Magma::Controller
       end
     end
 
-    if copy_revisions.length > 0
+    if copy_revisions.length > 0 && Magma.instance.storage.instance_of?(Magma::Storage::Metis)
       execute_bulk_copy_on_metis(copy_revisions)
     end
   end
