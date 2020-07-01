@@ -174,9 +174,21 @@
           "stats": {
             "name": "stats",
             "attribute_name": "stats",
-            "type": "String",
+            "type": "json",
             "attribute_class": "Magma::FileAttribute",
             "display_name": "Stats",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "file"
+          },
+          "selfie": {
+            "name": "selfie",
+            "attribute_name": "selfie",
+            "type": "json",
+            "attribute_class": "Magma::FileAttribute",
+            "display_name": "Selfie",
             "restricted": false,
             "read_only": false,
             "hidden": false,
