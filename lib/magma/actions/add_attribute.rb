@@ -73,8 +73,7 @@ class Magma
 
     def restart_server
       return if Magma.instance.test?
-      pid = File.read("tmp/pids/puma.pid").chomp.to_i
-      Process.kill("USR2", pid)
+      Process.kill("USR2", Magma.instance.server_pid)
     end
 
     def attribute_already_exists?

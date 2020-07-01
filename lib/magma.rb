@@ -130,4 +130,8 @@ class Magma
   def test?
     ENV["MAGMA_ENV"] == "test"
   end
+
+  def server_pid
+    File.read(config(:server_pidfile)).chomp.to_i
+  end
 end
