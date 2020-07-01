@@ -587,7 +587,9 @@ describe UpdateController do
         update(
           monster: {
             'Nemean Lion' => {
-              selfie: 'metis://labors/files/lion-stats.txt'
+              selfie: {
+                path: 'metis://labors/files/lion-stats.txt'
+              }
             }
           }
         )
@@ -606,14 +608,19 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: '::blank'
+            selfie: {
+              path: '::blank'
+            }
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.selfie).to eq("::blank")
+      expect(lion.selfie.to_json).to eq({
+        location: "::blank",
+        filename: "::blank",
+        original_filename: "::blank"}.to_json)
 
       expect(last_response.status).to eq(200)
 
@@ -629,19 +636,25 @@ describe UpdateController do
     end
 
     it 'removes an image reference' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: 'https://metis.test/labors/Nemean Lion/headshot.png')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"location": "https://metis.test/labors/Nemean Lion/headshot.png", "filename": "", "original_filename": ""}')
 
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: nil
+            selfie: {
+              path: nil
+            }
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.selfie).to eq(nil)
+      expect(lion.selfie.to_json).to eq({
+        location: nil,
+        filename: nil,
+        original_filename: nil
+      }.to_json)
 
       expect(last_response.status).to eq(200)
 
@@ -656,19 +669,25 @@ describe UpdateController do
     end
 
     it 'removes an image reference using ::blank' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: 'https://metis.test/labors/Nemean Lion/headshot.png')
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"location": "https://metis.test/labors/Nemean Lion/headshot.png", "filename": "", "original_filename": ""}')
 
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: '::blank'
+            selfie: {
+              path: '::blank'
+            }
           }
         }
       )
 
       # the field is updated
       lion.refresh
-      expect(lion.selfie).to eq("::blank")
+      expect(lion.selfie.to_json).to eq({
+        location: '::blank',
+        filename: '::blank',
+        original_filename: '::blank'
+      }.to_json)
 
       expect(last_response.status).to eq(200)
 
@@ -689,7 +708,9 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: '::temp'
+            selfie: {
+              path: '::temp'
+            }
           }
         }
       )
@@ -720,13 +741,18 @@ describe UpdateController do
       update(
         monster: {
           'Nemean Lion' => {
-            selfie: 'metis://labors/files/lion.jpg'
+            selfie: {
+              path: 'metis://labors/files/lion.jpg'
+            }
           }
         }
       )
 
       lion.refresh
-      expect(lion.selfie).to eq("monster-Nemean Lion-selfie.jpg")
+      expect(lion.selfie.to_json).to eq({
+        location: "metis://labors/files/lion.jpg",
+        filename: "monster-Nemean Lion-selfie.jpg",
+        original_filename: nil}.to_json)
 
       expect(last_response.status).to eq(200)
 
