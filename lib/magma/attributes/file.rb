@@ -8,7 +8,7 @@ class Magma
     end
 
     def database_type
-      String
+      :json
     end
 
     def revision_to_loader(record_name, new_value)
