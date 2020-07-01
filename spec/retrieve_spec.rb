@@ -42,7 +42,7 @@ describe RetrieveController do
     )
 
     # attributes are well-formed
-    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_class, :display_name, :name, :shown))
+    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_class, :display_name, :name, :hidden))
 
     # the identifier is reported
     expect(json_template[:identifier]).to eq('id')
@@ -55,6 +55,7 @@ describe RetrieveController do
 
     # the dictionary model is reported
     expect(json_template[:dictionary]).to eq(
+      dictionary_model: "Labors::Codex",
       project_name: 'labors',
       model_name: 'codex',
       attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
@@ -234,8 +235,8 @@ describe RetrieveController do
 
       # the labor documents are received with the table identifiers filled in
       expect(models[:labor][:documents].size).to eq(2)
-      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to eq(lion_prizes.map(&:id))
-      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to eq(hydra_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to match_array(lion_prizes.map(&:id))
+      expect(models[:labor][:documents][:'Lernean Hydra'][:prize]).to match_array(hydra_prizes.map(&:id))
 
       # the prize documents are also included
       expect(models[:prize][:documents].keys.sort.map(&:to_s)).to eq(selected_prize_ids)
@@ -279,7 +280,7 @@ describe RetrieveController do
   context 'tsv format' do
     it 'can retrieve a TSV of data from the endpoint' do
       labor_list = create_list(:labor, 12)
-      required_atts = ['name', 'number', 'completed']
+      required_atts = ['name', 'completed', 'number']
       retrieve(
         model_name: 'labor',
         record_names: 'all',
@@ -380,7 +381,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
-      expect(labor_names).to match(new_labors.map(&:name))
+      expect(labor_names).to match_array(new_labors.map(&:name))
 
       Timecop.return
     end

@@ -1,10 +1,30 @@
 class Magma
   class Project
+    class AttributeLoadError < StandardError
+      def initialize(project_name, model_name, attributes)
+        attribute_names = attributes.
+          map { |attribute| attribute[:attribute_name] }.
+          join(", ")
+
+        project_model = "#{project_name.to_s.camel_case}::#{model_name.to_s.camel_case}"
+
+        msg = "Tried to load attributes (#{attribute_names}) from the database on #{project_model} but #{project_model} doesn't exist"
+
+        super(msg)
+      end
+    end
+
     attr_reader :project_name
 
-    def initialize project_dir
-      @project_dir = project_dir
-      @project_name = project_dir.split('/').last.to_sym
+    def initialize(options = {})
+      if options[:project_dir]
+        @project_dir = options[:project_dir]
+        @project_name = @project_dir.split('/').last.to_sym
+      elsif options[:project_name]
+        @project_name = options[:project_name]
+      else
+        raise ArgumentError, "one of [:project_dir, :project_name] is required"
+      end
 
       load_project
     end
@@ -23,7 +43,7 @@ class Magma
 
     def ordered_models(model)
       link_models = model.attributes.values.select do |att|
-        att.is_a?(Magma::Link) && att.link_model.parent == model.model_name
+        att.is_a?(Magma::Link) && att.link_model.parent_model_name == model.model_name
       end.map(&:link_model)
       link_models + link_models.map{|m| ordered_models(m)}.flatten
     end
@@ -35,10 +55,20 @@ class Magma
     private
 
     def project_container
-      @project_container ||= Kernel.const_get(@project_name.to_s.camel_case)
+      @project_container ||= if @project_dir
+        Kernel.const_get(@project_name.to_s.camel_case)
+      else
+        Object.const_set(@project_name.to_s.camel_case, Module.new)
+      end
     end
 
     def load_project
+      load_project_files if @project_dir
+      load_models
+      load_model_attributes
+    end
+
+    def load_project_files
       base_file = project_file('requirements.rb')
       if File.exists?(base_file)
         require base_file 
@@ -46,6 +76,36 @@ class Magma
         require_files('models')
         require_files('loaders')
         require_files('metrics')
+      end
+    end
+
+    def load_models
+      Magma.instance.db[:models].where(project_name: @project_name.to_s).
+        reject { |model| project_container.const_defined?(model[:model_name].classify) }.
+        each do |model|
+          model_class = Class.new(Magma::Model) do
+            set_schema(
+              model[:project_name].to_sym,
+              model[:model_name].pluralize.to_sym
+            )
+
+            dictionary(model[:dictionary].symbolize_keys) if model[:dictionary]
+          end
+
+          project_container.const_set(model[:model_name].classify, model_class)
+        end
+    end
+
+    def load_model_attributes
+      model_attributes = Magma.instance.db[:attributes].
+        where(project_name: @project_name.to_s).
+        to_a.
+        group_by { |attribute| attribute[:model_name].to_sym }
+
+      model_attributes.each do |model_name, attributes|
+        model = models[model_name]
+        raise AttributeLoadError.new(@project_name, model_name, attributes) unless model
+        model.load_attributes(attributes)
       end
     end
 

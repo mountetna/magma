@@ -7,14 +7,26 @@ class Magma
    
   class Model
     class << self
-      %i(string integer boolean date_time float file image collection table match matrix child foreign_key).each do |method_name|
-        define_method method_name do |attribute_name, opts={}|
-          klass = "Magma::#{method_name.to_s.capitalize}_attribute".camelcase.constantize
-          attributes[attribute_name] = klass.new(attribute_name, self, opts)
+      Magma::Attribute.descendants.
+        reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
+        each do |attribute|
+          define_method attribute.attribute_type do |attribute_name=nil, opts={}|
+            @parent = attribute_name if attribute == Magma::ParentAttribute
+            attributes[attribute_name] = attribute.new(attribute_name, self, opts)
+          end
         end
-      end
 
       alias_method :document, :file
+
+      def load_attributes(attributes = {})
+        attributes.each do |attribute|
+          send(
+            attribute[:type],
+            attribute[:attribute_name].to_sym,
+            attribute.slice(*Magma::Attribute::EDITABLE_OPTIONS)
+          )
+        end
+      end
 
       def project_name
         name.split('::').first.snake_case.to_sym
@@ -47,47 +59,26 @@ class Magma
         name.respond_to?(:to_sym) && @attributes.has_key?(name.to_sym)
       end
 
-      # identifier attribute, sets a unique identifier
-      def identifier(name, opts)
-        string(name, opts.merge(unique: true))
-        @identity = name
-
-        # Default ordering is by identifier.
-        order(name) unless @order
-      end
-
       def identity
         @identity || primary_key
+      end
+
+      def identity=(identity)
+        @identity = (identity)
       end
 
       def has_identifier?
         @identity
       end
 
-      # parent attribute, links to a parent record
-      def parent name=nil, opts = {}
-        if name
-          @parent = name
-          many_to_one name
-          foreign_key(name, opts)
-        end
+      def parent_model_name
         @parent
       end
 
-      # link attribute, links to a single other record
-      def link(name, opts = {})
-        many_to_one(name, class: project_model(opts[:link_model] || name))
-        foreign_key(name, opts)
-      end
-
-      def restricted(opts= {})
-        attributes[:restricted] = Magma::BooleanAttribute.new(:restricted, self, opts)
-      end
-
       # suggests dictionary entries based on
-      def dictionary(dict_model=nil, attributes={})
-        return @dictionary unless dict_model
-        @dictionary = Magma::Dictionary.new(self, dict_model, attributes)
+      def dictionary(dictionary_json = {})
+        return @dictionary unless dictionary_json[:dictionary_model]
+        @dictionary = Magma::Dictionary.new(dictionary_json)
       end
 
       # json template of this model
@@ -102,7 +93,7 @@ class Magma
           ],
           identifier: identity,
           dictionary: @dictionary && @dictionary.to_hash,
-          parent: @parent
+          parent: parent_model_name
         }.delete_if {|k,v| v.nil? }
       end
 
@@ -132,21 +123,27 @@ class Magma
       end
 
       def inherited(magma_model)
-        # Sets the appropriate postgres schema for the model. There should be a 
-        # one to one correlation between a model's module/class and a postgres
-        # schema/table.
-        set_dataset(
-          Sequel[
-            magma_model.project_name
-          ][
+        # Only call set_schema for models that are loaded from file. Models that
+        # are loaded from the database get created as anonymous Ruby classes,
+        # and anonymous classes don't have names.
+        if magma_model.name
+          set_schema(
+            magma_model.project_name,
             magma_model.model_name.to_s.pluralize.to_sym
-          ]
-        )
+          )
+        end
 
         super
         %i(created_at updated_at).each do |timestamp|
-          magma_model.date_time(timestamp, {hide: true})
+          magma_model.date_time(timestamp, {hidden: true})
         end
+      end
+
+      # Sets the appropriate postgres schema for the model. There should be a
+      # one to one correlation between a model's module/class and a postgres
+      # schema/table.
+      def set_schema(project_name, table_name)
+        set_dataset(Sequel[project_name][table_name])
       end
     end
 

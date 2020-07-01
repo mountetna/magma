@@ -1,10 +1,8 @@
 require_relative '../lib/magma'
 require 'yaml'
 
-def disconnect_attribute model, att_name
-  att = model.attributes[att_name]
-  model.attributes[att_name] = nil
-  att
+def disconnect_attribute(model, att_name)
+  model.attributes.delete(att_name)
 end
 
 def reconnect_attribute model, att_name, value
@@ -41,6 +39,7 @@ describe Magma do
         expect{Magma.instance.validate_models}.to raise_error(Magma::ValidationError)
       end
     end
+
     context 'project model' do
       before(:each) do
         # Delete the constant
@@ -64,6 +63,7 @@ describe Magma do
         expect{Magma.instance.validate_models}.to raise_error(Magma::ValidationError)
       end
     end
+
     context 'orphan models' do
       before(:each) do
         # Unlink the labor model and prize model
@@ -77,6 +77,14 @@ describe Magma do
       it 'complains if there are orphan models' do
         expect{Magma.instance.validate_models}.to raise_error(Magma::ValidationError)
       end
+    end
+
+    it "raises an error if a model has an attribute that isn't backed by a column in the model's table" do
+      Labors::Monster.attributes[:size] = Magma::IntegerAttribute.new(:size, Labors::Monster, {})
+
+      expect{ Magma.instance.validate_models }.to raise_error(Magma::ValidationError)
+
+      Labors::Monster.attributes.delete(:size)
     end
   end
 end

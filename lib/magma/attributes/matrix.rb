@@ -2,9 +2,8 @@ require 'set'
 
 class Magma
   class MatrixAttribute < Attribute
-    def initialize(name, model, opts)
-      opts.merge!(type: :json)
-      super
+    def database_type
+      :json
     end
 
     def entry(value, loader)
@@ -17,7 +16,7 @@ class Magma
 
         # it must be an array of numbers
         yield "Matrix value is not an array of numbers" unless value.is_a?(Array) && value.all?{|v| v.is_a?(Numeric)}
-        yield "Improper matrix row size" unless @attribute.match.size == value.size
+        yield "Improper matrix row size" unless validation_object.options.size == value.size
       end
     end
 
@@ -77,11 +76,11 @@ class Magma
     end
 
     def null_row_json
-      @null_row_json ||= @match.map{nil}.to_json
+      @null_row_json ||= validation_object.options.map{nil}.to_json
     end
 
     def column_indexes(names)
-      @column_indexes ||= @match.map.with_index{|name,i| [ name, i ]}.to_h
+      @column_indexes ||= validation_object.options.map.with_index{|name,i| [ name, i ]}.to_h
 
       @column_indexes.values_at(*names)
     end

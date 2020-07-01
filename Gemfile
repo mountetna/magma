@@ -4,7 +4,7 @@ ruby '~> 2.5'
 
 gem 'etna'
 gem 'pg'
-gem 'sequel'
+gem 'sequel', '5.28.0'
 gem 'mini_magick'
 gem 'fog-aws'
 gem 'carrierwave-sequel'

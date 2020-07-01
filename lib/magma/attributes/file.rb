@@ -7,6 +7,10 @@ class Magma
       super
     end
 
+    def database_type
+      String
+    end
+
     def revision_to_loader(record_name, new_value)
       case new_value[:path]
       when '::blank'
@@ -16,7 +20,6 @@ class Magma
           original_filename: '::blank'
         }]
       when '::temp'
-        # Here we should generate a temporary location on Metis
         return nil
       when %r!^metis://!
         return [ @name, {
@@ -25,7 +28,6 @@ class Magma
           original_filename: new_value[:original_filename]
         }]
       else
-        # return nil --> This didn't seem to save to the database?
         return [ @name, {
           location: nil,
           filename: nil,

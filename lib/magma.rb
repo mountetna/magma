@@ -1,7 +1,9 @@
 require 'sequel'
+require "active_support/core_ext/class/subclasses"
 
 require_relative 'magma/project'
 require_relative 'magma/validation'
+require_relative 'magma/validation_object'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
 require_relative 'magma/attribute'
@@ -36,6 +38,7 @@ class Magma
   end
 
   def setup_db
+    return if @db
     @db = Sequel.connect(config(:db))
     @db.extension :connection_validator
     @db.extension :pg_json
@@ -48,7 +51,7 @@ class Magma
     @storage = Magma::Storage.setup
 
     config(:project_path).split(/\s+/).each do |project_dir|
-      project = Magma::Project.new(project_dir)
+      project = Magma::Project.new(project_dir: project_dir)
       magma_projects[ project.project_name ] = project
     end
 
@@ -74,16 +77,7 @@ class Magma
         # Check that tables exist
         raise Magma::ValidationError, "Missing table for #{model}." unless model.has_table?
 
-        # Check reciprocal links
-        model.attributes.each do |att_name, attribute|
-          next unless attribute.respond_to?(:link_model)
-          link_model = attribute.link_model
-          link_attribute = link_model.attributes.values.find do |attribute|
-            attribute.respond_to?(:link_model) && attribute.link_model == model
-          end
-          raise Magma::ValidationError, "Missing reciprocal link for #{model_name}##{att_name} from #{link_model.model_name}." unless link_attribute
-        end
-
+        validate_attributes(model)
 
         # Check for orphan models. Make and exception for the root model.
         if(
@@ -94,6 +88,24 @@ class Magma
           raise Magma::ValidationError, "Orphan model #{model_name}." 
         end
       end
+    end
+  end
+
+  def validate_attributes(model)
+    model.attributes.each do |attribute_name, attribute|
+      # Check that attribute has a column in the model's table
+      raise Magma::ValidationError, "Missing column for #{model}##{attribute_name}." if attribute.missing_column?
+
+      next unless attribute.respond_to?(:link_model)
+
+      # Check reciprocal links
+      link_model = attribute.link_model
+
+      link_attribute = link_model.attributes.values.find do |attribute|
+        attribute.respond_to?(:link_model) && attribute.link_model == model
+      end
+
+      raise Magma::ValidationError, "Missing reciprocal link for #{model.model_name}##{attribute_name} from #{link_model.model_name}." unless link_attribute
     end
   end
 

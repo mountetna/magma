@@ -65,8 +65,8 @@ Here is an example Magma model:
 
     module Pancan
       class Sample < Magma::Model
-        identifier :name, desc: 'PANCAN id'
-        attribute :mass, type: Float, desc: 'Mass in grams'
+        identifier :name, description: 'PANCAN id'
+        attribute :mass, type: Float, description: 'Mass in grams'
       end
     end
 

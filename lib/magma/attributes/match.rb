@@ -1,8 +1,7 @@
 class Magma
   class MatchAttribute < Attribute
-    def initialize(name, model, opts)
-      opts.merge!(type: :json)
-      super
+    def database_type
+      :json
     end
 
     def entry(value, loader)

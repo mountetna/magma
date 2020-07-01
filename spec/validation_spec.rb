@@ -8,27 +8,33 @@ describe Magma::Validation do
     errors
   end
 
-  context 'attribute validations' do
-    before(:each) do
-      @match_stubs = {}
-    end
+  def validation_stubs
+    @validation_stubs ||= {}
+  end
 
-    def stub_match(model, att_name, new_match)
-      @match_stubs[model] ||= {}
-      @match_stubs[model][att_name] = model.attributes[att_name].match
-      model.attributes[att_name].instance_variable_set("@match", new_match)
-    end
+  def stub_validation(model, att_name, new_validation)
+    validation_stubs[model] ||= {}
+    validation_stubs[model][att_name] = model.attributes[att_name].validation
+    model.attributes[att_name].instance_variable_set("@validation", new_validation)
+    model.attributes[att_name].instance_variable_set("@validation_object", nil)
+  end
 
-    after(:each) do
-      @match_stubs.each do |model,atts|
-        atts.each do |att_name,old_match|
-          model.attributes[att_name].instance_variable_set("@match",old_match)
-        end
+  def remove_validation_stubs
+    validation_stubs.each do |model,atts|
+      atts.each do |att_name, old_validation|
+        model.attributes[att_name].instance_variable_set("@validation", old_validation)
+        model.attributes[att_name].instance_variable_set("@validation_object", nil)
       end
+    end
+  end
+
+  context 'attribute validations' do
+    after(:each) do
+      remove_validation_stubs
     end
 
     it 'validates a regexp' do
-      stub_match(Labors::Monster, :species, /^[a-z\s]+$/)
+      stub_validation(Labors::Monster, :species, { type: "Regexp", value: /^[a-z\s]+$/ })
 
       # fails
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
@@ -39,8 +45,25 @@ describe Magma::Validation do
       expect(errors).to be_empty
     end
 
+    it 'validates a regexp proc' do
+      stub_validation(Labors::Monster, :species, {
+        type: "Regexp",
+        value: Proc.new { /#{2.times.map{ "[a-z\s]" }.join(" ")}/ }
+      })
+
+      # fails
+      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'leo')
+      expect(errors).to eq(["On species, 'leo' is improperly formatted."])
+
+      # passes
+      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'panthera leo')
+      expect(errors).to be_empty
+    end
+
     it 'validates an array' do
-      stub_match(Labors::Monster, :species, ['lion', 'Panthera leo'])
+      stub_validation(Labors::Monster, :species, {
+        type: "Array", value: ['lion', 'Panthera leo']
+      })
 
       # fails
       errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
@@ -52,7 +75,9 @@ describe Magma::Validation do
     end
 
     it 'validates a child identifier' do
-      stub_match(Labors::Monster, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+      stub_validation(Labors::Monster, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
 
       # fails
       errors = validate(Labors::Labor, name: 'Nemean Lion', monster: 'nemean lion')
@@ -64,7 +89,9 @@ describe Magma::Validation do
     end
 
     it 'validates a foreign key identifier' do
-      stub_match(Labors::Monster, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+      stub_validation(Labors::Monster, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
 
       # fails
       errors = validate(Labors::Victim, name: 'Outis Koutsonadis', monster: 'nemean lion')
@@ -76,7 +103,9 @@ describe Magma::Validation do
     end
 
     it 'validates a collection' do
-      stub_match(Labors::Labor, :name, /^[A-Z][a-z]+ [A-Z][a-z]+$/)
+      stub_validation(Labors::Labor, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
 
       # fails
       errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'augean stables', 'lernean hydra' ])
@@ -119,6 +148,33 @@ describe Magma::Validation do
         }
       )
       expect(errors).to be_empty
+    end
+
+    it 'validates a range' do
+      stub_validation(Labors::Labor, :number, { type: "Range", begin: 1, end: 5 })
+
+      # fails
+      errors = validate(Labors::Labor, name: "Rick", number: 10)
+      expect(errors).to eq([
+        "On number, 10 should be greater than or equal to 1 and less than or equal to 5."
+      ])
+
+      # passes
+      errors = validate(Labors::Labor, name: "Rick", number: 3)
+      expect(errors).to be_empty
+    end
+
+    it 'validates a range that excludes the end' do
+      stub_validation(
+        Labors::Labor,
+        :number,
+        { type: "Range", begin: 1, end: 5, exclude_end: true }
+      )
+
+      errors = validate(Labors::Labor, name: "Rick", number: 5)
+      expect(errors).to eq([
+        "On number, 5 should be greater than or equal to 1 and less than 5."
+      ])
     end
   end
 

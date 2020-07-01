@@ -1,0 +1,202 @@
+{
+  "models": {
+    "parent_model": {
+      "template": {
+        "name": "parent_model",
+        "identifier": "name",
+        "attributes": {
+          "created_at": {
+            "name": "created_at",
+            "attribute_name": "created_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Created At",
+            "restricted": false,
+            "read_only": false,
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "updated_at": {
+            "name": "updated_at",
+            "attribute_name": "updated_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Updated At",
+            "restricted": false,
+            "read_only": false,
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "name": {
+            "name": "name",
+            "attribute_name": "name",
+            "type": "String",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Name",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "identifier"
+          }
+        }
+      }
+    },
+    "model_one": {
+      "template": {
+        "name": "model_one",
+        "identifier": "name",
+        "attributes": {
+          "created_at": {
+            "name": "created_at",
+            "attribute_name": "created_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Created At",
+            "restricted": false,
+            "read_only": false,
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "updated_at": {
+            "name": "updated_at",
+            "attribute_name": "updated_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Updated At",
+            "restricted": false,
+            "read_only": false,
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "name": {
+            "name": "name",
+            "attribute_name": "name",
+            "type": "String",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Name",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "identifier"
+          },
+          "model_two": {
+            "name": "model_two",
+            "attribute_name": "model_two",
+            "model_name": "model_two",
+            "link_model_name": "model_two",
+            "attribute_class": "Magma::CollectionAttribute",
+            "display_name": "Model Two",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "collection"
+          }
+        }
+      }
+    },
+    "model_two": {
+      "template": {
+        "name": "model_two",
+        "identifier": "name",
+        "attributes": {
+          "created_at": {
+            "name": "created_at",
+            "attribute_name": "created_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Created At",
+            "restricted": false,
+            "read_only": false,
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "updated_at": {
+            "name": "updated_at",
+            "attribute_name": "updated_at",
+            "type": "DateTime",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Updated At",
+            "restricted": false,
+            "read_only": false,
+            "hidden": true,
+            "validation": null,
+            "attribute_type": "date_time"
+          },
+          "parent_model": {
+            "name": "parent_model",
+            "attribute_name": "parent_model",
+            "model_name": "parent_model",
+            "link_model_name": "parent_model",
+            "attribute_class": "Magma::ForeignKeyAttribute",
+            "display_name": "ParentModel",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "parent"
+          },
+          "name": {
+            "name": "name",
+            "attribute_name": "name",
+            "type": "String",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Name",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "identifier"
+          },
+          "species": {
+            "name": "species",
+            "attribute_name": "species",
+            "type": "String",
+            "attribute_class": "Magma::Attribute",
+            "display_name": "Species",
+            "match": "^[a-z\\s]+$",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": {
+              "type": "Regexp",
+              "value": "^[a-z\\s]+$"
+            },
+            "attribute_type": "string"
+          },
+          "stats": {
+            "name": "stats",
+            "attribute_name": "stats",
+            "type": "String",
+            "attribute_class": "Magma::FileAttribute",
+            "display_name": "Stats",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "file"
+          }
+        },
+        "parent": "parent_model",
+        "dictionary": {
+          "dictionary_model": "Labors::Codex",
+          "project_name": "labors",
+          "model_name": "codex",
+          "attributes": {
+            "monster": "monster",
+            "name": "aspect",
+            "source": "tome",
+            "value": "lore"
+          }
+        }
+      }
+    }
+  }
+}
