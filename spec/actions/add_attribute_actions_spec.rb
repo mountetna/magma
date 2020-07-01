@@ -2,7 +2,6 @@ describe Magma::AddAttributeAction do
   let(:project_name) { 'labors' }
   let(:action_params) do
     {
-      project_name: project_name,
       action_name: "add_attribute",
       model_name: model_name,
       attribute_name: attribute_name,

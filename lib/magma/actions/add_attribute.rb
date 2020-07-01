@@ -40,10 +40,7 @@ class Magma
       attribute_class = Magma::Attribute.
         sti_class_from_sti_key(@action_params[:type])
 
-      fields = [:project_name, :model_name, :attribute_name, :type] +
-        Magma::Attribute::EDITABLE_OPTIONS
-
-      attribute_class.create(@action_params.slice(*fields))
+      attribute_class.create(attribute_params)
     rescue Sequel::ValidationFailed => e
       @errors << Magma::ActionError.new(
         message: 'Create attribute failed',
@@ -52,6 +49,13 @@ class Magma
       )
 
       nil
+    end
+
+    def attribute_params
+      fields = [:model_name, :attribute_name, :type] +
+        Magma::Attribute::EDITABLE_OPTIONS
+
+      @action_params.slice(*fields).merge(project_name: @project_name)
     end
 
     def update_model_table
