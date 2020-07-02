@@ -1,5 +1,4 @@
 require_relative 'controller'
-require 'pry'
 
 class UpdateController < Magma::Controller
   def action
