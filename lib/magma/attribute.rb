@@ -108,8 +108,6 @@ class Magma
           new_value.to_f :
         database_type == Integer ?
           new_value.to_i :
-        new_value.is_a?(Hash) ?
-          Sequel.pg_json_wrap(new_value) :
           new_value
       ]
     end
