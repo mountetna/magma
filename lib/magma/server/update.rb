@@ -18,7 +18,6 @@ class UpdateController < Magma::Controller
         end
       ]
     end.to_h
-    binding.pry
 
     censor_revisions
 
