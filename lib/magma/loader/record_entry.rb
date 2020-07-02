@@ -9,7 +9,6 @@ class Magma
       @model = model
       @loader = loader
       @complaints = []
-      binding.pry
       check_document_validity
     end
 
