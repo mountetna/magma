@@ -1,5 +1,3 @@
-require 'securerandom'
-
 class Magma
   class FileAttribute < Attribute
     def initialize(name, model, opts)
