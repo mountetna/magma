@@ -11,7 +11,6 @@ describe Magma::AddAttributeAction do
       format_hint: "incoming format hint",
       hidden: true,
       index: false,
-      link_model_name: "species",
       read_only: true,
       restricted: false,
       unique: true,
@@ -57,6 +56,15 @@ describe Magma::AddAttributeAction do
       end
     end
 
+    context "when the project doesn't exist" do
+      let(:project_name) { "houdini" }
+
+      it 'captures a project error' do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("Project does not exist")
+      end
+    end
+
     context "when the model doesn't exist" do
       let(:model_name) { 'super_duper' }
 
@@ -71,7 +79,49 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq('Attribute already exists')
+        expect(action.errors.first[:message]).to eq("attribute_name already exists on Labors::Monster")
+      end
+    end
+
+    context "when attribute_name is not snake case" do
+      let(:attribute_name) { 'firstName' }
+
+      it 'captures an attribute error' do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case")
+      end
+    end
+
+    context "when adding a link attribute with a link_model_name that doesn't exist" do
+      let(:action_params) do
+        {
+          action_name: "add_attribute",
+          model_name: model_name,
+          attribute_name: attribute_name,
+          type: "link",
+          link_model_name: "houdini",
+        }
+      end
+
+      it 'captures an attribute error' do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("link_model_name doesn't match an existing model")
+      end
+    end
+
+    context "when adding a link attribute with an attribute_name that doesn't exist" do
+      let(:action_params) do
+        {
+          action_name: "add_attribute",
+          model_name: model_name,
+          attribute_name: "houdini",
+          type: "parent"
+        }
+      end
+
+      it 'captures an attribute error' do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("attribute_name doesn't match an existing model")
       end
     end
   end

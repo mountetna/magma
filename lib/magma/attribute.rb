@@ -22,18 +22,6 @@ class Magma
     plugin :dirty
     plugin :auto_validations
 
-    def validate
-      super
-      validate_validation_json
-    end
-
-    def validate_validation_json
-      return unless validation
-      validation_object
-    rescue => e
-      errors.add(:validation, "is not properly formatted")
-    end
-
     DISPLAY_ONLY = [:child, :collection]
 
     EDITABLE_OPTIONS = [
@@ -194,6 +182,27 @@ class Magma
       else
         self.class.name
       end
+    end
+
+    # Use Sequel::Model validations to validate values before they get inserted
+    # into the database. Call super first to execute validations provided by the
+    # auto_validations plugin.
+    def validate
+      super
+      validate_validation_json
+      validate_attribute_name_format
+    end
+
+    def validate_validation_json
+      return unless validation
+      validation_object
+    rescue => e
+      errors.add(:validation, "is not properly formatted")
+    end
+
+    def validate_attribute_name_format
+      return if attribute_name == attribute_name&.snake_case
+      errors.add(:attribute_name, "must be snake_case")
     end
 
     class Entry < Magma::BaseAttributeEntry
