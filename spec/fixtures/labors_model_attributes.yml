@@ -53,6 +53,9 @@ monster:
     type: file
   selfie:
     type: image
+  reference_monster:
+    type: link
+    link_model_name: monster
 prize:
   labor:
     type: parent

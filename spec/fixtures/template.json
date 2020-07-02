@@ -194,6 +194,19 @@
             "hidden": false,
             "validation": null,
             "attribute_type": "file"
+          },
+          "reference_model": {
+            "name": "reference_model",
+            "attribute_name": "reference_model",
+            "attribute_class": "Magma::ForeignKeyAttribute",
+            "display_name": "ReferenceModel",
+            "restricted": false,
+            "read_only": false,
+            "hidden": false,
+            "validation": null,
+            "attribute_type": "link",
+            "model_name": "model_two",
+            "link_model_name": "model_two"
           }
         },
         "parent": "parent_model",
