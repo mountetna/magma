@@ -1,4 +1,3 @@
-require 'pry'
 class Magma
   class RecordEntry
     attr_reader :complaints
