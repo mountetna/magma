@@ -12,16 +12,6 @@ describe Magma::Attribute do
       expect(template[:format_hint]).to eq("Hint")
     end
 
-    it "includes updated attributes" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
-
-      attribute.update_option(:description, "New name")
-      template = attribute.json_template
-
-      expect(template[:desc]).to eq("New name")
-    end
-
     it "continues reporting attribute_class as 'Magma::Attribute' for old Magma::Attributes" do
       model = double("model", project_name: :project, model_name: :model)
       attribute = Magma::BooleanAttribute.new("name", model, {})
@@ -32,6 +22,13 @@ describe Magma::Attribute do
 
     it "continues reporting attribute_class as 'Magma::ForeignKeyAttribute' for old Magma::ForeignKeyAttributes" do
       attribute = Labors::Monster.attributes[:labor]
+      template = attribute.json_template
+
+      expect(template[:attribute_class]).to eq("Magma::ForeignKeyAttribute")
+    end
+
+    it "reports attribute_class as 'Magma::ForeignKeyAttribute' for Magma::LinkAttributes" do
+      attribute = Labors::Monster.attributes[:reference_monster]
       template = attribute.json_template
 
       expect(template[:attribute_class]).to eq("Magma::ForeignKeyAttribute")
@@ -58,17 +55,17 @@ describe Magma::Attribute do
     end
   end
 
-  describe "#update_option" do
-    it "updates editable string backed options" do
+  describe "#revision_to_loader" do
+    it "returns entry for editable string backed options" do
       model = double("model", project_name: :project, model_name: :model)
       attribute = Magma::Attribute.new("name", model, { description: "Old name" })
 
-      attribute.update_option(:description, "New name")
+      entry = attribute.revision_to_loader(:description, "New name")
 
-      expect(attribute.description).to eq("New name")
+      expect(entry).to eq(["name", "New name"])
     end
 
-    it "updates editable JSON backed options" do
+    it "returns entry for editable JSON backed options" do
       model = double("model", project_name: :project, model_name: :model)
       attribute = Magma::Attribute.new("name", model, {
         validation: { type: "Array", value: [1, 2, 3] }
@@ -78,20 +75,94 @@ describe Magma::Attribute do
       # gets reset
       attribute.validation_object
 
-      attribute.update_option(:validation, { type: "Array", value: [4, 5, 6] })
+      entry = attribute.revision_to_loader(:validation, { type: "Array", value: [4, 5, 6] })
 
-      expect(attribute.validation_object.options).to eq([4, 5, 6])
+      expect(entry[0]).to eq("name")
+      expect(entry[1].to_json).to eq({type: "Array", value: [4, 5, 6]}.to_json)
     end
 
-    it "doesn't update non-editable options" do
+    it "doesn't return entry for non-editable options" do
       model = double("model", project_name: :project, model_name: :model)
       attribute = Magma::Attribute.new("name", model, {})
 
-      attribute.update_option(:loader, "foo")
+      entry = attribute.revision_to_loader(:loader, "foo")
 
-      expect(attribute.loader).to be_nil
+      expect(entry).to be_nil
     end
   end
+
+  describe "#revision_to_payload" do
+    it "returns entry for editable string backed options" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+
+      entry = attribute.revision_to_payload(
+        :description,
+        "New name",
+        Etna::User.new({
+          email: "outis@mountolympus.org"
+        }))
+
+      expect(entry).to eq(["name", "New name"])
+    end
+
+    it "returns entry for editable JSON backed options" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, {
+        validation: { type: "Array", value: [1, 2, 3] }
+      })
+
+      # Call attribute#validation_object to verify the cached validation_object
+      # gets reset
+      attribute.validation_object
+
+      entry = attribute.revision_to_payload(
+        :validation,
+        { type: "Array", value: [4, 5, 6] },
+        Etna::User.new({
+          email: "outis@mountolympus.org"
+        }))
+
+      expect(entry[0]).to eq("name")
+      expect(entry[1].to_json).to eq({type: "Array", value: [4, 5, 6]}.to_json)
+    end
+
+    it "doesn't return entry for non-editable options" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, {})
+
+      entry = attribute.revision_to_payload(
+        :loader,
+        "foo",
+        Etna::User.new({
+          email: "outis@mountolympus.org"
+        }))
+
+      expect(entry).to be_nil
+    end
+  end
+
+  describe "#query_to_payload" do
+    it "returns attribute value for a JSON payload" do
+      model = double("model", project_name: :project, model_name: :model)
+      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+
+      query = attribute.query_to_payload("New name")
+
+      expect(query).to eq("New name")
+    end
+  end
+
+  describe "#query_to_tsv" do
+  it "returns attribute value for a TSV payload" do
+    model = double("model", project_name: :project, model_name: :model)
+    attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+
+    query = attribute.query_to_tsv("New name")
+
+    expect(query).to eq("New name")
+  end
+end
 
   describe "#validation_object" do
     it "builds ArrayValidationObjects using validation options from the database" do
