@@ -38,7 +38,7 @@ describe UpdateModelController do
         display_name: "NAME"
       }]
     })
-
+    
     expect(last_response.status).to eq(200)
     expect(Labors::Monster.attributes[:name].description).to eq("The monster's name")
     expect(Labors::Monster.attributes[:name].display_name).to eq("NAME")

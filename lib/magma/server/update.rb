@@ -1,4 +1,5 @@
 require_relative 'controller'
+require 'pry'
 
 class UpdateController < Magma::Controller
   def action
@@ -17,6 +18,7 @@ class UpdateController < Magma::Controller
         end
       ]
     end.to_h
+    binding.pry
 
     censor_revisions
 

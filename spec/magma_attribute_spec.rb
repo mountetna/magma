@@ -80,15 +80,6 @@ describe Magma::Attribute do
       expect(entry[0]).to eq("name")
       expect(entry[1].to_json).to eq({type: "Array", value: [4, 5, 6]}.to_json)
     end
-
-    it "doesn't return entry for non-editable options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {})
-
-      entry = attribute.revision_to_loader(:loader, "foo")
-
-      expect(entry).to be_nil
-    end
   end
 
   describe "#revision_to_payload" do
@@ -125,20 +116,6 @@ describe Magma::Attribute do
 
       expect(entry[0]).to eq("name")
       expect(entry[1].to_json).to eq({type: "Array", value: [4, 5, 6]}.to_json)
-    end
-
-    it "doesn't return entry for non-editable options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {})
-
-      entry = attribute.revision_to_payload(
-        :loader,
-        "foo",
-        Etna::User.new({
-          email: "outis@mountolympus.org"
-        }))
-
-      expect(entry).to be_nil
     end
   end
 
