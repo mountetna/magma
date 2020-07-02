@@ -122,9 +122,9 @@ class Magma
       revision_to_loader(record_name, value)
     end
 
-    # def entry(value, loader)
-    #   [ name, value ]
-    # end
+    def entry(value, loader)
+      [ name, value ]
+    end
 
     # def update_option(opt, new_value)
     #   opt = opt.to_sym
