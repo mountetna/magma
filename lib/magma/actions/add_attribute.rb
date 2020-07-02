@@ -44,15 +44,18 @@ class Magma
     end
 
     def update_model_table
-      migration = eval("
+      model_migration = model.migration
+      return if model_migration.empty?
+
+      sequel_migration = eval("
         Sequel.migration do
           up do
-            #{model.migration.to_s}
+            #{model_migration.to_s}
           end
         end
       ")
 
-      migration.apply(Magma.instance.db, :up)
+      sequel_migration.apply(Magma.instance.db, :up)
       restart_server
     end
 
