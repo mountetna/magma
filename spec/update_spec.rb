@@ -127,6 +127,28 @@ describe UpdateController do
     expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
   end
 
+  it 'updates a link attribute' do
+    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+
+    reference_monster = create(:monster, name: 'Cnidaria')
+    other_monster = create(:monster, name: 'Nemean Lion')
+    monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
+    
+    update(
+      monster: {
+        'Lernean Hydra': {
+          reference_monster: 'Cnidaria'
+        }
+      }
+    )
+    
+    monster.refresh
+    expect(monster.reference_monster).to eq(reference_monster)
+
+    expect(last_response.status).to eq(200)
+    expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
+  end
+
   it 'updates a match' do
     entry = create(
       :codex, :lion, aspect: 'hide', tome: 'Bullfinch',
