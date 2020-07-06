@@ -1,9 +1,12 @@
 class Magma
   class LinkAttribute < ForeignKeyAttribute
-    def initialize(name, model, opts)
-      model.many_to_one(name, class: model.project_model(opts[:link_model_name] || name))
-      super(name, model, opts)
+    private
+
+    def after_magma_model_set
+      @magma_model.many_to_one(
+        name,
+        class: @magma_model.project_model(link_model_name || name)
+      )
     end
   end
 end
-

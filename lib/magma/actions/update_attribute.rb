@@ -9,11 +9,16 @@ class Magma
     end
 
     def perform
-      @action_params.slice(*Magma::Attribute::EDITABLE_OPTIONS).each do |option, value|
-        attribute.update_option(option, value)
-      rescue => e
-        @errors << Magma::ActionError.new(message: 'Update attribute failed', source: @action_params.slice(:attribute_name, :model_name), reason: e)
-      end
+      attribute.update(@action_params.slice(*Magma::Attribute::EDITABLE_OPTIONS))
+    rescue Sequel::ValidationFailed => e
+      @errors << Magma::ActionError.new(
+        message: 'Update attribute failed',
+        source: @action_params.slice(:attribute_name, :model_name),
+        reason: e
+      )
+
+      attribute.initial_values.keys.each { |name| attribute.reset_column(name) }
+    ensure
       return @errors.empty?
     end
 

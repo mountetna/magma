@@ -7,7 +7,8 @@ class Magma
     end
 
     def query_to_payload(link)
-      link&.map(&:last)
+      link = record[name]
+      link ? link.map(&:last) : nil
     end
 
     def query_to_tsv(value)
@@ -26,5 +27,15 @@ class Magma
     end
 
     class Validation < Magma::CollectionAttribute::Validation; end
+
+    private
+
+    def after_magma_model_set
+      @magma_model.one_to_many(
+        attribute_name.to_sym,
+        class: @magma_model.project_model(attribute_name),
+        primary_key: :id
+      )
+    end
   end
 end

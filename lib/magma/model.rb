@@ -1,18 +1,17 @@
-Sequel::Model.plugin :timestamps, update_on_create: true
-Sequel::Model.require_valid_table = false
-Sequel.extension :inflector
-
 class Magma
-  Model = Class.new(Sequel::Model)
-   
-  class Model
+  class Model < Sequel::Model
     class << self
       Magma::Attribute.descendants.
         reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
         each do |attribute|
           define_method attribute.attribute_type do |attribute_name=nil, opts={}|
             @parent = attribute_name if attribute == Magma::ParentAttribute
-            attributes[attribute_name] = attribute.new(attribute_name, self, opts)
+            attributes[attribute_name] = attribute.new(opts.merge(
+              project_name: project_name,
+              model_name: model_name,
+              attribute_name: attribute_name,
+              magma_model: self
+            ))
           end
         end
 
@@ -20,11 +19,9 @@ class Magma
 
       def load_attributes(attributes = {})
         attributes.each do |attribute|
-          send(
-            attribute[:type],
-            attribute[:attribute_name].to_sym,
-            attribute.slice(*Magma::Attribute::EDITABLE_OPTIONS)
-          )
+          @parent = attribute.name if attribute.is_a?(Magma::ParentAttribute)
+          attribute.magma_model = self
+          self.attributes[attribute.name] = attribute
         end
       end
 
@@ -52,7 +49,26 @@ class Magma
       # attributes point to pieces of data, including
       # records and collections of records
       def attributes
-        @attributes ||= {}
+        @attributes ||= base_attributes
+      end
+
+      def base_attributes
+        {
+          created_at: Magma::DateTimeAttribute.new(
+            attribute_name: :created_at,
+            project_name: project_name,
+            model_name: model_name,
+            magma_model: self,
+            hidden: true
+          ),
+          updated_at: Magma::DateTimeAttribute.new(
+            attribute_name: :updated_at,
+            project_name: project_name,
+            model_name: model_name,
+            magma_model: self,
+            hidden: true
+          )
+        }
       end
 
       def has_attribute?(name)
@@ -134,9 +150,6 @@ class Magma
         end
 
         super
-        %i(created_at updated_at).each do |timestamp|
-          magma_model.date_time(timestamp, {hidden: true})
-        end
       end
 
       # Sets the appropriate postgres schema for the model. There should be a

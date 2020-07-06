@@ -26,5 +26,11 @@ class Magma
         link_validate(value, &block)
       end
     end
+
+    private
+
+    def after_magma_model_set
+      @magma_model.one_to_one(attribute_name.to_sym)
+    end
   end
 end

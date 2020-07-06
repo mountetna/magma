@@ -5,7 +5,7 @@ class Magma
 
       json && json[:url] ?
         json.merge(
-          thumb: Magma.instance.storage.download_url(@model.project_name, "thumb_#{value}")
+          thumb: Magma.instance.storage.download_url(@magma_model.project_name, "thumb_#{record[name]}")
         )
         : nil
     end
