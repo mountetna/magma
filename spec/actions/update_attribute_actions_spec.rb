@@ -15,26 +15,25 @@ describe Magma::UpdateAttributeAction do
 
   describe '#perform' do
     let(:attribute) { Labors::Monster.attributes[:name] }
-    let(:option) { :description }
 
     before do
-      allow(attribute).to receive(:update_option)
+      allow(attribute).to receive(:update)
     end
 
     it 'updates the option and returns no errors' do
       expect(update_attribute_action.perform).to eq(true)
-      expect(attribute).to have_received(:update_option).with(option, value).once
+      expect(attribute).to have_received(:update).once
       expect(update_attribute_action.errors).to be_empty
     end
 
     describe 'when update fails' do
       before do
-        allow(attribute).to receive(:update_option).and_raise('oopsie')
+        allow(attribute).to receive(:update).and_raise(Sequel::ValidationFailed)
       end
 
       it 'captures an update error' do
         expect(update_attribute_action.perform).to eq(false)
-        expect(attribute).to have_received(:update_option).with(option, value).once
+        expect(attribute).to have_received(:update).once
         expect(update_attribute_action.errors).not_to be_empty
       end
     end

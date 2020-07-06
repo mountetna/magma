@@ -6,10 +6,10 @@ class Magma
     end
 
     def json_for record
-      record[@name]
+      record[name]
     end
 
-    def update record, link
+    def update_record record, link
       if link.nil?
         return record[ foreign_id ] = nil
       end

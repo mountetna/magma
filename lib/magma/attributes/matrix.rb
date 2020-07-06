@@ -17,8 +17,8 @@ class Magma
       end
     end
 
-    def update(record, new_value)
-      record.set({@name=> new_value})
+    def update_record(record, new_value)
+      record.set({name=> new_value})
 
       cached_rows.delete(record.identifier)
       cached_rows_json.delete(record.identifier)
@@ -38,7 +38,7 @@ class Magma
       return if required_identifiers.empty?
 
       cached_rows.update(
-        @model.where( @model.identity => required_identifiers.to_a ).select_map( [ @model.identity, @name ] ).to_h
+        @magma_model.where( @magma_model.identity => required_identifiers.to_a ).select_map( [ @magma_model.identity, name ] ).to_h
       )
     end
 

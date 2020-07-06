@@ -53,8 +53,6 @@ describe UpdateModelController do
 
   describe "does not update" do
     it "does not update attribute options with invalid attribute name" do
-      original_attribute = Labors::Monster.attributes[:name].dup
-
       auth_header(:superuser)
       json_post(:update_model, {
         project_name: "labors",
@@ -62,7 +60,6 @@ describe UpdateModelController do
           action_name: "update_attribute",
           model_name: "monster",
           attribute_name: improper_name,
-          description: "The monster's name",
           display_name: "NAME"
         }]
       })
@@ -71,12 +68,11 @@ describe UpdateModelController do
       expect(last_response.status).to eq(422)
       expect(response_json['errors'][0]['message']).to eq('Attribute does not exist')
 
-      Labors::Monster.attributes[:name] = original_attribute
+      # Other options are not changed if an update fails
+      expect(Labors::Monster.attributes[:name].display_name).not_to eq("NAME")
     end
 
-    it "does not update attribute options with the incorrect data type" do
-      original_attribute = Labors::Monster.attributes[:name].dup
-
+    it "does not update attribute options with the invalid data type" do
       auth_header(:superuser)
       json_post(:update_model, {
         project_name: "labors",
@@ -84,9 +80,8 @@ describe UpdateModelController do
           action_name: "update_attribute",
           model_name: "monster",
           attribute_name: proper_name,
-          description: 123,
-          display_name: "NAME",
-          hidden: 'something'
+          validation: 23,
+          display_name: "NAME"
         }]
       })
 
@@ -94,9 +89,10 @@ describe UpdateModelController do
 
       expect(last_response.status).to eq(422)
       expect(response_json['errors'][0]['message']).to eq("Update attribute failed")
-      expect(response_json['errors'][0]['reason']).to include("PG::InvalidTextRepresentation: ERROR:  invalid input syntax for type boolean:")
+      expect(response_json['errors'][0]['reason']).to eq("validation is not properly formatted")
 
-      Labors::Monster.attributes[:name] = original_attribute
+      # Other options are not changed if an update fails
+      expect(Labors::Monster.attributes[:name].display_name).not_to eq("NAME")
     end
 
     it "does not update attribute_name" do
