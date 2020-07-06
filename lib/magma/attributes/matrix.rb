@@ -24,11 +24,11 @@ class Magma
       cached_rows.delete(record_name.to_s)
       cached_rows_json.delete(record_name.to_s)
 
-      [ @name, new_value ]
+      [ name, new_value ]
     end
 
     def revision_to_payload(record_name, new_value, user)
-      [ @name, new_value ]
+      [ name, new_value ]
     end
 
     def reset_cache

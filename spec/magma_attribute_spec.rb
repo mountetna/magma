@@ -72,19 +72,23 @@ describe Magma::Attribute do
 
   describe "#revision_to_loader" do
     it "returns entry for editable string backed options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+      attribute = Magma::StringAttribute.create(
+        project_name: :project,
+        attribute_name: "name", 
+        model_name: :model, 
+        description: "Old name")
 
       entry = attribute.revision_to_loader(:description, "New name")
 
-      expect(entry).to eq(["name", "New name"])
+      expect(entry).to eq([:name, "New name"])
     end
 
     it "returns entry for editable JSON backed options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
-        validation: { type: "Array", value: [1, 2, 3] }
-      })
+      attribute = Magma::MatchAttribute.create(
+        project_name: :project,
+        attribute_name: "name", 
+        model_name: :model,
+        validation: { type: "Array", value: [1, 2, 3] })
 
       # Call attribute#validation_object to verify the cached validation_object
       # gets reset
@@ -92,15 +96,18 @@ describe Magma::Attribute do
 
       entry = attribute.revision_to_loader(:validation, { type: "Array", value: [4, 5, 6] })
 
-      expect(entry[0]).to eq("name")
+      expect(entry[0]).to eq(:name)
       expect(entry[1].to_json).to eq({type: "Array", value: [4, 5, 6]}.to_json)
     end
   end
 
   describe "#revision_to_payload" do
     it "returns entry for editable string backed options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+      attribute = Magma::StringAttribute.create(
+        project_name: :project,
+        attribute_name: "name", 
+        model_name: :model, 
+        description: "Old name")
 
       entry = attribute.revision_to_payload(
         :description,
@@ -109,14 +116,15 @@ describe Magma::Attribute do
           email: "outis@mountolympus.org"
         }))
 
-      expect(entry).to eq(["name", "New name"])
+      expect(entry).to eq([:name, "New name"])
     end
 
     it "returns entry for editable JSON backed options" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, {
-        validation: { type: "Array", value: [1, 2, 3] }
-      })
+      attribute = Magma::MatchAttribute.create(
+        project_name: :project,
+        attribute_name: "name", 
+        model_name: :model, 
+        validation: { type: "Array", value: [1, 2, 3] })
 
       # Call attribute#validation_object to verify the cached validation_object
       # gets reset
@@ -129,14 +137,16 @@ describe Magma::Attribute do
           email: "outis@mountolympus.org"
         }))
 
-      expect(entry[0]).to eq("name")
+      expect(entry[0]).to eq(:name)
       expect(entry[1].to_json).to eq({type: "Array", value: [4, 5, 6]}.to_json)
+    end
   end
 
   describe "#query_to_payload" do
     it "returns attribute value for a JSON payload" do
-      model = double("model", project_name: :project, model_name: :model)
-      attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+      attribute = Magma::Attribute.new(
+        attribute_name: "name", 
+        description: "Old name")
 
       query = attribute.query_to_payload("New name")
 
@@ -145,15 +155,16 @@ describe Magma::Attribute do
   end
 
   describe "#query_to_tsv" do
-  it "returns attribute value for a TSV payload" do
-    model = double("model", project_name: :project, model_name: :model)
-    attribute = Magma::Attribute.new("name", model, { description: "Old name" })
+    it "returns attribute value for a TSV payload" do
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
+        description: "Old name")
 
-    query = attribute.query_to_tsv("New name")
+      query = attribute.query_to_tsv("New name")
 
-    expect(query).to eq("New name")
+      expect(query).to eq("New name")
+    end
   end
-end
 
   describe "#validation_object" do
     it "builds ArrayValidationObjects using validation options from the database" do

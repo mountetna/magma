@@ -203,7 +203,7 @@ describe RetrieveController do
         attribute_names: [ 'labor' ],
         project_name: 'labors'
       )
-
+      
       project_doc = json_body[:models][:project][:documents][project.name.to_sym]
 
       expect(project_doc).not_to be_nil
@@ -232,7 +232,7 @@ describe RetrieveController do
       )
 
       models = json_body[:models]
-
+      
       # the labor documents are received with the table identifiers filled in
       expect(models[:labor][:documents].size).to eq(2)
       expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to match_array(lion_prizes.map(&:id))

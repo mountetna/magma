@@ -13,6 +13,7 @@ class Magma
       "matrix" => "Magma::MatrixAttribute",
       "collection" => "Magma::CollectionAttribute",
       "file" => "Magma::FileAttribute",
+      "image" => "Magma::ImageAttribute",
       "link" => "Magma::LinkAttribute"
     }
 
@@ -84,23 +85,23 @@ class Magma
     end
 
     def read_only?
-      @read_only
+      read_only
     end
 
     def shown?
-      !@hidden
+      !hidden
     end
 
     def hidden?
-      @hidden
+      hidden
     end
 
     def column_name
-      @name
+      attribute_name.to_sym
     end
 
     def display_name
-      @display_name || name.to_s.split(/_/).map(&:capitalize).join(' ')
+      super || (attribute_name && attribute_name.split(/_/).map(&:capitalize).join(' '))
     end
 
     def database_type
@@ -146,7 +147,7 @@ class Magma
 
     def revision_to_loader(record_name, new_value)
       [
-        @name,
+        name,
         database_type == DateTime ?
           DateTime.parse(new_value) :
         database_type == Float ?

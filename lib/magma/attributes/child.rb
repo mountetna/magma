@@ -1,11 +1,6 @@
 class Magma
   class ChildAttribute < Attribute
     include Magma::Link
-    def initialize(name, model, opts)
-      model.one_to_one(name)
-      super
-    end
-
     def query_to_payload(value)
       value
     end

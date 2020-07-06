@@ -50,7 +50,7 @@ describe UpdateController do
         }
       }
     )
-
+    
     expect(last_response.status).to eq(200)
     expect(json_document(:project, 'The Ten Labors of Hercules')).to eq(name: 'The Ten Labors of Hercules')
     expect(Labors::Project.count).to eq(1)

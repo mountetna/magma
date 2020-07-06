@@ -5,10 +5,6 @@ class Magma
       foreign_id
     end
 
-    # def update(record_name, link)
-    #   [ @name, link ]
-    # end
-
     def entry(value, loader)
       return nil if value.nil?
 

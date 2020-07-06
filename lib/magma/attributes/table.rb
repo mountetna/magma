@@ -1,13 +1,8 @@
 class Magma
   class TableAttribute < Attribute
     include Magma::Link
-    def initialize(name, model, opts)
-      model.one_to_many(name, class: model.project_model(name), primary_key: :id)
-      super
-    end
 
     def query_to_payload(link)
-      link = record[name]
       link ? link.map(&:last) : nil
     end
 
