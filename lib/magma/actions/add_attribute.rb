@@ -29,10 +29,7 @@ class Magma
     private
 
     def create_attribute
-      attribute_class = Magma::Attribute.
-        sti_class_from_sti_key(@action_params[:type])
-
-      attribute_class.create(attribute_params)
+      attribute.save
     rescue Sequel::ValidationFailed => e
       @errors << Magma::ActionError.new(
         message: 'Create attribute failed',
