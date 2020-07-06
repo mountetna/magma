@@ -45,7 +45,12 @@ class Magma
     end
 
     def action_validations
-      [:validate_model, :validate_attribute_name_unique, :validate_attribute]
+      [
+        :validate_model,
+        :validate_attribute_name_unique,
+        :validate_options,
+        :validate_attribute
+      ]
     end
 
     def validate_model
@@ -64,6 +69,17 @@ class Magma
         message: "attribute_name already exists on #{model.name}",
         source: @action_params.slice(:project_name, :model_name, :attribute_name)
       )
+    end
+
+    def validate_options
+      @action_params.except(:action_name, :model_name, :attribute_name).keys.each do |option|
+        if !attribute.respond_to?(option)
+          @errors << Magma::ActionError.new(
+            message: "Attribute does not implement #{option}",
+            source: @action_params.slice(:action_name, :model_name, :attribute_name)
+          )
+        end
+      end
     end
 
     def validate_attribute

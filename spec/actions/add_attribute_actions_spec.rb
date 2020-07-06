@@ -124,5 +124,22 @@ describe Magma::AddAttributeAction do
         expect(action.errors.first[:message]).to eq("attribute_name doesn't match an existing model")
       end
     end
+
+    context "when an option doesn't exist" do
+      let(:action_params) do
+        {
+          action_name: "add_attribute",
+          model_name: model_name,
+          attribute_name: attribute_name,
+          type: "string",
+          foo: "bar"
+        }
+      end
+
+      it 'captures an attribute error' do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("Attribute does not implement foo")
+      end
+    end
   end
 end
