@@ -33,7 +33,6 @@ describe Magma::AddAttributeAction do
         expect(action.perform).to eq(true)
         expect(action.errors).to be_empty
         expect(Labors::Monster.attributes[attribute_name.to_sym].display_name).to eq("name")
-        expect(Labors::Monster.dataset.columns!).to include(attribute_name.to_sym)
       end
     end
 

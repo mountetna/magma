@@ -9,7 +9,11 @@ class Magma
     end
 
     def perform
-      valid? && @actions.all?(&:perform)
+      return false unless valid?
+      return false unless @actions.all?(&:perform)
+
+      update_model_tables
+      true
     end
 
     def errors
@@ -18,11 +22,33 @@ class Magma
 
     private
 
+    def update_model_tables
+      migrations = @project.migrations
+      return if migrations.all?(&:empty?)
+
+      sequel_migration = eval("
+        Sequel.migration do
+          up do
+            #{migrations.map(&:to_s).join("\n")}
+          end
+        end
+      ")
+
+      sequel_migration.apply(Magma.instance.db, :up)
+      restart_server
+    end
+
+    def restart_server
+      return if Magma.instance.test?
+      Process.kill("USR2", Magma.instance.server_pid)
+    end
+
     def valid?
       @errors.empty? && @actions.all?(&:validate)
     end
 
     def initialize(project_name, actions_list)
+      @project = Magma.instance.get_project(project_name)
       @errors = []
       @actions = []
 

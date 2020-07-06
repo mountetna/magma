@@ -1,17 +1,16 @@
 class Magma
   class AddAttributeAction < BaseAction
     def perform
-      if attribute = create_attribute
-        model.load_attributes([attribute])
-        update_model_table
-      end
+      save_attribute
+      return false if @errors.any?
 
-      @errors.empty?
+      model.load_attributes([attribute])
+      true
     end
 
     private
 
-    def create_attribute
+    def save_attribute
       attribute.save
     rescue Sequel::ValidationFailed => e
       @errors << Magma::ActionError.new(
@@ -19,29 +18,6 @@ class Magma
         source: @action_params.slice(:project_name, :model_name),
         reason: e
       )
-
-      nil
-    end
-
-    def update_model_table
-      model_migration = model.migration
-      return if model_migration.empty?
-
-      sequel_migration = eval("
-        Sequel.migration do
-          up do
-            #{model_migration.to_s}
-          end
-        end
-      ")
-
-      sequel_migration.apply(Magma.instance.db, :up)
-      restart_server
-    end
-
-    def restart_server
-      return if Magma.instance.test?
-      Process.kill("USR2", Magma.instance.server_pid)
     end
 
     def action_validations

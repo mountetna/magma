@@ -24,6 +24,40 @@ describe Magma::ModelUpdateActions do
       end
     end
 
+    context "when actions generate migrations" do
+      let(:actions) do
+        Magma::ModelUpdateActions.build(
+          "labors",
+          [
+            {
+              action_name: "add_attribute",
+              model_name: "monster",
+              attribute_name: "attribute_one",
+              type: "string"
+            },
+            {
+              action_name: "add_attribute",
+              model_name: "prize",
+              attribute_name: "attribute_two",
+              type: "string"
+            }
+          ]
+        )
+      end
+
+      after do
+        # Clear out new test attributes that are cached in memory
+        Labors::Monster.attributes.delete(:attribute_one)
+        Labors::Prize.attributes.delete(:attribute_two)
+      end
+
+      it "runs migrations to update the database" do
+        actions.perform
+        expect(Labors::Monster.dataset.columns!).to include(:attribute_one)
+        expect(Labors::Prize.dataset.columns!).to include(:attribute_two)
+      end
+    end
+
     describe 'with valid action_name' do
       let(:update_attribute_action) { double('update_attribute') }
       let(:validate_return) { true }
