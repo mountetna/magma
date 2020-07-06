@@ -1,13 +1,5 @@
-require_relative 'action_error'
-
 class Magma
-  class AddAttributeAction
-    def initialize(project_name, action_params = {})
-      @project_name = project_name
-      @action_params = action_params
-      @errors = []
-    end
-
+  class AddAttributeAction < BaseAction
     def perform
       if attribute = create_attribute
         model.load_attributes([attribute])
@@ -15,15 +7,6 @@ class Magma
       end
 
       @errors.empty?
-    end
-
-    def validate
-      validate_project && validate_model && validate_attribute_name_unique && validate_attribute
-      @errors.empty?
-    end
-
-    def errors
-      @errors.map(&:to_h)
     end
 
     private
@@ -61,41 +44,30 @@ class Magma
       Process.kill("USR2", Magma.instance.server_pid)
     end
 
-    def validate_project
-      return true if Magma.instance.get_project(@project_name)
-
-      @errors << Magma::ActionError.new(
-        message: 'Project does not exist',
-        source: @project_name
-      )
-
-      false
+    def action_validations
+      [:validate_model, :validate_attribute_name_unique, :validate_attribute]
     end
 
     def validate_model
-      return true if model
+      return if model
 
       @errors << Magma::ActionError.new(
         message: 'Model does not exist',
         source: @action_params.slice(:action_name, :model_name)
       )
-
-      false
     end
 
     def validate_attribute_name_unique
-      return true if !model.has_attribute?(attribute.attribute_name)
+      return if !model.has_attribute?(attribute.attribute_name)
 
       @errors << Magma::ActionError.new(
         message: "attribute_name already exists on #{model.name}",
         source: @action_params.slice(:project_name, :model_name, :attribute_name)
       )
-
-      false
     end
 
     def validate_attribute
-      return true if attribute.valid?
+      return if attribute.valid?
 
       attribute.errors.full_messages.each do |error|
         @errors << Magma::ActionError.new(
@@ -103,8 +75,6 @@ class Magma
           source: @action_params.slice(:project_name, :model_name, :attribute_name)
         )
       end
-
-      false
     end
 
     def attribute
