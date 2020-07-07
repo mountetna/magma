@@ -8,15 +8,33 @@ describe Magma::ModelUpdateActions do
             action_name: "delete_everything",
             model_name: "monster",
             attribute_name: "name",
-            description: "The monster's name",
-            display_name: "NAME"
+            description: "The monster's name"
           }]
         )
       end
 
       it 'produces an error with invalid names' do
         expect(actions.perform).to eq(false)
-        expect(actions.errors.first.message).to eq("Invalid action type")
+        expect(actions.errors.first[:message]).to eq("Invalid action type")
+      end
+    end
+
+    context "with non-existing project" do
+      let(:actions) do
+        Magma::ModelUpdateActions.build(
+          "not_a_project",
+          [{
+            action_name: "update_attribute",
+            model_name: "monster",
+            attribute_name: "name",
+            description: "The monster's name"
+          }]
+        )
+      end
+
+      it 'produces a project error' do
+        expect(actions.perform).to eq(false)
+        expect(actions.errors.first[:message]).to eq("Project does not exist")
       end
     end
 

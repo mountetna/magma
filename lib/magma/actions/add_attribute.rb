@@ -24,7 +24,7 @@ class Magma
       )
     end
 
-    def action_validations
+    def validations
       [
         :validate_model,
         :validate_attribute_name_unique,

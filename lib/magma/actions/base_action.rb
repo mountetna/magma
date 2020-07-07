@@ -31,20 +31,7 @@ class Magma
     private
 
     def validations
-      [:validate_project] + action_validations
-    end
-
-    def action_validations
       []
-    end
-
-    def validate_project
-      return if Magma.instance.get_project(@project_name)
-
-      @errors << Magma::ActionError.new(
-        message: 'Project does not exist',
-        source: @project_name
-      )
     end
   end
 end

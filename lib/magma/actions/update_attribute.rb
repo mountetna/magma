@@ -16,7 +16,7 @@ class Magma
 
     private
 
-    def action_validations
+    def validations
       [:validate_attribute_exists, :validate_options]
     end
 

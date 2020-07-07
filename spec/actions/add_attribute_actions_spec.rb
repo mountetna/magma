@@ -55,15 +55,6 @@ describe Magma::AddAttributeAction do
       end
     end
 
-    context "when the project doesn't exist" do
-      let(:project_name) { "houdini" }
-
-      it 'captures a project error' do
-        expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("Project does not exist")
-      end
-    end
-
     context "when the model doesn't exist" do
       let(:model_name) { 'super_duper' }
 

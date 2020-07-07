@@ -24,7 +24,7 @@ class Magma
     end
 
     def errors
-      @errors + @actions.flat_map(&:errors)
+      @errors.map(&:to_h) + @actions.flat_map(&:errors)
     end
 
     private
@@ -51,7 +51,17 @@ class Magma
     end
 
     def valid?
+      validate_project
       @errors.empty? && @actions.all?(&:validate)
+    end
+
+    def validate_project
+      return if @project
+
+      @errors << Magma::ActionError.new(
+        message: 'Project does not exist',
+        source: @project_name
+      )
     end
 
     def initialize(project_name, actions_list)
@@ -65,7 +75,7 @@ class Magma
         if action_class
           @actions << action_class.new(project_name, action_params)
         else
-          @errors << ActionError.new(
+          @errors << Magma::ActionError.new(
             message: "Invalid action type",
             source: action_params[:action_name]
           )
