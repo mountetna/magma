@@ -4,16 +4,23 @@ require_relative 'add_attribute'
 
 class Magma
   class ModelUpdateActions
+    class FailedActionError < StandardError; end
+
     def self.build(project_name, actions_list)
       new(project_name, actions_list)
     end
 
     def perform
       return false unless valid?
-      return false unless @actions.all?(&:perform)
 
-      update_model_tables
-      true
+      Magma.instance.db.transaction do
+        raise FailedActionError unless @actions.all?(&:perform)
+        update_model_tables
+        true
+      end
+    rescue
+      @actions.each(&:rollback)
+      false
     end
 
     def errors

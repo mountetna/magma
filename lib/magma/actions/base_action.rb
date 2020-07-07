@@ -21,6 +21,9 @@ class Magma
       raise NotImplementedError
     end
 
+    def rollback
+    end
+
     def errors
       @errors.map(&:to_h)
     end

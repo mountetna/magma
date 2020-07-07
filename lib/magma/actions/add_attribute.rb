@@ -8,6 +8,10 @@ class Magma
       true
     end
 
+    def rollback
+      model.attributes.delete(attribute.name)
+    end
+
     private
 
     def save_attribute

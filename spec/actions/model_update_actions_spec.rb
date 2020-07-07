@@ -1,30 +1,26 @@
 describe Magma::ModelUpdateActions do
-  let(:actions) do
-    Magma::ModelUpdateActions.build(
-      "labors", 
-      [{
-        action_name: action_name,
-        model_name: "monster",
-        attribute_name: "name",
-        description: "The monster's name",
-        display_name: "NAME"
-      }]
-    )
-  end
-
   describe '#perform' do
-    let(:action_name) { "update_attribute" }
-
-    describe 'with invalid action_name' do
-      let(:action_name) { "delete_everything" }
+    context 'with invalid action_name' do
+      let(:actions) do
+        Magma::ModelUpdateActions.build(
+          "labors",
+          [{
+            action_name: "delete_everything",
+            model_name: "monster",
+            attribute_name: "name",
+            description: "The monster's name",
+            display_name: "NAME"
+          }]
+        )
+      end
 
       it 'produces an error with invalid names' do
         expect(actions.perform).to eq(false)
-        expect(actions.errors.size).to eq(1)
+        expect(actions.errors.first.message).to eq("Invalid action type")
       end
     end
 
-    context "when actions generate migrations" do
+    context "with valid actions" do
       let(:actions) do
         Magma::ModelUpdateActions.build(
           "labors",
@@ -39,7 +35,7 @@ describe Magma::ModelUpdateActions do
               action_name: "add_attribute",
               model_name: "prize",
               attribute_name: "attribute_two",
-              type: "string"
+              type: "integer"
             }
           ]
         )
@@ -51,60 +47,47 @@ describe Magma::ModelUpdateActions do
         Labors::Prize.attributes.delete(:attribute_two)
       end
 
-      it "runs migrations to update the database" do
-        actions.perform
+      it "persists action changes in both the db and in memory" do
+        expect(actions.perform).to eq(true)
+
         expect(Labors::Monster.dataset.columns!).to include(:attribute_one)
+        expect(Labors::Monster.attributes[:attribute_one]).to be_a(Magma::StringAttribute)
+
         expect(Labors::Prize.dataset.columns!).to include(:attribute_two)
+        expect(Labors::Prize.attributes[:attribute_two]).to be_a(Magma::IntegerAttribute)
       end
     end
 
-    describe 'with valid action_name' do
-      let(:update_attribute_action) { double('update_attribute') }
-      let(:validate_return) { true }
-      let(:perform_return) { true }
-      let(:action_errors) { [] }
-
-      before do
-        allow(Magma::UpdateAttributeAction).to receive(:new).and_return(update_attribute_action)
-        allow(update_attribute_action).to receive(:validate).and_return(validate_return)
-        allow(update_attribute_action).to receive(:perform).and_return(perform_return)
-        allow(update_attribute_action).to receive(:errors).and_return(action_errors)
+    context "when an action fails", disable_database_cleaner_transaction: true do
+      let(:actions) do
+        Magma::ModelUpdateActions.build(
+          "labors",
+          [
+            {
+              action_name: "add_attribute",
+              model_name: "monster",
+              attribute_name: "new_attribute",
+              type: "string"
+            },
+            {
+              action_name: "update_attribute",
+              model_name: "monster",
+              attribute_name: "species",
+              validation: "invalid"
+            }
+          ]
+        )
       end
 
-      it 'calls validate and peform' do
-        expect(actions.perform).to eq(true)
-        expect(update_attribute_action).to have_received(:validate).once
-        expect(update_attribute_action).to have_received(:perform).once
-        expect(actions.errors).to eq([])
+      it "returns false and doesn't persist any action changes" do
+        expect(actions.perform).to eq(false)
+        expect(actions.errors).not_to be_empty
+
+        expect(Magma::Attribute["labors", "monster", "new_attribute"]).to be_nil
+        expect(Labors::Monster.dataset.columns!).not_to include(:new_attribute)
+        expect(Labors::Monster.attributes.keys).not_to include(:new_attribute)
+        expect(Labors::Monster.attributes[:species].validation).not_to eq("validation")
       end
-
-      describe 'when action#validate fails' do
-        let(:validate_return) { false } 
-
-        it 'perform fails and does not perform action' do
-          expect(actions.perform).to eq(false)
-          expect(update_attribute_action).to have_received(:validate).once
-          expect(update_attribute_action).not_to have_received(:perform)
-        end
-      end
-
-      describe 'when action#perform fails' do
-        let(:perform_return) { false }
-
-        it 'perform is called on action' do
-          expect(actions.perform).to eq(false)
-          expect(update_attribute_action).to have_received(:validate).once
-          expect(update_attribute_action).to have_received(:perform).once
-        end
-      end
-
-      describe '#errors' do
-        let(:action_errors) { [:oops] }
-
-        it 'returns action#errors' do
-          expect(actions.errors).to eq(action_errors)
-        end
-      end
-    end 
+    end
   end
 end
