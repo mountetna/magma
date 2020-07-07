@@ -13,6 +13,7 @@ class Magma
       "matrix" => "Magma::MatrixAttribute",
       "collection" => "Magma::CollectionAttribute",
       "file" => "Magma::FileAttribute",
+      "image" => "Magma::ImageAttribute",
       "link" => "Magma::LinkAttribute"
     }
 
@@ -83,6 +84,26 @@ class Magma
       attribute_name.to_sym
     end
 
+    def read_only?
+      read_only
+    end
+
+    def shown?
+      !hidden
+    end
+
+    def hidden?
+      hidden
+    end
+
+    def column_name
+      attribute_name.to_sym
+    end
+
+    def display_name
+      super || (attribute_name && attribute_name.split(/_/).map(&:capitalize).join(' '))
+    end
+
     def database_type
       nil
     end
@@ -116,57 +137,27 @@ class Magma
       }.delete_if {|k,v| v.nil? }
     end
 
-    def json_for record
-      record[ name ]
+    def query_to_payload(value)
+      value
     end
 
-    def txt_for(record)
-      json_for record
+    def query_to_tsv(value)
+      query_to_payload(value)
     end
 
-    def update_record(record, new_value)
-      record.set({name=> new_value})
-
-      if database_type == DateTime
-        return DateTime.parse(new_value)
-      elsif database_type == Float
-        return new_value.to_f
-      elsif database_type == Integer
-        return new_value.to_i
-      else
-        return new_value
-      end
+    def revision_to_loader(record_name, new_value)
+      [ name, new_value ]
     end
 
-    def read_only?
-      read_only
+    def revision_to_links(record_name, value)
     end
 
-    def shown?
-      !hidden
+    def revision_to_payload(record_name, value, user)
+      revision_to_loader(record_name, value)
     end
 
-    def hidden?
-      hidden
-    end
-
-    def column_name
-      attribute_name.to_sym
-    end
-
-    def display_name
-      super || (attribute_name && attribute_name.split(/_/).map(&:capitalize).join(' '))
-    end
-
-    def update_link(record, link)
-    end
-
-    def entry
-      if self.class.const_defined?(:Entry)
-        self.class.const_get(:Entry)
-      else
-        Magma::BaseAttributeEntry
-      end
+    def entry(value, loader)
+      [ name, value ]
     end
 
     private
@@ -193,12 +184,6 @@ class Magma
         "Magma::ForeignKeyAttribute"
       else
         self.class.name
-      end
-    end
-
-    class Entry < Magma::BaseAttributeEntry
-      def entry(value)
-        [ @attribute.name, value ]
       end
     end
   end

@@ -8,6 +8,7 @@ class Magma
 
       def validate(document)
         document.each do |att_name,value|
+          next if att_name == :id || att_name == :$identifier
           if att_name == :temp_id
             unless value.is_a? Magma::TempId
               yield "temp_id should be of class Magma::TempId"

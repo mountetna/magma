@@ -1,66 +1,70 @@
 class Magma
   class Revision
     attr_reader :model, :record_name
-    def initialize(model, record_name, revised_document, validator, restrict)
+    def initialize(model, record_name, revision)
       @model = model
-      @record = @model[@model.identity => record_name]
       @record_name = record_name
-      @revised_document = censored(revised_document || {})
-      @validator = validator
-      @restrict = restrict
-    end
-    attr_reader :errors
-
-    def updated_record
-      @updated_record ||= { @model.identity => final_record_name }
+      @revision = revision
     end
 
-    def final_record_name
-      @model.identity == :id ? @record.id : @revised_document[@model.identity]
-    end
-
-    def valid?
-      @errors = []
-
-      if @restrict
-        if @model.has_attribute?(:restricted) && @record[:restricted]
-          @errors.push "Cannot revise restricted #{@model.model_name} '#{@record.identifier}'"
-        end
-        @revised_document.each do |attribute_name, value|
-          if @model.has_attribute?(attribute_name) && @model.attributes[attribute_name].restricted
-            @errors.push "Cannot revise restricted attribute :#{ attribute_name } on #{@model.model_name} '#{@record.identifier}'"
-          end
-        end
-      end
-
-      @validator.validate(@model, @revised_document) do |error|
-        @errors.push error
-      end
-
-      @errors.empty?
+    def [](k)
+      @revision[k]
     end
 
     def attribute_names
-      @revised_document.keys
+      @revision.keys
     end
 
-    def post!
-      # update the record using this revision
-      @revised_document.each do |name, new_value|
-        updated_record[name.to_sym] = @model.attributes[name.to_sym].update_record(@record, new_value)
+    def to_payload(user)
+      to_record do |attribute, value|
+        attribute.revision_to_payload(@record_name, value, user)
       end
-      @record.save changed: true
+    end
 
-      @record.refresh
+    def to_loader
+      to_record do |attribute, value|
+        attribute.revision_to_loader(@record_name, value)
+      end
+    end
+
+    def each_linked_record
+      each_attribute do |attribute, value|
+        attribute.revision_to_links(record_name, value) do |link_model, link_identifiers|
+          link_identifiers.each do |link_identifier|
+            link_record = {
+              link_model.identity => link_identifier,
+              model.model_name.to_sym => record_name.to_s,
+              created_at: now,
+              updated_at: now
+            }
+            yield link_model, link_record
+          end
+        end
+      end
     end
 
     private
 
-    def censored document
+    def now
+      @now ||= DateTime.now
+    end
+
+    def to_record(&block)
       {
-        @model.identity => @record_name
-      }.merge(document).select do |att_name,val|
-        @model.has_attribute?(att_name) && !@model.attributes[att_name.to_sym].read_only?
+        # ensure the identifier
+        @model.identity => @record_name.to_s,
+
+        # back up the original identifier
+        :$identifier => @record_name.to_s
+      }.update(
+        each_attribute(&block).compact.to_h
+      )
+    end
+
+    def each_attribute
+      @revision.map do |attribute_name, value|
+        next unless @model.has_attribute?(attribute_name)
+        yield @model.attributes[attribute_name], value
       end
     end
   end

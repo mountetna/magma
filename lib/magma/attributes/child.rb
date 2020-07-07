@@ -1,14 +1,8 @@
 class Magma
   class ChildAttribute < Attribute
     include Magma::Link
-    def json_for record
-      record[name]
-    end
-
-    def update_record record, link
-      link_model.update_or_create(link_model.identity => link) do |obj|
-        obj[ self_id ] = record.id
-      end
+    def query_to_payload(value)
+      value
     end
 
     def missing_column?

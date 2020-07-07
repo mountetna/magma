@@ -1,9 +1,6 @@
-# Some vocabulary:
-# A 'model' is the class representing a database table.
-# A 'record' is an instance of a model or row in a database table.
-# A 'template' is a json object describing a model.
-# A 'document' is a json object describing a record.
-# An 'entry' is a hash suitable for database loading prepared from a document.
+require_relative './loader/temp_id'
+require_relative './loader/multi_update'
+require_relative './loader/record_entry'
 
 class Magma
   class LoadFailed < Exception
@@ -11,132 +8,6 @@ class Magma
 
     def initialize(complaints)
       @complaints = complaints
-    end
-  end
-
-  class RecordSet < Array
-    def initialize(model, loader)
-      @model = model
-      @loader = loader
-      @attribute_entries = {}
-    end
-
-    def identifier_id
-      @identifier_id ||= Hash[@model.select_map([@model.identity, :id])]
-    end
-
-    def attribute_entry(att_name, value)
-      attribute_entries(att_name).entry(value)
-    end
-
-    def validate(document)
-      @loader.validate(@model,document) do |error|
-        yield error
-      end
-    end
-
-    private
-
-    def attribute_entries(att_name)
-      @attribute_entries[att_name] ||= @model.attributes[att_name].entry.new(
-        @model, @model.attributes[att_name], @loader
-      )
-    end
-  end
-
-  class RecordEntry
-    attr_reader :complaints
-    attr_accessor :real_id
-
-    def initialize(model, document, set, loader)
-      @document = document
-      @model = model
-      @set = set
-      @loader = loader
-      @complaints = []
-      @valid = true
-
-      check_document_validity
-    end
-
-    def valid_new_entry?
-      valid? && !record_exists?
-    end
-
-    def valid_update_entry?
-      valid? && record_exists?
-    end
-
-    def valid_temp_update?
-      valid? && needs_temp?
-    end
-
-    def valid?
-      @valid
-    end
-
-    def needs_temp?
-      @needs_temp
-    end
-
-    def insert_entry
-      Hash[
-        @document.map do |att_name,value|
-          # filter out temp ids
-          if att_name == :temp_id
-            value.record_entry = self
-            next
-          end
-          if value.is_a? Magma::TempId
-            @needs_temp = true
-            next
-          end
-          @loader.attribute_entry(@model, att_name, value)
-        end.compact
-      ]
-    end
-
-    def update_entry
-      entry = insert_entry
-      entry[:id] = @loader.identifier_id(@model, @document[@model.identity])
-
-      # Never overwrite created_at.
-      entry.delete(:created_at)
-      entry
-    end
-
-    def temp_entry
-      entry = @document.clone
-
-      # Replace the entry with the appropriate values for the column.
-      Hash[
-        entry.map do |att_name,value|
-          if att_name == :temp_id
-            [ :real_id, value.real_id ]
-          elsif value.is_a? Magma::TempId
-            @loader.attribute_entry(@model, att_name, value)
-          else
-            nil
-          end
-        end.compact
-      ]
-    end
-
-    private
-
-    def record_exists?
-      @model.has_identifier? && @loader.identifier_exists?(@model,@document[@model.identity])
-    end
-
-    def check_document_validity
-      @set.validate(@document) do |complaint|
-        complain complaint
-        @valid = false
-      end
-    end
-
-    def complain plaint
-      @complaints << plaint
     end
   end
 
@@ -164,39 +35,18 @@ class Magma
       end
     end
 
+    attr_reader :validator
+
     def initialize
       @records = {}
       @temp_id_counter = 0
       @validator = Magma::Validation.new
+      @attribute_entries = {}
+      @identifiers = {}
     end
 
-    def push_record(model, document)
-      records(model) << RecordEntry.new(model, document, records(model), self)
-    end
-
-    def attribute_entry(model, att_name, value)
-      records(model).attribute_entry(att_name,value)
-    end
-
-    def identifier_id(model, identifier)
-      records(model).identifier_id[identifier]
-    end
-
-    alias_method :identifier_exists?, :identifier_id
-
-    def records(model)
-      return @records[model] if @records[model]
-
-      @records[model] = RecordSet.new(model, self)
-      ensure_link_models(model)
-
-      @records[model]
-    end
-
-    def validate(model, document)
-      @validator.validate(model,document) do |error|
-        yield error
-      end
+    def push_record(model, record)
+      records(model) << RecordEntry.new(model, record, self)
     end
 
     # Once we have loaded up all the records we wish to insert/update (upsert)
@@ -211,6 +61,8 @@ class Magma
     def reset
       @records = {}
       @validator = Magma::Validation.new
+      @attribute_entries = {}
+      @identifiers = {}
       GC.start
     end
 
@@ -221,7 +73,34 @@ class Magma
       temp_ids[obj] ||= TempId.new(new_temp_id, obj)
     end
 
+    def identifier_id(model, identifier)
+      @identifiers[model] ||= Hash[model.select_map([model.identity, :id])]
+
+      @identifiers[model][identifier]
+    end
+
+    alias_method :identifier_exists?, :identifier_id
+
     private
+
+    def attribute_entry(model, att_name, value)
+      model.attributes[att_name].entry(value, self)
+    end
+
+    def records(model)
+      return @records[model] if @records[model]
+
+      @records[model] = []
+      ensure_link_models(model)
+
+      @records[model]
+    end
+
+    def validate(model, record)
+      @validator.validate(model,record) do |error|
+        yield error
+      end
+    end
 
     def find_complaints
       complaints = []
@@ -241,7 +120,6 @@ class Magma
       # Loop the records separate them into an insert group and an update group.
       # @records is separated out by model.
       @records.each do |model, record_set|
-
         # Skip if the record_set for this model is empty.
         next if record_set.empty?
 
@@ -250,20 +128,39 @@ class Magma
         update_records = record_set.select(&:valid_update_entry?)
 
         # Run the record insertion.
+        multi_insert(model, insert_records)
+
+        # Run the record updates.
+        multi_update(model, update_records)
+
+      end
+    end
+
+    def multi_insert(model, insert_records)
+      by_attribute_key(insert_records) do |records|
         insert_ids = model.multi_insert(
-          insert_records.map(&:insert_entry),
+          records.map(&:insert_entry),
           return: :primary_key
         )
 
         if insert_ids
-          insert_records.zip(insert_ids).each do |record, real_id|
+          records.zip(insert_ids).each do |record, real_id|
             record.real_id = real_id
           end
         end
+      end
+    end
 
-        # Run the record updates.
-        update_records = update_records.map(&:update_entry)
-        model.multi_update(records: update_records)
+    def multi_update(model, update_records)
+      by_attribute_key(update_records) do |records|
+
+        MultiUpdate.new(model, records.map(&:update_entry), :id, :id).update
+      end
+    end
+
+    def by_attribute_key(all_records)
+      all_records.group_by(&:attribute_key).each do |_, records|
+        yield records
       end
     end
 
@@ -272,12 +169,7 @@ class Magma
         next if record_set.empty?
         temp_records = record_set.select(&:valid_temp_update?)
 
-        args = {
-          records: temp_records.map(&:temp_entry),
-          src_id: :real_id,
-          dest_id: :id
-        }
-        model.multi_update(args)
+        MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update
       end
     end
 
@@ -295,22 +187,6 @@ class Magma
       end
     end
   end
-
-  class TempId
-    # This marks the column as a temporary id. It needs to be replaced with a
-    # real foreign key id for the corresponding object once it is complete.
-    attr_reader :obj, :id
-    attr_accessor :record_entry
-
-    def initialize(id, obj)
-      @obj = obj
-      @id = id
-    end
-
-    def real_id
-      record_entry.real_id
-    end
-  end
 end
 
-require_relative './loaders/tsv'
+require_relative './loader/tsv'
