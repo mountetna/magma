@@ -1,9 +1,5 @@
 class Magma
   class FileAttribute < Attribute
-    def initialize(opts = {})
-      opts.merge!(type: :json)
-      super
-    end
 
     def database_type
       :json

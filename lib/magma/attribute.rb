@@ -146,16 +146,7 @@ class Magma
     end
 
     def revision_to_loader(record_name, new_value)
-      [
-        name,
-        database_type == DateTime ?
-          DateTime.parse(new_value) :
-        database_type == Float ?
-          new_value.to_f :
-        database_type == Integer ?
-          new_value.to_i :
-          new_value
-      ]
+      [ name, new_value ]
     end
 
     def revision_to_links(record_name, value)

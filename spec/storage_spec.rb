@@ -1,5 +1,3 @@
-require 'pry'
-
 describe 'Magma::Storage' do
     include Rack::Test::Methods
 

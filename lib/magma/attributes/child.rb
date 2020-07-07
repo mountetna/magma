@@ -5,12 +5,6 @@ class Magma
       value
     end
 
-    def revision_to_record(record, value)
-    end
-
-    def revision_to_links(record_name, value)
-    end
-
     def missing_column?
       false
     end

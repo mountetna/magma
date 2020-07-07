@@ -2,13 +2,13 @@ require_relative '../lib/magma'
 
 describe Magma::FileAttribute do
   it 'stores a JSON database type' do
-    file_attribute = Magma.instance.magma_projects[:labors].models[:monster].attributes[:stats]
+    file_attribute = Labors::Monster.attributes[:stats]
 
     expect(file_attribute.database_type).to eq(:json)
   end
 
   describe ".revision_to_loader" do
-    let(:file_attribute) { Magma.instance.magma_projects[:labors].models[:monster].attributes[:stats] }
+    let(:file_attribute) { Labors::Monster.attributes[:stats] }
     it 'returns entry when given valid path' do
         expect(file_attribute.revision_to_loader("Nemean Lion", {
             path: "metis://labors/Nemean Lion/lion-stats.txt"
@@ -56,7 +56,7 @@ describe Magma::FileAttribute do
   end
 
   describe ".revision_to_payload" do
-    let(:file_attribute) { Magma.instance.magma_projects[:labors].models[:monster].attributes[:stats] }
+    let(:file_attribute) { Labors::Monster.attributes[:stats] }
     let(:user) { Etna::User.new(email: "heracles@mountolympus.org", first: "Heracles", last: "of Thebes") }
     it 'returns full payload when given valid path' do
         payload = file_attribute.revision_to_payload("Nemean Lion", {
@@ -101,7 +101,7 @@ describe Magma::FileAttribute do
   end
 
   describe ".query_to_payload" do
-    let(:file_attribute) { Magma.instance.magma_projects[:labors].models[:monster].attributes[:stats] }
+    let(:file_attribute) { Labors::Monster.attributes[:stats] }
     
     it 'returns nil if no data passed in' do
         expect(file_attribute.query_to_payload(nil)).to eq(nil)

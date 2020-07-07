@@ -68,7 +68,6 @@ describe UpdateController do
         }
       }
     )
-
     lion.refresh
     expect(last_response.status).to eq(200)
     expect(lion.species).to eq('panthera leo')

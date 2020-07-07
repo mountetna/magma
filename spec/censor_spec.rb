@@ -16,7 +16,7 @@ describe Magma::Censor do
     )
     expect(censor.censored?(model, [Magma::Revision.new(model, 'Apollodorus', {
         country: 'Rome'
-    })])).to eq(nil)
+    })])).to eq(false)
   end
 
   it 'revisions censored for users with restricted permissions' do
@@ -31,11 +31,12 @@ describe Magma::Censor do
         user,
         'labors'
     )
-    expect { |b|
-        censor.censored?(model, [Magma::Revision.new(model, 'Apollodorus', {
-            country: 'Rome'
-        })], &b)
-    }.to yield_with_args("Cannot revise restricted attribute :country on victim 'Apollodorus'")
+    revisions = [Magma::Revision.new(model, 'Apollodorus', {
+        country: 'Rome'
+    })]
+    expect(censor.censored?(model, revisions)).to eq(true)
+    expect(censor.censored_reasons(model, revisions)).to eq(
+        ["Cannot revise restricted attribute :country on victim 'Apollodorus'"])
   end
 
   it 'revisions censored for users with restricted model' do
@@ -50,10 +51,11 @@ describe Magma::Censor do
         user,
         'labors'
     )
-    expect { |b|
-        censor.censored?(model, [Magma::Revision.new(model, 'Apollodorus', {
-            name: 'Victim father'
-        })], &b)
-    }.to yield_with_args("Cannot revise restricted victim 'Apollodorus'")
+    revisions = [Magma::Revision.new(model, 'Apollodorus', {
+        name: 'Victim father'
+    })]
+    expect(censor.censored?(model, revisions)).to eq(true)
+    expect(censor.censored_reasons(model, revisions)).to eq(
+        ["Cannot revise restricted victim 'Apollodorus'"])
   end
 end

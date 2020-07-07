@@ -36,9 +36,9 @@ class UpdateController < Magma::Controller
 
   def censor_revisions
     @revisions.each do |model, model_revisions|
-      @censor.censored?(model, model_revisions) do |error|
-        @errors.push error
-      end
+      next unless @censor.censored?(model, model_revisions)
+
+      @errors += @censor.censored_reasons(model, model_revisions)
     end
   end
 

@@ -90,10 +90,6 @@ describe Magma::Attribute do
         model_name: :model,
         validation: { type: "Array", value: [1, 2, 3] })
 
-      # Call attribute#validation_object to verify the cached validation_object
-      # gets reset
-      attribute.validation_object
-
       entry = attribute.revision_to_loader(:validation, { type: "Array", value: [4, 5, 6] })
 
       expect(entry[0]).to eq(:name)

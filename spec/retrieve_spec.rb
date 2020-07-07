@@ -1,5 +1,3 @@
-require 'pry'
-
 describe RetrieveController do
   include Rack::Test::Methods
 
