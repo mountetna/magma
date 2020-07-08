@@ -195,12 +195,6 @@ class Magma
       return if attribute_name == attribute_name&.snake_case
       errors.add(:attribute_name, "must be snake_case")
     end
-
-    class Entry < Magma::BaseAttributeEntry
-      def entry(value)
-        [ @attribute.name, value ]
-      end
-    end
   end
 end
 
