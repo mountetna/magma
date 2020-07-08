@@ -2,11 +2,6 @@ require 'csv'
 
 class Magma
   class Payload
-    # The payload is ONLY responsible for retrieving
-    # information from the model and turning it into JSON. It
-    # should not retrieve any data directly (except perhaps by
-    # invoking uncomputed model associations). Ideally all of
-    # the data is loaded already when passed into the payload.
     def initialize
       @models = {}
     end
@@ -16,7 +11,7 @@ class Magma
 
       @models[model] = ModelPayload.new(model,attribute_names)
     end
-    
+
     def add_records model, records
       @models[model].add_records records
     end
@@ -96,23 +91,16 @@ class Magma
         # A JSON version of this record (actually a hash). Each attribute
         # reports in its own fashion
         Hash[
-          @attribute_names.map do |name|
-            [ 
-              name, 
-              @model.has_attribute?(name) ? @model.attributes[name].json_for(record) : record[name] 
-            ]
-          end
+          @attribute_names.map do |attribute_name|
+            record.has_key?(attribute_name) ?  [
+              attribute_name, record[attribute_name]
+            ] : nil
+          end.compact
         ]
       end
 
       def tsv_header
         tsv_attributes.join("\t") + "\n"
-      end
-
-      def tsv_attributes
-        @tsv_attributes ||= @attribute_names.select do |att_name| 
-          att_name == :id || (@model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute))
-        end
       end
 
       def to_tsv
@@ -122,10 +110,18 @@ class Magma
               if att_name == :id
                 record[att_name]
               else
-                @model.attributes[att_name].txt_for(record)
+                @model.attributes[att_name].query_to_tsv(record[att_name])
               end
             end
           end
+        end
+      end
+
+      private
+
+      def tsv_attributes
+        @tsv_attributes ||= @attribute_names.select do |att_name|
+          att_name == :id || (@model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute))
         end
       end
     end

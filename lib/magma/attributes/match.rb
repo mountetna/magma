@@ -4,6 +4,10 @@ class Magma
       :json
     end
 
+    def entry(value, loader)
+      [ name, value.to_json ]
+    end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         return if value.nil? || value.empty?

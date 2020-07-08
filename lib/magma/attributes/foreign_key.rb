@@ -5,21 +5,14 @@ class Magma
       foreign_id
     end
 
-    def json_for record
-      record[name]
-    end
+    def entry(value, loader)
+      return nil if value.nil?
 
-    def update_record record, link
-      if link.nil?
-        return record[ foreign_id ] = nil
+      if value.is_a? Magma::TempId
+        [ foreign_id, value.real_id ]
+      elsif link_identity
+        [ foreign_id, loader.identifier_id(link_model, value) ]
       end
-
-      link_model.update_or_create(link_model.identity => link) do |obj|
-        record[ foreign_id ] = obj.id
-        return link
-      end
-
-      return nil
     end
 
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation

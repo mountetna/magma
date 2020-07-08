@@ -5,6 +5,14 @@ describe QueryController do
     OUTER_APP
   end
 
+  before(:each) do
+    route_payload = JSON.generate([
+      {:success=>true}
+    ])
+    stub_request(:any, /https:\/\/metis.test/).
+      to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+  end
+
   def query(question,user_type=:viewer)
     auth_header(user_type)
     json_post(:query, {project_name: 'labors', query: question})
@@ -278,9 +286,9 @@ describe QueryController do
 
   context Magma::FilePredicate do
     before(:each) do
-      lion = create(:monster, name: 'Nemean Lion', stats: 'lion-stats.tsv')
-      hydra = create(:monster, name: 'Lernean Hydra', stats: 'hydra-stats.tsv')
-      stables = create(:monster, name: 'Augean Stables', stats: 'stables-stats.tsv')
+      lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}')
+      hydra = create(:monster, name: 'Lernean Hydra', stats: '{"filename": "hydra-stats.tsv", "original_filename": "alpha-hydra.tsv"}')
+      stables = create(:monster, name: 'Augean Stables', stats: '{"filename": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}')
     end
 
     it 'returns a path' do
@@ -302,6 +310,32 @@ describe QueryController do
       expect(last_response.status).to eq(200)
 
       expect(json_body[:answer].map(&:last)).to all(match(/^https/))
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
+    end
+
+    it 'returns the original filename' do
+      query(
+        [ 'monster', '::all', 'stats', '::original_filename' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([ 'alpha-hydra.tsv', 'alpha-lion.tsv', 'alpha-stables.tsv' ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
+    end
+
+    it 'returns all the file data' do
+      query(
+        [ 'monster', '::all', 'stats', '::all' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort_by { |hsh| hsh[:filename] }).
+        to eq([
+          {original_filename: "alpha-hydra.tsv", filename: "hydra-stats.tsv"},
+          {original_filename: "alpha-lion.tsv", filename: "lion-stats.tsv"},
+          {original_filename: "alpha-stables.tsv", filename: "stables-stats.tsv"}])
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
     end
   end
@@ -457,6 +491,9 @@ describe QueryController do
           }
         }
       )
+      expect(last_response.status).to eq(200)
+      lion.refresh
+      expect(lion.contributions).to eq(matrix[1])
 
       # the new query should reflect the updated values
       query(

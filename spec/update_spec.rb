@@ -1,8 +1,24 @@
+require 'json'
+
 describe UpdateController do
   include Rack::Test::Methods
 
   def app
     OUTER_APP
+  end
+
+  before(:each) do
+    route_payload = JSON.generate([
+      {:method=>"POST", :route=>"/:project_name/files/copy", :name=>"file_bulk_copy", :params=>["project_name"]}
+    ])
+    stub_request(:options, 'https://metis.test').
+    to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+    route_payload = JSON.generate([
+      {:success=>true}
+    ])
+    stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+      to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
   end
 
   def update(revisions, user_type=:editor)
@@ -34,9 +50,12 @@ describe UpdateController do
         }
       }
     )
-
+    
     expect(last_response.status).to eq(200)
     expect(json_document(:project, 'The Ten Labors of Hercules')).to eq(name: 'The Ten Labors of Hercules')
+    expect(Labors::Project.count).to eq(1)
+    project.refresh
+    expect(project.name).to eq('The Ten Labors of Hercules')
   end
 
   it 'updates a string attribute' do
@@ -49,7 +68,6 @@ describe UpdateController do
         }
       }
     )
-
     lion.refresh
     expect(last_response.status).to eq(200)
     expect(lion.species).to eq('panthera leo')
@@ -108,6 +126,28 @@ describe UpdateController do
     expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
   end
 
+  it 'updates a link attribute' do
+    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+
+    reference_monster = create(:monster, name: 'Cnidaria')
+    other_monster = create(:monster, name: 'Nemean Lion')
+    monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
+    
+    update(
+      monster: {
+        'Lernean Hydra': {
+          reference_monster: 'Cnidaria'
+        }
+      }
+    )
+    
+    monster.refresh
+    expect(monster.reference_monster).to eq(reference_monster)
+
+    expect(last_response.status).to eq(200)
+    expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
+  end
+
   it 'updates a match' do
     entry = create(
       :codex, :lion, aspect: 'hide', tome: 'Bullfinch',
@@ -123,39 +163,638 @@ describe UpdateController do
       }
     )
     entry.refresh
-    expect(entry.lore).to eq(new_lore)
+    expect(entry.lore.to_hash).to eq(new_lore)
 
     expect(last_response.status).to eq(200)
     expect(json_document(:codex, entry.id.to_s)).to eq(lore: new_lore.symbolize_keys)
+
+    # Make sure the Metis copy endpoint was not called
+    expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+    with(query: hash_including({
+      "X-Etna-Headers": "revisions"
+    }))
   end
 
-  xit 'updates a file attribute' do
-    Timecop.freeze(DateTime.new(500))
-    lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+  context 'file attributes' do
+    it 'fails the update when the bulk copy request fails' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
 
-    update(
-      monster: {
-        'Nemean Lion' => {
-          stats: 'stats.txt'
+      # May be overkill ... but making sure each of the anticipated
+      #   exceptions from Metis bulk_copy results in a failed Magma update.
+      bad_request_statuses = [400, 403, 404, 422, 500]
+      req_counter = 0
+      bad_request_statuses.each do |status|
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+          to_return(status: status, body: '{}')
+
+        update(
+          monster: {
+            'Nemean Lion' => {
+              stats: {
+                path: 'metis://labors/files/lion-stats.txt'
+              }
+            }
+          }
+        )
+        req_counter += 1
+        lion.refresh
+        expect(lion.stats).to eq nil  # Did not change from the create state
+        expect(last_response.status).to eq(422)
+      end
+
+      Timecop.return
+    end
+
+    it 'marks a file as blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: {
+              path: '::blank'
+            }
+          }
         }
-      }
-    )
+      )
 
-    # the field is NOT updated here
-    lion.refresh
-    expect(lion.stats).to be_nil
+      # the field is updated
+      lion.refresh
+      expect(lion.stats.to_json).to eq({
+        "location": "::blank",
+        "filename": "::blank",
+        "original_filename": "::blank"
+      }.to_json)
 
-    expect(last_response.status).to eq(200)
+      expect(last_response.status).to eq(200)
 
-    # but we do get an upload url for Metis
-    uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:upload_url])
-    params = Rack::Utils.parse_nested_query(uri.query)
-    expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
-    expect(uri.path).to eq('/labors/upload/magma/stats.txt')
-    expect(params['X-Etna-Id']).to eq('magma')
-    expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:upload_expiration]).iso8601)
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats][:path]).to eq('::blank')
+      expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
 
-    Timecop.return
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes a file reference' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: '{"filename": "monster-Nemean Lion-lion-stats.txt", "original_filename": ""}')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: {
+              path: nil
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.stats.to_json).to eq({
+        "location": nil,
+        "filename": nil,
+        "original_filename": nil
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do not get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes a file reference using ::blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: '{"filename": "monster-Nemean Lion-lion-stats.txt", "original_filename": ""}')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: {
+              path: '::blank'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.stats.to_json).to eq({
+        "location": "::blank",
+        "filename": "::blank",
+        "original_filename": "::blank"
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do not get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:stats]).to eq({
+        path: '::blank'
+      })
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'returns a temporary Metis path when using ::temp' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: {
+              path: '::temp'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.stats).to eq(nil)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      upload_url = json_document(:monster, 'Nemean Lion')[:stats][:path]
+      expect(upload_url.
+        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+      expect(upload_url.
+        include?('X-Etna-Signature=')).to eq(true)
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'links a file from metis' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      update(
+        monster: {
+          'Nemean Lion' => {
+            stats: {
+              path: 'metis://labors/files/lion-stats.txt',
+              original_filename: 'original-file.txt'
+            }
+          }
+        }
+      )
+
+      lion.refresh
+      expect(lion.stats.to_json).to eq({
+        "location": "metis://labors/files/lion-stats.txt",
+        "filename": "monster-Nemean Lion-stats.txt",
+        "original_filename": "original-file.txt"
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an download url for Metis
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-stats.txt')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      expect(json_document(:monster, 'Nemean Lion')[:stats].key?(:path)).to eq (true)
+      expect(json_document(:monster, 'Nemean Lion')[:stats].key?(:original_filename)).to eq (true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+
+      Timecop.return
+    end
+  end
+
+  context 'image attributes' do
+    it 'fails the update when the bulk copy request fails' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      # May be overkill ... but making sure each of the anticipated
+      #   exceptions from Metis bulk_copy results in a failed Magma update.
+      bad_request_statuses = [400, 403, 404, 422, 500]
+      req_counter = 0
+      bad_request_statuses.each do |status|
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+          to_return(status: status, body: '{}')
+
+        update(
+          monster: {
+            'Nemean Lion' => {
+              selfie: {
+                path: 'metis://labors/files/lion-stats.txt'
+              }
+            }
+          }
+        )
+        req_counter += 1
+        lion.refresh
+        expect(lion.selfie).to eq nil  # Did not change from the create state
+        expect(last_response.status).to eq(422)
+      end
+
+      Timecop.return
+    end
+
+    it 'marks an image as blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: '::blank'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        "location": "::blank",
+        "filename": "::blank",
+        "original_filename": "::blank"
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:selfie][:path]).to eq('::blank')
+      expect(json_document(:monster, 'Nemean Lion')[:selfie][:url]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes an image reference' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"filename": "lion.jpg", "original_filename": ""}')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: nil
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        "location": nil,
+        "filename": nil,
+        "original_filename": nil
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do not get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:selfie]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes an image reference using ::blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"filename": "lion.jpg", "original_filename": ""}')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: '::blank'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        "location": "::blank",
+        "filename": "::blank",
+        "original_filename": "::blank"
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do not get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:selfie]).to eq({
+        path: '::blank'
+      })
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'returns a temporary Metis path when using ::temp' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: '::temp'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie).to eq(nil)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      upload_url = json_document(:monster, 'Nemean Lion')[:selfie][:path]
+      expect(upload_url.
+        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+      expect(upload_url.
+        include?('X-Etna-Signature=')).to eq(true)
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'links an image from metis' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: 'metis://labors/files/lion.jpg',
+              original_filename: 'closeup.jpg'
+            }
+          }
+        }
+      )
+
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        "location": "metis://labors/files/lion.jpg",
+        "filename": "monster-Nemean Lion-selfie.jpg",
+        "original_filename": "closeup.jpg"
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an download url for Metis
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:selfie][:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-selfie.jpg')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      expect(json_document(:monster, 'Nemean Lion')[:selfie].key?(:path)).to eq (true)
+      expect(json_document(:monster, 'Nemean Lion')[:selfie].key?(:original_filename)).to eq (true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+
+      Timecop.return
+    end
+  end
+
+  context 'image attributes' do
+    it 'fails the update when the bulk copy request fails' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      # May be overkill ... but making sure each of the anticipated
+      #   exceptions from Metis bulk_copy results in a failed Magma update.
+      bad_request_statuses = [400, 403, 404, 422, 500]
+      req_counter = 0
+      bad_request_statuses.each do |status|
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+          to_return(status: status, body: '{}')
+
+        update(
+          monster: {
+            'Nemean Lion' => {
+              selfie: {
+                path: 'metis://labors/files/lion-stats.txt'
+              }
+            }
+          }
+        )
+        req_counter += 1
+        lion.refresh
+        expect(lion.selfie).to eq nil  # Did not change from the create state
+        expect(last_response.status).to eq(422)
+      end
+
+      Timecop.return
+    end
+
+    it 'marks an image as blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: '::blank'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        location: "::blank",
+        filename: "::blank",
+        original_filename: "::blank"}.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:selfie][:path]).to eq('::blank')
+      expect(json_document(:monster, 'Nemean Lion')[:selfie][:url]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes an image reference' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"location": "https://metis.test/labors/Nemean Lion/headshot.png", "filename": "", "original_filename": ""}')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: nil
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        location: nil,
+        filename: nil,
+        original_filename: nil
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do not get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:selfie]).to be_nil
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes an image reference using ::blank' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', selfie: '{"location": "https://metis.test/labors/Nemean Lion/headshot.png", "filename": "", "original_filename": ""}')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: '::blank'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        location: '::blank',
+        filename: '::blank',
+        original_filename: '::blank'
+      }.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do not get an upload url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:selfie]).to eq({
+        path: '::blank'})
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'returns a temporary Metis path when using ::temp' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: '::temp'
+            }
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.selfie).to eq(nil)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis
+      upload_url = json_document(:monster, 'Nemean Lion')[:selfie][:path]
+      expect(upload_url.
+        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+      expect(upload_url.
+        include?('X-Etna-Signature=')).to eq(true)
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'links an image from metis' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      update(
+        monster: {
+          'Nemean Lion' => {
+            selfie: {
+              path: 'metis://labors/files/lion.jpg'
+            }
+          }
+        }
+      )
+
+      lion.refresh
+      expect(lion.selfie.to_json).to eq({
+        location: "metis://labors/files/lion.jpg",
+        filename: "monster-Nemean Lion-selfie.jpg",
+        original_filename: nil}.to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an download url for Metis
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:selfie][:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-selfie.jpg')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      expect(json_document(:monster, 'Nemean Lion')[:selfie].key?(:path)).to eq (true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+
+      Timecop.return
+    end
   end
 
   it 'updates a collection' do
@@ -171,13 +810,18 @@ describe UpdateController do
       }
     )
 
-    expect(last_response.status).to eq(200)
+    # we have created some new records
     expect(Labors::Labor.count).to be(2)
-    expect(json_document(:project, 'The Two Labors of Hercules')).to eq(name: 'The Two Labors of Hercules', labor: [ 'Lernean Hydra', 'Nemean Lion' ])
-
-    # check that it sets created_at and updated_at
     expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
     expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
+
+    # the labors are linked to the project
+    project.refresh
+    expect(project.labor.count).to eq(2)
+
+    # the updated record is returned
+    expect(last_response.status).to eq(200)
+    expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'Lernean Hydra', 'Nemean Lion' ])
   end
 
   it 'updates a matrix' do
@@ -263,7 +907,7 @@ describe UpdateController do
       expect(restricted_victim.name).to eq(orig_name)
     end
 
-    it 'allows updates to a restricted record by an unrestricted user' do
+    it 'allows updates to a restricted record by a privileged user' do
       orig_name = 'Outis Koutsonadis'
       new_name  = 'Outis Koutsomadis'
       restricted_victim = create(:victim, name: orig_name, restricted: true)
@@ -281,6 +925,7 @@ describe UpdateController do
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,new_name)).to eq(name: new_name)
 
+      expect(Labors::Victim.count).to eq(1)
       restricted_victim.refresh
       expect(restricted_victim.name).to eq(new_name)
     end
@@ -305,7 +950,7 @@ describe UpdateController do
       expect(victim.country).to eq('nemea')
     end
 
-    it 'allows updates to a restricted attribute by an unrestricted user' do
+    it 'allows updates to a restricted attribute by a privileged user' do
       victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
 
       update(

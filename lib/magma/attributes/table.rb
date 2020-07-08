@@ -1,16 +1,20 @@
 class Magma
   class TableAttribute < Attribute
     include Magma::Link
-    def json_for record
-      link = record[name]
+
+    def query_to_payload(link)
       link ? link.map(&:last) : nil
     end
 
-    def txt_for record
+    def query_to_tsv(value)
       nil
     end
 
-    def update_record record, new_value
+    def revision_to_loader(record_name, new_value)
+      nil
+    end
+
+    def revision_to_payload(record_name, value, user)
     end
 
     def missing_column?

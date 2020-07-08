@@ -99,7 +99,7 @@ describe RetrieveController do
   context 'files' do
     it 'retrieves file attributes with storage links' do
       Timecop.freeze(DateTime.new(500))
-      monster = create(:monster, :lion, stats: 'stats.txt')
+      monster = create(:monster, :lion, stats: '{"filename": "stats.txt", "original_filename": ""}')
 
       retrieve(
         project_name: 'labors',
@@ -109,7 +109,6 @@ describe RetrieveController do
       )
 
       expect(last_response.status).to eq(200)
-
       uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
       params = Rack::Utils.parse_nested_query(uri.query)
 
@@ -168,7 +167,7 @@ describe RetrieveController do
         project_name: 'labors',
         model_name: 'prize',
         record_names: prizes[0..1].map(&:id),
-        attribute_names: 'all' 
+        attribute_names: 'all'
       )
 
       expect(json_body[:models][:prize][:documents].keys).to eq(prizes[0..1].map(&:id).map(&:to_s).map(&:to_sym))
@@ -202,7 +201,7 @@ describe RetrieveController do
         attribute_names: [ 'labor' ],
         project_name: 'labors'
       )
-
+      
       project_doc = json_body[:models][:project][:documents][project.name.to_sym]
 
       expect(project_doc).not_to be_nil
@@ -231,7 +230,7 @@ describe RetrieveController do
       )
 
       models = json_body[:models]
-
+      
       # the labor documents are received with the table identifiers filled in
       expect(models[:labor][:documents].size).to eq(2)
       expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to match_array(lion_prizes.map(&:id))

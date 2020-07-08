@@ -1,49 +1,25 @@
 class Magma
   class CollectionAttribute < Attribute
     include Magma::Link
-    def json_for record
-      link = record[name]
+
+    def query_to_payload(link)
       link ? link.map(&:last).sort : nil
     end
 
-    def txt_for record
-      json_for(record).join(", ")
+    def query_to_tsv(value)
+      query_to_payload(value).join(", ")
     end
 
-    def update_record record, new_ids
-      old_links = record.send(name)
+    def revision_to_loader record, new_ids
+      nil
+    end
 
-      old_ids = old_links.map(&:identifier)
+    def revision_to_links(record_name, new_ids)
+      yield link_model, new_ids
+    end
 
-      removed_links = old_ids - new_ids
-      added_links = new_ids - old_ids
-
-      existing_links = link_records(added_links).select_map(link_model.identity)
-      new_links = added_links - existing_links
-
-      if !new_links.empty?
-        now = DateTime.now
-        link_model.multi_insert(
-          new_links.map do |link|
-            {
-              link_model.identity => link,
-              self_id => record.id,
-              created_at: now,
-              updated_at: now
-            }
-          end
-        )
-      end
-
-      if !existing_links.empty?
-        link_records( existing_links ).update( self_id => record.id )
-      end
-
-      if !removed_links.empty?
-        link_records( removed_links ).update( self_id => nil )
-      end
-
-      return new_ids.map do |id| [id] end
+    def revision_to_payload(record_name, value, user)
+      [ name, value ]
     end
 
     def missing_column?
