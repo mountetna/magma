@@ -33,5 +33,9 @@ class Magma
     def validations
       []
     end
+
+    def project
+      @project ||= Magma.instance.get_project(@project_name)
+    end
   end
 end
