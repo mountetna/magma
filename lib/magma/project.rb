@@ -65,6 +65,11 @@ class Magma
       project_container.const_set(model_data[:model_name].classify, model_class)
     end
 
+    def unload_model(model_name)
+      models.delete(model_name)
+      project_container.send(:remove_const, model_name.to_s.classify)
+    end
+
     private
 
     def project_container

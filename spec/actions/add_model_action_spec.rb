@@ -15,10 +15,7 @@ describe Magma::AddModelAction do
 
       after do
         # Remove test model and link relationships from memory
-        project = Magma.instance.get_project(:labors)
-        project.models.delete(:new_child_model)
-        Labors.send(:remove_const, :NewChildModel)
-        Labors::Labor.attributes.delete(:new_child_model)
+        action.rollback
       end
 
       it "adds the model and defines link relationships" do
@@ -57,10 +54,7 @@ describe Magma::AddModelAction do
 
       after do
         # Remove test model and link relationships from memory
-        project = Magma.instance.get_project(:labors)
-        project.models.delete(:new_table_model)
-        Labors.send(:remove_const, :NewTableModel)
-        Labors::Labor.attributes.delete(:new_table_model)
+        action.rollback
       end
 
       it "adds the model and defines link relationships" do
@@ -150,6 +144,32 @@ describe Magma::AddModelAction do
         expect(action.validate).to eq(false)
         expect(action.errors.first[:message]).to eq("parent_link_type must be one of child, collection, table")
       end
+    end
+  end
+
+  describe "#rollback" do
+    let(:action_params) do
+      {
+        action_name: "add_attribute",
+        model_name: "new_child_model",
+        identifier: "name",
+        parent_model_name: "labor",
+        parent_link_type: "child"
+      }
+    end
+
+    let(:project) { Magma.instance.get_project(:labors) }
+
+    before do
+      action.perform
+    end
+
+    it "rolls back in memory changes" do
+      action.rollback
+
+      expect(project.models.keys).not_to include(:new_child_model)
+      expect(Labors::Labor.attributes.keys).not_to include(:new_child_model)
+      expect { Labors::NewChildModel }.to raise_error(NameError)
     end
   end
 end

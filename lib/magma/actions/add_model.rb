@@ -1,21 +1,26 @@
 class Magma
   class AddModelAction < BaseAction
     def perform
-      model = create_model
+      @model = create_model
 
       if !table_parent_link?
-        model.identifier(@action_params[:identifier].to_sym).save
+        @model.identifier(@action_params[:identifier].to_sym).save
       end
 
-      model.parent(@action_params[:parent_model_name].to_sym).save
+      @model.parent(@action_params[:parent_model_name].to_sym).save
 
-      project.models[model.model_name] = model
+      project.models[@model.model_name] = @model
 
       parent_model.
-        send(@action_params[:parent_link_type], model.model_name).
+        send(@action_params[:parent_link_type], @model.model_name).
         save
 
       true
+    end
+
+    def rollback
+      parent_model.attributes.delete(@model.model_name)
+      project.unload_model(@model.model_name)
     end
 
     private
