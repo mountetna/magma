@@ -11,7 +11,6 @@ class Magma
     def validate
       validations.each do |validation|
         send(validation)
-        break if @errors.any?
       end
 
       @errors.empty?

@@ -30,6 +30,8 @@ class Magma
     end
 
     def validate_options
+      return unless attribute
+
       @action_params.except(:action_name, :model_name, :attribute_name).keys.each do |option|
         if restricted_options.include?(option)
           @errors << Magma::ActionError.new(
