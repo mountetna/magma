@@ -5,7 +5,7 @@ describe Magma::AddModelAction do
     context "for child/collection parent_link_type" do
       let(:action_params) do
         {
-          action_name: "add_attribute",
+          action_name: "add_model",
           model_name: "new_child_model",
           identifier: "name",
           parent_model_name: "labor",
@@ -45,7 +45,7 @@ describe Magma::AddModelAction do
     context "for table parent_link_type" do
       let(:action_params) do
         {
-          action_name: "add_attribute",
+          action_name: "add_model",
           model_name: "new_table_model",
           parent_model_name: "labor",
           parent_link_type: "table"
@@ -82,7 +82,7 @@ describe Magma::AddModelAction do
     context "when a required field is missing" do
       let(:action_params) do
         {
-          action_name: "add_attribute",
+          action_name: "add_model",
           identifier: "name",
           parent_model_name: "labor",
           parent_link_type: "child"
@@ -98,7 +98,7 @@ describe Magma::AddModelAction do
     context "when a required field is not snake_case" do
       let(:action_params) do
         {
-          action_name: "add_attribute",
+          action_name: "add_model",
           identifier: "name",
           model_name: "newChildModel",
           parent_model_name: "labor",
@@ -115,7 +115,7 @@ describe Magma::AddModelAction do
     context "when the parent model doesn't exist" do
       let(:action_params) do
         {
-          action_name: "add_attribute",
+          action_name: "add_model",
           model_name: "new_child_model",
           identifier: "name",
           parent_model_name: "houdini",
@@ -132,7 +132,7 @@ describe Magma::AddModelAction do
     context "when parent_link_type is incorrect" do
       let(:action_params) do
         {
-          action_name: "add_attribute",
+          action_name: "add_model",
           model_name: "new_child_model",
           identifier: "name",
           parent_model_name: "labor",
@@ -150,7 +150,7 @@ describe Magma::AddModelAction do
   describe "#rollback" do
     let(:action_params) do
       {
-        action_name: "add_attribute",
+        action_name: "add_model",
         model_name: "new_child_model",
         identifier: "name",
         parent_model_name: "labor",
