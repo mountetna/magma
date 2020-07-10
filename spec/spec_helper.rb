@@ -182,11 +182,7 @@ RSpec.configure do |config|
   end
 
   config.around(:each) do |example|
-    if example.metadata[:disable_database_cleaner_transaction]
-      example.run
-    else
-      DatabaseCleaner.cleaning { example.run }
-    end
+    DatabaseCleaner.cleaning { example.run }
   end
 end
 

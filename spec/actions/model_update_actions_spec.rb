@@ -76,7 +76,7 @@ describe Magma::ModelUpdateActions do
       end
     end
 
-    context "when an action fails", disable_database_cleaner_transaction: true do
+    context "when an action fails" do
       let(:actions) do
         Magma::ModelUpdateActions.build(
           "labors",
