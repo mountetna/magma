@@ -61,6 +61,7 @@ class Magma
     Sequel::Model.plugin :timestamps, update_on_create: true
     Sequel::Model.require_valid_table = false
     Sequel.extension :inflector
+    Sequel.extension :migration
     require_relative 'magma/attribute'
     require_relative 'magma/model'
   end
@@ -125,5 +126,13 @@ class Magma
     ObjectSpace.each_object(Class).select do |k|
       k < klass
     end
+  end
+
+  def test?
+    ENV["MAGMA_ENV"] == "test"
+  end
+
+  def server_pid
+    File.read(config(:server_pidfile)).chomp.to_i
   end
 end

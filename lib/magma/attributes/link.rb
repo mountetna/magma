@@ -31,5 +31,15 @@ class Magma
     def link_identity
       link_model.attributes[link_model.identity]
     end
+
+    private
+
+    def validate
+      super
+      link_model
+    rescue => e
+      field = link_model_name ? :link_model_name : :attribute_name
+      errors.add(field, "doesn't match an existing model")
+    end
   end
 end

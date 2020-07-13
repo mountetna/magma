@@ -17,7 +17,7 @@ class Magma
 
       alias_method :document, :file
 
-      def load_attributes(attributes = {})
+      def load_attributes(attributes = [])
         attributes.each do |attribute|
           @parent = attribute.name if attribute.is_a?(Magma::ParentAttribute)
           attribute.magma_model = self

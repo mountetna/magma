@@ -1,26 +1,71 @@
+require_relative 'base_action'
 require_relative 'update_attribute'
+require_relative 'add_attribute'
 
 class Magma
   class ModelUpdateActions
+    class FailedActionError < StandardError; end
+
     def self.build(project_name, actions_list)
       new(project_name, actions_list)
     end
 
     def perform
-      valid? && @actions.all?(&:perform)
+      return false unless valid?
+
+      Magma.instance.db.transaction do
+        raise FailedActionError unless @actions.all?(&:perform)
+        update_model_tables
+        true
+      end
+    rescue
+      @actions.each(&:rollback)
+      false
     end
 
     def errors
-      @errors + @actions.flat_map(&:errors)
+      @errors.map(&:to_h) + @actions.flat_map(&:errors)
     end
 
     private
 
+    def update_model_tables
+      migrations = @project.migrations
+      return if migrations.all?(&:empty?)
+
+      sequel_migration = eval("
+        Sequel.migration do
+          up do
+            #{migrations.map(&:to_s).join("\n")}
+          end
+        end
+      ")
+
+      sequel_migration.apply(Magma.instance.db, :up)
+      restart_server
+    end
+
+    def restart_server
+      return if Magma.instance.test?
+      Process.kill("USR2", Magma.instance.server_pid)
+    end
+
     def valid?
+      validate_project
       @errors.empty? && @actions.all?(&:validate)
     end
 
+    def validate_project
+      return if @project
+
+      @errors << Magma::ActionError.new(
+        message: 'Project does not exist',
+        source: @project_name
+      )
+    end
+
     def initialize(project_name, actions_list)
+      @project = Magma.instance.get_project(project_name)
       @errors = []
       @actions = []
 
@@ -30,7 +75,7 @@ class Magma
         if action_class
           @actions << action_class.new(project_name, action_params)
         else
-          @errors << ActionError.new(
+          @errors << Magma::ActionError.new(
             message: "Invalid action type",
             source: action_params[:action_name]
           )
