@@ -1,0 +1,51 @@
+version: "3.4"
+volumes:
+  magma-app-gems:
+    driver: local
+  magma-db-data:
+    driver: local
+  magma-log-dir:
+    driver: local
+  magma-tmp-dir:
+    driver: local
+
+x-magma_base: &magma_base
+  build:
+    context: .
+    dockerfile: docker/app/Dockerfile.development
+  image: magma_base
+  volumes:
+    - .:/app:cached
+    - magma-app-gems:/app/vendor/bundle:rw
+    - magma-log-dir:/app/log:rw
+    - magma-tmp-dir:/app/tmp:rw
+    - ./projects:/app/projects
+    - ../etna:/etna:cached
+  environment: &app_environment
+    COVERAGE: "true"
+    DATABASE_HOST: "db"
+    magma_ENV: "development"
+    MASTER_BUILD: "${MASTER_BUILD}"
+
+services:
+  magma_app:
+    <<: *magma_base
+    ports:
+      - 3003:3000
+    command: ./docker/app/puma.sh
+    depends_on:
+      - magma_db
+
+  magma_db:
+    build:
+      context: .
+      dockerfile: docker/db/Dockerfile
+    volumes:
+      - magma-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: magma_development
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: developer
+    ports:
+      - 5432
+    container_name: magma_db_1

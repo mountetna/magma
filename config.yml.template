@@ -1,0 +1,37 @@
+---
+:development:
+  :db:
+    :database: magma_development
+    :host: magma_db
+    :adapter: postgres
+    :user: developer
+    :password: password
+  :project_path: ./projects/ipi
+  :host: https://magma.development.local
+  :log_file: /dev/stdout
+  :log_level: error
+  :hmac_keys:
+    :magma: haggis
+  :storage:
+    :provider: metis
+    :host: metis.development.local
+    :download_expiration: 1440
+    :upload_expiration: 720
+:test:
+  :db:
+    :database: magma_test
+    :host: magma_db
+    :adapter: postgres
+    :user: developer
+    :password: password
+  :project_path: ./spec/labors/
+  :host: https://magma.test
+  :log_file: /dev/stdout
+  :log_level: error
+  :hmac_keys:
+    :magma: haggis
+  :storage:
+    :provider: metis
+    :host: metis.test
+    :download_expiration: 1440
+    :upload_expiration: 720
