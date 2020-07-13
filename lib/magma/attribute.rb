@@ -1,22 +1,7 @@
 class Magma
   class Attribute < Sequel::Model
-    plugin :single_table_inheritance, :type, model_map: {
-      "parent" => "Magma::ParentAttribute",
-      "string" => "Magma::StringAttribute",
-      "match" => "Magma::MatchAttribute",
-      "identifier" => "Magma::IdentifierAttribute",
-      "child" => "Magma::ChildAttribute",
-      "integer" => "Magma::IntegerAttribute",
-      "boolean" => "Magma::BooleanAttribute",
-      "date_time" => "Magma::DateTimeAttribute",
-      "table" => "Magma::TableAttribute",
-      "matrix" => "Magma::MatrixAttribute",
-      "collection" => "Magma::CollectionAttribute",
-      "file" => "Magma::FileAttribute",
-      "image" => "Magma::ImageAttribute",
-      "link" => "Magma::LinkAttribute",
-      "float" => "Magma::FloatAttribute"
-    }
+    plugin :single_table_inheritance, :type,
+      model_map: Proc.new { |type| "Magma::#{type.classify}Attribute" }
 
     set_primary_key [:project_name, :model_name, :attribute_name]
     unrestrict_primary_key
