@@ -45,6 +45,7 @@ class Magma
         merge(
           project_name: project_name,
           model_name: model_name,
+          column_name: attribute[:attribute_name],
           type: attribute[:attribute_type],
           validation: Sequel.pg_json_wrap(attribute[:validation]),
         )
