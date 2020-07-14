@@ -9,14 +9,24 @@
   :project_path: ./projects/ipi
   :host: https://magma.development.local
   :log_file: /dev/stdout
-  :log_level: error
-  :hmac_keys:
-    :magma: haggis
+  :log_level: info
   :storage:
     :provider: metis
     :host: metis.development.local
     :download_expiration: 1440
     :upload_expiration: 720
+  :token_algo: RS256
+  :token_name: JANUS_DEV_TOKEN
+  :rsa_public: |
+    -----BEGIN PUBLIC KEY-----
+    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6pLkfi2RXd3jHWKh9W37
+    k7Nw5aZxIQRCf9b5b0uUIqyk4ODH1Pd4s/hhYq/9c+HT2304NkiqRw4cVOHMgk8N
+    O+a+7F+HgspJZopyEBCJvBloBoPKrpkZv0FeVHYwiDM2kf3GFDzTPBdUSpYJimtn
+    HF29DdEoj6O5xL9uGW97QZ34JYacIeG7GmVGjYnCvA87S0miDUxvGlu40g+VJhND
+    mLXMzWa5vTxyGb4cEQSL6rryVxmBlonG4J41K7A04/7tftKvWrqsCWAfSCusNs8w
+    CgX77PmgC3zcOpKDZW0LVb2x7qhp67Fz1EMnRbV1vJY5L6U4FlUnu59/WiTvCpwu
+    NQIDAQAB
+    -----END PUBLIC KEY-----
 :test:
   :db:
     :database: magma_test

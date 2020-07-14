@@ -23,8 +23,8 @@ x-magma_base: &magma_base
     - ../etna:/etna:cached
   environment: &app_environment
     COVERAGE: "true"
-    DATABASE_HOST: "db"
-    magma_ENV: "development"
+    DATABASE_HOST: "magma_db"
+    MAGMA_ENV: "development"
     MASTER_BUILD: "${MASTER_BUILD}"
 
 services:
