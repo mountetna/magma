@@ -37,7 +37,8 @@ def load_labors_project
       row = options.merge(
         project_name: "labors",
         model_name: model_name,
-        attribute_name: attribute_name
+        attribute_name: attribute_name,
+        column_name: attribute_name
       )
 
       Magma.instance.db[:attributes].insert(row)

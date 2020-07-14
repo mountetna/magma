@@ -42,7 +42,12 @@ class Magma
       # Some Ipi models set the group option but it doesn't seem to be used anywhere
       opts.delete(:group)
 
-      super(opts.except(:magma_model, :loader))
+      super(
+        opts.
+          merge(column_name: opts[:attribute_name]).
+          except(:magma_model, :loader)
+      )
+
       self.magma_model = opts[:magma_model]
       @loader = opts[:loader]
     end

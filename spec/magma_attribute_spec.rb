@@ -72,11 +72,12 @@ describe Magma::Attribute do
 
   describe "#revision_to_loader" do
     it "returns entry for editable string backed options" do
-      attribute = Magma::StringAttribute.create(
+      attribute = Magma::StringAttribute.new(
         project_name: :project,
         attribute_name: "name", 
         model_name: :model, 
-        description: "Old name")
+        description: "Old name"
+      )
 
       entry = attribute.revision_to_loader(:description, "New name")
 
@@ -84,11 +85,12 @@ describe Magma::Attribute do
     end
 
     it "returns entry for editable JSON backed options" do
-      attribute = Magma::MatchAttribute.create(
+      attribute = Magma::MatchAttribute.new(
         project_name: :project,
         attribute_name: "name", 
         model_name: :model,
-        validation: { type: "Array", value: [1, 2, 3] })
+        validation: { type: "Array", value: [1, 2, 3] }
+      )
 
       entry = attribute.revision_to_loader(:validation, { type: "Array", value: [4, 5, 6] })
 
@@ -99,32 +101,31 @@ describe Magma::Attribute do
 
   describe "#revision_to_payload" do
     it "returns entry for editable string backed options" do
-      attribute = Magma::StringAttribute.create(
+      attribute = Magma::StringAttribute.new(
         project_name: :project,
         attribute_name: "name", 
         model_name: :model, 
-        description: "Old name")
+        description: "Old name"
+      )
 
       entry = attribute.revision_to_payload(
         :description,
         "New name",
         Etna::User.new({
           email: "outis@mountolympus.org"
-        }))
+        })
+      )
 
       expect(entry).to eq([:name, "New name"])
     end
 
     it "returns entry for editable JSON backed options" do
-      attribute = Magma::MatchAttribute.create(
+      attribute = Magma::MatchAttribute.new(
         project_name: :project,
         attribute_name: "name", 
         model_name: :model, 
-        validation: { type: "Array", value: [1, 2, 3] })
-
-      # Call attribute#validation_object to verify the cached validation_object
-      # gets reset
-      attribute.validation_object
+        validation: { type: "Array", value: [1, 2, 3] }
+      )
 
       entry = attribute.revision_to_payload(
         :validation,
@@ -164,7 +165,7 @@ describe Magma::Attribute do
 
   describe "#validation_object" do
     it "builds ArrayValidationObjects using validation options from the database" do
-      attribute = Magma::StringAttribute.create(
+      attribute = Magma::StringAttribute.new(
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
@@ -184,7 +185,7 @@ describe Magma::Attribute do
     end
 
     it "builds RangeValidationObjects using validation options from the database" do
-      attribute = Magma::IntegerAttribute.create(
+      attribute = Magma::IntegerAttribute.new(
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
@@ -204,7 +205,7 @@ describe Magma::Attribute do
     end
 
     it "builds RegexpValidationObjects using validation options from the database" do
-      attribute = Magma::StringAttribute.create(
+      attribute = Magma::StringAttribute.new(
         project_name: "project",
         model_name: "model",
         attribute_name: "name",
