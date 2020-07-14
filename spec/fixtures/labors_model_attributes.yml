@@ -2,6 +2,7 @@ aspect:
   dictionary: '{"dictionary_model":"Labors::Codex", "monster":"monster", "name":"aspect", "source":"tome", "value":"lore"}'
   monster:
     type: parent
+    column_name: monster_id
   name:
     type: string
   source:
@@ -11,6 +12,7 @@ aspect:
 codex:
   project:
     type: parent
+    column_name: project_id
   monster:
     type: string
   aspect:
@@ -22,6 +24,7 @@ codex:
 labor:
   project:
     type: parent
+    column_name: project_id
   name:
     type: identifier
   monster:
@@ -40,6 +43,7 @@ labor:
 monster:
   labor:
     type: parent
+    column_name: labor_id
   name:
     type: identifier
   species:
@@ -56,9 +60,11 @@ monster:
   reference_monster:
     type: link
     link_model_name: monster
+    column_name: reference_monster_id
 prize:
   labor:
     type: parent
+    column_name: labor_id
   name:
     type: string
   worth:
@@ -74,6 +80,7 @@ project:
 victim:
   monster:
     type: parent
+    column_name: monster_id
   name:
     type: identifier
   country:

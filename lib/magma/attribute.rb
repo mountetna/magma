@@ -42,22 +42,15 @@ class Magma
       # Some Ipi models set the group option but it doesn't seem to be used anywhere
       opts.delete(:group)
 
-      super(
-        opts.
-          merge(column_name: opts[:attribute_name]).
-          except(:magma_model, :loader)
-      )
-
+      super(opts.except(:magma_model, :loader))
       self.magma_model = opts[:magma_model]
+      self.column_name = initial_column_name
       @loader = opts[:loader]
     end
 
     def magma_model=(new_magma_model)
       @magma_model = new_magma_model
       after_magma_model_set
-    end
-
-    def after_magma_model_set
     end
 
     def name
@@ -76,10 +69,6 @@ class Magma
       hidden
     end
 
-    def column_name
-      attribute_name.to_sym
-    end
-
     def display_name
       super || (attribute_name && attribute_name.split(/_/).map(&:capitalize).join(' '))
     end
@@ -89,7 +78,7 @@ class Magma
     end
 
     def missing_column?
-      !@magma_model.columns.include?(column_name)
+      !@magma_model.columns.include?(column_name.to_sym)
     end
 
     def validation_object
@@ -141,6 +130,13 @@ class Magma
     end
 
     private
+
+    def after_magma_model_set
+    end
+
+    def initial_column_name
+      attribute_name
+    end
 
     MAGMA_ATTRIBUTES = [
       "Magma::BooleanAttribute",

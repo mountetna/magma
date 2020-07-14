@@ -72,7 +72,7 @@ class Magma
       if foreign_attribute?(att)
         return true
       else
-        return model.schema.has_key?(att.column_name)
+        return model.schema.has_key?(att.column_name.to_sym)
       end
     end
 
@@ -85,7 +85,7 @@ class Magma
       literal_type = att.is_a?(DateTimeAttribute)?  :"timestamp without time zone" :
         Magma.instance.db.cast_type_literal(att.database_type)
 
-      return model.schema[att.column_name][:db_type].to_sym == literal_type.to_sym
+      return model.schema[att.column_name.to_sym][:db_type].to_sym == literal_type.to_sym
     end
 
     SPC='  '
