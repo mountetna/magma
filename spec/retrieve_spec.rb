@@ -1,3 +1,4 @@
+require 'pry'
 describe RetrieveController do
   include Rack::Test::Methods
 
@@ -176,6 +177,10 @@ describe RetrieveController do
 
   context 'collections' do
     it 'retrieves collections as a list of identifiers' do
+      # Sequel::Model returns collections as individual rows instead
+      #   of a list of entries,
+      #   so this test does not reflect the same behavior as
+      #   the code.
       project = create(:project, name: 'The Twelve Labors of Hercules')
       labors = create_list(:labor, 3, project: project)
 
@@ -201,7 +206,7 @@ describe RetrieveController do
         attribute_names: [ 'labor' ],
         project_name: 'labors'
       )
-      
+
       project_doc = json_body[:models][:project][:documents][project.name.to_sym]
 
       expect(project_doc).not_to be_nil
@@ -230,7 +235,7 @@ describe RetrieveController do
       )
 
       models = json_body[:models]
-      
+
       # the labor documents are received with the table identifiers filled in
       expect(models[:labor][:documents].size).to eq(2)
       expect(models[:labor][:documents][:'Nemean Lion'][:prize]).to match_array(lion_prizes.map(&:id))
@@ -304,6 +309,23 @@ describe RetrieveController do
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
       expect(table.length).to eq(12)
+    end
+
+    it 'can retrieve a TSV of collection attribute' do
+      project = create(:project, name: 'The Twelve Labors of Hercules')
+      labors = create_list(:labor, 3, project: project)
+
+      retrieve(
+        model_name: 'project',
+        record_names: [ project.name ],
+        attribute_names: [ 'labor' ],
+        project_name: 'labors',
+        format: 'tsv'
+      )
+
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(table.length).to eq(1)
     end
   end
 
