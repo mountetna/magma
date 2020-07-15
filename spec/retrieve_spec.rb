@@ -176,10 +176,6 @@ describe RetrieveController do
 
   context 'collections' do
     it 'retrieves collections as a list of identifiers' do
-      # Sequel::Model returns collections as individual rows instead
-      #   of a list of entries,
-      #   so this test does not reflect the same behavior as
-      #   the code.
       project = create(:project, name: 'The Twelve Labors of Hercules')
       labors = create_list(:labor, 3, project: project)
 
