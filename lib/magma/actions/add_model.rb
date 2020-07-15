@@ -47,7 +47,7 @@ class Magma
 
     def validate_required_fields
       required_fields.each do |field|
-        validate_pressence(field)
+        validate_presence(field)
         validate_snake_case(field)
       end
     end
@@ -58,7 +58,7 @@ class Magma
       fields
     end
 
-    def validate_pressence(field)
+    def validate_presence(field)
       return if @action_params[field] && @action_params[field] != ""
 
       @errors << Magma::ActionError.new(
