@@ -1,6 +1,7 @@
 require_relative 'base_action'
 require_relative 'update_attribute'
 require_relative 'add_attribute'
+require_relative 'add_model'
 
 class Magma
   class ModelUpdateActions
@@ -18,8 +19,17 @@ class Magma
         update_model_tables
         true
       end
-    rescue
+    rescue => e
       @actions.each(&:rollback)
+
+      if @errors.empty?
+        @errors << Magma::ActionError.new(
+          message: "Unexpected error",
+          source: nil,
+          reason: e
+        )
+      end
+
       false
     end
 

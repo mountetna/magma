@@ -26,7 +26,7 @@ describe Magma::AddAttributeAction do
     context "when it succeeds" do
       after do
         # Clear out new test attributes that are cached in memory
-        Labors::Monster.attributes.delete(attribute_name.to_sym)
+        action.rollback
       end
 
       it 'adds a new attribute and returns no errors' do
@@ -130,6 +130,17 @@ describe Magma::AddAttributeAction do
         expect(action.validate).to eq(false)
         expect(action.errors.first[:message]).to eq("Attribute does not implement foo")
       end
+    end
+  end
+
+  describe "#rollback" do
+    before do
+      action.perform
+    end
+
+    it "rolls back in memory changes" do
+      action.rollback
+      expect(Labors::Monster.attributes.keys).not_to include(attribute_name.to_sym)
     end
   end
 end

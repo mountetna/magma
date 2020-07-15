@@ -52,6 +52,24 @@ class Magma
       ([ models[:project] ] + ordered_models(models[:project])).map(&:migration).reject(&:empty?)
     end
 
+    def load_model(model_data)
+      model_class = Class.new(Magma::Model) do
+        set_schema(
+          model_data[:project_name].to_sym,
+          model_data[:model_name].pluralize.to_sym
+        )
+
+        dictionary(model_data[:dictionary].symbolize_keys) if model_data[:dictionary]
+      end
+
+      project_container.const_set(model_data[:model_name].classify, model_class)
+    end
+
+    def unload_model(model_name)
+      models.delete(model_name)
+      project_container.send(:remove_const, model_name.to_s.classify)
+    end
+
     private
 
     def project_container
@@ -82,18 +100,7 @@ class Magma
     def load_models
       Magma.instance.db[:models].where(project_name: @project_name.to_s).
         reject { |model| project_container.const_defined?(model[:model_name].classify) }.
-        each do |model|
-          model_class = Class.new(Magma::Model) do
-            set_schema(
-              model[:project_name].to_sym,
-              model[:model_name].pluralize.to_sym
-            )
-
-            dictionary(model[:dictionary].symbolize_keys) if model[:dictionary]
-          end
-
-          project_container.const_set(model[:model_name].classify, model_class)
-        end
+        each { |model| load_model(model) }
     end
 
     def load_model_attributes

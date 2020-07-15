@@ -43,7 +43,7 @@ class Magma
     end
 
     def validate_attribute_name_unique
-      return if !model.has_attribute?(attribute.attribute_name)
+      return if !model&.has_attribute?(attribute.attribute_name)
 
       @errors << Magma::ActionError.new(
         message: "attribute_name already exists on #{model.name}",

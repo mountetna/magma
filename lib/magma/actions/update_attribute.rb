@@ -17,7 +17,7 @@ class Magma
     private
 
     def validations
-      [:validate_attribute_exists, :validate_options]
+      [:validate_attribute_exists, :validate_options, :validate_changes]
     end
 
     def validate_attribute_exists
@@ -30,6 +30,8 @@ class Magma
     end
 
     def validate_options
+      return unless attribute
+
       @action_params.except(:action_name, :model_name, :attribute_name).keys.each do |option|
         if restricted_options.include?(option)
           @errors << Magma::ActionError.new(
@@ -42,6 +44,20 @@ class Magma
             source: @action_params.slice(:action_name, :model_name, :attribute_name)
           )
         end
+      end
+    end
+
+    def validate_changes
+      return unless attribute
+      validation_attribute = attribute.dup
+      validation_attribute.set(@action_params.slice(*Magma::Attribute::EDITABLE_OPTIONS))
+      return if validation_attribute.valid?
+
+      validation_attribute.errors.full_messages.each do |error|
+        @errors << Magma::ActionError.new(
+          message: error,
+          source: @action_params.slice(:model_name, :attribute_name)
+        )
       end
     end
 
