@@ -4,12 +4,9 @@ set -e
 export PATH="/app/node_modules/.bin:/app/vendor/bundle/$RUBY_VERSION/bin:$PATH"
 
 function findEnvConfig() {
-  local splitLine=$(grep -n :test: config.yml | cut -d ':' -f 1)
-  if [[ $MAGMA_ENV == "test" ]]; then
-    tail -n+${splitLine} config.yml
-  else
-    head -n ${splitLine} config.yml
-  fi
+  wget https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 -o /dev/null -O ~/yq
+  chmod +x ~/yq
+  ~/yq r /app/config.yml ":${MAGMA_ENV:development}"
 }
 
 if [ -z "$SKIP_RUBY_SETUP" ]; then
