@@ -19,12 +19,12 @@ class UpdateController < Magma::Controller
     end.to_h
 
     censor_revisions
-    
+
     # Unclear if this step to update file links in Metis should
     # happen before load_revisions ... either could fail, which
     # should cause the other to not run.
     update_any_file_links if success?
-    
+
     load_revisions if success?
 
     return success_json(@payload.to_hash) if success?

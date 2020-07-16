@@ -46,9 +46,7 @@ class Magma
             @needs_temp = true
             next
           end
-          att_name == :id ?
-            [ :id, value ] :
-            @loader.send(:attribute_entry,@model, att_name, value)
+          @loader.attribute_entry(@model, att_name, value)
         end.compact
       ]
     end

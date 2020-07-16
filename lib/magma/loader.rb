@@ -81,11 +81,12 @@ class Magma
 
     alias_method :identifier_exists?, :identifier_id
 
-    private
-
     def attribute_entry(model, att_name, value)
+      return [:id, value] if att_name == :id
       model.attributes[att_name].entry(value, self)
     end
+
+    private
 
     def records(model)
       return @records[model] if @records[model]
