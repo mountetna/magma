@@ -7,7 +7,7 @@ class Magma
     end
 
     def query_to_tsv(value)
-      query_to_payload(value).join(", ")
+      value.join(", ")
     end
 
     def revision_to_loader record, new_ids
