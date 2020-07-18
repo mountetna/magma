@@ -46,7 +46,9 @@ class Magma
     end
 
     def push_record(model, record)
-      records(model) << RecordEntry.new(model, record, self)
+      id = record[:temp_id]&.is_a?(Magma::TempId) ? record[:temp_id] : record[model.identity]
+      records(model)[id] ||= RecordEntry.new(model, self)
+      records(model)[id] << record
     end
 
     # Once we have loaded up all the records we wish to insert/update (upsert)
@@ -91,7 +93,8 @@ class Magma
     def records(model)
       return @records[model] if @records[model]
 
-      @records[model] = []
+      @records[model] = {}
+
       ensure_link_models(model)
 
       @records[model]
@@ -108,7 +111,7 @@ class Magma
 
       @records.each do |model, record_set|
         next if record_set.empty?
-        complaints.concat(record_set.map(&:complaints))
+        complaints.concat(record_set.values.map(&:complaints))
       end
 
       complaints.flatten!
@@ -125,8 +128,8 @@ class Magma
         next if record_set.empty?
 
         # Our insert and update record groupings.
-        insert_records = record_set.select(&:valid_new_entry?)
-        update_records = record_set.select(&:valid_update_entry?)
+        insert_records = record_set.values.select(&:valid_new_entry?)
+        update_records = record_set.values.select(&:valid_update_entry?)
 
         # Run the record insertion.
         multi_insert(model, insert_records)
@@ -168,7 +171,7 @@ class Magma
     def update_temp_ids
       @records.each do |model, record_set|
         next if record_set.empty?
-        temp_records = record_set.select(&:valid_temp_update?)
+        temp_records = record_set.values.select(&:valid_temp_update?)
 
         MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update
       end
