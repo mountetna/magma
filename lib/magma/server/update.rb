@@ -45,9 +45,9 @@ class UpdateController < Magma::Controller
   def load_revisions
     @revisions.each do |model, model_revisions|
       model_revisions.each do |revision|
-        @loader.push_record(model, revision.to_loader)
+        @loader.push_record(model, revision.to_loader(@loader))
 
-        revision.each_linked_record do |link_model, link_record|
+        revision.each_linked_record(@loader) do |link_model, link_record|
           @loader.push_record(link_model, link_record)
         end
       end
@@ -113,7 +113,7 @@ class UpdateController < Magma::Controller
           elsif revision[attribute_name][:path].start_with? 'metis://'
             copy_revisions.push({
               source: revision[attribute_name][:path],
-              dest: "metis://#{@project_name}/magma/#{revision.to_loader[attribute_name][:filename]}"
+              dest: "metis://#{@project_name}/magma/#{revision.to_loader(@loader)[attribute_name][:filename]}"
             })
           end
         end
