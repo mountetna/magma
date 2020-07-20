@@ -474,6 +474,24 @@ describe RetrieveController do
 
       expect(json_body[:models][:labor][:count]).to eq(9)
     end
+
+    it 'returns a descriptive error when no results are retrieved on paginated query' do
+      lion = create(:labor, :lion)
+      hydra = create(:labor, :hydra)
+      stables = create(:labor, :stables)
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'name~xyz123',
+        page: 1,
+        page_size: 10
+      )
+
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Page 1 not found"])
+    end
   end
 
   context 'restriction' do

@@ -59,6 +59,8 @@ class RetrieveController < Magma::Controller
       return failure(422, errors: @errors) unless success?
 
       perform
+    rescue Magma::QuestionError => e
+      return failure(422, errors: [ e.message ])
     rescue ArgumentError => e
       puts e.backtrace
       return failure 422, errors: [ e.message ]
