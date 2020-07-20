@@ -46,6 +46,7 @@ monster:
     column_name: labor_id
   name:
     type: identifier
+    column_name: old_name
   species:
     type: string
     validation: '{"type":"Regexp", "value":"^[a-z\\s]+$"}'
