@@ -625,7 +625,36 @@ describe UpdateController do
       @apple_of_discord = { name: 'apple of discord', worth: 3000 }
     end
 
-    xit 'updates a table' do
+    it 'updates a table' do
+      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+      update(
+        'labor' => {
+          'The Golden Apples of the Hesperides' => {
+            prize: [
+              '::temp1',
+              '::temp2'
+            ]
+          },
+        },
+        'prize' => {
+          '::temp1' => @apple_of_joy,
+          '::temp2' => @apple_of_joy
+        }
+      )
+
+      # we have created some new records
+      expect(Labors::Prize.count).to eq(2)
+
+      # the prizes are linked to the labor
+      labor.refresh
+      expect(labor.prize.count).to eq(2)
+
+      # the updated record is returned
+      expect(last_response.status).to eq(200)
+      #expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
+    end
+
+    xit 'updates a table and returns the correct id' do
       labor = create(:labor, name: 'The Golden Apples of the Hesperides')
       update(
         'labor' => {
@@ -654,7 +683,7 @@ describe UpdateController do
       expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
     end
 
-    xit 'appends to an existing table' do
+    it 'appends to an existing table' do
       labor = create(:labor, name: 'The Golden Apples of the Hesperides')
       apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
       update(
@@ -676,7 +705,7 @@ describe UpdateController do
       expect(json_body[:models][:prize][:documents].values.map{|p|p[:name]}).to eq(['apple of joy']*2)
     end
 
-    it 'replaces an existing table' do
+    xit 'replaces an existing table' do
       labor = create(:labor, name: 'The Golden Apples of the Hesperides')
       apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
       update(
