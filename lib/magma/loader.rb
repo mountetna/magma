@@ -25,16 +25,6 @@ class Magma
 
   # A generic loader class.
   class Loader
-    class << self
-      def description desc=nil
-        @description ||= desc
-      end
-
-      def loader_name
-        name.snake_case.sub(/_loader$/,'')
-      end
-    end
-
     attr_reader :validator
 
     def initialize
