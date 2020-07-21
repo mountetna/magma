@@ -14,7 +14,7 @@ class Magma
     def extract table, identity
       records = Hash[
         @model.where(
-          @model.identity => table.map do |row|
+          @model.identity.column_name.to_sym => table.map do |row|
             row[identity]
           end
         ).map do |record|
@@ -34,13 +34,13 @@ class Magma
     end
 
     def select
-      @arguments.empty? ? [ Sequel[alias_name][@model.identity].as(column_name) ] : []
+      @arguments.empty? ? [ Sequel[alias_name][@model.identity.column_name].as(column_name) ] : []
     end
 
     private
 
     def column_name
-      :"#{alias_name}_#{@model.identity}"
+      :"#{alias_name}_#{@model.identity.column_name}"
     end
   end
 end
