@@ -22,6 +22,11 @@ class Magma
           @parent = attribute.name if attribute.is_a?(Magma::ParentAttribute)
           attribute.magma_model = self
           self.attributes[attribute.name] = attribute
+
+          if !attribute.is_a?(Magma::Link) && attribute.attribute_name != attribute.column_name
+            alias_method attribute.attribute_name, attribute.column_name
+            alias_method "#{attribute.attribute_name}=", "#{attribute.column_name}="
+          end
         end
       end
 
