@@ -34,7 +34,7 @@ class Magma
 
         if @requested_attribute_names != "all"
           attributes.sort_by! do |att|
-            if att.name == @model.identity
+            if att == @model.identity
               -1
             else
               @requested_attribute_names.index(att.name)
@@ -75,7 +75,7 @@ class Magma
 
     def requested?(att)
       # identifiers are always included
-      @model.identity == att.name ||
+      @model.identity == att ||
       # they asked for all attribute_names
       @requested_attribute_names == 'all' ||
       # the attribute was requested by name

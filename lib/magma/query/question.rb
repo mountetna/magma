@@ -84,7 +84,7 @@ class Magma
     end
 
     def identity
-      Sequel.qualify(@start_predicate.alias_name, @model.identity)
+      Sequel.qualify(@start_predicate.alias_name, @model.identity.column_name)
     end
 
     def type
