@@ -35,8 +35,8 @@ describe RetrieveController do
     json_template = json_body[:models][:aspect][:template]
 
     # all attributes are present
-    expect(json_template[:attributes].keys.sort).to eq(
-      [ :created_at, :monster, :name, :source, :updated_at, :value ]
+    expect(json_template[:attributes].keys).to eq(
+      Labors::Aspect.attributes.keys
     )
 
     # attributes are well-formed
@@ -219,7 +219,7 @@ describe RetrieveController do
       stables_prizes = create_list(:prize, 3, labor: stables)
 
       selected_prize_ids = (lion_prizes + hydra_prizes).map do |prize|
-        prize.send(Labors::Prize.identity).to_s
+        prize.send(Labors::Prize.identity.column_name).to_s
       end.sort
 
       retrieve(
@@ -252,7 +252,7 @@ describe RetrieveController do
       stables_prizes = create_list(:prize, 3, labor: stables)
 
       selected_prize_ids = (lion_prizes + hydra_prizes).map do |prize|
-        prize.send(Labors::Prize.identity).to_s
+        prize.send(Labors::Prize.identity.column_name).to_s
       end.sort
 
       retrieve(

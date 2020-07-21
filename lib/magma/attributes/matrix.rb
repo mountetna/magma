@@ -41,9 +41,12 @@ class Magma
 
       return if required_identifiers.empty?
 
-      cached_rows.update(
-        @magma_model.where( @magma_model.identity => required_identifiers.to_a ).select_map( [ @magma_model.identity, name ] ).to_h
-      )
+      rows = @magma_model.
+        where(@magma_model.identity.column_name.to_sym => required_identifiers.to_a).
+        select_map([@magma_model.identity.column_name.to_sym, name]).
+        to_h
+
+      cached_rows.update(rows)
     end
 
     def matrix_row_json(identifier, column_names)

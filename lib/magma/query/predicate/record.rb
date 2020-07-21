@@ -27,7 +27,7 @@ class Magma
 
     verb '::identifier' do
       child do
-        attribute_child(@model.identity)
+        attribute_child(@model.identity.attribute_name)
       end
     end
 
@@ -139,7 +139,7 @@ class Magma
       when Magma::MatrixAttribute
         return Magma::MatrixPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
       when Magma::StringAttribute
-        return Magma::StringPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::StringPredicate.new(@question, @model, alias_name, attribute.column_name, *@query_args)
       when Magma::IntegerAttribute, Magma::FloatAttribute
         return Magma::NumberPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
       when Magma::DateTimeAttribute

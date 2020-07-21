@@ -173,7 +173,7 @@ class RetrieveController < Magma::Controller
         [
           Magma::Retrieval::ParentFilter.new(
             att.link_model, model,
-            records.map{|r| r[model.identity]}
+            records.map{|r| r[model.identity.column_name.to_sym]}
           )
         ],
         false,

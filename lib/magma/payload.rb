@@ -78,7 +78,7 @@ class Magma
           documents: Hash[
             @records.map do |record|
               [
-                record[@model.identity], json_document(record)
+                record[@model.identity.attribute_name.to_sym], json_document(record)
               ]
             end
           ],

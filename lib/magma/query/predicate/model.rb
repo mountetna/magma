@@ -122,7 +122,7 @@ class Magma
     end
 
     def column_name
-      Sequel[alias_name][@model.identity]
+      Sequel[alias_name][@model.identity.column_name]
     end
 
     def constraint
@@ -143,7 +143,7 @@ class Magma
     end
 
     def identity
-      :"#{alias_name}_#{@model.identity}"
+      :"#{alias_name}_#{@model.identity.column_name}"
     end
   end
 end
