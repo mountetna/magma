@@ -33,11 +33,11 @@ class Magma
     end
 
     def ensure_identifier(model, identifier, loader=nil)
-      if loader && model.identity == :id && identifier =~ /^::temp/
+      if loader && model.identity.attribute_name.to_sym == :id && identifier =~ /^::temp/
         return { temp_id: loader.temp_id(identifier.to_sym) }
       end
 
-      { model.identity => identifier }
+      { model.identity.attribute_name.to_sym => identifier }
     end
 
     def each_linked_record(loader)

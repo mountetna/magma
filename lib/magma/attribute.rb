@@ -126,7 +126,7 @@ class Magma
     end
 
     def entry(value, loader)
-      [ name, value ]
+      [ column_name, value ]
     end
 
     private
