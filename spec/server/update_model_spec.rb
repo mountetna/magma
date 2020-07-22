@@ -29,7 +29,9 @@ describe UpdateModelController do
     end
 
     after do
-      Labors::Monster.attributes[:name] = @original_attribute
+      attribute = Labors::Monster.attributes[:name]
+      attribute.description = @original_attribute.description
+      attribute.display_name = @original_attribute.display_name
     end
 
     it "returns the project template with all changes" do
