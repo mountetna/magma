@@ -90,7 +90,7 @@ class Magma
     private
 
     def identifier
-      (@record[:$identifier] || @record[ @model.identity ]).tap do |i|
+      (@record[:$identifier] || @record[ @model.identity.column_name.to_sym ]).tap do |i|
         return @model.has_identifier? ? i : i.to_i
       end
     end

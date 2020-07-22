@@ -29,7 +29,7 @@ class Magma
     end
 
     def link_identity
-      link_model.attributes[link_model.identity]
+      link_model.attributes[link_model.identity.attribute_name.to_sym]
     end
 
     private

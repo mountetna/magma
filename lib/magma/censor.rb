@@ -16,9 +16,9 @@ class Magma
 
       if model.has_attribute?(:restricted)
         restricted_identifiers = model.where(
-          model.identity => revisions.map(&:record_name).map(&:to_s),
+          model.identity.column_name.to_sym => revisions.map(&:record_name).map(&:to_s),
           restricted: true
-        ).select_map(model.identity)
+        ).select_map(model.identity.column_name.to_sym)
 
         unless restricted_identifiers.empty?
           restricted_identifiers.each do |restricted_identifier|
