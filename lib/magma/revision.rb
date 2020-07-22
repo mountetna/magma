@@ -16,27 +16,42 @@ class Magma
     end
 
     def to_payload(user)
-      to_record do |attribute, value|
-        attribute.revision_to_payload(@record_name, value, user)
-      end
+      ensure_identifier(@model, @record_name.to_s).update(
+        to_record do |attribute, value|
+          attribute.revision_to_payload(@record_name, value, user)
+        end
+      )
     end
 
-    def to_loader
-      to_record do |attribute, value|
-        attribute.revision_to_loader(@record_name, value)
-      end
+    def to_loader(loader)
+      # ensure the identifier
+      ensure_identifier(@model, @record_name.to_s, loader).update(
+        to_record do |attribute, value|
+          attribute.revision_to_loader(@record_name, value)
+        end
+      )
     end
 
-    def each_linked_record
+    def ensure_identifier(model, identifier, loader=nil)
+      if loader && model.identity == :id && identifier =~ /^::temp/
+        return { temp_id: loader.temp_id(identifier.to_sym) }
+      end
+
+      { model.identity => identifier }
+    end
+
+    def each_linked_record(loader)
       each_attribute do |attribute, value|
-        attribute.revision_to_links(record_name, value) do |link_model, link_identifiers|
+        attribute.revision_to_links(@record_name, value) do |link_model, link_identifiers|
           link_identifiers.each do |link_identifier|
-            link_record = {
-              link_model.identity => link_identifier,
-              model.model_name.to_sym => record_name.to_s,
+            link_record = ensure_identifier(
+              link_model, link_identifier, loader
+            ).update(
+              :$identifier => link_identifier,
+              model.model_name.to_sym => @record_name.to_s,
               created_at: now,
               updated_at: now
-            }
+            )
             yield link_model, link_record
           end
         end
@@ -51,9 +66,6 @@ class Magma
 
     def to_record(&block)
       {
-        # ensure the identifier
-        @model.identity => @record_name.to_s,
-
         # back up the original identifier
         :$identifier => @record_name.to_s
       }.update(

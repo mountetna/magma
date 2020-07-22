@@ -14,6 +14,10 @@ class Magma
       nil
     end
 
+    def revision_to_links(record_name, new_ids)
+      yield link_model, new_ids
+    end
+
     def revision_to_payload(record_name, value, user)
     end
 
