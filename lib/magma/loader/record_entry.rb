@@ -1,14 +1,22 @@
 class Magma
   class RecordEntry
-    attr_reader :complaints
     attr_accessor :real_id
 
-    def initialize(model, record, loader)
-      @record = record
+    def initialize(model, loader)
+      @record = {}
       @model = model
       @loader = loader
-      @complaints = []
+    end
+
+    def <<(record)
+      @record.update(record)
+    end
+
+    def complaints
+      return @complaints if @complaints
       check_document_validity
+
+      return @complaints
     end
 
     def valid_new_entry?
@@ -24,7 +32,7 @@ class Magma
     end
 
     def valid?
-      @complaints.empty?
+      complaints.empty?
     end
 
     def needs_temp?
@@ -46,9 +54,7 @@ class Magma
             @needs_temp = true
             next
           end
-          att_name == :id ?
-            [ :id, value ] :
-            @loader.send(:attribute_entry,@model, att_name, value)
+          @loader.attribute_entry(@model, att_name, value)
         end.compact
       ]
     end
@@ -94,6 +100,7 @@ class Magma
     end
 
     def check_document_validity
+      @complaints = []
       @loader.validator.validate(@model, @record) do |complaint|
         @complaints << complaint
       end
