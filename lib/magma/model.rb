@@ -112,7 +112,7 @@ class Magma
               [ name, attributes[name].json_template ]
             end
           ],
-          identifier: identity.attribute_name,
+          identifier: identity.attribute_name.to_sym,
           dictionary: @dictionary && @dictionary.to_hash,
           parent: parent_model_name
         }.delete_if {|k,v| v.nil? }
