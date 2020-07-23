@@ -71,6 +71,7 @@ prize:
     type: string
   worth:
     type: integer
+    column_name: old_worth
 project:
   name:
     type: identifier
