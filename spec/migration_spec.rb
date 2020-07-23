@@ -108,7 +108,7 @@ EOT
   context 'update migrations' do
     def remove_attribute(model, attribute)
       model.attributes.delete(attribute)
-      model.instance_variable_set("@identity",nil) if model.identity == attribute
+      model.instance_variable_set("@identity",nil) if model.identity.column_name.to_sym == attribute
     end
 
     it 'suggests an update migration for identifiers' do
