@@ -5,10 +5,6 @@ class Magma
       super(opts.merge(unique: true))
     end
 
-    def primary_key?
-      !!@primary_key
-    end
-
     private
 
     def after_magma_model_set

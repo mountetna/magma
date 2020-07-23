@@ -69,6 +69,10 @@ class Magma
       hidden
     end
 
+    def primary_key?
+      !!@primary_key
+    end
+
     def display_name
       super || (attribute_name && attribute_name.split(/_/).map(&:capitalize).join(' '))
     end
