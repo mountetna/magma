@@ -9,7 +9,7 @@ class Magma
 
     def after_magma_model_set
       @magma_model.identity = self
-      @magma_model.order(attribute_name) unless @magma_model.order
+      @magma_model.order(column_name) unless @magma_model.order
     end
   end
 end
