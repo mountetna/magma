@@ -40,7 +40,7 @@ class Magma
         when Magma::ForeignKeyAttribute
           not_null_constraint(attribute.foreign_id)
         else
-          not_null_constraint(attribute.name)
+          not_null_constraint(attribute.column_name.to_sym)
         end
       end
     end
@@ -54,7 +54,7 @@ class Magma
         when Magma::ForeignKeyAttribute
           basic_constraint(attribute.foreign_id, nil)
         else
-          basic_constraint(attribute.name, nil)
+          basic_constraint(attribute.column_name.to_sym, nil)
         end
       end
     end
@@ -133,19 +133,19 @@ class Magma
       when Magma::TableAttribute, Magma::CollectionAttribute
         return Magma::ModelPredicate.new(@question, attribute.link_model, *@query_args)
       when Magma::FileAttribute, Magma::ImageAttribute
-        return Magma::FilePredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::FilePredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::MatchAttribute
-        return Magma::MatchPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::MatchPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::MatrixAttribute
-        return Magma::MatrixPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::MatrixPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::StringAttribute
-        return Magma::StringPredicate.new(@question, @model, alias_name, attribute.column_name, *@query_args)
+        return Magma::StringPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::IntegerAttribute, Magma::FloatAttribute
-        return Magma::NumberPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::NumberPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::DateTimeAttribute
-        return Magma::DateTimePredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::DateTimePredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::BooleanAttribute
-        return Magma::BooleanPredicate.new(@question, @model, alias_name, attribute.name, *@query_args)
+        return Magma::BooleanPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       else
         invalid_argument! attribute.name
       end

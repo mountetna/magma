@@ -8,21 +8,21 @@ class Magma
       child TrueClass
 
       constraint do
-        comparison_constraint(@attribute_name, @arguments[0], @arguments[1].to_f)
+        comparison_constraint(@column_name, @arguments[0], @arguments[1].to_f)
       end
     end
 
     verb '::in', Array do
       child TrueClass
       constraint do
-        basic_constraint(@attribute_name, @arguments[1])
+        basic_constraint(@column_name, @arguments[1])
       end
     end
 
     verb '::not', Array do
       child TrueClass
       constraint do
-        not_constraint(@attribute_name, @arguments[1])
+        not_constraint(@column_name, @arguments[1])
       end
     end
   end

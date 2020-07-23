@@ -8,7 +8,7 @@ class Magma
       child TrueClass
 
       constraint do
-        basic_constraint(@attribute_name, Regexp.new(@arguments[1]))
+        basic_constraint(@column_name, Regexp.new(@arguments[1]))
       end
     end
 
@@ -16,7 +16,7 @@ class Magma
       child TrueClass
 
       constraint do
-        basic_constraint(@attribute_name, @arguments[1])
+        basic_constraint(@column_name, @arguments[1])
       end
     end
 
@@ -24,7 +24,7 @@ class Magma
       child TrueClass
 
       constraint do
-        not_constraint(@attribute_name, @arguments[1])
+        not_constraint(@column_name, @arguments[1])
       end
     end
 
@@ -32,7 +32,7 @@ class Magma
       child TrueClass
 
       constraint do
-        basic_constraint(@attribute_name, @arguments[1])
+        basic_constraint(@column_name, @arguments[1])
       end
     end
 
@@ -40,7 +40,7 @@ class Magma
       child TrueClass
 
       constraint do
-        not_constraint(@attribute_name, @arguments[1])
+        not_constraint(@column_name, @arguments[1])
       end
     end
   end
