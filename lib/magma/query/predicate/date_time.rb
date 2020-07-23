@@ -9,7 +9,7 @@ class Magma
 
       constraint do
         op, date = @arguments
-        comparison_constraint(@attribute_name, op, DateTime.parse(date))
+        comparison_constraint(@column_name, op, DateTime.parse(date))
       end
     end
 
