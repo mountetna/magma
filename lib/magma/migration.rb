@@ -191,8 +191,15 @@ class Magma
         next if @model.attributes[ name.to_s.sub(/_id$/,'').to_sym ]
         next if @model.attributes[ name.to_s.sub(/_type$/,'').to_sym ]
         next if db_opts[:primary_key]
+        next if attribute_with_different_column_name?(name)
         remove_column_entry(name)
       end.compact.flatten
+    end
+
+    def attribute_with_different_column_name?(name)
+      @model.attributes.any? do |attribute_name, attribute|
+        attribute.column_name.to_sym == name
+      end
     end
   end
 end
