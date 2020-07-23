@@ -181,7 +181,7 @@ EOT
       migration = Labors::Prize.migration
       expect(migration.to_s).to eq <<EOT.chomp
     alter_table(Sequel[:labors][:prizes]) do
-      drop_column :worth
+      drop_column :#{worth.column_name}
     end
 EOT
       Labors::Prize.attributes[:worth] = worth
@@ -216,7 +216,7 @@ EOT
       expect(migration.to_s).to eq <<EOT.chomp
     alter_table(Sequel[:labors][:prizes]) do
       add_column :weight, Float
-      drop_column :worth
+      drop_column :#{worth.column_name}
     end
 EOT
       remove_attribute(Labors::Prize, :weight)
@@ -225,12 +225,15 @@ EOT
 
     it 'changes column types' do
       original_attribute = Labors::Prize.attributes.delete(:worth)
-      Labors::Prize.attributes[:worth] = Magma::Model.float(:worth)
+      Labors::Prize.attributes[:worth] = Magma::Model.float(
+        :worth,
+        column_name: original_attribute.column_name
+      )
 
       migration = Labors::Prize.migration
       expect(migration.to_s).to eq <<EOT.chomp
     alter_table(Sequel[:labors][:prizes]) do
-      set_column_type :worth, Float
+      set_column_type :#{original_attribute.column_name}, Float
     end
 EOT
       Labors::Prize.attributes[:worth] = original_attribute
