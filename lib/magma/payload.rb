@@ -55,7 +55,8 @@ class Magma
     class ModelPayload
       def initialize model, attribute_names
         @model = model
-        @attribute_names = attribute_names || @model.attributes.keys
+        @attribute_names = attribute_names ||
+          @model.attributes.reject { |name, attr| attr.primary_key? }.keys
         @records = []
       end
 

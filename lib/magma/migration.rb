@@ -102,7 +102,7 @@ class Magma
     end
 
     def new_attributes
-      @model.attributes.map do |name,att|
+      @model.attributes.reject { |name, attr| attr.primary_key? }.map do |name,att|
         next if foreign_attribute?(att)
         attribute_migration(att)
       end.compact.flatten
@@ -170,7 +170,7 @@ class Magma
     private
 
     def missing_attributes
-      @model.attributes.map do |name,att|
+      @model.attributes.reject { |name, attr| attr.primary_key? }.map do |name,att|
         next if schema_supports_attribute?(@model, att)
         attribute_migration(att)
       end.compact.flatten
@@ -178,7 +178,7 @@ class Magma
 
 
     def changed_attributes
-      @model.attributes.map do |name,att|
+      @model.attributes.reject { |name, attr| attr.primary_key? }.map do |name,att|
         next unless schema_supports_attribute?(@model,att)
         next if schema_unchanged?(@model,att)
         column_type_entry(att.column_name, att.database_type)
