@@ -10,7 +10,6 @@ class Magma
               project_name: project_name,
               model_name: model_name,
               attribute_name: attribute_name,
-              column_name: attribute_name,
               magma_model: self
             ))
           end

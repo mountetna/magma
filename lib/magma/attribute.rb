@@ -44,7 +44,7 @@ class Magma
 
       super(opts.except(:magma_model, :loader))
       self.magma_model = opts[:magma_model]
-      self.column_name = initial_column_name
+      self.column_name = initial_column_name unless self.column_name
       @loader = opts[:loader]
     end
 
