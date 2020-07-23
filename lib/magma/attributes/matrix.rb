@@ -7,7 +7,7 @@ class Magma
     end
 
     def entry(value, loader)
-      [ name, value.to_json ]
+      [ column_name, value.to_json ]
     end
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
@@ -43,7 +43,7 @@ class Magma
 
       rows = @magma_model.
         where(@magma_model.identity.column_name.to_sym => required_identifiers.to_a).
-        select_map([@magma_model.identity.column_name.to_sym, name]).
+        select_map([@magma_model.identity.column_name.to_sym, column_name.to_sym]).
         to_h
 
       cached_rows.update(rows)
