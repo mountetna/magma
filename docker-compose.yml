@@ -1,4 +1,4 @@
-version: "3.4"
+version: '3.4'
 volumes:
   magma-app-gems:
     driver: local
@@ -8,6 +8,14 @@ volumes:
     driver: local
   magma-tmp-dir:
     driver: local
+
+networks:
+  edge_net:
+    ipam:
+      driver: default
+      config:
+        - subnet: '172.16.238.0/24'
+        - subnet: '2001:3984:3989::/64'
 
 x-magma_base: &magma_base
   build:
@@ -22,10 +30,16 @@ x-magma_base: &magma_base
     - ./projects:/app/projects
     - ../etna:/etna:cached
   environment: &app_environment
-    COVERAGE: "true"
-    DATABASE_HOST: "magma_db"
-    MAGMA_ENV: "development"
-    MASTER_BUILD: "${MASTER_BUILD}"
+    COVERAGE: 'true'
+    DATABASE_HOST: 'magma_db'
+    MAGMA_ENV: 'development'
+    MASTER_BUILD: '${MASTER_BUILD}'
+  # Maps external facing host names to the internal ip for development-apache.
+  extra_hosts:
+    - 'metis.development.local:172.16.238.10'
+  networks:
+    edge_net:
+    default:
 
 services:
   magma_app:

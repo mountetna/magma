@@ -7,6 +7,9 @@ ENV DOCKERIZE_VERSION 0.5.0
 ENV DOCKERIZE_URL https://github.com/jwilder/dockerize/releases/download/v${DOCKERIZE_VERSION}/dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 ENV SERVICE_NAME magma
 
+ADD docker/app/rootCA.pem /usr/local/share/ca-certificates/devRoot.crt
+RUN chmod 644 /usr/local/share/ca-certificates/devRoot.crt && update-ca-certificates
+
 # add postgres 10 repo for debian stretch
 RUN echo "deb http://apt.postgresql.org/pub/repos/apt/ stretch-pgdg main" >> /etc/apt/sources.list.d/pgdg.list
 RUN wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
