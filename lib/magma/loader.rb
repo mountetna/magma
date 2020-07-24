@@ -46,7 +46,7 @@ class Magma
     end
 
     def push_record(model, record)
-      id = record[:temp_id]&.is_a?(Magma::TempId) ? record[:temp_id] : record[model.identity]
+      id = record[:temp_id]&.is_a?(Magma::TempId) ? record[:temp_id] : record[model.identity.column_name.to_sym]
       records(model)[id] ||= RecordEntry.new(model, self)
       records(model)[id] << record
     end
