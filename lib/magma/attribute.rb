@@ -174,6 +174,7 @@ class Magma
       super
       validate_validation_json
       validate_attribute_name_format
+      validate_attribute_name_unique
     end
 
     def validate_validation_json
@@ -186,6 +187,12 @@ class Magma
     def validate_attribute_name_format
       return if attribute_name == attribute_name&.snake_case
       errors.add(:attribute_name, "must be snake_case")
+    end
+
+    def validate_attribute_name_unique
+      return unless modified?(:attribute_name)
+      return unless @magma_model.has_attribute?(attribute_name)
+      errors.add(:attribute_name, "already exists on the model")
     end
   end
 end
