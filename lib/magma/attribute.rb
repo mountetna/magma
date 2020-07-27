@@ -1,7 +1,8 @@
 class Magma
   class Attribute < Sequel::Model
     plugin :single_table_inheritance, :type,
-      model_map: Proc.new { |type| "Magma::#{type.classify}Attribute" }
+      model_map: Proc.new { |type| "Magma::#{type.classify}Attribute" },
+      key_map: Proc.new { |attribute| attribute.attribute_type }
 
     set_primary_key [:project_name, :model_name, :attribute_name]
     unrestrict_primary_key
