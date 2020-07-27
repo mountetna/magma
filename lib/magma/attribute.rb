@@ -4,7 +4,7 @@ class Magma
       model_map: Proc.new { |type| "Magma::#{type.classify}Attribute" },
       key_map: Proc.new { |attribute| attribute.attribute_type }
 
-    set_primary_key [:project_name, :model_name, :attribute_name]
+    set_primary_key [:project_name, :model_name, :column_name]
     unrestrict_primary_key
 
     plugin :dirty
