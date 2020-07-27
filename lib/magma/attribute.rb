@@ -175,6 +175,7 @@ class Magma
       validate_validation_json
       validate_attribute_name_format
       validate_type
+      validate_attribute_name_unique
     end
 
     def validate_validation_json
@@ -193,6 +194,12 @@ class Magma
     def validate_type
       return if Magma.const_defined?("#{type.classify}Attribute")
       errors.add(:type, "is not a supported type")
+    end
+
+    def validate_attribute_name_unique
+      return unless modified?(:attribute_name)
+      return unless @magma_model.has_attribute?(attribute_name)
+      errors.add(:attribute_name, "already exists on the model")
     end
   end
 end

@@ -34,4 +34,54 @@ describe Magma::RenameAttributeAction do
       expect(renamed_attribute.validation).to eq(@original_attribute.validation)
     end
   end
+
+  describe "#validate" do
+    context "when there's no attribute with attribute_name" do
+      let(:action_params) do
+        {
+          action: "rename_attribute",
+          model_name: "monster",
+          attribute_name: "does_not_exist",
+          new_attribute_name: "species_name"
+        }
+      end
+
+      it "captures an attribute error" do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("Attribute does not exist")
+      end
+    end
+
+    context "when new_attribute_name is not properly formatted" do
+      let(:action_params) do
+        {
+          action: "rename_attribute",
+          model_name: "monster",
+          attribute_name: "species",
+          new_attribute_name: "speciesName"
+        }
+      end
+
+      it "captures an attribute error" do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case")
+      end
+    end
+
+    context "when there's already an attribute with new_attribute_name" do
+      let(:action_params) do
+        {
+          action: "rename_attribute",
+          model_name: "monster",
+          attribute_name: "species",
+          new_attribute_name: "victim"
+        }
+      end
+
+      it "captures an attribute error" do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("attribute_name already exists on the model")
+      end
+    end
+  end
 end
