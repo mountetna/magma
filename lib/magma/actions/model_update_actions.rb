@@ -23,7 +23,7 @@ class Magma
     rescue => e
       Magma.instance.logger.log_error(e)
 
-      @actions.each(&:rollback)
+      @actions.reverse_each(&:rollback)
 
       if @errors.empty?
         @errors << Magma::ActionError.new(
