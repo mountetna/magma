@@ -21,7 +21,7 @@ class Magma
         true
       end
     rescue => e
-      @actions.reverse_each(&:rollback)
+      restart_server
 
       if @errors.empty?
         @errors << Magma::ActionError.new(
