@@ -1,12 +1,19 @@
 class Magma
   class RenameAttributeAction < BaseAction
     def perform
-      attribute.update(attribute_name: @action_params[:new_attribute_name])
+      @original_attribute_name = attribute.attribute_name.to_sym
 
-      model.attributes.delete(attribute.column_name.to_sym)
+      model.attributes.delete(@original_attribute_name)
+      attribute.update(attribute_name: @action_params[:new_attribute_name])
       model.attributes[attribute.attribute_name.to_sym] = attribute
 
       true
+    end
+
+    def rollback
+      model.attributes.delete(@action_params[:new_attribute_name].to_sym)
+      attribute.attribute_name = @original_attribute_name.to_s
+      model.attributes[@original_attribute_name] = attribute
     end
 
     private

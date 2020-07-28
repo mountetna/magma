@@ -84,4 +84,27 @@ describe Magma::RenameAttributeAction do
       end
     end
   end
+
+  describe "#rollback" do
+    let(:action_params) do
+      {
+        action: "rename_attribute",
+        model_name: "monster",
+        attribute_name: "species",
+        new_attribute_name: "species_name"
+      }
+    end
+
+    before do
+      action.perform
+    end
+
+    it "rolls back in memory changes" do
+      action.rollback
+
+      expect(Labors::Monster.attributes[:species_name]).to be_nil
+      expect(Labors::Monster.attributes[:species]).not_to be_nil
+      expect(Labors::Monster.attributes[:species].attribute_name).to eq("species")
+    end
+  end
 end
