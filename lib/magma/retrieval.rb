@@ -42,11 +42,6 @@ class Magma
           end
         end
 
-        # if there is no identifier, use the :id column
-        if !@model.has_identifier?
-          attributes.push(OpenStruct.new(name: :id))
-        end
-
         attributes
       end
     end
