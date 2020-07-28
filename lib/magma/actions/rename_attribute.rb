@@ -10,12 +10,6 @@ class Magma
       true
     end
 
-    def rollback
-      model.attributes.delete(@action_params[:new_attribute_name].to_sym)
-      attribute.attribute_name = @original_attribute_name.to_s
-      model.attributes[@original_attribute_name] = attribute
-    end
-
     private
 
     def validations
