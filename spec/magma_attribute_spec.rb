@@ -223,4 +223,15 @@ describe Magma::Attribute do
       expect(attribute.validation_object.validate("A")).to eq(true)
     end
   end
+
+  describe "#valid?" do
+    it "returns false if type doesn't match an existing Magma::Attribute" do
+      attribute = Magma::Attribute.new(
+        attribute_name: "name",
+        type: "invalid"
+      )
+
+      expect(attribute.valid?).to eq(false)
+    end
+  end
 end
