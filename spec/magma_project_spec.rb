@@ -101,6 +101,13 @@ describe Magma::Project do
         updated_at: Time.now
       )
 
+      Magma.instance.db[:models].insert(
+          project_name: "movies",
+          model_name: "status",
+          created_at: Time.now,
+          updated_at: Time.now
+      )
+
       Magma.instance.db[:attributes].insert(
         project_name: "movies",
         model_name: "hero",
@@ -115,6 +122,8 @@ describe Magma::Project do
 
       expect(project.models[:hero]).to eq(Movies::Hero)
       expect(Movies::Hero.attributes[:name].description).to eq("The hero's name")
+
+      expect(project.models[:status]).to eq(Movies::Status)
     end
   end
 

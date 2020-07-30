@@ -62,12 +62,12 @@ class Magma
         dictionary(model_data[:dictionary].symbolize_keys) if model_data[:dictionary]
       end
 
-      project_container.const_set(model_data[:model_name].classify, model_class)
+      project_container.const_set(model_data[:model_name].camelize, model_class)
     end
 
     def unload_model(model_name)
       models.delete(model_name)
-      project_container.send(:remove_const, model_name.to_s.classify)
+      project_container.send(:remove_const, model_name.to_s.camelize)
     end
 
     private
@@ -99,7 +99,7 @@ class Magma
 
     def load_models
       Magma.instance.db[:models].where(project_name: @project_name.to_s).
-        reject { |model| project_container.const_defined?(model[:model_name].classify) }.
+        reject { |model| project_container.const_defined?(model[:model_name].camelize) }.
         each { |model| load_model(model) }
     end
 

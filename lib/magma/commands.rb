@@ -21,6 +21,11 @@ class Magma
       end
     end
 
+    def setup(config)
+      super
+      Magma.instance.setup_db
+    end
+
     private
 
     def load_model(project_name, model_name, template)
