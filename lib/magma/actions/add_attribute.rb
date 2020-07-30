@@ -17,6 +17,7 @@ class Magma
     def save_attribute
       attribute.save
     rescue Sequel::ValidationFailed => e
+      Magma.instance.logger.log_error(e)
       @errors << Magma::ActionError.new(
         message: 'Create attribute failed',
         source: @action_params.slice(:project_name, :model_name),

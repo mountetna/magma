@@ -3,6 +3,8 @@ class Magma
     def perform
       attribute.update(@action_params.slice(*Magma::Attribute::EDITABLE_OPTIONS))
     rescue Sequel::ValidationFailed => e
+      Magma.instance.logger.log_error(e)
+
       @errors << Magma::ActionError.new(
         message: 'Update attribute failed',
         source: @action_params.slice(:attribute_name, :model_name),

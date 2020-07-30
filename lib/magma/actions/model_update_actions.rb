@@ -20,6 +20,8 @@ class Magma
         true
       end
     rescue => e
+      Magma.instance.logger.log_error(e)
+
       @actions.each(&:rollback)
 
       if @errors.empty?

@@ -175,6 +175,7 @@ class Magma
       return unless validation
       validation_object
     rescue => e
+      Magma.instance.logger.log_error(e)
       errors.add(:validation, "is not properly formatted")
     end
 
