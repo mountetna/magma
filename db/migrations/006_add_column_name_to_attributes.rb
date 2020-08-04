@@ -4,7 +4,9 @@ Sequel.migration do
       add_column :column_name, String
     end
 
-    Magma.instance.db.execute("UPDATE attributes SET column_name=attribute_name")
+    Magma.instance.db.execute("UPDATE attributes SET column_name=CONCAT(attribute_name,'_id') WHERE attributes.type IN ('link', 'parent')")
+
+    Magma.instance.db.execute("UPDATE attributes SET column_name=attribute_name WHERE attributes.type NOT IN ('link', 'parent')")
 
     alter_table(:attributes) do
       set_column_not_null :column_name
