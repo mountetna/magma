@@ -68,6 +68,22 @@ describe Magma::RenameAttributeAction do
       end
     end
 
+    context "when the attribute is a link attribute" do
+      let(:action_params) do
+        {
+          action: "rename_attribute",
+          model_name: "monster",
+          attribute_name: "victim",
+          new_attribute_name: "victor"
+        }
+      end
+
+      it "captures an attribute error" do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("attribute_name doesn't match an existing model")
+      end
+    end
+
     context "when there's already an attribute with new_attribute_name" do
       let(:action_params) do
         {
