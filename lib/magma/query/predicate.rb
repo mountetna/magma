@@ -95,7 +95,7 @@ class Magma
     end
 
     def default_format
-      "#{@model.project_name}::#{@model.model_name}##{@attribute_name || @model.identity}" if @model
+      "#{@model.project_name}::#{@model.model_name}##{@attribute_name || @model.identity.attribute_name}" if @model
     end
 
     def to_hash

@@ -40,6 +40,8 @@ def load_labors_project
         attribute_name: attribute_name
       )
 
+      row["column_name"] = attribute_name unless row["column_name"]
+
       Magma.instance.db[:attributes].insert(row)
     end
   end

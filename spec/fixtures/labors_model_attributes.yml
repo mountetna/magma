@@ -2,6 +2,7 @@ aspect:
   dictionary: '{"dictionary_model":"Labors::Codex", "monster":"monster", "name":"aspect", "source":"tome", "value":"lore"}'
   monster:
     type: parent
+    column_name: monster_id
   name:
     type: string
   source:
@@ -11,6 +12,7 @@ aspect:
 codex:
   project:
     type: parent
+    column_name: project_id
   monster:
     type: string
   aspect:
@@ -22,6 +24,7 @@ codex:
 labor:
   project:
     type: parent
+    column_name: project_id
   name:
     type: identifier
   monster:
@@ -37,11 +40,14 @@ labor:
   contributions:
     type: matrix
     validation: '{"type":"Array", "value":["Athens","Sparta","Sidon","Thebes"]}'
+    column_name: old_contributions
 monster:
   labor:
     type: parent
+    column_name: labor_id
   name:
     type: identifier
+    column_name: old_name
   species:
     type: string
     validation: '{"type":"Regexp", "value":"^[a-z\\s]+$"}'
@@ -56,13 +62,16 @@ monster:
   reference_monster:
     type: link
     link_model_name: monster
+    column_name: reference_monster_id
 prize:
   labor:
     type: parent
+    column_name: labor_id
   name:
     type: string
   worth:
     type: integer
+    column_name: old_worth
 project:
   name:
     type: identifier
@@ -74,6 +83,7 @@ project:
 victim:
   monster:
     type: parent
+    column_name: monster_id
   name:
     type: identifier
   country:

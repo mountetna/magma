@@ -70,7 +70,7 @@ class Magma
     end
 
     def entry(value, loader)
-      [ name, value.to_json ]
+      [ column_name, value.to_json ]
     end
 
     private

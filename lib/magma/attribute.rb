@@ -4,7 +4,7 @@ class Magma
       model_map: Proc.new { |type| "Magma::#{type.classify}Attribute" },
       key_map: Proc.new { |attribute| attribute.attribute_type }
 
-    set_primary_key [:project_name, :model_name, :attribute_name]
+    set_primary_key [:project_name, :model_name, :column_name]
     unrestrict_primary_key
 
     plugin :dirty
@@ -44,15 +44,13 @@ class Magma
 
       super(opts.except(:magma_model, :loader))
       self.magma_model = opts[:magma_model]
+      self.column_name = initial_column_name unless self.column_name
       @loader = opts[:loader]
     end
 
     def magma_model=(new_magma_model)
       @magma_model = new_magma_model
       after_magma_model_set
-    end
-
-    def after_magma_model_set
     end
 
     def name
@@ -71,8 +69,8 @@ class Magma
       hidden
     end
 
-    def column_name
-      attribute_name.to_sym
+    def primary_key?
+      !!@primary_key
     end
 
     def display_name
@@ -84,7 +82,7 @@ class Magma
     end
 
     def missing_column?
-      !@magma_model.columns.include?(column_name)
+      !@magma_model.columns.include?(column_name.to_sym)
     end
 
     def validation_object
@@ -132,10 +130,17 @@ class Magma
     end
 
     def entry(value, loader)
-      [ name, value ]
+      [ column_name, value ]
     end
 
     private
+
+    def after_magma_model_set
+    end
+
+    def initial_column_name
+      attribute_name
+    end
 
     MAGMA_ATTRIBUTES = [
       "Magma::BooleanAttribute",
@@ -170,6 +175,7 @@ class Magma
       validate_validation_json
       validate_attribute_name_format
       validate_type
+      validate_attribute_name_unique
     end
 
     def validate_validation_json
@@ -188,6 +194,12 @@ class Magma
     def validate_type
       return if Magma.const_defined?("#{type.classify}Attribute")
       errors.add(:type, "is not a supported type")
+    end
+
+    def validate_attribute_name_unique
+      return unless modified?(:attribute_name)
+      return unless @magma_model.has_attribute?(attribute_name)
+      errors.add(:attribute_name, "already exists on the model")
     end
   end
 end

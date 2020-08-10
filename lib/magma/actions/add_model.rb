@@ -18,11 +18,6 @@ class Magma
       true
     end
 
-    def rollback
-      parent_model.attributes.delete(@model.model_name)
-      project.unload_model(@model.model_name)
-    end
-
     private
 
     def create_model

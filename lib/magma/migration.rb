@@ -72,7 +72,7 @@ class Magma
       if foreign_attribute?(att)
         return true
       else
-        return model.schema.has_key?(att.column_name)
+        return model.schema.has_key?(att.column_name.to_sym)
       end
     end
 
@@ -85,7 +85,7 @@ class Magma
       literal_type = att.is_a?(DateTimeAttribute)?  :"timestamp without time zone" :
         Magma.instance.db.cast_type_literal(att.database_type)
 
-      return model.schema[att.column_name][:db_type].to_sym == literal_type.to_sym
+      return model.schema[att.column_name.to_sym][:db_type].to_sym == literal_type.to_sym
     end
 
     SPC='  '
@@ -102,7 +102,7 @@ class Magma
     end
 
     def new_attributes
-      @model.attributes.map do |name,att|
+      @model.attributes.reject { |name, attr| attr.primary_key? }.map do |name,att|
         next if foreign_attribute?(att)
         attribute_migration(att)
       end.compact.flatten
@@ -170,7 +170,7 @@ class Magma
     private
 
     def missing_attributes
-      @model.attributes.map do |name,att|
+      @model.attributes.reject { |name, attr| attr.primary_key? }.map do |name,att|
         next if schema_supports_attribute?(@model, att)
         attribute_migration(att)
       end.compact.flatten
@@ -178,7 +178,7 @@ class Magma
 
 
     def changed_attributes
-      @model.attributes.map do |name,att|
+      @model.attributes.reject { |name, attr| attr.primary_key? }.map do |name,att|
         next unless schema_supports_attribute?(@model,att)
         next if schema_unchanged?(@model,att)
         column_type_entry(att.column_name, att.database_type)
@@ -191,8 +191,15 @@ class Magma
         next if @model.attributes[ name.to_s.sub(/_id$/,'').to_sym ]
         next if @model.attributes[ name.to_s.sub(/_type$/,'').to_sym ]
         next if db_opts[:primary_key]
+        next if attribute_with_different_column_name?(name)
         remove_column_entry(name)
       end.compact.flatten
+    end
+
+    def attribute_with_different_column_name?(name)
+      @model.attributes.any? do |attribute_name, attribute|
+        attribute.column_name.to_sym == name
+      end
     end
   end
 end

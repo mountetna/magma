@@ -3,8 +3,8 @@ class Magma
     def initialize(model, records, src_id=nil, dest_id=nil)
       @model = model
       @records = records
-      @src_id = src_id || model.identity
-      @dest_id = dest_id || model.identity
+      @src_id = src_id || model.identity.column_name
+      @dest_id = dest_id || model.identity.column_name
     end
 
     def update

@@ -21,7 +21,7 @@ class Magma
     end
 
     def select
-      [ Sequel[alias_name][@attribute_name].as(column_name) ]
+      [ Sequel[alias_name][@column_name].as(column_name) ]
     end
   end
 end

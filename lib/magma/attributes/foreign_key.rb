@@ -1,7 +1,8 @@
 class Magma
   class ForeignKeyAttribute < Attribute
     include Magma::Link
-    def column_name
+
+    def initial_column_name
       foreign_id
     end
 

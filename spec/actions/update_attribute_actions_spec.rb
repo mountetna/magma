@@ -18,7 +18,9 @@ describe Magma::UpdateAttributeAction do
 
     after do
       # Rollback in memory changes to the attribute
-      Labors::Monster.attributes[:name] = @original_attribute
+      attribute = Labors::Monster.attributes[:name]
+      attribute.description = @original_attribute.description
+      attribute.display_name = @original_attribute.display_name
     end
 
     it 'updates the attribute' do

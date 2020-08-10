@@ -55,7 +55,8 @@ class Magma
     class ModelPayload
       def initialize model, attribute_names
         @model = model
-        @attribute_names = attribute_names || @model.attributes.keys
+        @attribute_names = attribute_names ||
+          @model.attributes.reject { |name, attr| attr.primary_key? }.keys
         @records = []
       end
 
@@ -78,7 +79,7 @@ class Magma
           documents: Hash[
             @records.map do |record|
               [
-                record[@model.identity], json_document(record)
+                record[@model.identity.attribute_name.to_sym], json_document(record)
               ]
             end
           ],
