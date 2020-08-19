@@ -70,6 +70,7 @@ class RetrieveController < Magma::Controller
   private
 
   def validate
+    return error('`project_name` is required') if @project_name.nil?
     return error('`model_name` is required') if @model_name.nil?
     return error('`record_names` must be Array, or `all`') unless valid_record_names?
     return error('`attribute_names` must be Array, `all`, or `identifier`') unless @attribute_names.is_a?(Array) || @attribute_names == 'all' || @attribute_names == 'identifier'
