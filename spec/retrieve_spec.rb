@@ -535,7 +535,7 @@ describe RetrieveController do
         project_name: 'labors',
         model_name: 'victim',
         record_names: 'all',
-        attribute_names: [ 'country' ]
+        attribute_names: 'all'
       )
       countries = json_body[:models][:victim][:documents].values.map{|victim| victim[:country]}
       expect(countries).to all(be_nil)

@@ -25,6 +25,7 @@ class Magma
       [
         :validate_model,
         :validate_attribute_name_unique,
+        :validate_restricted_attribute,
         :validate_options,
         :validate_attribute
       ]
@@ -45,6 +46,15 @@ class Magma
       @errors << Magma::ActionError.new(
         message: "attribute_name already exists on #{model.name}",
         source: @action_params.slice(:project_name, :model_name, :attribute_name)
+      )
+    end
+
+    def validate_restricted_attribute
+      return if @action_params[:attribute_name] != 'restricted' || !@action_params[:restricted]
+
+      @errors << Magma::ActionError.new(
+          message: "restricted column may not, itself, be restricted",
+          source: @action_params.slice(:project_name, :model_name, :attribute_name, :restricted)
       )
     end
 

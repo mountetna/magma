@@ -65,6 +65,31 @@ describe Magma::UpdateAttributeAction do
       end
     end
 
+    context "when updating the restricted value of an attribute" do
+      let(:attribute_name) { "name" }
+      let(:action_params) do
+        {
+            action_name: "update_attribute",
+            model_name: "victim",
+            attribute_name: attribute_name,
+            restricted: true
+        }
+      end
+
+      it "succeeds" do
+        expect(action.validate).to eq(true)
+      end
+
+      context "and the attribute_name is restricted" do
+        let(:attribute_name) { "restricted" }
+
+        it "false" do
+          expect(action.validate).to eq(false)
+          expect(action.errors.last[:message]).to eq("restricted column may not, itself, be restricted")
+        end
+      end
+    end
+
     context "when fields are restricted options" do
       let(:action_params) do
         {

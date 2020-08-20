@@ -862,6 +862,25 @@ describe UpdateController do
       expect(victim.country).to eq('nemea')
     end
 
+    it 'prevents updates to the restricted column by a restricted user' do
+      victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
+
+      update(
+          {
+              victim: {
+                  'Outis Koutsonadis': {
+                      restricted: false
+                  }
+              }
+          },
+          :restricted_editor
+      )
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Cannot revise restricted attribute :restricted on victim 'Outis Koutsonadis'"])
+
+      expect { victim.refresh }.not_to change { victim.restricted }
+    end
+
     it 'allows updates to a restricted attribute by a privileged user' do
       victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
 
@@ -880,6 +899,24 @@ describe UpdateController do
 
       victim.refresh
       expect(victim.country).to eq('thrace')
+    end
+
+    it 'allows updates to the restricted column by a privileged user' do
+      victim = create(:victim, name: 'Outis Koutsonadis', country: 'nemea')
+
+      update(
+          {
+              victim: {
+                  'Outis Koutsonadis': {
+                      restricted: false
+                  }
+              }
+          },
+          :editor
+      )
+      expect(last_response.status).to eq(200)
+
+      expect { victim.refresh }.to change { victim.restricted }.to(false)
     end
   end
 end

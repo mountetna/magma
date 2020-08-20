@@ -28,7 +28,7 @@ class Magma
       end
 
       restricted_attributes = model.attributes.values
-        .select(&:restricted).map(&:name)
+        .select(&:restricted).map(&:name) + [:restricted]
 
       revisions.each do |revision|
         (restricted_attributes & revision.attribute_names).each do |attribute_name|

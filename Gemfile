@@ -24,6 +24,8 @@ group :test do
   gem 'timecop'
   gem 'net-http-persistent'
   gem 'multipart-post'
+  gem 'debase'
+  gem 'ruby-debug-ide'
 end
 
 Dir.glob File.expand_path("projects/*/Gemfile",__dir__) do |file|

@@ -19,7 +19,7 @@ class Magma
     private
 
     def validations
-      [:validate_attribute_exists, :validate_options, :validate_changes]
+      [:validate_attribute_exists, :validate_options, :validate_changes, :validate_restricted_attribute]
     end
 
     def validate_attribute_exists
@@ -61,6 +61,15 @@ class Magma
           source: @action_params.slice(:model_name, :attribute_name)
         )
       end
+    end
+
+    def validate_restricted_attribute
+      return if @action_params[:attribute_name] != 'restricted' || !@action_params[:restricted]
+
+      @errors << Magma::ActionError.new(
+          message: "restricted column may not, itself, be restricted",
+          source: @action_params.slice(:project_name, :model_name, :attribute_name, :restricted)
+      )
     end
 
     def model
