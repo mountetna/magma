@@ -64,6 +64,23 @@ describe Magma::AddAttributeAction do
       end
     end
 
+    context "when setting the restricted property" do
+      before(:each) { action_params[:restricted] = true }
+
+      it 'succeeds' do
+        expect(action.validate).to eq(true)
+      end
+
+      context "on an attribute named restricted" do
+        let(:attribute_name) { 'restricted' }
+
+        it 'fails' do
+          expect(action.validate).to eq(false)
+          expect(action.errors.last[:message]).to eq("restricted column may not, itself, be restricted")
+        end
+      end
+    end
+
     context "when the attribute already exists" do
       let(:attribute_name) { 'name' }
 
