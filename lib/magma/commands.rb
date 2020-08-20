@@ -59,6 +59,7 @@ class Magma
     end
 
     def options
+      require_relative './attribute'
       @options ||= Magma::Attribute.options - [:loader] + [:created_at, :updated_at, :attribute_name]
     end
   end
@@ -76,7 +77,7 @@ class Magma
 
   class Migrate < Etna::Command
     usage '[<version_number>] # Run migrations for the current environment.'
-    
+
     def execute(version=nil)
       Sequel.extension(:migration)
       db = Magma.instance.db
@@ -123,8 +124,8 @@ class Magma
 
   # When building migrations from scratch this command does not output
   # an order that respects foreign key constraints. i.e. The order in which the
-  # migration creates tries to create the tables is out of whack and causes 
-  # error messages that tables are required but do not exist. Most of the time 
+  # migration creates tries to create the tables is out of whack and causes
+  # error messages that tables are required but do not exist. Most of the time
   # this is not an issue (because we are only doing slight modifications), but
   # when we do a new migration of an established database errors do arise.
   # Presently we are manually reorgaizing the initial migration (putting the
