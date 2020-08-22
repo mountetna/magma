@@ -13,3 +13,4 @@ config.yml
 
 /projects
 .projects-mark
+.npmrc

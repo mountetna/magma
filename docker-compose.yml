@@ -1,13 +1,77 @@
+
 version: '3.4'
-volumes:
-  magma-app-gems:
-    driver: local
-  magma-db-data:
-    driver: local
-  magma-log-dir:
-    driver: local
-  magma-tmp-dir:
-    driver: local
+
+x-base-etna-service: &base-etna-service
+  # Base configuration used by most etna services.
+  image: etna-base
+  volumes: &base-etna-service-volumes
+    - .:/app:cached
+    - magma-app-gems:/app/vendor/bundle:rw
+    - magma-log-dir:/app/log:rw
+    - magma-tmp-dir:/app/tmp:rw
+    - magma-public-dir:/app/public:rw
+    - magma-data-dir:/app/data:rw
+    - magma-opt-dir:/usr/opt:rw
+    - ../etna:/etna:cached
+  environment: &base-etna-env
+    "MAGMA_ENV": "development"
+    APP_NAME: "magma"
+  entrypoint: /entrypoints/development.sh
+
+  networks:
+    default:
+    edge_net:
+  extra_hosts:
+    - 'metis.development.local:172.16.238.10'
+    - 'magma.development.local:172.16.238.10'
+    - 'janus.development.local:172.16.238.10'
+    - 'timur.development.local:172.16.238.10'
+
+x-base-etna-services: &base-etna-services
+  # Default list of services an etna app may have.
+  "magma_app": &base-etna-app
+    # The ruby webserver
+    <<: *base-etna-service
+    command: ./bin/puma.sh
+    depends_on:
+      - "magma_db"
+
+  "magma_webpack": &base-etna-webpack
+    # The ruby webpack server watching for changes
+    <<: *base-etna-service
+    environment:
+      <<: *base-etna-env
+      RUN_NPM_INSTALL: "true"
+      SKIP_RUBY_SETUP: "true"
+    command: npm run webpack
+
+  "magma_db": &base-etna-db
+    # The application specific database.  Overwrite with development-psql-9 to use psql 9 instead.
+    image: development-psql
+    volumes:
+      - magma-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "magma_development"
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: developer
+      APP_NAME: "magma"
+    container_name: "magma_db_1"
+
+  "magma_app_fe": &base-etna-fe
+    # The application level apache frontend serving static assets, data, and proxying the main app.
+    image: etna-apache
+    volumes:
+      - magma-public-dir:/app/public:ro
+      - magma-opt-dir:/usr/opt:ro
+      - ../docker/etna-base/entrypoints:/entrypoints:ro
+    depends_on:
+      - "magma_app"
+    entrypoint: /entrypoints/development.sh
+    command: ["httpd", "-DFOREGROUND"]
+    environment:
+      SKIP_BUILD: "1"
+      WAIT_FOR_APP: "1"
+      APP_NAME: "magma"
 
 networks:
   edge_net:
@@ -17,49 +81,31 @@ networks:
         - subnet: '172.16.238.0/24'
         - subnet: '2001:3984:3989::/64'
 
-x-magma_base: &magma_base
-  build:
-    context: .
-    dockerfile: docker/app/Dockerfile.development
-  image: magma_base
-  volumes:
-    - .:/app:cached
-    - magma-app-gems:/app/vendor/bundle:rw
-    - magma-log-dir:/app/log:rw
-    - magma-tmp-dir:/app/tmp:rw
-    - ./projects:/app/projects
-    - ../etna:/etna:cached
-  environment: &app_environment
-    COVERAGE: 'true'
-    DATABASE_HOST: 'magma_db'
-    MAGMA_ENV: 'development'
-    MASTER_BUILD: '${MASTER_BUILD}'
-  # Maps external facing host names to the internal ip for development-apache.
-  extra_hosts:
-    - 'metis.development.local:172.16.238.10'
-  networks:
-    edge_net:
-    default:
+volumes:
+  magma-app-gems:
+    driver: local
+  magma-db-data:
+    driver: local
+    name: "magma-db-data"
+  magma-log-dir:
+    driver: local
+    name: "magma-log-dir"
+  magma-tmp-dir:
+    driver: local
+    name: "magma-tmp-dir"
+  magma-public-dir:
+    driver: local
+    name: "magma-public-dir"
+  magma-data-dir:
+    driver: local
+    name: "magma-data-dir"
+  magma-opt-dir:
+    driver: local
 
 services:
-  magma_app:
-    <<: *magma_base
-    ports:
-      - 3003:3000
-    command: ./docker/app/puma.sh
-    depends_on:
-      - magma_db
+  <<: *base-etna-services
+  "magma_webpack":
+    image: alpine
+    # Magma does not really have a webpack setup
+    command: echo 1
 
-  magma_db:
-    build:
-      context: .
-      dockerfile: docker/db/Dockerfile
-    volumes:
-      - magma-db-data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: magma_development
-      POSTGRES_PASSWORD: password
-      POSTGRES_USER: developer
-    ports:
-      - 5432
-    container_name: magma_db_1

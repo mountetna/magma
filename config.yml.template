@@ -10,6 +10,8 @@
   :host: https://magma.development.local
   :log_file: /dev/stdout
   :log_level: info
+  :hmac_keys:
+    :magma: haggis
   :storage:
     :provider: metis
     :host: metis.development.local

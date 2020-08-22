@@ -252,7 +252,7 @@ EOT
     def create_schema
       puts "Creating namespace (schema) #{@project_name} in database #{@db_config[:database]}"
 
-      Magma.instance.db.run "CREATE SCHEMA #{@project_name}"
+      Magma.instance.db.run "CREATE SCHEMA IF NOT EXISTS #{@project_name}"
     end
 
     def create_db

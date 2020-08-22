@@ -1,2 +1,0 @@
-CREATE DATABASE magma_test;
-GRANT ALL PRIVILEGES ON DATABASE magma_test TO developer;
