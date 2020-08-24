@@ -382,6 +382,36 @@ describe UpdateController do
 
       Timecop.return
     end
+
+    it 'does not link a file from metis for an invalid update' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      update(
+        monster: {
+          'Nemean Lion' => {
+            species: 'Lion',
+            stats: {
+              path: 'metis://labors/files/lion-stats.txt',
+              original_filename: 'original-file.txt'
+            }
+          }
+        }
+      )
+
+      # the record is unchanged
+      lion.refresh
+      expect(lion.stats).to be_nil
+      expect(lion.species).to eq('lion')
+      expect(last_response.status).to eq(422)
+
+      # The metis endpoint was NOT called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+
+      Timecop.return
+    end
   end
 
   context 'image attributes' do
@@ -654,7 +684,7 @@ describe UpdateController do
       #expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
     end
 
-    xit 'updates a table and returns the correct id' do
+    it 'updates a table and returns the correct id' do
       labor = create(:labor, name: 'The Golden Apples of the Hesperides')
       update(
         'labor' => {
@@ -705,7 +735,7 @@ describe UpdateController do
       expect(json_body[:models][:prize][:documents].values.map{|p|p[:name]}).to eq(['apple of joy']*2)
     end
 
-    xit 'replaces an existing table' do
+    it 'replaces an existing table' do
       labor = create(:labor, name: 'The Golden Apples of the Hesperides')
       apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
       update(
@@ -723,10 +753,10 @@ describe UpdateController do
         }
       )
 
-      # we have created some new records
+      # we have created some new records replacing the old
       expect(Labors::Prize.count).to eq(2)
 
-      # the prizes are linked to the labor
+      # the new prizes are linked to the labor
       labor.refresh
       expect(labor.prize.count).to eq(2)
 
