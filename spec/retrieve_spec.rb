@@ -523,6 +523,29 @@ describe RetrieveController do
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
     end
 
+    it 'conservatively hides if any ancestor is restricted' do
+      lion = create(:monster, :lion, restricted: true)
+      hydra = create(:monster, :hydra, restricted: false)
+
+      # some of the victims are not restricted
+      restricted_victim_list = create_list(:victim, 3, monster: lion, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 3, monster: lion, restricted: false)
+      unrestricted_victim_list2 = create_list(:victim, 3, monster: lion, restricted: nil)
+
+      # some of the victims are not restricted
+      restricted_victim_list2 = create_list(:victim, 3, monster: hydra, restricted: true)
+      unrestricted_victim_list3 = create_list(:victim, 3, monster: hydra, restricted: false)
+      unrestricted_victim_list4 = create_list(:victim, 3, monster: hydra, restricted: nil)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: 'all'
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to match_array((unrestricted_victim_list3 + unrestricted_victim_list4).map(&:identifier).map(&:to_sym))
+    end
+
     it 'shows restricted records to users with restricted permission' do
       restricted_victim_list = create_list(:victim, 9, restricted: true)
       unrestricted_victim_list = create_list(:victim, 9)

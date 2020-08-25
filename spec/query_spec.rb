@@ -341,19 +341,30 @@ describe QueryController do
   end
 
   context Magma::BooleanPredicate do
-    it 'checks truthiness' do
+    it 'checks ::true' do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil)
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
-      query(
-        [ 'labor',
-          [ 'completed', '::false' ],
-          '::all',
-          'name'
-        ]
-      )
+      query([ 'labor', [ 'completed', '::true' ], '::all', 'name' ])
+      expect(json_body[:answer].map(&:last)).to eq([ 'Nemean Lion' ])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
 
-      expect(json_body[:answer].map(&:last)).to eq([ 'Augean Stables', 'Lernean Hydra' ])
+    it 'checks ::false' do
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      query([ 'labor', [ 'completed', '::false' ], '::all', 'name' ])
+      expect(json_body[:answer].map(&:last)).to eq([ 'Augean Stables' ])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
+
+    it 'checks ::untrue' do
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      query([ 'labor', [ 'completed', '::untrue' ], '::all', 'name' ])
+      expect(json_body[:answer].map(&:last)).to match_array([ 'Lernean Hydra', 'Augean Stables' ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
   end

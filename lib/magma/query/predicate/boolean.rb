@@ -14,6 +14,13 @@ class Magma
     verb '::false' do
       child TrueClass
       constraint do
+        basic_constraint(@column_name, false)
+      end
+    end
+
+    verb '::untrue' do
+      child TrueClass
+      constraint do
         not_constraint(@column_name, true)
       end
     end

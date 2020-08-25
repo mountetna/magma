@@ -38,7 +38,7 @@ class Magma
         while restriction_model do
           if restriction_model.has_attribute?(:restricted)
             query_args.unshift(
-              ancestral_path + [ 'restricted', '::false' ]
+              ancestral_path + [ 'restricted', '::untrue' ]
             )
           end
           ancestral_path << restriction_model.parent_model_name&.to_s
