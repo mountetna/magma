@@ -819,10 +819,57 @@ describe UpdateController do
       expect(restricted_victim.name).to eq(orig_name)
     end
 
+    it 'prevents updates to the child of a restricted record by a restricted user' do
+      orig_name = 'Outis Koutsonadis'
+      new_name  = 'Outis Koutsomadis'
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', restricted: true)
+      restricted_victim = create(:victim, monster: lion, name: orig_name)
+
+      update(
+        {
+          victim: {
+            orig_name => {
+              name: new_name
+            }
+          }
+        },
+        :restricted_editor
+      )
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Cannot revise restricted victim '#{orig_name}'"])
+
+      restricted_victim.refresh
+      expect(restricted_victim.name).to eq(orig_name)
+    end
+
     it 'allows updates to a restricted record by a privileged user' do
       orig_name = 'Outis Koutsonadis'
       new_name  = 'Outis Koutsomadis'
       restricted_victim = create(:victim, name: orig_name, restricted: true)
+
+      update(
+        {
+          victim: {
+            orig_name => {
+              name: new_name
+            }
+          }
+        },
+        :editor
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_document(:victim,new_name)).to eq(name: new_name)
+
+      expect(Labors::Victim.count).to eq(1)
+      restricted_victim.refresh
+      expect(restricted_victim.name).to eq(new_name)
+    end
+
+    it 'allows updates to a child of a restricted record by a privileged user' do
+      orig_name = 'Outis Koutsonadis'
+      new_name  = 'Outis Koutsomadis'
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', restricted: true)
+      restricted_victim = create(:victim, monster: lion, name: orig_name)
 
       update(
         {

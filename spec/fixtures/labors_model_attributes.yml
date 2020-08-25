@@ -63,6 +63,8 @@ monster:
     type: link
     link_model_name: monster
     column_name: reference_monster_id
+  restricted:
+    type: boolean
 prize:
   labor:
     type: parent

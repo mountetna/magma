@@ -96,6 +96,10 @@ class Magma
         @parent
       end
 
+      def parent_model
+        @parent ? Magma.instance.get_model(project_name, parent_model_name) : nil
+      end
+
       # suggests dictionary entries based on
       def dictionary(dictionary_json = {})
         return @dictionary unless dictionary_json[:dictionary_model]

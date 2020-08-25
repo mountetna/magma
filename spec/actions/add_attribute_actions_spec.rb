@@ -19,20 +19,20 @@ describe Magma::AddAttributeAction do
   end
 
   let(:action) { Magma::AddAttributeAction.new(project_name, action_params) }
-  let(:model_name) { "monster" }
+  let(:model_name) { "labor" }
   let(:attribute_name) { "number_of_claws" }
 
   describe '#perform' do
     context "when it succeeds" do
       after do
         # Clear out new test attributes that are cached in memory
-        Labors::Monster.attributes.delete(attribute_name.to_sym)
+        Labors::Labor.attributes.delete(attribute_name.to_sym)
       end
 
       it 'adds a new attribute and returns no errors' do
         expect(action.perform).to eq(true)
         expect(action.errors).to be_empty
-        expect(Labors::Monster.attributes[attribute_name.to_sym].display_name).to eq("name")
+        expect(Labors::Labor.attributes[attribute_name.to_sym].display_name).to eq("name")
       end
     end
 
@@ -42,7 +42,7 @@ describe Magma::AddAttributeAction do
       it "captures the error and doesn't add the attribute" do
         expect(action.perform).to eq(false)
         expect(action.errors).not_to be_empty
-        expect(Labors::Monster.attributes[attribute_name.to_sym]).to be_nil
+        expect(Labors::Labor.attributes[attribute_name.to_sym]).to be_nil
       end
     end
   end
@@ -86,7 +86,7 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name already exists on Labors::Monster")
+        expect(action.errors.first[:message]).to eq("attribute_name already exists on Labors::Labor")
       end
     end
 

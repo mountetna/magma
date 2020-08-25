@@ -508,9 +508,46 @@ describe RetrieveController do
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
     end
 
+    it 'hides the children of restricted records' do
+      lion = create(:monster, :lion, restricted: true)
+      hydra = create(:monster, :hydra, restricted: false)
+      restricted_victim_list = create_list(:victim, 9, monster: lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: 'all'
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
+    end
+
     it 'shows restricted records to users with restricted permission' do
       restricted_victim_list = create_list(:victim, 9, restricted: true)
       unrestricted_victim_list = create_list(:victim, 9)
+
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'victim',
+          record_names: 'all',
+          attribute_names: 'all'
+        },
+        :editor
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to eq(
+        (
+          unrestricted_victim_list + restricted_victim_list
+        ).map(&:identifier).map(&:to_sym).sort
+      )
+    end
+
+    it 'shows the children of restricted records to users with restricted permission' do
+      lion = create(:monster, :lion, restricted: true)
+      hydra = create(:monster, :hydra, restricted: false)
+      restricted_victim_list = create_list(:victim, 9, monster: lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
 
       retrieve(
         {
