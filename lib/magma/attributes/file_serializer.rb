@@ -1,53 +1,54 @@
 class Magma
-  class FileAttribute < Attribute
+  class FileSerializer
 
-    def database_type
-      :json
+    def initialize(magma_model:, record_name:)
+      @magma_model = magma_model,
+      @record_name = record_name
     end
 
-    def revision_to_loader(record_name, new_value)
-      case new_value[:path]
+    def to_loader_format(record_name, file_hash)
+      case file_hash[:path]
       when '::blank'
-        return [ name, {
+        return {
           location: '::blank',
           filename: '::blank',
           original_filename: '::blank'
-        }]
+        }
       when '::temp'
         return nil
       when %r!^metis://!
-        return [ name, {
-          location: new_value[:path],
-          filename: filename(record_name, new_value[:path]),
-          original_filename: new_value[:original_filename]
-        }]
+        return {
+          location: file_hash[:path],
+          filename: filename(record_name, file_hash[:path]),
+          original_filename: file_hash[:original_filename]
+        }
       else
-        return [ name, {
+        return {
           location: nil,
           filename: nil,
           original_filename: nil
-        }]
+        }
       end
     end
 
-    def revision_to_payload(record_name, new_value, user)
-      case new_value[:path]
+    def to_payload_format(record_name, file_hash, user)
+      case file_hash[:path]
       when '::temp'
-        return [ name, { path: temporary_filepath(user) } ]
+        return { path: temporary_filepath(user) }
       when '::blank'
-        return [ name, { path: '::blank' } ]
+        return { path: '::blank' }
       when %r!^metis://!
-        _, value = revision_to_loader(record_name, new_value)
-        return [ name, query_to_payload(value) ]
+        _, value = to_loader_format(record_name, file_hash)
+        return to_query_payload_format(value)
       when nil
-        return [ name, nil ]
+        return nil
       end
     end
 
-    def query_to_payload(data)
-      return nil unless data
+    def to_query_payload_format(file_hash)
+      return nil unless file_hash
 
-      path = data[:filename]
+      path = file_hash[:filename]
       return nil unless path
 
       case path
@@ -59,17 +60,17 @@ class Magma
         return {
           url: Magma.instance.storage.download_url(@magma_model.project_name, path),
           path: path,
-          original_filename: data[:original_filename]
+          original_filename: file_hash[:original_filename]
         }
       end
     end
 
-    def query_to_tsv(value)
-      file = query_to_payload(value)
+    def to_query_tsv_format(file_hash)
+      file = to_query_payload_format(file_hash)
       file ? file[:url] : nil
     end
 
-    def entry(value, loader)
+    def to_loader_entry_format(value)
       [ column_name, value.to_json ]
     end
 
