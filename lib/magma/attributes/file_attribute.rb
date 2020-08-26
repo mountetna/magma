@@ -12,7 +12,7 @@ class Magma
     end
 
     def revision_to_loader(record_name, new_value)
-      loader_format = @serializer.to_loader_format(record_name, new_value)
+      loader_format = @serializer.to_loader_format(name, record_name, new_value)
       loader_format ? [ name, loader_format ] : nil
     end
 

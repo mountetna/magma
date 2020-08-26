@@ -6,7 +6,7 @@ class Magma
       @record_name = record_name
     end
 
-    def to_loader_format(record_name, file_hash)
+    def to_loader_format(attribute_name, record_name, file_hash)
       case file_hash[:path]
       when '::blank'
         return {
@@ -19,7 +19,7 @@ class Magma
       when %r!^metis://!
         return {
           location: file_hash[:path],
-          filename: filename(record_name, file_hash[:path]),
+          filename: filename(attribute_name, record_name, file_hash[:path]),
           original_filename: file_hash[:original_filename]
         }
       else
@@ -76,10 +76,10 @@ class Magma
 
     private
 
-    def filename(record_name, path)
+    def filename(attribute_name, record_name, path)
       ext = path ? ::File.extname(path) : ''
       ext = '.dat' if ext.empty?
-      "#{@magma_model.model_name}-#{record_name}-#{name}#{ext}"
+      "#{@magma_model.model_name}-#{record_name}-#{attribute_name}#{ext}"
     end
 
     def temporary_filepath(user)
