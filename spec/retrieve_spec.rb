@@ -289,11 +289,11 @@ describe RetrieveController do
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
       expect(header).to eq(required_atts)
-      expect(table.length).to eq(12)
+      expect(table).to match_array(labor_list.map{|l| [ l.name, l.completed.to_s, l.number.to_s ] })
     end
 
     it 'can retrieve a TSV of data without an identifier' do
-      prize_list = create_list(:prize, 12)
+      prize_list = create_list(:prize, 12, worth: 5)
       retrieve(
         project_name: 'labors',
         model_name: 'prize',
@@ -303,7 +303,7 @@ describe RetrieveController do
       )
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
-      expect(table.length).to eq(12)
+      expect(table).to match_array(prize_list.map{|l| [ l.labor, l.name, l.worth.to_s ] })
     end
 
     it 'can retrieve a TSV of collection attribute' do
@@ -319,8 +319,31 @@ describe RetrieveController do
       )
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(table).to eq([ [ "The Twelve Labors of Hercules", "labor1, labor2, labor3"] ])
+    end
 
-      expect(table.length).to eq(1)
+    it 'retrieves a TSV with file attributes as urls' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, :lion, stats: '{"filename": "lion.txt", "original_filename": ""}')
+      hydra = create(:monster, :hydra, stats: '{"filename": "hydra.txt", "original_filename": ""}')
+      hind = create(:monster, :hind, stats: '{"filename": "hind.txt", "original_filename": ""}')
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: [ 'stats' ],
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      uris = table.map{|l| URI.parse(l.last)}
+      expect(uris.map(&:host)).to all(eq(Magma.instance.config(:storage)[:host]))
+      expect(uris.map(&:path)).to all(match(%r!/labors/download/magma/\w+.txt!))
+
+      Timecop.return
     end
   end
 
