@@ -303,7 +303,7 @@ describe RetrieveController do
       )
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
-      expect(table).to match_array(prize_list.map{|l| [ l.labor, l.name, l.worth.to_s ] })
+      expect(table).to match_array(prize_list.map{|l| header.map{|h| l.send(h)&.to_s} })
     end
 
     it 'can retrieve a TSV of collection attribute' do
