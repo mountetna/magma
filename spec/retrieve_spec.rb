@@ -319,7 +319,7 @@ describe RetrieveController do
       )
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(table).to eq([ [ "The Twelve Labors of Hercules", "labor1, labor2, labor3"] ])
+      expect(table).to eq([ [ "The Twelve Labors of Hercules", labors.map(&:identifier).join(', ') ] ])
     end
 
     it 'retrieves a TSV with file attributes as urls' do
