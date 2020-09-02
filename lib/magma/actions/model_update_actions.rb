@@ -3,6 +3,8 @@ require_relative 'update_attribute'
 require_relative 'add_attribute'
 require_relative 'add_model'
 require_relative 'rename_attribute'
+require_relative 'add_project'
+require 'rollbar'
 
 class Magma
   class ModelUpdateActions
@@ -23,6 +25,8 @@ class Magma
     rescue => e
       restart_server
 
+      Rollbar.error(e)
+
       if @errors.empty?
         @errors << Magma::ActionError.new(
           message: "Unexpected error",
@@ -36,6 +40,11 @@ class Magma
 
     def errors
       @errors.map(&:to_h) + @actions.flat_map(&:errors)
+    end
+
+    def valid?
+      validate_project
+      @errors.empty? && @actions.all?(&:validate)
     end
 
     private
@@ -61,11 +70,6 @@ class Magma
       Process.kill("USR2", Magma.instance.server_pid)
     end
 
-    def valid?
-      validate_project
-      @errors.empty? && @actions.all?(&:validate)
-    end
-
     def validate_project
       return if @project
 
@@ -76,7 +80,7 @@ class Magma
     end
 
     def initialize(project_name, actions_list)
-      @project = Magma.instance.get_project(project_name)
+      @project = Magma.instance.get_or_load_project(project_name)
       @errors = []
       @actions = []
 

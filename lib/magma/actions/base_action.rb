@@ -34,4 +34,10 @@ class Magma
       @project ||= Magma.instance.get_project(@project_name)
     end
   end
+
+  class NoOpAction < BaseAction
+    def perform
+      true
+    end
+  end
 end

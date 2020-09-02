@@ -48,13 +48,28 @@ class Magma
     setup_sequel
 
     @storage = Magma::Storage.setup
+    load_config_projects
+    load_db_projects
 
+    validate_models if validate
+  end
+
+  def load_config_projects
     config(:project_path).split(/\s+/).each do |project_dir|
       project = Magma::Project.new(project_dir: project_dir)
       magma_projects[ project.project_name ] = project
     end
+  end
 
-    validate_models if validate
+  def load_db_projects
+    Magma.instance.db[:models].distinct.select(:project_name).to_a.each do |row|
+      get_or_load_project(row[:project_name])
+    end
+  end
+
+  def get_or_load_project(project_name)
+    project_name = project_name.to_sym
+    magma_projects[project_name] ||= Magma::Project.new(project_name: project_name)
   end
 
   def setup_sequel
