@@ -106,6 +106,22 @@ describe UpdateController do
     expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: '0003-01-01T00:00:00+00:00')
   end
 
+  it 'empties a date-time attribute' do
+    lion = create(:labor, name: 'Nemean Lion', year: '0002-01-01')
+    update(
+      labor: {
+        'Nemean Lion': {
+          year: nil
+        }
+      }
+    )
+
+    lion.refresh
+    expect(last_response.status).to eq(200)
+    expect(lion.year).to eq(nil)
+    expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: nil)
+  end
+
   it 'updates a foreign-key attribute' do
     lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
     hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
