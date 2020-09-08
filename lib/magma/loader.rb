@@ -35,29 +35,64 @@ class Magma
       end
     end
 
-    attr_reader :validator
+    attr_reader :validator, :user
 
-    def initialize
+    def initialize(user)
       @records = {}
       @temp_id_counter = 0
       @validator = Magma::Validation.new
       @attribute_entries = {}
       @identifiers = {}
+      @user = user
+      @now = Time.now.iso8601
     end
 
-    def push_record(model, record)
-      id = record[:temp_id]&.is_a?(Magma::TempId) ? record[:temp_id] : record[model.identity.column_name.to_sym]
-      records(model)[id] ||= RecordEntry.new(model, self)
-      records(model)[id] << record
+    def push_record(model, record_name, revision)
+      records(model)[record_name] ||= RecordEntry.new(model, record_name, self)
+
+      records(model)[record_name] << revision
+    end
+
+    def to_payload
+      payload = Magma::Payload.new
+
+      @records.each do |model, record_set|
+        next if record_set.empty?
+
+        payload.add_model(model)
+
+        payload.add_records(model, record_set.values.map(&:payload_entry))
+      end
+
+      return payload.to_hash
+    end
+
+    def push_links(model, record_name, revision)
+      revision.each do |attribute_name, value|
+        next unless model.has_attribute?(attribute_name)
+
+        model.attributes[attribute_name].revision_to_links(record_name, value) do |link_model, link_identifiers|
+          link_identifiers.each do |link_identifier|
+            push_record(
+              link_model, link_identifier,
+              model.model_name.to_sym => record_name.to_s,
+              created_at: @now,
+              updated_at: @now
+            )
+          end
+        end
+      end
     end
 
     # Once we have loaded up all the records we wish to insert/update (upsert)
     # we run this function to kick off the DB insert and update queries.
     def dispatch_record_set
-      find_complaints
+      validate!
+      payload = to_payload
       upsert
       update_temp_ids
       reset
+      return payload
     end
 
     def reset
@@ -83,11 +118,6 @@ class Magma
 
     alias_method :identifier_exists?, :identifier_id
 
-    def attribute_entry(model, att_name, value)
-      return [:id, value] if att_name == :id
-      model.attributes[att_name].entry(value, self)
-    end
-
     private
 
     def records(model)
@@ -100,13 +130,7 @@ class Magma
       @records[model]
     end
 
-    def validate(model, record)
-      @validator.validate(model,record) do |error|
-        yield error
-      end
-    end
-
-    def find_complaints
+    def validate!
       complaints = []
 
       @records.each do |model, record_set|
@@ -115,6 +139,7 @@ class Magma
       end
 
       complaints.flatten!
+
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
     end
 
@@ -192,5 +217,3 @@ class Magma
     end
   end
 end
-
-require_relative './loader/tsv'

@@ -2,14 +2,28 @@ class Magma
   class RecordEntry
     attr_accessor :real_id
 
-    def initialize(model, loader)
-      @record = {}
+    def initialize(model, record_name, loader)
       @model = model
+      @record_name = @model.has_identifier? ? record_name : record_name.to_i
       @loader = loader
+      @record = {}
     end
 
-    def <<(record)
-      @record.update(record)
+    def <<(revision)
+      @record.update(
+        revision.map do |att_name, value|
+          next unless @model.has_attribute?(att_name)
+          @model.attributes[att_name].revision_to_loader( @record_name, value )
+        end.compact.to_h
+      )
+    end
+
+    def [](att_name)
+      @record[att_name]
+    end
+
+    def has_key?(att_name)
+      @record.has_key?(att_name)
     end
 
     def complaints
@@ -39,8 +53,19 @@ class Magma
       @needs_temp
     end
 
+    def payload_entry
+      { @model.identity.name => @record_name }.update(
+        @record.map do |att_name,value|
+          # filter out temp ids
+          next if att_name == :temp_id || att_name == :$identifier || value.is_a?(Magma::TempId)
+
+          att_name == :id ?  [:id, value ] : @model.attributes[att_name].revision_to_payload(@record_name, value, @loader.user)
+        end.compact.to_h
+      )
+    end
+
     def insert_entry
-      Hash[
+      { @model.identity.column_name.to_sym => @record_name }.update(
         @record.map do |att_name,value|
           # filter out temp ids
           if att_name == :temp_id
@@ -54,14 +79,14 @@ class Magma
             @needs_temp = true
             next
           end
-          @loader.attribute_entry(@model, att_name, value)
-        end.compact
-      ]
+          attribute_entry(att_name, value)
+        end.compact.to_h
+      )
     end
 
     def update_entry
       entry = insert_entry
-      entry[:id] ||= @loader.identifier_id(@model, identifier)
+      entry[:id] ||= @loader.identifier_id(@model, @record_name)
 
       # Never overwrite created_at.
       entry.delete(:created_at)
@@ -75,7 +100,7 @@ class Magma
           if att_name == :temp_id
             [ :real_id, value.real_id ]
           elsif value.is_a? Magma::TempId
-            @loader.send(:attribute_entry,@model, att_name, value)
+            attribute_entry(att_name, value)
           else
             nil
           end
@@ -89,14 +114,13 @@ class Magma
 
     private
 
-    def identifier
-      (@record[:$identifier] || @record[ @model.identity.column_name.to_sym ]).tap do |i|
-        return @model.has_identifier? ? i : i.to_i
-      end
+    def attribute_entry(att_name, value)
+      return [:id, value] if att_name == :id
+      @model.attributes[att_name].entry(value, @loader)
     end
 
     def record_exists?
-      @loader.identifier_exists?(@model, identifier)
+      @loader.identifier_exists?(@model, @record_name)
     end
 
     def check_document_validity

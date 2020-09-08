@@ -130,7 +130,7 @@ class Magma
     end
 
     def entry(value, loader)
-      [ column_name, value ]
+      [ column_name.to_sym, value ]
     end
 
     private

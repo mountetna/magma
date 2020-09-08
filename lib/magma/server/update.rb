@@ -2,32 +2,20 @@ require_relative 'controller'
 
 class UpdateController < Magma::Controller
   def action
-    @loader = Magma::Loader.new
+    @loader = Magma::Loader.new(@user)
     @censor = Magma::Censor.new(@user,@project_name)
-    @payload = Magma::Payload.new
+    @revisions = @params[:revisions]
 
-    @revisions = @params[:revisions].map do |model_name, model_revisions|
-      model = Magma.instance.get_model(@project_name, model_name)
-      @payload.add_model(model)
-
-      [
-        model,
-        model_revisions.map do |record_name, revision|
-          Magma::Revision.new(model, record_name, revision)
-        end
-      ]
-    end.to_h
-
-    censor_revisions
+    #censor_revisions
 
     # Unclear if this step to update file links in Metis should
     # happen before load_revisions ... either could fail, which
     # should cause the other to not run.
-    update_any_file_links if success?
+    #update_any_file_links if success?
 
-    load_revisions if success?
+    payload = load_revisions
 
-    return success_json(@payload.to_hash) if success?
+    return success_json(payload.to_hash) if success?
 
     return failure(422, errors: @errors)
   end
@@ -43,22 +31,20 @@ class UpdateController < Magma::Controller
   end
 
   def load_revisions
-    @revisions.each do |model, model_revisions|
-      model_revisions.each do |revision|
-        @loader.push_record(model, revision.to_loader(@loader))
+    @revisions.each do |model_name, model_revisions|
+      model = Magma.instance.get_model(@project_name, model_name)
 
-        revision.each_linked_record(@loader) do |link_model, link_record|
-          @loader.push_record(link_model, link_record)
-        end
+      model_revisions.each do |record_name, revision|
+        @loader.push_record(model, record_name.to_s, revision)
+        @loader.push_links(model, record_name, revision)
       end
-
-      @payload.add_records(model, model_revisions.map{ |rev| rev.to_payload(@user) })
     end
 
-    @loader.dispatch_record_set
+    return @loader.dispatch_record_set
   rescue Magma::LoadFailed => m
     log(m.complaints)
     @errors.concat(m.complaints)
+    return nil
   end
 
   private
