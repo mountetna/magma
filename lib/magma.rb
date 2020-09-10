@@ -118,17 +118,6 @@ class Magma
     model.attributes.each do |attribute_name, attribute|
       # Check that attribute has a column in the model's table
       raise Magma::ValidationError, "Missing column for #{model}##{attribute_name}." if attribute.missing_column?
-
-      next unless attribute.respond_to?(:link_model)
-
-      # Check reciprocal links
-      link_model = attribute.link_model
-
-      link_attribute = link_model.attributes.values.find do |attribute|
-        attribute.respond_to?(:link_model) && attribute.link_model == model
-      end
-
-      raise Magma::ValidationError, "Missing reciprocal link for #{model.model_name}##{attribute_name} from #{link_model.model_name}." unless link_attribute
     end
   end
 

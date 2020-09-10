@@ -28,18 +28,6 @@ describe Magma do
   end
 
   describe '#validate_models' do
-    context 'two-way links' do
-      before(:each) do
-        @labor = disconnect_attribute(Labors::Monster, :labor)
-      end
-      after(:each) do
-        reconnect_attribute(Labors::Monster, :labor, @labor)
-      end
-      it 'complains without reciprocal links' do
-        expect{Magma.instance.validate_models}.to raise_error(Magma::ValidationError)
-      end
-    end
-
     context 'project model' do
       before(:each) do
         # Delete the constant
