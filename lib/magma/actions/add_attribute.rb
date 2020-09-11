@@ -27,7 +27,8 @@ class Magma
         :validate_attribute_name_unique,
         :validate_restricted_attribute,
         :validate_options,
-        :validate_attribute
+        :validate_attribute,
+        :validate_not_link,
       ]
     end
 
@@ -37,6 +38,15 @@ class Magma
       @errors << Magma::ActionError.new(
         message: 'Model does not exist',
         source: @action_params.slice(:action_name, :model_name)
+      )
+    end
+
+    def validate_not_link
+      return unless attribute.is_a?(Magma::ChildAttribute) || attribute.is_a?(Magma::CollectionAttribute) || attribute.is_a?(Magma::ForeignKeyAttribute)
+
+      @errors << Magma::ActionError.new(
+          message: "type cannot be a relation, use add_link instead.",
+          source: @action_params.slice(:type)
       )
     end
 
