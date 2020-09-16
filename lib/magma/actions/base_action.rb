@@ -42,12 +42,16 @@ class Magma
   end
 
   class ComposedAction < BaseAction
+    alias :super_validate :validate
+
     def make_actions
       []
     end
 
     def inner_actions
-      @inner_actions ||= make_actions
+      @inner_actions ||= begin
+        super_validate ? make_actions : []
+      end
     end
 
     def perform
@@ -66,7 +70,7 @@ class Magma
         @errors.push(*action.errors)
       end
 
-      super
+      @errors.empty?
     end
   end
 end

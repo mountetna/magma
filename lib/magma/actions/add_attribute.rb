@@ -27,8 +27,8 @@ class Magma
         :validate_attribute_name_unique,
         :validate_restricted_attribute,
         :validate_options,
-        :validate_attribute,
         :validate_not_link,
+        :validate_attribute,
       ]
     end
 
@@ -69,6 +69,7 @@ class Magma
     end
 
     def validate_options
+      return unless model
       @action_params.except(:action_name, :model_name, :attribute_name).keys.each do |option|
         if !attribute.respond_to?(option)
           @errors << Magma::ActionError.new(
@@ -80,6 +81,7 @@ class Magma
     end
 
     def validate_attribute
+      return unless model
       return if attribute.valid?
 
       attribute.errors.full_messages.each do |error|

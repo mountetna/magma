@@ -11,7 +11,6 @@ class Magma
 
     def validations
       [
-          :two_links,
           :link_types_valid,
       ]
     end
@@ -21,29 +20,59 @@ class Magma
     end
 
     def two_links
-      return unless (
-      @action_params[:links].is_a? Array &&
-          @action_params[:links].length == 2 &&
-          @action_params[:links].all? { |v| v.is_a? Hash } &&
-          @action_params[:links].all? { |v| v.slice(:model_name, :attribute_name, :type).values.all? }
-      )
+      unless @action_params[:links].is_a?(Array)
+        @errors << Magma::ActionError.new(
+            message: 'links must be an array',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
 
-      @errors << Magma::ActionError.new(
-          message: 'links must be an array of two valid link attribute hashes containing a model_name, attribute_name, and type',
-          source: @action_params.slice(:action_name, :links)
-      )
+      unless @action_params[:links].length == 2
+        @errors << Magma::ActionError.new(
+            message: 'links must contain exactly two items',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
+
+      unless @action_params[:links].all? { |v| v.is_a?(Hash) }
+        @errors << Magma::ActionError.new(
+            message: 'links entries must be objects',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
+
+      unless @action_params[:links].all? { |v| v.slice(:model_name, :attribute_name, :type).values.all? }
+        @errors << Magma::ActionError.new(
+            message: 'links entries must contain model_name, attribute_name, and type',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
+
+      @action_params[:links]
     end
 
     def link_types_valid
-      return unless (
-          @action_params[:links].all? { |v| ['collection', 'link'].include?(v[:type]) } &&
-          @action_params[:links].any? { |v| v[:type] == 'link' }
-      )
+      return unless two_links
 
-      @errors << Magma::ActionError.new(
-          message: 'links type must include one link, and either another link or a collection',
-          source: @action_params.slice(:action_name, :links)
-      )
+      unless two_links.all? { |v| ['collection', 'link'].include?(v[:type]) }
+        @errors << Magma::ActionError.new(
+            message: 'links type must be either another link or a collection',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
+
+      unless two_links.any? { |v| v[:type] == 'link' }
+        @errors << Magma::ActionError.new(
+            message: 'links must include at least one link type',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
     end
 
     def two_model_names
@@ -61,10 +90,10 @@ class Magma
 
     def make_actions
       [
-          AddLinkAction.new(@project_name, @action_params[:links][0].slice(:model_name, :attribute_name, :type).update({
+          LinkAddAttributeAction.new(@project_name, @action_params[:links][0].slice(:model_name, :attribute_name, :type).update({
               link_model_name: @action_params[:links][1][:model_name]
           })),
-          AddLinkAction.new(@project_name, @action_params[:links][1].slice(:model_name, :attribute_name, :type).update({
+          LinkAddAttributeAction.new(@project_name, @action_params[:links][1].slice(:model_name, :attribute_name, :type).update({
               link_model_name: @action_params[:links][0][:model_name]
           })),
       ]
