@@ -2,7 +2,7 @@ require_relative 'controller'
 
 class UpdateController < Magma::Controller
   def action
-    @loader = Magma::Loader.new(@user)
+    @loader = Magma::Loader.new(@user,@project_name)
     @censor = Magma::Censor.new(@user,@project_name)
     @revisions = @params[:revisions]
 

@@ -133,6 +133,15 @@ class Magma
       [ column_name.to_sym, value ]
     end
 
+    def load_hook(loader, record_name, value, bulk_load)
+    end
+
+    def bulk_load_hook(loader, bulk_load)
+    end
+
+    def self.type_bulk_load_hook(loader, project_name, bulk_type_attributes)
+    end
+
     private
 
     def after_magma_model_set

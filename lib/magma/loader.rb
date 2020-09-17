@@ -37,13 +37,14 @@ class Magma
 
     attr_reader :validator, :user
 
-    def initialize(user)
+    def initialize(user, project_name)
       @records = {}
       @temp_id_counter = 0
       @validator = Magma::Validation.new
       @attribute_entries = {}
       @identifiers = {}
       @user = user
+      @project_name = project_name
       @now = Time.now.iso8601
     end
 
@@ -87,11 +88,20 @@ class Magma
     # Once we have loaded up all the records we wish to insert/update (upsert)
     # we run this function to kick off the DB insert and update queries.
     def dispatch_record_set
+      # Validations may raise Magma::LoadFailed
       validate!
+
       payload = to_payload
+
+      # Hooks may also raise Magma::LoadFailed
+      run_attribute_hooks!
+
       upsert
+      
       update_temp_ids
+
       reset
+
       return payload
     end
 
@@ -141,6 +151,35 @@ class Magma
       complaints.flatten!
 
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+    end
+
+    def run_attribute_hooks!
+      bulk_load_type = {}
+      @records.each do |model, record_set|
+        model.attributes.each do |att_name, attribute|
+          bulk_load_attribute = {}
+
+          record_set.each do |record_name, record|
+            next unless record.has_key?(att_name)
+            error = attribute.load_hook(self, record_name, record[att_name], bulk_load_attribute)
+
+            raise Magma::LoadFailed.new([error]) if error
+          end
+
+          error = attribute.bulk_load_hook(self, bulk_load_attribute)
+          raise Magma::LoadFailed.new([error]) if error
+
+          unless bulk_load_attribute.empty?
+            bulk_load_type[ attribute.class ] ||= {}
+            bulk_load_type[ attribute.class ][ attribute ] = bulk_load_attribute
+          end
+        end
+      end
+
+      bulk_load_type.each do |attribute_class, bulk_type_attributes|
+        error = attribute_class.type_bulk_load_hook(self, @project_name, bulk_type_attributes)
+        raise Magma::LoadFailed.new([error]) if error
+      end
     end
 
     # This 'upsert' function will look at the records and either insert or
