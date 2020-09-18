@@ -137,6 +137,13 @@ class Magma
   end
 
   def server_pid
-    File.read(config(:server_pidfile)).chomp.to_i
+    pid_file = config(:server_pidfile)
+    if ::File.exists?(pid_file)
+      File.read(pid_file).chomp.to_i
+    else
+      # Oh boy.  Not ideal, but best effort here.  This could end up just restarting the wrong puma process if
+      # it was hosted together.  Ideally we're running these processes in separate containers so it should be ok.
+      `pidof puma | tail -n 1`.chomp.to_i
+    end
   end
 end
