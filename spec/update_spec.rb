@@ -698,35 +698,6 @@ describe UpdateController do
 
       # the updated record is returned
       expect(last_response.status).to eq(200)
-      #expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
-    end
-
-    it 'updates a table and returns the correct id' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(2)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.count).to eq(2)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
       expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
     end
 

@@ -6,7 +6,7 @@ class Magma
 
     def initialize(model, record_name, loader)
       @model = model
-      @record_name = @model.has_identifier? ? record_name : record_name.to_i
+      @record_name = record_name
       @loader = loader
       @record = {}
     end

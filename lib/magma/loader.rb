@@ -123,7 +123,11 @@ class Magma
     end
 
     def identifier_id(model, identifier)
-      @identifiers[model] ||= Hash[model.select_map([model.identity.column_name.to_sym, :id])]
+      @identifiers[model] ||= model.select_map(
+        [model.identity.column_name.to_sym, :id]
+      ).map do |identifier, id|
+        [ identifier.to_s, id ]
+      end.to_h
 
       @identifiers[model][identifier]
     end
