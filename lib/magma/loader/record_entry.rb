@@ -2,6 +2,8 @@ class Magma
   class RecordEntry
     attr_accessor :real_id
 
+    attr_reader :record_name
+
     def initialize(model, record_name, loader)
       @model = model
       @record_name = @model.has_identifier? ? record_name : record_name.to_i

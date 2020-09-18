@@ -38,13 +38,14 @@ class Magma
     attr_reader :validator, :user
 
     def initialize(user, project_name)
-      @records = {}
-      @temp_id_counter = 0
-      @validator = Magma::Validation.new
-      @attribute_entries = {}
-      @identifiers = {}
       @user = user
       @project_name = project_name
+      @validator = Magma::Validation.new
+      @censor = Magma::Censor.new(@user,@project_name)
+      @records = {}
+      @temp_id_counter = 0
+      @attribute_entries = {}
+      @identifiers = {}
       @now = Time.now.iso8601
     end
 
@@ -88,13 +89,13 @@ class Magma
     # Once we have loaded up all the records we wish to insert/update (upsert)
     # we run this function to kick off the DB insert and update queries.
     def dispatch_record_set
-      # Validations may raise Magma::LoadFailed
       validate!
 
-      payload = to_payload
+      censor_revisions!
 
-      # Hooks may also raise Magma::LoadFailed
       run_attribute_hooks!
+
+      payload = to_payload
 
       upsert
       
@@ -108,6 +109,7 @@ class Magma
     def reset
       @records = {}
       @validator = Magma::Validation.new
+      @censor = Magma::Censor.new(@user,@project_name)
       @attribute_entries = {}
       @identifiers = {}
       GC.start
@@ -149,6 +151,19 @@ class Magma
       end
 
       complaints.flatten!
+
+      raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+    end
+
+    def censor_revisions!
+      complaints = []
+      @records.each do |model, record_set|
+        reasons = @censor.censored_reasons(model, record_set)
+
+        next if reasons.empty?
+
+        complaints += reasons
+      end
 
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
     end

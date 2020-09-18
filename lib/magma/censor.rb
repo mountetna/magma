@@ -6,15 +6,11 @@ class Magma
       @project_name = project_name
     end
 
-    def censored?(model, revisions)
-      censored_reasons(model, revisions).length > 0
-    end
-
-    def censored_reasons(model, revisions)
+    def censored_reasons(model, record_set)
       reasons = []
       return reasons unless restrict?
 
-      record_names = revisions.map(&:record_name).map(&:to_s)
+      record_names = record_set.values.map(&:record_name)
 
       restricted_identifiers = record_names - Magma::Question.new(
         @project_name,
@@ -36,8 +32,8 @@ class Magma
       restricted_attributes = model.attributes.values
         .select(&:restricted).map(&:name) + [:restricted]
 
-      revisions.each do |revision|
-        (restricted_attributes & revision.attribute_names).each do |attribute_name|
+      record_set.each do |record_name, revision|
+        (restricted_attributes & revision.attribute_key).each do |attribute_name|
           reasons << "Cannot revise restricted attribute :#{ attribute_name } on #{model.model_name} '#{revision.record_name}'"
         end
       end
