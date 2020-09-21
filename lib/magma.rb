@@ -118,17 +118,6 @@ class Magma
     model.attributes.each do |attribute_name, attribute|
       # Check that attribute has a column in the model's table
       raise Magma::ValidationError, "Missing column for #{model}##{attribute_name}." if attribute.missing_column?
-
-      next unless attribute.respond_to?(:link_model)
-
-      # Check reciprocal links
-      link_model = attribute.link_model
-
-      link_attribute = link_model.attributes.values.find do |attribute|
-        attribute.respond_to?(:link_model) && attribute.link_model == model
-      end
-
-      raise Magma::ValidationError, "Missing reciprocal link for #{model.model_name}##{attribute_name} from #{link_model.model_name}." unless link_attribute
     end
   end
 
@@ -148,6 +137,13 @@ class Magma
   end
 
   def server_pid
-    File.read(config(:server_pidfile)).chomp.to_i
+    pid_file = config(:server_pidfile)
+    if ::File.exists?(pid_file)
+      File.read(pid_file).chomp.to_i
+    else
+      # Oh boy.  Not ideal, but best effort here.  This could end up just restarting the wrong puma process if
+      # it was hosted together.  Ideally we're running these processes in separate containers so it should be ok.
+      `pidof puma | tail -n 1`.chomp.to_i
+    end
   end
 end

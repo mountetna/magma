@@ -99,7 +99,7 @@ describe Magma::AddAttributeAction do
       end
     end
 
-    context "when adding a link attribute with a link_model_name that doesn't exist" do
+    context "when adding a link attribute" do
       let(:action_params) do
         {
           action_name: "add_attribute",
@@ -112,23 +112,7 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("link_model_name doesn't match an existing model")
-      end
-    end
-
-    context "when adding a link attribute with an attribute_name that doesn't exist" do
-      let(:action_params) do
-        {
-          action_name: "add_attribute",
-          model_name: model_name,
-          attribute_name: "houdini",
-          type: "parent"
-        }
-      end
-
-      it 'captures an attribute error' do
-        expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name doesn't match an existing model")
+        expect(action.errors.first[:message]).to eq("type cannot be a relation, use add_link instead.")
       end
     end
 
