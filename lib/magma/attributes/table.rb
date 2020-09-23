@@ -29,6 +29,21 @@ class Magma
       false
     end
 
+    def load_hook(loader, record_name, new_ids, clean_records)
+      clean_records[record_name] = true
+      return nil
+    end
+
+    def bulk_load_hook(loader, clean_records)
+      link_model.where(
+        self_id => clean_records.keys.map do |id|
+          loader.real_id(@magma_model, id)
+        end
+      ).delete unless clean_records.empty?
+
+      return nil
+    end
+
     class Validation < Magma::CollectionAttribute::Validation; end
 
     private
