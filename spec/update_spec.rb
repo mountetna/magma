@@ -395,6 +395,11 @@ describe UpdateController do
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
         with(query: hash_including({
           "X-Etna-Headers": "revisions"
+        }), body: hash_including({
+          "revisions": [{
+            "source": "metis://labors/files/lion-stats.txt",
+            "dest": "metis://labors/magma/monster-Nemean Lion-stats.txt"
+          }]
         }))
 
       Timecop.return
@@ -631,6 +636,11 @@ describe UpdateController do
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
         with(query: hash_including({
           "X-Etna-Headers": "revisions"
+        }), body: hash_including({
+          "revisions": [{
+            "source": "metis://labors/files/lion.jpg",
+            "dest": "metis://labors/magma/monster-Nemean Lion-selfie.jpg"
+          }]
         }))
 
       Timecop.return
