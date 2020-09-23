@@ -110,9 +110,6 @@ class Magma
         revisions: revisions
       }
 
-      puts bulk_copy_params
-      puts path
-
       # Now populate the standard headers
       hmac_params = {
         method: 'POST',
@@ -131,19 +128,17 @@ class Magma
       cgi_hash.delete('X-Etna-Revisions') # this could be too long for URI
 
       hmac_params_hash = Hash[cgi_hash.map {|key,values| [key.to_sym, values[0]||true]}]
-      puts "Sending to Metis"
+
       client.send(
         'body_request',
         Net::HTTP::Post,
         hmac.url_params[:path] + '?' + URI.encode_www_form(cgi_hash),
         bulk_copy_params)
-      puts "Done linking Metis"
+
       return nil
 
     rescue Etna::Error => e
       # We receive a stringified JSON error from Metis
-      puts e.message
-      Magma.instance.logger.log_error(e)
       return JSON.parse(e.message)
     end
 
