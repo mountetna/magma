@@ -26,6 +26,7 @@ x-base-etna-service: &base-etna-service
     - 'magma.development.local:172.16.238.10'
     - 'janus.development.local:172.16.238.10'
     - 'timur.development.local:172.16.238.10'
+    - 'rtemis.development.local:172.16.238.10'
 
 x-base-etna-services: &base-etna-services
   # Default list of services an etna app may have.

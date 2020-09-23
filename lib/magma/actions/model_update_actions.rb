@@ -1,6 +1,7 @@
 require_relative 'base_action'
 require_relative 'update_attribute'
 require_relative 'add_attribute'
+require_relative 'add_link'
 require_relative 'add_model'
 require_relative 'rename_attribute'
 require_relative 'add_project'

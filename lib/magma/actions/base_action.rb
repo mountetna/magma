@@ -40,4 +40,37 @@ class Magma
       true
     end
   end
+
+  class ComposedAction < BaseAction
+    alias :super_validate :validate
+
+    def make_actions
+      []
+    end
+
+    def inner_actions
+      @inner_actions ||= begin
+        super_validate ? make_actions : []
+      end
+    end
+
+    def perform
+      inner_actions.each do |action|
+        result = action.perform
+        @errors.push(*action.errors)
+        return false unless result
+      end
+
+      @errors.empty?
+    end
+
+    def validate
+      inner_actions.each do |action|
+        action.validate
+        @errors.push(*action.errors)
+      end
+
+      @errors.empty?
+    end
+  end
 end
