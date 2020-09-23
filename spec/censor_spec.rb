@@ -2,6 +2,21 @@ require_relative '../lib/magma'
 require 'pry'
 
 describe Magma::Censor do
+  def to_record_set(model, revisions)
+    loader = double('loader')
+    allow(loader).to receive(:identifier_id) { nil }
+    revisions.map do |record_name, revision|
+      # The RecordEntry should require a Loader, but the censor doesn't need it
+      entry = Magma::RecordEntry.new(model, record_name, loader)
+
+      entry << revision
+      [
+        record_name,
+        entry
+      ]
+    end.to_h
+  end
+
   it 'nothing censored for authorized users with unrestricted permissions' do
     victim = create(:victim, name: 'Apollodorus', country: 'Greece')
     model = Magma.instance.magma_projects[:labors].models[:victim]
@@ -14,9 +29,8 @@ describe Magma::Censor do
         user,
         'labors'
     )
-    expect(censor.censored?(model, [Magma::Revision.new(model, 'Apollodorus', {
-        country: 'Rome'
-    })])).to eq(false)
+    revisions = to_record_set(Labors::Victim, { 'Apollodorus' => { country: 'Rome' }})
+    expect(censor.censored_reasons(model, revisions)).to be_empty
   end
 
   it 'revisions censored for users with restricted permissions' do
@@ -31,12 +45,10 @@ describe Magma::Censor do
         user,
         'labors'
     )
-    revisions = [Magma::Revision.new(model, 'Apollodorus', {
-        country: 'Rome'
-    })]
-    expect(censor.censored?(model, revisions)).to eq(true)
+    revisions = to_record_set(Labors::Victim, { 'Apollodorus' => { country: 'Rome' } })
     expect(censor.censored_reasons(model, revisions)).to eq(
-        ["Cannot revise restricted attribute :country on victim 'Apollodorus'"])
+      ["Cannot revise restricted attribute :country on victim 'Apollodorus'"]
+    )
   end
 
   it 'revisions censored for users with restricted model' do
@@ -51,10 +63,7 @@ describe Magma::Censor do
         user,
         'labors'
     )
-    revisions = [Magma::Revision.new(model, 'Apollodorus', {
-        name: 'Victim father'
-    })]
-    expect(censor.censored?(model, revisions)).to eq(true)
+    revisions = to_record_set(Labors::Victim, { 'Apollodorus' => { name: 'Victim father' }})
     expect(censor.censored_reasons(model, revisions)).to eq(
         ["Cannot revise restricted victim 'Apollodorus'"])
   end

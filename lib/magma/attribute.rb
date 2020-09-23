@@ -125,7 +125,7 @@ class Magma
     def revision_to_links(record_name, value)
     end
 
-    def revision_to_payload(record_name, value, user)
+    def revision_to_payload(record_name, value, loader)
       revision_to_loader(record_name, value)
     end
 

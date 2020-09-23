@@ -9,10 +9,10 @@ class Magma
       [ name, file.update(filename: filename(record_name, file[:path])) ]
     end
 
-    def revision_to_payload(record_name, new_value, user)
+    def revision_to_payload(record_name, new_value, loader)
       case new_value[:path]
       when '::temp'
-        return [ name, { path: temporary_filepath(user) } ]
+        return [ name, { path: temporary_filepath(loader.user) } ]
       when '::blank'
         return [ name, { path: '::blank' } ]
       when %r!^metis://!

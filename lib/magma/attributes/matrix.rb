@@ -27,7 +27,7 @@ class Magma
       [ name, new_value ]
     end
 
-    def revision_to_payload(record_name, new_value, user)
+    def revision_to_payload(record_name, new_value, loader)
       [ name, new_value ]
     end
 

@@ -10,15 +10,19 @@ class Magma
       nil
     end
 
-    def revision_to_loader(record_name, new_value)
-      nil
-    end
-
     def revision_to_links(record_name, new_ids)
       yield link_model, new_ids
     end
 
-    def revision_to_payload(record_name, value, user)
+    def revision_to_payload(record_name, new_ids, loader)
+      [
+        name,
+        new_ids.map do |id| loader.real_id(link_model, id) end
+      ]
+    end
+
+    def entry(value, loader)
+      nil
     end
 
     def missing_column?

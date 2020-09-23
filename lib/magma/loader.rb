@@ -95,11 +95,11 @@ class Magma
 
       run_attribute_hooks!
 
-      payload = to_payload
-
       upsert
       
       update_temp_ids
+
+      payload = to_payload
 
       reset
 
@@ -122,6 +122,8 @@ class Magma
       temp_ids[obj] ||= TempId.new(new_temp_id, obj)
     end
 
+    TEMP_ID_MATCH=/^::temp/
+
     def identifier_id(model, identifier)
       @identifiers[model] ||= model.select_map(
         [model.identity.column_name.to_sym, :id]
@@ -129,12 +131,19 @@ class Magma
         [ identifier.to_s, id ]
       end.to_h
 
+      @identifiers[model][identifier] ||= temp_id([ model, identifier ])
+
       @identifiers[model][identifier]
     end
 
-    alias_method :identifier_exists?, :identifier_id
+    def real_id(model, identifier)
+      id = identifier_id(model, identifier)
+      id.is_a?(TempId) ? id.real_id : id
+    end
 
-    private
+    def identifier_exists?(model, identifier)
+      !identifier_id(model, identifier).is_a?(TempId)
+    end
 
     def records(model)
       return @records[model] if @records[model]
@@ -145,6 +154,8 @@ class Magma
 
       @records[model]
     end
+
+    private
 
     def validate!
       complaints = []
@@ -219,7 +230,6 @@ class Magma
 
         # Run the record updates.
         multi_update(model, update_records)
-
       end
     end
 
@@ -240,7 +250,6 @@ class Magma
 
     def multi_update(model, update_records)
       by_attribute_key(update_records) do |records|
-
         MultiUpdate.new(model, records.map(&:update_entry), :id, :id).update
       end
     end
@@ -254,6 +263,7 @@ class Magma
     def update_temp_ids
       @records.each do |model, record_set|
         next if record_set.empty?
+
         temp_records = record_set.values.select(&:valid_temp_update?)
 
         MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update

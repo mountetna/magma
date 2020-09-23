@@ -9,6 +9,8 @@ class Magma
       @record_name = record_name
       @loader = loader
       @record = {}
+
+      set_temp_id
     end
 
     def <<(revision)
@@ -52,35 +54,32 @@ class Magma
     end
 
     def needs_temp?
-      @needs_temp
+      @needs_temp ||= @record.any? do |att_name, value|
+        attribute = @model.attributes[att_name]
+        attribute.is_a?(Magma::ForeignKeyAttribute) &&
+          !@loader.identifier_exists?(attribute.link_model, value)
+      end
     end
 
     def payload_entry
       { @model.identity.name => @record_name }.update(
         @record.map do |att_name,value|
-          # filter out temp ids
-          next if att_name == :temp_id || att_name == :$identifier || value.is_a?(Magma::TempId)
-
-          att_name == :id ?  [:id, value ] : @model.attributes[att_name].revision_to_payload(@record_name, value, @loader.user)
+          att_name == :id ?  [:id, value ] : @model.attributes[att_name].revision_to_payload(@record_name, value, @loader)
         end.compact.to_h
       )
     end
 
     def insert_entry
-      { @model.identity.column_name.to_sym => @record_name }.update(
+      entry = {}
+      
+      id_column = @model.identity.column_name.to_sym
+
+      entry[id_column] = @record_name unless id_column == :id
+      
+      entry.update(
         @record.map do |att_name,value|
           # filter out temp ids
-          if att_name == :temp_id
-            value.record_entry = self
-            next
-          end
-          if att_name == :$identifier
-            next
-          end
-          if value.is_a? Magma::TempId
-            @needs_temp = true
-            next
-          end
+          next if value.is_a?(Magma::TempId)
           attribute_entry(att_name, value)
         end.compact.to_h
       )
@@ -97,17 +96,13 @@ class Magma
 
     def temp_entry
       # Replace the entry with the appropriate values for the column.
-      Hash[
-        @record.map do |att_name,value|
-          if att_name == :temp_id
-            [ :real_id, value.real_id ]
-          elsif value.is_a? Magma::TempId
-            attribute_entry(att_name, value)
-          else
-            nil
-          end
-        end.compact
-      ]
+      @record.map do |att_name,value|
+        attribute = @model.attributes[att_name]
+        next unless attribute.is_a?(Magma::ForeignKeyAttribute)
+        [ attribute.foreign_id, @loader.identifier_id(attribute.link_model, value).real_id ]
+      end.compact.to_h.merge(
+        real_id: @loader.real_id(@model, @record_name)
+      )
     end
 
     def attribute_key
@@ -115,6 +110,14 @@ class Magma
     end
 
     private
+
+    def set_temp_id
+      id = @loader.identifier_id(@model, @record_name)
+
+      if id.is_a?(Magma::TempId)
+        id.record_entry = self
+      end
+    end
 
     def attribute_entry(att_name, value)
       return [:id, value] if att_name == :id
