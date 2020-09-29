@@ -122,7 +122,7 @@ describe UpdateController do
     expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: nil)
   end
 
-  it 'updates a foreign-key attribute' do
+  it 'updates a parent attribute' do
     lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
     hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
 
@@ -146,7 +146,6 @@ describe UpdateController do
   it 'updates a link attribute' do
     hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
 
-    reference_monster = create(:monster, name: 'Cnidaria')
     other_monster = create(:monster, name: 'Nemean Lion')
     monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
 
@@ -158,11 +157,17 @@ describe UpdateController do
       }
     )
 
-    monster.refresh
-    expect(monster.reference_monster).to eq(reference_monster)
-
     expect(last_response.status).to eq(200)
     expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
+
+    # A new record is created
+    expect(Labors::Monster.count).to eq(3)
+    cnidaria = Labors::Monster.last
+    expect(cnidaria.name).to eq('Cnidaria')
+
+    # the link has been made
+    monster.refresh
+    expect(monster.reference_monster).to eq(cnidaria)
   end
 
   it 'updates a match' do
