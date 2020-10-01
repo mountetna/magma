@@ -636,7 +636,7 @@ describe RetrieveController do
           record_names: 'all',
           attribute_names: 'all'
         },
-        :editor
+        :privileged_editor
       )
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(
         (
@@ -658,7 +658,7 @@ describe RetrieveController do
           record_names: 'all',
           attribute_names: 'all'
         },
-        :editor
+        :privileged_editor
       )
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(
         (
@@ -690,7 +690,7 @@ describe RetrieveController do
           record_names: 'all',
           attribute_names: [ 'country' ]
         },
-        :editor
+        :privileged_editor
       )
       countries = json_body[:models][:victim][:documents].values.map{|victim| victim[:country]}
       expect(countries).to all(eq('thrace'))

@@ -291,10 +291,10 @@ AUTH_USERS = {
     email: 'zeus@twelve-labors.org', first: 'Zeus', perm: 'a:administration'
   },
   editor: {
-    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'E:labors'
+    email: 'eurystheus@twelve-labors.org', first: 'Eurystheus', perm: 'e:labors'
   },
-  restricted_editor: {
-    email: 'copreus@twelve-labors.org', first: 'Copreus', perm: 'e:labors'
+  privileged_editor: {
+    email: 'copreus@twelve-labors.org', first: 'Copreus', perm: 'E:labors'
   },
   viewer: {
     email: 'hercules@twelve-labors.org', first: 'Hercules', perm: 'v:labors'

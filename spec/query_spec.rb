@@ -628,7 +628,7 @@ describe QueryController do
             [ '::identifier' ]
           ]
         ],
-        :editor
+        :privileged_editor
       )
       # the editor has a restricted permission
       expect(json_body[:answer].map(&:first).sort).to eq(
@@ -649,7 +649,7 @@ describe QueryController do
     it 'allows queries on restricted attributes to users with restricted permission' do
       victim_list = create_list(:victim, 9, country: 'thrace')
 
-      query([ 'victim', '::all', 'country' ], :editor)
+      query([ 'victim', '::all', 'country' ], :privileged_editor)
       expect(json_body[:answer].map(&:last).sort).to all(eq('thrace'))
     end
   end

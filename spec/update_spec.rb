@@ -909,7 +909,7 @@ describe UpdateController do
             }
           }
         },
-        :restricted_editor
+        :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted victim '#{orig_name}'"])
@@ -932,7 +932,7 @@ describe UpdateController do
             }
           }
         },
-        :restricted_editor
+        :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted victim '#{orig_name}'"])
@@ -954,7 +954,7 @@ describe UpdateController do
             }
           }
         },
-        :editor
+        :privileged_editor
       )
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,new_name)).to eq(name: new_name)
@@ -978,7 +978,7 @@ describe UpdateController do
             }
           }
         },
-        :editor
+        :privileged_editor
       )
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,new_name)).to eq(name: new_name)
@@ -999,7 +999,7 @@ describe UpdateController do
             }
           }
         },
-        :restricted_editor
+        :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted attribute :country on victim 'Outis Koutsonadis'"])
@@ -1019,7 +1019,7 @@ describe UpdateController do
                   }
               }
           },
-          :restricted_editor
+          :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted attribute :restricted on victim 'Outis Koutsonadis'"])
@@ -1038,7 +1038,7 @@ describe UpdateController do
             }
           }
         },
-        :editor
+        :privileged_editor
       )
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,'Outis Koutsonadis')).to include(country: 'thrace')
@@ -1058,7 +1058,7 @@ describe UpdateController do
                   }
               }
           },
-          :editor
+          :privileged_editor
       )
       expect(last_response.status).to eq(200)
 
