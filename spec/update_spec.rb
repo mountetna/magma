@@ -41,6 +41,34 @@ describe UpdateController do
     expect(last_response.status).to eq(403)
   end
 
+  it 'updates updated_at' do
+    now = Time.now
+    later = now + 1500
+    Timecop.freeze(now)
+    project = create(:project, name: 'The Two Labors of Hercules')
+
+    Timecop.freeze(later)
+    update(
+      'project' => {
+        'The Two Labors of Hercules' => {
+          name: 'The Ten Labors of Hercules'
+        }
+      }
+    )
+
+    expect(last_response.status).to eq(200)
+    expect(json_document(:project, 'The Ten Labors of Hercules')).to eq(name: 'The Ten Labors of Hercules')
+
+    # the update happened
+    expect(Labors::Project.count).to eq(1)
+    project.refresh
+    expect(project.name).to eq('The Ten Labors of Hercules')
+
+    # we updated updated_at
+    expect(project.updated_at).to be_within(0.001).of(later)
+    Timecop.return
+  end
+
   it 'updates the identifier' do
     project = create(:project, name: 'The Two Labors of Hercules')
     update(

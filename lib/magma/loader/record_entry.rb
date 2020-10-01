@@ -91,6 +91,9 @@ class Magma
 
       # Never overwrite created_at.
       entry.delete(:created_at)
+
+      # Set updated_at
+      entry[:updated_at] = Time.now
       entry
     end
 
