@@ -19,9 +19,6 @@ class Magma
     def upload_url(project_name, path, params={})
     end
 
-    def setup_uploader(model, name, type)
-    end
-
     class Metis < Magma::Storage
       def initialize(config)
         @config = config
@@ -69,8 +66,6 @@ class Magma
         require 'fog/aws'
         require 'carrierwave/sequel'
         require 'carrierwave/storage/fog'
-        require_relative '../magma/file_uploader'
-        require_relative '../magma/image_uploader'
 
         @config = config
         @fog = Fog::Storage.new(@config[:credentials])
@@ -94,15 +89,6 @@ class Magma
           Time.now + @config[:expiration]*60,
           path_style: true
         )
-      end
-
-      def setup_uploader(model, name, type)
-        case type
-        when :file
-          model.mount_uploader name, Magma::FileUploader
-        when :image
-          model.mount_uploader name, Magma::ImageUploader
-        end
       end
 
       private

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+_magma_completions() {
+local all_completion_names=''
+if [ "${COMP_CWORD}" == "1" ]; then
+all_completion_names='generate_completion_script plan global_migrate migrate help load_project create_db unload load console'
+COMPREPLY=($(compgen -W "$all_completion_names" "${COMP_WORDS[COMP_CWORD]}"))
+else
+if [ "${COMP_WORDS[1]}" == 'generate_completion_script' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'plan' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'global_migrate' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'migrate' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'help' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'load_project' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'create_db' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'unload' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'load' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'console' ]; then
+true
+fi
+fi
+}
+complete -F _magma_completions magma

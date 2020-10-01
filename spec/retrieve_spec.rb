@@ -426,6 +426,61 @@ describe RetrieveController do
   end
 
   context 'pagination' do
+    it 'can order by an additional parameter across pages' do
+      labor_list = []
+      labor_list << create(:labor, name: "d")
+      labor_list << create(:labor, name: "a")
+      labor_list << create(:labor, name: "c")
+      labor_list << create(:labor, name: "b")
+
+      retrieve(
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+          order: 'updated_at',
+          page: 1,
+          page_size: 2,
+      )
+
+      expect(json_body[:models][:labor][:documents].keys).to eq([:d, :a])
+    end
+
+    it 'can order results for a total query' do
+      labor_list = []
+      labor_list << create(:labor, name: "a", updated_at: Time.now + 5)
+      labor_list << create(:labor, name: "c", updated_at: Time.now - 3)
+      labor_list << create(:labor, name: "b", updated_at: Time.now - 2)
+
+      labor_list_by_identifier = labor_list.sort_by { |n| n.name.to_s }
+
+      retrieve(
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+      )
+
+      names_by_identifier = labor_list_by_identifier.map(&:name).map(&:to_sym)
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names_by_identifier)
+
+      labor_list_by_updated_at = labor_list.sort_by(&:updated_at)
+      retrieve(
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+          order: 'updated_at'
+      )
+
+      names_by_updated_at = labor_list_by_updated_at.map(&:name).map(&:to_sym)
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names_by_updated_at)
+
+      expect(names_by_updated_at).to_not eql(names_by_identifier)
+    end
+
     it 'can page results' do
       labor_list = create_list(:labor, 9)
       third_page_labors = labor_list.sort_by(&:name)[6..8]
@@ -476,6 +531,7 @@ describe RetrieveController do
         model_name: 'monster',
         record_names: 'all',
         attribute_names: 'all',
+        order: 'reference_monster',
         page: 3,
         page_size: 3
       )

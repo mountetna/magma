@@ -45,6 +45,7 @@ require_relative 'query_executor'
 class Magma
   class QuestionError < StandardError
   end
+
   class Question
     def initialize(project_name, query_args, options = {})
       @model = Magma.instance.get_model(project_name, query_args.shift)
@@ -116,22 +117,42 @@ class Magma
 
       # do you have page bounds? if so, compute them here.
       if @options[:page] && @options[:page_size]
-        query = paged_query( query )
+        query = paged_query(query)
       end
 
       query = query.select(
-        *(predicate_collect(:select)).uniq
+          *(predicate_collect(:select)).uniq
       )
 
       query
+    end
+
+    def order_by_attributes
+      @order_by_attributes ||= begin
+        order_columns = []
+        if @options[:order]
+          order_columns << @options[:order]
+        end
+        order_columns << @start_predicate.identity
+      end
+    end
+
+    def order_by_aliases
+      @order_by_aliases ||= order_by_attributes.map { |attr| @start_predicate.alias_for_attribute(attr) }
+    end
+
+    def order_by_column_names
+      @order_by_column_names ||= order_by_attributes.map { |attr| @start_predicate.column_name(attr) }
     end
 
     # The base query joins all of the tables and applies constraints for this
     # question, but does not select any columns
     def base_query
       query = @model.from(
-        Sequel.as(@model.table_name, @start_predicate.alias_name)
-      ).order(@start_predicate.identity)
+          Sequel.as(@model.table_name, @start_predicate.alias_name)
+      )
+
+      query = query.order(*order_by_column_names)
 
       joins = predicate_collect(:join).uniq
       constraints = predicate_collect(:constraint).uniq
@@ -153,7 +174,7 @@ class Magma
       # values, only for filters on the start_predicate.
 
       query = @model.from(
-        Sequel.as(@model.table_name, @start_predicate.alias_name)
+          Sequel.as(@model.table_name, @start_predicate.alias_name)
       ).order(@start_predicate.identity)
 
       joins = @start_predicate.join.uniq
@@ -168,72 +189,115 @@ class Magma
       end
 
       query.select(
-        *@start_predicate.select
+          *order_by_column_names.zip(order_by_aliases).map { |c, a| c.as(a) }
       )
     end
 
     # get page bounds for this question using @options[:page] and @options[:page_size]
     def bounds_query
       raise QuestionError, 'Page size must be greater than 1' unless @options[:page_size] > 1
+      bounds_select_parts = order_by_aliases.dup
+      bounds_select_parts << Sequel.function(:row_number)
+                             .over(order: order_by_aliases)
+                             .as(:row)
+
       count_query.from_self.select(
-        # add row_numbers to the count query
-        @start_predicate.identity,
-        Sequel.function(:row_number)
-          .over(order: @start_predicate.identity)
-          .as(:row)
+          *bounds_select_parts
       ).from_self(alias: :main_query).select(
-        # only the first row from each page
-        @start_predicate.identity).where(
+          # only the first row from each page
+          *order_by_aliases).where(
           Sequel.lit(
-            '? % ? = 1',
-            Sequel[:main_query][:row],
-            @options[:page_size]
+              '? % ? = 1',
+              Sequel[:main_query][:row],
+              @options[:page_size]
           )
-        )
+      )
     end
 
     def page_bounds_query
-      bounds_query.limit(2).offset(@options[:page]-1)
+      bounds_query.limit(2).offset(@options[:page] - 1)
     end
 
     # create an upper and lower limit for each page bound
     def all_bounds
       bounds = to_table(bounds_query)
       bounds.map.with_index do |row, index|
-        bound = {:lower =>  row[@start_predicate.identity], :upper => nil}
+        bound = {:lower => order_by_aliases.map { |c| row[c] }, :upper => nil}
 
         if bounds[index + 1]
-          bound[:upper] = bounds[index + 1][@start_predicate.identity]
+          bound[:upper] = bounds[index + 1].map { |c| row[c] }
         end
 
         bound
       end
     end
 
-    def apply_bounds(query, lower, upper)
-      query = query.where(
-        Sequel.lit(
-          '? >= ?',
-          @start_predicate.column_name,
-          lower
-        )
-      )
-      if upper
-        query = query.where(
-          Sequel.lit(
-            '? < ?',
-            @start_predicate.column_name,
-            upper
+    def apply_multi_stage_ordering_bounds(query, upper: nil, lower: nil)
+      bounds = upper || lower
+      prev = upper ? Sequel.lit('TRUE') : Sequel.lit('FALSE')
+      start = lower ? Sequel.lit('TRUE') : Sequel.lit('FALSE')
+      operator = upper ? '<' : '>='
+
+      # upper (a < 1 & true) | (b < 2 & (a == 1 & true))
+      # lower (a >= 1 | false) & (b >= 2 | (a != 1 | false)) & (c >= 5 | (b != 2 | (a != 1 | false)))
+      query.where(order_by_column_names.zip(bounds).reduce(start) do |cond, n|
+        column, value = n
+
+        if value.nil? && upper
+          step = Sequel.lit('FALSE')
+        elsif value.nil? && lower
+          step = Sequel.lit('TRUE')
+        else
+          step = Sequel.lit(
+              "? #{operator} ?",
+              column,
+              value
           )
-        )
+        end
+
+        next_cond = nil
+        if upper
+          next_cond = Sequel.lit('(? AND ?)', step, prev)
+        elsif lower
+          next_cond = Sequel.lit('(? OR ?)', step, prev)
+        end
+
+        if upper
+          if value.nil?
+            prev = Sequel.lit("(? IS NULL AND ?)", column, prev)
+          else
+            prev = Sequel.lit("(? = ? AND ?)", column, value, prev)
+          end
+
+          Sequel.lit('(? OR ?)', cond, next_cond)
+        elsif lower
+          if value.nil?
+            prev = Sequel.lit("(? IS NOT NULL OR ?)", column, prev)
+          else
+            prev = Sequel.lit("(? != ? OR ?)", column, value, prev)
+          end
+
+          Sequel.lit('(? AND ?)', cond, next_cond)
+        end
+      end)
+    end
+
+    def apply_bounds(query, lower, upper)
+      query = apply_multi_stage_ordering_bounds(query, lower: lower)
+
+      if upper
+        query = apply_multi_stage_ordering_bounds(query, upper: upper)
       end
+
+      p lower, upper
+
       query
     end
 
     def paged_query(query)
       raise QuestionError, 'Page must start at 1' unless @options[:page] > 0
       bounds = to_table(page_bounds_query).map do |row|
-        row[@start_predicate.identity]
+        order_by_aliases.map { |c| row[c] }
       end
       raise QuestionError, "Page #{@options[:page]} not found" if bounds.empty?
 

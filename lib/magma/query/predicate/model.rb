@@ -129,8 +129,15 @@ class Magma
       [ column_name.as(identity) ]
     end
 
-    def column_name
-      Sequel[alias_name][@model.identity.column_name]
+    def column_name(attribute = @model.identity)
+      if attribute.is_a?(String) || attribute.is_a?(Symbol)
+        attribute = @model.attributes[attribute.to_sym]
+        if attribute.nil?
+          attribute = @model.identity
+        end
+      end
+
+      Sequel[alias_name][attribute.column_name]
     end
 
     def constraint
@@ -151,7 +158,22 @@ class Magma
     end
 
     def identity
-      :"#{alias_name}_#{@model.identity.column_name}"
+      alias_for_column(@model.identity.column_name)
+    end
+
+    def alias_for_column(column_name)
+      :"#{alias_name}_#{column_name}"
+    end
+
+    def alias_for_attribute(attr)
+      if attr.is_a?(String) || attr.is_a?(Symbol)
+        attr = @model.attributes[attr.to_sym]
+        if attr.nil?
+          return identity
+        end
+      end
+
+      alias_for_column(attr.column_name)
     end
   end
 end

@@ -12,7 +12,7 @@ class Magma
 
       record_names = record_set.values.map(&:record_name)
 
-      restricted_identifiers = record_names - Magma::Question.new(
+      unrestricted_identifiers = Magma::Question.new(
         @project_name,
         [
           model.model_name.to_s,
@@ -22,6 +22,19 @@ class Magma
         ],
         restrict: true
       ).answer.map(&:last)
+
+      existing_identifiers = Magma::Question.new(
+          @project_name,
+          [
+              model.model_name.to_s,
+              [ '::identifier', '::in', record_names ],
+              '::all',
+              '::identifier'
+          ],
+          restrict: false
+      ).answer.map(&:last)
+
+      restricted_identifiers = existing_identifiers - unrestricted_identifiers
 
       unless restricted_identifiers.empty?
         restricted_identifiers.each do |restricted_identifier|

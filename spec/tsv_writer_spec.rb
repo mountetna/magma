@@ -14,7 +14,7 @@ describe 'TSVWriter' do
         model.attributes.values,
         filter: nil,
         page: 1,
-        page_size: 2
+        page_size: 5
     )
 
     file = StringIO.new

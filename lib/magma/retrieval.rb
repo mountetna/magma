@@ -16,6 +16,7 @@ class Magma
       @page_size = opts[:page_size]
       @page = opts[:page]
       @restrict = opts[:restrict]
+      @order = opts[:order]
 
       @model = model
       @record_names = record_names
@@ -94,7 +95,7 @@ class Magma
     end
 
     def question
-      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict)
+      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict, order: @order)
     end
 
     def query
