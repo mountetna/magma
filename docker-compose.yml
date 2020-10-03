@@ -5,14 +5,14 @@ x-base-etna-service: &base-etna-service
   # Base configuration used by most etna services.
   image: etna-base
   volumes: &base-etna-service-volumes
-    - .:/app:cached
+    - .:/app:delegated
     - magma-app-gems:/app/vendor/bundle:rw
     - magma-log-dir:/app/log:rw
     - magma-tmp-dir:/app/tmp:rw
     - magma-public-dir:/app/public:rw
     - magma-data-dir:/app/data:rw
     - magma-opt-dir:/usr/opt:rw
-    - ../etna:/etna:cached
+    - ../etna:/etna:delegated
   environment: &base-etna-env
     "MAGMA_ENV": "development"
     APP_NAME: "magma"
