@@ -95,7 +95,19 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case")
+        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case with no spaces")
+      end
+    end
+
+    context "when attribute_name has spaces" do
+      let(:attribute_name) { @attribute_name }
+
+      it 'captures an attribute error' do
+        [ "first\nname", ' first_name', 'first_name	' ].each do |name|
+          @attribute_name = name
+          expect(action.validate).to eq(false)
+          expect(action.errors.first[:message]).to eq("attribute_name must be snake_case with no spaces")
+        end
       end
     end
 

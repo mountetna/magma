@@ -196,8 +196,8 @@ class Magma
     end
 
     def validate_attribute_name_format
-      return if attribute_name == attribute_name&.snake_case
-      errors.add(:attribute_name, "must be snake_case")
+      return if attribute_name =~ /\A[a-z][a-z0-9]*(_[a-z0-9]+)*\Z/
+      errors.add(:attribute_name, "must be snake_case with no spaces")
     end
 
     def validate_type
