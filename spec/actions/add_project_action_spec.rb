@@ -1,8 +1,11 @@
 require 'securerandom'
+require 'pry'
 
-describe Magma::AddModelAction do
+describe Magma::AddProjectAction do
   let(:project_name) { "test_project_#{SecureRandom.uuid.gsub('-', '_')}" }
-  let(:action_params) { { } }
+  let(:action_params) { {
+    project_name: project_name
+   } }
 
   describe "#perform" do
     def run_once
@@ -23,6 +26,15 @@ describe Magma::AddModelAction do
 
       run_once
       expect(Magma.instance.get_model(project_name, :project)).to_not be_nil
+    end
+
+    it 'captures an error on invalid project names' do
+      [ "my\nmproject", ' my_project', 'my_project	' , '1x_project', 'pg_project'].each do |name|
+        action = Magma::AddProjectAction.new(name, action_params)
+        action.validate
+        expect(action.errors.first[:message]).to eql("project_name must be snake_case with no spaces")
+        expect(action.validate).to eql(false)
+      end
     end
 
     # Does not work due to sequel caching, normally a restart is required to fully clear caches.

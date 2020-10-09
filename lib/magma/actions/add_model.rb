@@ -38,7 +38,8 @@ class Magma
       [
           :validate_required_fields,
           :validate_parent_model,
-          :validate_parent_link_type
+          :validate_parent_link_type,
+          :validate_model_name
       ]
     end
 
@@ -98,6 +99,14 @@ class Magma
       @errors << Magma::ActionError.new(
           message: "parent_link_type must be one of #{PARENT_LINK_TYPES.join(', ')}",
           source: @action_params.slice(:parent_model_name)
+      )
+    end
+
+    def validate_model_name
+      return if @action_params[:model_name] =~ /\A[a-z]*(_[a-z]+)*\Z/
+      @errors << Magma::ActionError.new(
+          message: "model_name must be snake_case and not contain numbers",
+          source: @action_params.slice(:model_name)
       )
     end
 

@@ -151,5 +151,25 @@ describe Magma::AddModelAction do
         expect(action.errors.first[:message]).to eq("parent_link_type must be one of child, collection, table")
       end
     end
+
+    context "when model_name is invalid" do
+      let(:action_params) do
+        {
+          action_name: "add_model",
+          model_name: "<template>",
+          identifier: "name",
+          parent_model_name: "labor",
+          parent_link_type: "collection"
+        }
+      end
+
+      it 'captures an error' do
+        [ "my\nmodel", ' my_model', 'my_model	' , '1x_model', 'assay_2_study'].each do |name|
+          action_params[:model_name] = name
+          expect(action.validate).to eq(false)
+          expect(action.errors.first[:message]).to eq("model_name must be snake_case and not contain numbers")
+        end
+      end
+    end
   end
 end

@@ -99,11 +99,11 @@ describe Magma::AddAttributeAction do
       end
     end
 
-    context "when attribute_name has spaces" do
+    context "when attribute_name has spaces or leading numbers" do
       let(:attribute_name) { @attribute_name }
 
       it 'captures an attribute error' do
-        [ "first\nname", ' first_name', 'first_name	' ].each do |name|
+        [ "first\nname", ' first_name', 'first_name	' , '1x_attribute'].each do |name|
           @attribute_name = name
           expect(action.validate).to eq(false)
           expect(action.errors.first[:message]).to eq("attribute_name must be snake_case with no spaces")
