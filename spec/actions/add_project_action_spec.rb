@@ -1,5 +1,4 @@
 require 'securerandom'
-require 'pry'
 
 describe Magma::AddProjectAction do
   let(:project_name) { "test_project_#{SecureRandom.uuid.gsub('-', '_')}" }
