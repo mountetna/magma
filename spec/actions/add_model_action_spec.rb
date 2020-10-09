@@ -164,7 +164,7 @@ describe Magma::AddModelAction do
       end
 
       it 'captures an error' do
-        [ "my\nmodel", ' my_model', 'my_model	' , '1x_model', 'assay_2_study'].each do |name|
+        [ "my\nmodel", ' my_model', 'my_model	' , '1x_model', 'assay_2_study', 'looonnng___assay'].each do |name|
           action_params[:model_name] = name
           expect(action.validate).to eq(false)
           expect(action.errors.first[:message]).to eq("model_name must be snake_case and not contain numbers")
