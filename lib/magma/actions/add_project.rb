@@ -2,7 +2,11 @@ class Magma
 
   class AddProjectAction < ComposedAction
     def perform
-      Magma.instance.db.run "CREATE SCHEMA IF NOT EXISTS #{@project_name}"
+      begin
+        Magma.instance.db.run "CREATE SCHEMA #{@project_name}"
+      rescue Sequel::Error => e
+        raise unless e.message.start_with?('PG::DuplicateSchema: ERROR:')
+      end
       super
     end
 
