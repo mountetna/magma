@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: 3bbd64742d40c8e3b2bc98c0e336286bf6a22ea8
-  branch: refs/artifacts/gem-etna/b7a723395f967113fcab2dd8908023397578f0c0
+  revision: ca451c243bdbe70e812b75497f8619bc5bd26ae6
+  branch: refs/artifacts/gem-etna/3ae54ec6fd506a9238f183151845ba63d83ad136
   specs:
     etna (0.1.16)
       jwt
@@ -40,7 +40,6 @@ GEM
     connection_pool (2.2.3)
     crack (0.4.3)
       safe_yaml (~> 1.0.0)
-    curb (0.9.10)
     database_cleaner (1.8.0)
     debase (0.2.4.1)
       debase-ruby_core_source (>= 0.10.2)
@@ -147,7 +146,6 @@ DEPENDENCIES
   activesupport (>= 4.2.6)
   carrierwave
   carrierwave-sequel
-  curb
   database_cleaner
   debase
   etna!
