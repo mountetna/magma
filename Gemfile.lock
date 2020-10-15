@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: 2847c0f922ab9f81149eba3fa2a370dac52191d6
-  branch: refs/artifacts/gem-etna/a8dea76f7fc7aed2a613d534e779a8e73133f2e7
+  revision: 6f7c04889f55ef2d38e147a4abbb2d0d2a44dfc2
+  branch: refs/artifacts/gem-etna/c8091f573c914e6db2f4c3d09eed812782a5670e
   specs:
     etna (0.1.16)
       jwt
@@ -102,7 +102,7 @@ GEM
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
     rake (13.0.1)
-    rollbar (3.0.0)
+    rollbar (3.0.1)
     rspec (3.9.0)
       rspec-core (~> 3.9.0)
       rspec-expectations (~> 3.9.0)
