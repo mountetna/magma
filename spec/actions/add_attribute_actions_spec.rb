@@ -11,6 +11,7 @@ describe Magma::AddAttributeAction do
       format_hint: "incoming format hint",
       hidden: true,
       index: false,
+      attribute_group: attribute_group,
       read_only: true,
       restricted: false,
       unique: true,
@@ -21,6 +22,7 @@ describe Magma::AddAttributeAction do
   let(:action) { Magma::AddAttributeAction.new(project_name, action_params) }
   let(:model_name) { "labor" }
   let(:attribute_name) { "number_of_claws" }
+  let(:attribute_group) { "info" }
 
   describe '#perform' do
     context "when it succeeds" do
@@ -111,6 +113,17 @@ describe Magma::AddAttributeAction do
       end
     end
 
+    context "when attribute_group is not a snake_case word" do
+      let(:attribute_group) { @attribute_group }
+
+      it 'captures an attribute error' do
+        [ "infor\nmation", ' information', 'info_group	' , '1x_info'].each do |group|
+          @attribute_group = group
+          expect(action.validate).to eq(false)
+          expect(action.errors.first[:message]).to eq("attribute_group must be snake_case with no spaces")
+        end
+      end
+    end
     context "when adding a link attribute" do
       let(:action_params) do
         {
