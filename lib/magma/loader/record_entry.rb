@@ -83,6 +83,8 @@ class Magma
           attribute_entry(att_name, value)
         end.compact.to_h
       )
+
+      entry
     end
 
     def update_entry

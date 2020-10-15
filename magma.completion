@@ -2,39 +2,75 @@
 _magma_completions() {
 local all_completion_names=''
 if [ "${COMP_CWORD}" == "1" ]; then
-all_completion_names='generate_completion_script plan global_migrate migrate help load_project create_db unload load console'
+all_completion_names='console create_db generate_completion_script global_migrate help load load_project migrate plan unload'
 COMPREPLY=($(compgen -W "$all_completion_names" "${COMP_WORDS[COMP_CWORD]}"))
 else
+if [ "${COMP_WORDS[1]}" == 'console' ]; then
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'create_db' ]; then
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
+fi
+true
+fi
 if [ "${COMP_WORDS[1]}" == 'generate_completion_script' ]; then
 true
 fi
-if [ "${COMP_WORDS[1]}" == 'plan' ]; then
-true
-fi
 if [ "${COMP_WORDS[1]}" == 'global_migrate' ]; then
-true
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
 fi
-if [ "${COMP_WORDS[1]}" == 'migrate' ]; then
 true
 fi
 if [ "${COMP_WORDS[1]}" == 'help' ]; then
 true
 fi
-if [ "${COMP_WORDS[1]}" == 'load_project' ]; then
+if [ "${COMP_WORDS[1]}" == 'load' ]; then
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
+fi
 true
 fi
-if [ "${COMP_WORDS[1]}" == 'create_db' ]; then
+if [ "${COMP_WORDS[1]}" == 'load_project' ]; then
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
+fi
+if [ "${COMP_CWORD}" == "3" ]; then
+COMPREPLY=()
+return
+fi
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'migrate' ]; then
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
+fi
+true
+fi
+if [ "${COMP_WORDS[1]}" == 'plan' ]; then
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
+fi
 true
 fi
 if [ "${COMP_WORDS[1]}" == 'unload' ]; then
-true
+if [ "${COMP_CWORD}" == "2" ]; then
+COMPREPLY=()
+return
 fi
-if [ "${COMP_WORDS[1]}" == 'load' ]; then
-true
+if [ "${COMP_CWORD}" == "3" ]; then
+COMPREPLY=()
+return
 fi
-if [ "${COMP_WORDS[1]}" == 'console' ]; then
 true
 fi
 fi
 }
-complete -F _magma_completions magma
+complete -o default -F _magma_completions magma

@@ -64,17 +64,6 @@ class Magma
     end
   end
 
-  class Help < Etna::Command
-    usage 'List this help'
-
-    def execute
-      puts 'Commands:'
-      Magma.instance.commands.each do |name,cmd|
-        puts cmd.usage
-      end
-    end
-  end
-
   class Migrate < Etna::Command
     usage '[<version_number>] # Run migrations for the current environment.'
 
