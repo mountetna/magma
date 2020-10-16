@@ -206,7 +206,7 @@ class Magma
     end
 
     def validate_attribute_group_format
-      return if attribute_group =~ SNAKE_CASE_WORD
+      return if !attribute_group || attribute_group =~ SNAKE_CASE_WORD
       errors.add(:attribute_group, "must be snake_case with no spaces")
     end
 
