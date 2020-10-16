@@ -125,6 +125,8 @@ class Magma
     TEMP_ID_MATCH=/^::temp/
 
     def identifier_id(model, identifier)
+      return nil unless identifier
+
       @identifiers[model] ||= model.select_map(
         [model.identity.column_name.to_sym, :id]
       ).map do |identifier, id|
@@ -225,6 +227,9 @@ class Magma
         insert_records = record_set.values.select(&:valid_new_entry?)
         update_records = record_set.values.select(&:valid_update_entry?)
 
+
+        require 'pry'
+        binding.pry
         # Run the record insertion.
         multi_insert(model, insert_records)
 
@@ -265,6 +270,9 @@ class Magma
         next if record_set.empty?
 
         temp_records = record_set.values.select(&:valid_temp_update?)
+
+        require 'pry'
+        binding.pry
 
         MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update
       end

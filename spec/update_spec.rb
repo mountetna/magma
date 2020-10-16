@@ -150,25 +150,105 @@ describe UpdateController do
     expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: nil)
   end
 
-  it 'updates a parent attribute' do
-    lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
-    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+  context 'parent attributes' do
+    it 'updates a parent attribute' do
+      lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
+      hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
 
-    monster = create(:monster, name: 'Lernean Hydra', labor: lion)
-    update(
-      monster: {
-        'Lernean Hydra': {
-          labor: 'The Lernean Hydra'
+      monster = create(:monster, name: 'Lernean Hydra', labor: lion)
+      update(
+        monster: {
+          'Lernean Hydra': {
+            labor: 'The Lernean Hydra'
+          }
         }
-      }
-    )
+      )
 
-    expect(last_response.status).to eq(200)
-    expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
 
-    monster.refresh
-    hydra.refresh
-    expect(monster.labor).to eq(hydra)
+      monster.refresh
+      hydra.refresh
+      expect(monster.labor).to eq(hydra)
+    end
+
+    it 'orphans a record' do
+      hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+
+      monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+      update(
+        monster: {
+          'Lernean Hydra': {
+            labor: nil
+          }
+        }
+      )
+
+      # child => parent
+      # collection => parent
+      # table => parent
+      #
+      # link_record(s) exist
+      #   new value =>
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) don't exist => create and set parent to record_name
+      #     old_value record(s) NOT in new_value => set parent to nil
+      #   nil => set parent for all old records to nil
+      #
+      # link_record(s) don't exist
+      #   new value => 
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) don't exist => create and set parent to record_name
+      #   nil => do nothing
+      #
+      # child => link
+      # collection => link
+      # table => link
+      #
+      # link_record(s) exist
+      #   new value =>
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) don't exist => validation error
+      #     old_value record(s) NOT in new_value => set parent to nil
+      #   nil => set parent for all old records to nil
+      #
+      # link_record(s) don't exist
+      #   new value => 
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) won't exist after this update => validation error
+      #   nil => do nothing
+      #
+      # parent => child
+      # parent => collection
+      # parent => table
+      # link => child
+      # link => collection
+      # link => table
+      #
+      # link_record(s) don't exist
+      #   new_value =>
+      #     new_value record exists => set new_value
+      #     new_value record won't exists => validation error
+      #   nil => do nothing
+      #
+      # link_record(s) exist
+      #   new_value =>
+      #     new_value record exists => set new_value
+      #     new_value record won't exist => validation error
+      #
+      # link
+      #
+      # new_value =>
+      #   new_value record exists => set new_value
+      #   new_value record won't exist => validation error
+
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Lernean Hydra')).to include(labor: nil)
+
+      monster.refresh
+      hydra.refresh
+      expect(monster.labor).to eq(nil)
+    end
   end
 
   it 'updates a link attribute' do
