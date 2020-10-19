@@ -150,7 +150,7 @@ describe UpdateController do
     expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: nil)
   end
 
-  context 'parent attributes' do
+  context 'linking records' do
     it 'updates a parent attribute' do
       lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
       hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
@@ -183,6 +183,41 @@ describe UpdateController do
           }
         }
       )
+
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Lernean Hydra')).to include(labor: nil)
+
+      monster.refresh
+      hydra.refresh
+      expect(monster.labor).to eq(nil)
+    end
+
+    it 'updates a link attribute' do
+      hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+
+      other_monster = create(:monster, name: 'Nemean Lion')
+      monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
+
+      update(
+        monster: {
+          'Lernean Hydra': {
+            reference_monster: 'Cnidaria'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
+
+      # A new record is created
+      expect(Labors::Monster.count).to eq(3)
+      cnidaria = Labors::Monster.last
+      expect(cnidaria.name).to eq('Cnidaria')
+
+      # the link has been made
+      monster.refresh
+      expect(monster.reference_monster).to eq(cnidaria)
+    end
 
       # child => parent
       # collection => parent
@@ -242,40 +277,158 @@ describe UpdateController do
       #   new_value record exists => set new_value
       #   new_value record won't exist => validation error
 
-      expect(last_response.status).to eq(200)
-      expect(json_document(:monster,'Lernean Hydra')).to include(labor: nil)
-
-      monster.refresh
-      hydra.refresh
-      expect(monster.labor).to eq(nil)
-    end
-  end
-
-  it 'updates a link attribute' do
-    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
-
-    other_monster = create(:monster, name: 'Nemean Lion')
-    monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
-
-    update(
-      monster: {
-        'Lernean Hydra': {
-          reference_monster: 'Cnidaria'
+    it 'updates a collection' do
+      project = create(:project, name: 'The Two Labors of Hercules')
+      update(
+        'project' => {
+          'The Two Labors of Hercules' => {
+            labor: [
+              'Nemean Lion',
+              'Lernean Hydra'
+            ]
+          }
         }
-      }
-    )
+      )
 
-    expect(last_response.status).to eq(200)
-    expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
+      # we have created some new records
+      expect(Labors::Labor.count).to be(2)
+      expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
+      expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
 
-    # A new record is created
-    expect(Labors::Monster.count).to eq(3)
-    cnidaria = Labors::Monster.last
-    expect(cnidaria.name).to eq('Cnidaria')
+      # the labors are linked to the project
+      project.refresh
+      expect(project.labor.count).to eq(2)
 
-    # the link has been made
-    monster.refresh
-    expect(monster.reference_monster).to eq(cnidaria)
+      # the updated record is returned
+      expect(last_response.status).to eq(200)
+      expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'Lernean Hydra', 'Nemean Lion' ])
+    end
+
+    context 'table attributes' do
+      before(:each) do
+        @apple_of_joy = { name: 'apple of joy', worth: 2000 }
+        @apple_of_discord = { name: 'apple of discord', worth: 3000 }
+      end
+
+      it 'updates a table' do
+        labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        update(
+          'labor' => {
+            'The Golden Apples of the Hesperides' => {
+              prize: [
+                '::temp1',
+                '::temp2'
+              ]
+            },
+          },
+          'prize' => {
+            '::temp1' => @apple_of_joy,
+            '::temp2' => @apple_of_joy
+          }
+        )
+        expect(last_response.status).to eq(200)
+
+        # we have created some new records
+        expect(Labors::Prize.count).to eq(2)
+
+        # the prizes are linked to the labor
+        labor.refresh
+        expect(labor.prize.count).to eq(2)
+
+        # the updated record is returned
+        expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
+      end
+
+      it 'updates a table for a new record' do
+        update(
+          'labor' => {
+            'The Golden Apples of the Hesperides' => {
+              prize: [
+                '::temp1',
+                '::temp2'
+              ]
+            },
+          },
+          'prize' => {
+            '::temp1' => @apple_of_joy,
+            '::temp2' => @apple_of_joy
+          }
+        )
+        expect(last_response.status).to eq(200)
+
+        # we have created some new records
+        expect(Labors::Prize.count).to eq(2)
+
+        # the prizes are linked to the labor
+        labor = Labors::Labor.first
+        expect(labor.prize.count).to eq(2)
+
+        # the updated record is returned
+        expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
+      end
+
+      it 'appends to an existing table' do
+        labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
+        update(
+          'prize' => {
+            '::temp1' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides'),
+            '::temp2' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides')
+          }
+        )
+
+        # we have created some new records
+        expect(Labors::Prize.count).to eq(5)
+
+        # the prizes are linked to the labor
+        labor.refresh
+        expect(labor.prize.map(&:name)).to match_array([ 'apple of joy' ] * 2 + [ 'apple of discord' ] * 3)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:prize][:documents].values.map{|p|p[:name]}).to eq(['apple of joy']*2)
+      end
+
+      it 'replaces an existing table' do
+        lion_labor = create(:labor, name: 'The Nemean Lion')
+        hide = create(:prize, name: 'hide', labor: lion_labor)
+
+        apple_labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        apples = create_list(:prize, 3, @apple_of_discord.merge(labor: apple_labor))
+
+        update(
+          'labor' => {
+            'The Golden Apples of the Hesperides' => {
+              prize: [
+                '::temp1',
+                '::temp2'
+              ]
+            },
+          },
+          'prize' => {
+            '::temp1' => @apple_of_joy,
+            '::temp2' => @apple_of_joy
+          }
+        )
+
+        # we have created some new records replacing the old
+        expect(Labors::Prize.count).to eq(3)
+
+        # the new prizes are linked to the labor
+        apple_labor.refresh
+        expect(apple_labor.prize.count).to eq(2)
+        expect(apple_labor.prize.map(&:name)).to all( eq('apple of joy') )
+
+        # tables we did not update are intact
+        lion_labor.refresh
+        expect(lion_labor.prize.count).to eq(1)
+        expect(lion_labor.prize.map(&:name)).to all( eq('hide') )
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(apple_labor.prize.map(&:id))
+      end
+    end
   end
 
   it 'updates a match' do
@@ -757,161 +910,6 @@ describe UpdateController do
         }))
 
       Timecop.return
-    end
-  end
-
-  context 'collection attributes' do
-    it 'updates a collection' do
-      project = create(:project, name: 'The Two Labors of Hercules')
-      update(
-        'project' => {
-          'The Two Labors of Hercules' => {
-            labor: [
-              'Nemean Lion',
-              'Lernean Hydra'
-            ]
-          }
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Labor.count).to be(2)
-      expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
-      expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
-
-      # the labors are linked to the project
-      project.refresh
-      expect(project.labor.count).to eq(2)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'Lernean Hydra', 'Nemean Lion' ])
-    end
-  end
-
-  context 'table attributes' do
-    before(:each) do
-      @apple_of_joy = { name: 'apple of joy', worth: 2000 }
-      @apple_of_discord = { name: 'apple of discord', worth: 3000 }
-    end
-
-    it 'updates a table' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-      expect(last_response.status).to eq(200)
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(2)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.count).to eq(2)
-
-      # the updated record is returned
-      expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
-    end
-
-    it 'updates a table for a new record' do
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-      expect(last_response.status).to eq(200)
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(2)
-
-      # the prizes are linked to the labor
-      labor = Labors::Labor.first
-      expect(labor.prize.count).to eq(2)
-
-      # the updated record is returned
-      expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
-    end
-
-    it 'appends to an existing table' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
-      update(
-        'prize' => {
-          '::temp1' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides'),
-          '::temp2' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides')
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(5)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.map(&:name)).to match_array([ 'apple of joy' ] * 2 + [ 'apple of discord' ] * 3)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_body[:models][:prize][:documents].values.map{|p|p[:name]}).to eq(['apple of joy']*2)
-    end
-
-    it 'replaces an existing table' do
-      lion_labor = create(:labor, name: 'The Nemean Lion')
-      hide = create(:prize, name: 'hide', labor: lion_labor)
-
-      apple_labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      apples = create_list(:prize, 3, @apple_of_discord.merge(labor: apple_labor))
-
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-
-      # we have created some new records replacing the old
-      expect(Labors::Prize.count).to eq(3)
-
-      # the new prizes are linked to the labor
-      apple_labor.refresh
-      expect(apple_labor.prize.count).to eq(2)
-      expect(apple_labor.prize.map(&:name)).to all( eq('apple of joy') )
-
-      # tables we did not update are intact
-      lion_labor.refresh
-      expect(lion_labor.prize.count).to eq(1)
-      expect(lion_labor.prize.map(&:name)).to all( eq('hide') )
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(apple_labor.prize.map(&:id))
     end
   end
 
