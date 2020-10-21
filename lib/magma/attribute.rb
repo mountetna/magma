@@ -17,6 +17,7 @@ class Magma
       :display_name,
       :format_hint,
       :hidden,
+      :attribute_group,
       :index,
       :link_model_name,
       :read_only,
@@ -29,7 +30,7 @@ class Magma
 
     class << self
       def options
-        [:description, :display_name, :hidden, :read_only, :unique, :index, :validation,
+        [:description, :display_name, :hidden, :attribute_group, :read_only, :unique, :index, :validation,
 :format_hint, :loader, :link_model_name, :restricted]
       end
 
@@ -99,6 +100,7 @@ class Magma
         attribute_class: attribute_class_name,
         desc: description,
         display_name: display_name,
+        attribute_group: attribute_group,
         options: validation_object.options,
         match: validation_object.match,
         restricted: restricted,
@@ -185,6 +187,7 @@ class Magma
       validate_attribute_name_format
       validate_type
       validate_attribute_name_unique
+      validate_attribute_group_format
     end
 
     def validate_validation_json
@@ -195,9 +198,16 @@ class Magma
       errors.add(:validation, "is not properly formatted")
     end
 
+    SNAKE_CASE_WORD=/\A[a-z][a-z0-9]*(_[a-z0-9]+)*\Z/
+
     def validate_attribute_name_format
-      return if attribute_name == attribute_name&.snake_case
-      errors.add(:attribute_name, "must be snake_case")
+      return if attribute_name =~ SNAKE_CASE_WORD
+      errors.add(:attribute_name, "must be snake_case with no spaces")
+    end
+
+    def validate_attribute_group_format
+      return if !attribute_group || attribute_group =~ SNAKE_CASE_WORD
+      errors.add(:attribute_group, "must be snake_case with no spaces")
     end
 
     def validate_type

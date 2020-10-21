@@ -64,7 +64,7 @@ describe Magma::RenameAttributeAction do
 
       it "captures an attribute error" do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case")
+        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case with no spaces")
       end
     end
 

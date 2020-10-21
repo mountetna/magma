@@ -68,6 +68,17 @@ describe Magma::Attribute do
 
       expect(json_validation_object.to_json).to eq("{\"type\":\"Regexp\",\"value\":\"(?-mix:^[a-zA-Z]{1}$)\"}")
     end
+
+    it "includes attribute groups" do
+      attribute = Magma::Attribute.new(
+        attribute_name: "stench",
+        attribute_group: "odors"
+      )
+
+      template = attribute.json_template
+
+      expect(template[:attribute_group]).to eq("odors")
+    end
   end
 
   describe "#revision_to_loader" do
