@@ -1,5 +1,8 @@
 class Magma
   class LinkAttribute < ForeignKeyAttribute
+    def revision_to_links(record_name, new_id)
+      yield link_model, [ new_id ]
+    end
 
     private
 

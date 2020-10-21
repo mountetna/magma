@@ -2,9 +2,9 @@ class Magma
   class ForeignKeyAttribute < Attribute
     include Magma::Link
 
-    def revision_to_links(record_name, new_id)
-      yield link_model, [ new_id ]
-    end
+    # def revision_to_links(record_name, new_id)
+    #   yield link_model, [ new_id ]
+    # end
 
     def initial_column_name
       foreign_id

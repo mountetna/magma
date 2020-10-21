@@ -1,4 +1,5 @@
 require 'json'
+require 'pry'
 
 describe UpdateController do
   include Rack::Test::Methods
@@ -151,7 +152,7 @@ describe UpdateController do
   end
 
   context 'linking records' do
-    it 'updates a parent attribute' do
+    it 'updates a parent attribute when parent exists' do
       lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
       hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
 
@@ -170,6 +171,52 @@ describe UpdateController do
       monster.refresh
       hydra.refresh
       expect(monster.labor).to eq(hydra)
+    end
+
+    it 'creates a parent record when linking to non-existent parent' do
+      lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
+
+      expect(Labors::Labor.count).to eq(1)
+
+      monster = create(:monster, name: 'Cerberus', labor: lion)
+      update(
+        monster: {
+          'Cerberus': {
+            labor: 'Capture Cerberus'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Cerberus')).to include(labor: 'Capture Cerberus')
+
+      monster.refresh
+      lion.refresh
+      expect(monster.labor.name).to eq('Capture Cerberus')
+      expect(lion.monsters.length).to eq(0)
+
+      expect(Labors::Labor.count).to eq(2)
+    end
+
+    it 'creates a parent record for orphans' do
+      expect(Labors::Labor.count).to eq(0)
+
+      monster = create(:monster, name: 'Cerberus')
+      update(
+        monster: {
+          'Cerberus': {
+            labor: 'Capture Cerberus'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Cerberus')).to include(labor: 'Capture Cerberus')
+
+      monster.refresh
+      expect(monster.labor.name).to eq('Capture Cerberus')
+
+      expect(Labors::Labor.count).to eq(1)
     end
 
     it 'orphans a record' do
@@ -192,7 +239,7 @@ describe UpdateController do
       expect(monster.labor).to eq(nil)
     end
 
-    it 'updates a link attribute' do
+    it 'updates a link attribute and creates new record' do
       hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
 
       other_monster = create(:monster, name: 'Nemean Lion')
@@ -219,6 +266,33 @@ describe UpdateController do
       expect(monster.reference_monster).to eq(cnidaria)
     end
 
+    it 'can remove a link attribute' do
+      hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+
+      other_monster = create(:monster, name: 'Nemean Lion')
+      monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
+
+      expect(monster.reference_monster).to eq(other_monster)
+      expect(other_monster.reference_monsters).to eq([monster])
+
+      update(
+        monster: {
+          'Lernean Hydra': {
+            reference_monster: nil
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_document(:monster,'Lernean Hydra')).not_to include(reference_monster: 'Nemean Lion')
+
+      # the link has been removed
+      monster.refresh
+      other_monster.refresh
+      expect(monster.reference_monster).to eq(nil)
+      expect(other_monster.reference_monsters).to eq([])
+    end
+
       # child => parent
       # collection => parent
       # table => parent
@@ -231,7 +305,7 @@ describe UpdateController do
       #   nil => set parent for all old records to nil
       #
       # link_record(s) don't exist
-      #   new value => 
+      #   new value =>
       #     new_value record(s) exist => set parent to record_name
       #     new_value record(s) don't exist => create and set parent to record_name
       #   nil => do nothing
@@ -248,7 +322,7 @@ describe UpdateController do
       #   nil => set parent for all old records to nil
       #
       # link_record(s) don't exist
-      #   new value => 
+      #   new value =>
       #     new_value record(s) exist => set parent to record_name
       #     new_value record(s) won't exist after this update => validation error
       #   nil => do nothing
