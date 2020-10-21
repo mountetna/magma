@@ -228,8 +228,6 @@ class Magma
         update_records = record_set.values.select(&:valid_update_entry?)
 
 
-        require 'pry'
-        binding.pry
         # Run the record insertion.
         multi_insert(model, insert_records)
 
@@ -270,9 +268,6 @@ class Magma
         next if record_set.empty?
 
         temp_records = record_set.values.select(&:valid_temp_update?)
-
-        require 'pry'
-        binding.pry
 
         MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update
       end
