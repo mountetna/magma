@@ -65,6 +65,15 @@ monster:
     column_name: reference_monster_id
   restricted:
     type: boolean
+  monster_pool:
+    type: link
+    link_model_name: monster_pool
+    column_name: monster_pool_id
+monster_pool:
+  name:
+    type: identifier
+  monster:
+    type: collection
 prize:
   labor:
     type: parent
@@ -77,7 +86,7 @@ prize:
 project:
   name:
     type: identifier
-    description: "Name for this project"
+    description: 'Name for this project'
   labor:
     type: collection
   codex:
