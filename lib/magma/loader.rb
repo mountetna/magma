@@ -69,15 +69,34 @@ class Magma
       return payload.to_hash
     end
 
+    def is_foreign_key_holder?(attribute)
+      # Based on the attribute class, determines if this is the "foreign key holder",
+      #   for a link relationship. If so, return true.
+      attribute.is_a?(Magma::CollectionAttribute) ||
+      attribute.is_a?(Magma::ChildAttribute)
+    end
+
     def push_links(model, record_name, revision)
       revision.each do |attribute_name, value|
         next unless model.has_attribute?(attribute_name)
 
         model.attributes[attribute_name].revision_to_links(record_name, value) do |link_model, link_identifiers|
+          # When the **revision** is from the parent / link -> children, the
+          #   new link records need to be single-entry records,
+          #   because they are linking from child up to a single
+          #   parent.
+          # When the **revision** is from the child -> parent / link,
+          #   the new link records need to be Arrays,
+          #   because they are linking from parent to a collection
+          #   of records.
+          link_record_name = is_foreign_key_holder?(model.attributes[attribute_name]) ?
+            record_name.to_s :
+            [ record_name.to_s ]
+
           link_identifiers.each do |link_identifier|
             push_record(
               link_model, link_identifier,
-              model.model_name.to_sym => record_name.to_s,
+              model.model_name.to_sym => link_record_name,
               created_at: @now,
               updated_at: @now
             )
@@ -96,7 +115,7 @@ class Magma
       run_attribute_hooks!
 
       upsert
-      
+
       update_temp_ids
 
       payload = to_payload
@@ -266,7 +285,6 @@ class Magma
     def update_temp_ids
       @records.each do |model, record_set|
         next if record_set.empty?
-
         temp_records = record_set.values.select(&:valid_temp_update?)
 
         MultiUpdate.new(model, temp_records.map(&:temp_entry), :real_id, :id).update

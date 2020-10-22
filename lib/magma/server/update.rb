@@ -4,7 +4,7 @@ class UpdateController < Magma::Controller
   def action
     @loader = Magma::Loader.new(@user,@project_name)
     @revisions = @params[:revisions]
-    binding.pry
+
     payload = load_revisions
 
     return success_json(payload.to_hash) if success?

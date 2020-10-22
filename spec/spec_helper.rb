@@ -272,6 +272,10 @@ FactoryBot.define do
   factory :project, class: Labors::Project do
     to_create(&:save)
   end
+
+  factory :habitat, class: Labors::Habitat do
+    to_create(&:save)
+  end
 end
 
 def fixture(name)

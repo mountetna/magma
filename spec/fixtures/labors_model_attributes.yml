@@ -65,11 +65,14 @@ monster:
     column_name: reference_monster_id
   restricted:
     type: boolean
-  monster_pool:
+  habitat:
     type: link
-    link_model_name: monster_pool
-    column_name: monster_pool_id
-monster_pool:
+    link_model_name: habitat
+    column_name: habitat_id
+habitat:
+  project:
+    type: parent
+    column_name: project_id
   name:
     type: identifier
   monster:
@@ -91,6 +94,8 @@ project:
     type: collection
   codex:
     type: table
+  habitat:
+    type: collection
 victim:
   monster:
     type: parent

@@ -11,7 +11,6 @@ class Magma
       return if @records.empty? || update_columns.empty?
 
       db.transaction do
-        binding.pry
         # Create a temporary table and drop when done, also copy the source
         # table structure (by Sequel model) onto the temp table.
         create_temp_table
