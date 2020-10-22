@@ -2,7 +2,7 @@ class Magma
   class RecordEntry
     attr_accessor :real_id
 
-    attr_reader :record_name
+    attr_reader :record_name, :model
 
     def initialize(model, record_name, loader)
       @model = model

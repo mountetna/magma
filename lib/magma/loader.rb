@@ -69,18 +69,87 @@ class Magma
       return payload.to_hash
     end
 
-    def is_foreign_key_holder?(attribute)
+    def is_foreign_key_parent?(attribute)
       # Based on the attribute class, determines if this is the "foreign key holder",
       #   for a link relationship. If so, return true.
       attribute.is_a?(Magma::CollectionAttribute) ||
       attribute.is_a?(Magma::ChildAttribute)
     end
 
+    def explicit_revision_exists?(model, record_name, attribute_name)
+      return false unless record_set = @records[model]
+      return false unless record_entry = record_set[record_name]
+
+      record_entry.has_key?(attribute_name)
+    end
+
+    def push_implied_link_revisions
+      # When updating link or parent attributes from the top-down,
+      #   we may not know what the previous relationships were.
+      # For example, changing a link child from record A to B,
+      #   the explicit revision is LinkModel -> B.
+      # But there is also an implied revision, of updating
+      #   record A to have a `nil` parent.
+      # So we also have to push records for all the
+      #   implied link revisions, when the attribute
+      #   is a Child or Collection type (i.e. the revision
+      #   comes from the parent / link).
+      # But, in a multi-revision scenario, we should
+      #   only push the implied revisions when those records + attributes
+      #   themselves aren't being revised, otherwise we risk
+      #   overwriting an explicit revision.
+
+      # We iterate over @records to see what all has been updated.
+      # If there are any ChildAttribute or CollectionAttribute values
+      #   that changed, we'll need to investigate further if any implied
+      #   revisions exist.
+      @records.each do |model, record_set|
+        next if record_set.empty?
+        record_set.values.each do |record_entry|
+          record_entry.attribute_key.each do |attribute_name|
+            attribute = record_entry.model.attributes[attribute_name]
+
+            push_implied_link_revision(
+                attribute.link_model,
+                model,
+                record_entry.record_name) if is_foreign_key_parent?(attribute)
+          end
+        end
+      end
+    end
+
+    def push_implied_link_revision(child_model, parent_model, parent_record_name)
+      # Here we fetch all current records that have the model::record_name as the
+      #   parent, and then we compare that to new_link_identifiers.
+      # For any record that has been removed or un-linked, we call push_record()
+      #   with that record, setting its parent to `nil`.
+      question = Magma::Question.new(@project_name, [
+        child_model.model_name,
+        [parent_model.model_name, '::identifier', '::in', [parent_record_name]],
+          '::all', '::identifier'
+      ])
+      current_record_names = question.answer.map(&:last).flatten
+
+      current_record_names.reject { |record_name|
+        explicit_revision_exists?(
+          child_model,
+          record_name,
+          parent_model.model_name)
+       }.each do |record_name|
+        push_record(
+          attribute.link_model, record_name,
+          model.model_name.to_sym => nil,
+          updated_at: @now)
+      end
+    end
+
     def push_links(model, record_name, revision)
       revision.each do |attribute_name, value|
         next unless model.has_attribute?(attribute_name)
 
-        model.attributes[attribute_name].revision_to_links(record_name, value) do |link_model, link_identifiers|
+        attribute = model.attributes[attribute_name]
+
+        attribute.revision_to_links(record_name, value) do |link_model, link_identifiers|
           # When the **revision** is from the parent / link -> children, the
           #   new link records need to be single-entry records,
           #   because they are linking from child up to a single
@@ -89,11 +158,12 @@ class Magma
           #   the new link records need to be Arrays,
           #   because they are linking from parent to a collection
           #   of records.
-          link_record_name = is_foreign_key_holder?(model.attributes[attribute_name]) ?
+          link_record_name = is_foreign_key_parent?(attribute) ?
             record_name.to_s :
             [ record_name.to_s ]
 
-          link_identifiers.each do |link_identifier|
+          link_identifiers&.each do |link_identifier|
+            next if link_identifier.nil?
             push_record(
               link_model, link_identifier,
               model.model_name.to_sym => link_record_name,
