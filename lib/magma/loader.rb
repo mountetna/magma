@@ -82,23 +82,19 @@ class Magma
     end
 
     def is_incoming_link?(attribute)
-      # Based on the attribute class, determines if this is the "foreign key holder",
-      #   for a link relationship. If so, return true.
+      # Based on the attribute class, determines if this is the incoming attribute,
+      #   for a foreign-key relationship. If so, return true.
       is_collection_attribute?(attribute) ||
       is_child_attribute?(attribute) ||
       is_table_attribute?(attribute)
     end
 
-    def has_implicit_revisions?(attribute)
-
-    end
-
     def explicit_child_revision_exists?(revisions, model_name, record_name, attribute_name)
-      # Check if the child's parent is being explicitly set by the user
+      # Check if the child's parent / link is being explicitly set by the user
       !!revisions.dig(model_name.to_sym, record_name.to_sym, attribute_name.to_sym)
     end
 
-    def explicit_parent_revision_exists?(revisions, model_name, record_name, attribute, child_record_name)
+    def explicit_link_revision_exists?(revisions, model_name, record_name, attribute, child_record_name)
       # We need to check if the child record has
       #   been set for ANY record in the same parent_model.
 
@@ -121,14 +117,14 @@ class Magma
       # Cannot find explicit revisions from @records, because
       #   some of those are calculated! So we have to look for
       #   explicit revisions from the user-supplied revisions hash.
-      # Note that because explicit revisions can be either parent -> child
-      #   or child -> parent, we need to check both cases.
+      # Note that because explicit revisions can be either parent / link -> child
+      #   or child -> parent / link, we need to check both cases.
       explicit_child_revision_exists?(
         revisions,
         parent_attribute.link_model.model_name,
         child_record_name,
         parent_model.model_name) ||
-      explicit_parent_revision_exists?(
+      explicit_link_revision_exists?(
         revisions,
         parent_model.model_name,
         parent_record_name,
