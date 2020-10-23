@@ -69,18 +69,63 @@ class Magma
       return payload.to_hash
     end
 
-    def is_foreign_key_parent?(attribute)
-      # Based on the attribute class, determines if this is the "foreign key holder",
-      #   for a link relationship. If so, return true.
-      attribute.is_a?(Magma::CollectionAttribute) ||
+    def is_collection_attribute?(attribute)
+      attribute.is_a?(Magma::CollectionAttribute)
+    end
+
+    def is_child_attribute?(attribute)
       attribute.is_a?(Magma::ChildAttribute)
     end
 
-    def explicit_revision_exists?(revisions, model_name, record_name, attribute_name)
-      # Cannot calculate explicit revisions from @records, because
+    def is_foreign_key_parent?(attribute)
+      # Based on the attribute class, determines if this is the "foreign key holder",
+      #   for a link relationship. If so, return true.
+      is_collection_attribute?(attribute) ||
+      is_child_attribute?(attribute)
+    end
+
+    def explicit_child_revision_exists?(revisions, model_name, record_name, attribute_name)
+      # Check if the child's parent is being explicitly set by the user
+      binding.pry
+      !!revisions.dig(model_name.to_sym, record_name.to_sym, attribute_name.to_sym)
+    end
+
+    def explicit_parent_revision_exists?(revisions, model_name, record_name, attribute, child_record_name)
+      # We need to check if the child record has
+      #   been set for ANY record in the same parent_model.
+
+      # NOTE: different check behavior for CollectionAttribute vs. ChildAttribute!
+      explicit_revisions_found = 0
+
+      revisions[model_name.to_sym].each do |record_name, record_revisions|
+        next unless record_revisions.key?(attribute.attribute_name.to_sym)
+
+        attribute_revision = record_revisions[attribute.attribute_name.to_sym]
+
+        explicit_revisions_found += 1 if is_collection_attribute?(attribute) && attribute_revision.include?(child_record_name)
+        explicit_revisions_found += 1 if is_child_attribute?(attribute) && child_record_name == attribute_revision
+      end
+
+      explicit_revisions_found > 0
+    end
+
+    def explicit_revision_exists?(revisions:, parent_model:, parent_record_name:, child_record_name:, parent_attribute:)
+      # Cannot find explicit revisions from @records, because
       #   some of those are calculated! So we have to look for
       #   explicit revisions from the user-supplied revisions hash.
-      !!revisions.dig(model_name.to_sym, record_name.to_sym, attribute_name.to_sym)
+      # Note that because explicit revisions can be either parent -> child
+      #   or child -> parent, we need to check both cases.
+      explicit_child_revision_exists?(
+        revisions,
+        parent_attribute.link_model.model_name,
+        child_record_name,
+        parent_model.model_name) ||
+      explicit_parent_revision_exists?(
+        revisions,
+        parent_model.model_name,
+        parent_record_name,
+        parent_attribute,
+        child_record_name)
     end
 
     def push_implied_link_revisions(revisions)
@@ -112,22 +157,31 @@ class Magma
         model_revisions.each do |record_name, revision|
           revision.each do |attribute_name, value|
             attribute = model.attributes[attribute_name]
-            binding.pry
+
+            # Note that we have to treat TableAttributes differently,
+            #   because they don't have "record_name" identifiers
+            #   that are specified in the revisions ... they use temporary ids
+            #   in the revisions and will only return database ids
+            #   in a query. Since those don't match, we can't rely on the
+            #   query method to find implied links.
+
             push_implied_link_revision(
-              revisions,
-              attribute.link_model,
-              model,
-              record_name.to_s) if is_foreign_key_parent?(attribute)
+              revisions: revisions,
+              parent_attribute: attribute,
+              parent_model: model,
+              parent_record_name: record_name.to_s) if is_foreign_key_parent?(attribute)
           end
         end
       end
     end
 
-    def push_implied_link_revision(revisions, child_model, parent_model, parent_record_name)
+    def push_implied_link_revision(revisions:, parent_attribute:, parent_model:, parent_record_name:)
       # Here we fetch all current records that have the model::record_name as the
       #   parent, and then we compare that to new_link_identifiers.
       # For any record that has been removed or un-linked, we call push_record()
       #   with that record, setting its parent to `nil`.
+      child_model = parent_attribute.link_model
+
       question = Magma::Question.new(@project_name, [
         child_model.model_name,
         [parent_model.model_name, '::identifier', '::in', [parent_record_name]],
@@ -137,10 +191,11 @@ class Magma
 
       current_record_names.reject { |record_name|
         explicit_revision_exists?(
-          revisions,
-          child_model.model_name,
-          record_name,
-          parent_model.model_name)
+          revisions: revisions,
+          parent_model: parent_model,
+          parent_record_name: parent_record_name,
+          child_record_name: record_name,
+          parent_attribute: parent_attribute)
        }.each do |record_name|
         push_record(
           child_model, record_name,
@@ -156,11 +211,11 @@ class Magma
         attribute = model.attributes[attribute_name]
 
         attribute.revision_to_links(record_name, value) do |link_model, link_identifiers|
-          # When the **revision** is from the parent / link -> children, the
+          # When the explicit revision is from the parent / link -> children, the
           #   new link records need to be single-entry records,
           #   because they are linking from child up to a single
           #   parent.
-          # When the **revision** is from the child -> parent / link,
+          # When the explicit revision is from the child -> parent / link,
           #   the new link records need to be Arrays,
           #   because they are linking from parent to a collection
           #   of records.
