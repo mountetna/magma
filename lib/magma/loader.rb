@@ -159,57 +159,59 @@ class Magma
       # Do not do this over @records, because some of those revisions
       #   are calculated and could lead to incorrectly orphaning
       #   currently-attached records.
+
       revisions.each do |model_name, model_revisions|
         model = Magma.instance.get_model(@project_name, model_name)
+
+        # For each model, collect all the record_names being revised
+        #   for each child / collection attribute.
+        revised_model_records = {}
 
         model_revisions.each do |record_name, revision|
           revision.each do |attribute_name, value|
             attribute = model.attributes[attribute_name]
 
-            # Note that we have to treat TableAttributes differently,
-            #   because they don't have "record_name" identifiers
-            #   that are specified in the revisions ... they use temporary ids
-            #   in the revisions and will only return database ids
-            #   in a query. Since those don't match, we can't rely on the
-            #   query method to find implicit links.
-
-            push_implicit_link_revision(
-              revisions: revisions,
-              parent_attribute: attribute,
-              parent_model: model,
-              parent_record_name: record_name.to_s) if is_collection_attribute?(attribute) || is_child_attribute?(attribute)
+            if is_collection_attribute?(attribute) || is_child_attribute?(attribute)
+              revised_model_records[attribute] ||= []
+              revised_model_records[attribute] << record_name.to_s
+            end
           end
+        end
+
+        implicit_revisions(revisions, model, revised_model_records) do |child_model, record_name, attribute_name|
+          push_record(
+            child_model, record_name.to_s,
+            attribute_name.to_sym => nil,
+            updated_at: @now)
         end
       end
     end
 
-    def push_implicit_link_revision(revisions:, parent_attribute:, parent_model:, parent_record_name:)
-      # Here we fetch all current records that have the model::record_name as the
-      #   parent, and then we compare that to new_link_identifiers.
-      # For any record that has been removed or un-linked, we call push_record()
-      #   with that record, setting its parent to `nil`.
-      child_model = parent_attribute.link_model
+    def implicit_revisions(revisions, parent_model, revised_model_records)
+      # Here we fetch all current records that have one of the parent model::record_names as the
+      #   parent, and exclude any the user is explicitly setting in `revisions`.
+      revised_model_records.keys.each do |attribute|
+        child_model = attribute.link_model
+        parent_record_names = revised_model_records[attribute]
 
-      # TODO: Try to collect this for all revisions for the same parent_model, to reduce queries.
-      question = Magma::Question.new(@project_name, [
-        child_model.model_name,
-        [parent_model.model_name, '::identifier', '::equals', parent_record_name],
-          '::all', parent_model.model_name, '::identifier'
-      ])
-      current_record_names = question.answer.map(&:last).flatten
+        question = Magma::Question.new(@project_name, [
+          child_model.model_name,
+          [parent_model.model_name, '::identifier', '::in', parent_record_names],
+            '::all', parent_model.model_name, '::identifier'
+        ])
 
-      current_record_names.reject { |record_name|
-        explicit_revision_exists?(
-          revisions: revisions,
-          parent_model: parent_model,
-          parent_record_name: parent_record_name,
-          child_record_name: record_name,
-          parent_attribute: parent_attribute)
-       }.each do |record_name|
-        push_record(
-          child_model, record_name,
-          parent_model.model_name.to_sym => nil,
-          updated_at: @now)
+        current_record_names = question.answer
+
+        current_record_names.reject { |child_record_name, parent_record_name|
+          explicit_revision_exists?(
+            revisions: revisions,
+            parent_model: parent_model,
+            parent_record_name: parent_record_name,
+            child_record_name: child_record_name,
+            parent_attribute: attribute)
+         }.each do |child_record_name, parent_record_name|
+          yield [child_model, child_record_name, parent_model.model_name]
+        end
       end
     end
 

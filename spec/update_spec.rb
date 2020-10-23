@@ -557,6 +557,38 @@ describe UpdateController do
         expect(hydra.monster).to eq(nil)
       end
 
+      it 'from the parent when switching children, for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        lion_monster = create(:monster, name: 'Nemean Lion', labor: hydra)
+        hydra_monster = create(:monster, name: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(2)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              monster: 'Lernean Hydra'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor,'The Lernean Hydra')).to include(monster: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(2)
+
+        lion_monster.refresh
+        hydra_monster.refresh
+        hydra.refresh
+        expect(lion_monster.labor).to eq(nil)
+        expect(hydra_monster.labor).to eq(hydra)
+        expect(hydra.monster).to eq(hydra_monster)
+      end
+
       it 'from the child itself for parent-collection' do
         project = create(:project, name: 'The Two Labors of Hercules')
 
@@ -909,7 +941,7 @@ describe UpdateController do
       end
     end
 
-    context 'trying to re-attach orphans but not to the graph throws exception' do
+    context 'trying to re-attach orphans but not to the graph throws exception for' do
       xit 'orphaned parent, parent-collection' do
       end
 
