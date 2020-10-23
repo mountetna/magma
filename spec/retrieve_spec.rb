@@ -292,6 +292,20 @@ describe RetrieveController do
       expect(table).to match_array(labor_list.map{|l| [ l.name, l.completed.to_s, l.number.to_s ] })
     end
 
+    it 'can retrieve the whole TSV' do
+      labor_list = create_list(:labor, 20000)
+      required_atts = ['name', 'completed', 'number']
+      retrieve(
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: required_atts,
+        format: 'tsv',
+        project_name: 'labors'
+      )
+      expect(last_response.status).to eq(200)
+      expect(last_response.body.count("\n")).to eq(20001)
+    end
+
     it 'can retrieve a TSV of data without an identifier' do
       prize_list = create_list(:prize, 12, worth: 5)
       retrieve(

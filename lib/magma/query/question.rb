@@ -224,8 +224,9 @@ class Magma
       bounds.map.with_index do |row, index|
         bound = {:lower => order_by_aliases.map { |c| row[c] }, :upper => nil}
 
+
         if bounds[index + 1]
-          bound[:upper] = bounds[index + 1].map { |c| row[c] }
+          bound[:upper] = order_by_aliases.map{ |c| bounds[index + 1][c] }
         end
 
         bound
@@ -288,8 +289,6 @@ class Magma
       if upper
         query = apply_multi_stage_ordering_bounds(query, upper: upper)
       end
-
-      p lower, upper
 
       query
     end
