@@ -77,11 +77,16 @@ class Magma
       attribute.is_a?(Magma::ChildAttribute)
     end
 
+    def is_table_attribute?(attribute)
+      attribute.is_a?(Magma::TableAttribute)
+    end
+
     def is_foreign_key_parent?(attribute)
       # Based on the attribute class, determines if this is the "foreign key holder",
       #   for a link relationship. If so, return true.
       is_collection_attribute?(attribute) ||
-      is_child_attribute?(attribute)
+      is_child_attribute?(attribute) ||
+      is_table_attribute?(attribute)
     end
 
     def explicit_child_revision_exists?(revisions, model_name, record_name, attribute_name)
@@ -169,7 +174,7 @@ class Magma
               revisions: revisions,
               parent_attribute: attribute,
               parent_model: model,
-              parent_record_name: record_name.to_s) if is_foreign_key_parent?(attribute)
+              parent_record_name: record_name.to_s) if is_collection_attribute?(attribute) || is_child_attribute?(attribute)
           end
         end
       end
