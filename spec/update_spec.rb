@@ -1,5 +1,4 @@
 require 'json'
-require 'pry'
 
 describe UpdateController do
   include Rack::Test::Methods
@@ -910,101 +909,23 @@ describe UpdateController do
       end
     end
 
-    context 'when new values do not already exist in the graph' do
-      xit 'throws exception re-assigning child to parent not in the graph' do
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
-
-        expect(Labors::Labor.count).to eq(1)
-
-        monster = create(:monster, name: 'Nemean Lion')
-        update(
-          monster: {
-            'Nemean Lion': {
-              labor: 'The Nemean Lion'
-            }
-          }
-        )
-
-        expect(last_response.status).to eq(500)
-
-        monster.refresh
-        lion.refresh
-        expect(monster.labor.name).to eq(nil)
-        expect(lion.monsters.count).to eq(0)
+    context 'trying to re-attach orphans but not to the graph throws exception' do
+      xit 'orphaned parent, parent-collection' do
       end
 
-      xit 'throws exception when re-attaching orphaned child to non-existent parent record' do
-        expect(Labors::Labor.count).to eq(0)
-
-        monster = create(:monster, name: 'Cerberus')
-        update(
-          monster: {
-            'Cerberus': {
-              labor: 'Capture Cerberus'
-            }
-          }
-        )
-
-        expect(last_response.status).to eq(500)
-
-        monster.refresh
-        expect(monster.labor).to eq(nil)
-
-        expect(Labors::Labor.count).to eq(0)
+      xit 'non-existent parent record, parent-collection' do
       end
 
-      xit 'throws exception when re-attaching orphaned record to non-existent link model' do
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
-
-        other_monster = create(:monster, name: 'Nemean Lion')
-        monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
-
-        update(
-          monster: {
-            'Lernean Hydra': {
-              reference_monster: 'Cnidaria'
-            }
-          }
-        )
-
-        expect(last_response.status).to eq(500)
-        expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
-
-        # A new record is created
-        expect(Labors::Monster.count).to eq(3)
-        cnidaria = Labors::Monster.last
-        expect(cnidaria.name).to eq('Cnidaria')
-
-        # the link has been made
-        monster.refresh
-        expect(monster.reference_monster).to eq(cnidaria)
+      xit 'orphaned parent, parent-child' do
       end
 
-      xit 'throws exception when re-attaching orphaned record to link model not in the graph' do
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+      xit 'non-existent parent record, parent-child' do
+      end
 
-        other_monster = create(:monster, name: 'Nemean Lion')
-        monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
+      xit 'non-existent link model' do
+      end
 
-        update(
-          monster: {
-            'Lernean Hydra': {
-              reference_monster: 'Cnidaria'
-            }
-          }
-        )
-
-        expect(last_response.status).to eq(500)
-        expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
-
-        # A new record is created
-        expect(Labors::Monster.count).to eq(3)
-        cnidaria = Labors::Monster.last
-        expect(cnidaria.name).to eq('Cnidaria')
-
-        # the link has been made
-        monster.refresh
-        expect(monster.reference_monster).to eq(cnidaria)
+      xit 'orphaned link model' do
       end
     end
 

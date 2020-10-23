@@ -89,9 +89,12 @@ class Magma
       is_table_attribute?(attribute)
     end
 
+    def has_implicit_revisions?(attribute)
+
+    end
+
     def explicit_child_revision_exists?(revisions, model_name, record_name, attribute_name)
       # Check if the child's parent is being explicitly set by the user
-      binding.pry
       !!revisions.dig(model_name.to_sym, record_name.to_sym, attribute_name.to_sym)
     end
 
@@ -133,25 +136,25 @@ class Magma
         child_record_name)
     end
 
-    def push_implied_link_revisions(revisions)
+    def push_implicit_link_revisions(revisions)
       # When updating link or parent attributes from the top-down,
       #   we may not know what the previous relationships were.
       # For example, changing a link child from record A to B,
       #   the explicit revision is LinkModel -> B.
-      # But there is also an implied revision, of updating
+      # But there is also an implicit revision, of updating
       #   record A to have a `nil` parent.
       # So we also have to push records for all the
-      #   implied link revisions, when the attribute
+      #   implicit link revisions, when the attribute
       #   is a Child or Collection type (i.e. the revision
       #   comes from the parent / link).
       # But, in a multi-revision scenario, we should
-      #   only push the implied revisions when those records + attributes
+      #   only push the implicit revisions when those records + attributes
       #   themselves aren't being revised, otherwise we risk
       #   overwriting an explicit revision.
 
       # We iterate over revisions to see what all has been updated.
       # If there are any ChildAttribute or CollectionAttribute values
-      #   that changed, we'll need to investigate further if any implied
+      #   that changed, we'll need to investigate further if any implicit
       #   revisions exist.
       # Do not do this over @records, because some of those revisions
       #   are calculated and could lead to incorrectly orphaning
@@ -168,9 +171,9 @@ class Magma
             #   that are specified in the revisions ... they use temporary ids
             #   in the revisions and will only return database ids
             #   in a query. Since those don't match, we can't rely on the
-            #   query method to find implied links.
+            #   query method to find implicit links.
 
-            push_implied_link_revision(
+            push_implicit_link_revision(
               revisions: revisions,
               parent_attribute: attribute,
               parent_model: model,
@@ -180,7 +183,7 @@ class Magma
       end
     end
 
-    def push_implied_link_revision(revisions:, parent_attribute:, parent_model:, parent_record_name:)
+    def push_implicit_link_revision(revisions:, parent_attribute:, parent_model:, parent_record_name:)
       # Here we fetch all current records that have the model::record_name as the
       #   parent, and then we compare that to new_link_identifiers.
       # For any record that has been removed or un-linked, we call push_record()
