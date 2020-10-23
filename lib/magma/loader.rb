@@ -81,7 +81,7 @@ class Magma
       attribute.is_a?(Magma::TableAttribute)
     end
 
-    def is_foreign_key_parent?(attribute)
+    def is_incoming_link?(attribute)
       # Based on the attribute class, determines if this is the "foreign key holder",
       #   for a link relationship. If so, return true.
       is_collection_attribute?(attribute) ||
@@ -190,10 +190,11 @@ class Magma
       #   with that record, setting its parent to `nil`.
       child_model = parent_attribute.link_model
 
+      # TODO: Try to collect this for all revisions for the same parent_model, to reduce queries.
       question = Magma::Question.new(@project_name, [
         child_model.model_name,
-        [parent_model.model_name, '::identifier', '::in', [parent_record_name]],
-          '::all', '::identifier'
+        [parent_model.model_name, '::identifier', '::equals', parent_record_name],
+          '::all', parent_model.model_name, '::identifier'
       ])
       current_record_names = question.answer.map(&:last).flatten
 
@@ -227,7 +228,7 @@ class Magma
           #   the new link records need to be Arrays,
           #   because they are linking from parent to a collection
           #   of records.
-          link_record_name = is_foreign_key_parent?(attribute) ?
+          link_record_name = is_incoming_link?(attribute) ?
             record_name.to_s :
             [ record_name.to_s ]
 
