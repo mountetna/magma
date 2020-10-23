@@ -76,14 +76,14 @@ class Magma
       attribute.is_a?(Magma::ChildAttribute)
     end
 
-    def explicit_revision_exists?(model, record_name, attribute_name)
-      return false unless record_set = @records[model]
-      return false unless record_entry = record_set[record_name]
-
-      record_entry.has_key?(attribute_name)
+    def explicit_revision_exists?(revisions, model_name, record_name, attribute_name)
+      # Cannot calculate explicit revisions from @records, because
+      #   some of those are calculated! So we have to look for
+      #   explicit revisions from the user-supplied revisions hash.
+      !!revisions.dig(model_name.to_sym, record_name.to_sym, attribute_name.to_sym)
     end
 
-    def push_implied_link_revisions
+    def push_implied_link_revisions(revisions)
       # When updating link or parent attributes from the top-down,
       #   we may not know what the previous relationships were.
       # For example, changing a link child from record A to B,
@@ -99,26 +99,31 @@ class Magma
       #   themselves aren't being revised, otherwise we risk
       #   overwriting an explicit revision.
 
-      # We iterate over @records to see what all has been updated.
+      # We iterate over revisions to see what all has been updated.
       # If there are any ChildAttribute or CollectionAttribute values
       #   that changed, we'll need to investigate further if any implied
       #   revisions exist.
-      @records.each do |model, record_set|
-        next if record_set.empty?
-        record_set.values.each do |record_entry|
-          record_entry.attribute_key.each do |attribute_name|
-            attribute = record_entry.model.attributes[attribute_name]
+      # Do not do this over @records, because some of those revisions
+      #   are calculated and could lead to incorrectly orphaning
+      #   currently-attached records.
+      revisions.each do |model_name, model_revisions|
+        model = Magma.instance.get_model(@project_name, model_name)
 
+        model_revisions.each do |record_name, revision|
+          revision.each do |attribute_name, value|
+            attribute = model.attributes[attribute_name]
+            binding.pry
             push_implied_link_revision(
-                attribute.link_model,
-                model,
-                record_entry.record_name) if is_foreign_key_parent?(attribute)
+              revisions,
+              attribute.link_model,
+              model,
+              record_name.to_s) if is_foreign_key_parent?(attribute)
           end
         end
       end
     end
 
-    def push_implied_link_revision(child_model, parent_model, parent_record_name)
+    def push_implied_link_revision(revisions, child_model, parent_model, parent_record_name)
       # Here we fetch all current records that have the model::record_name as the
       #   parent, and then we compare that to new_link_identifiers.
       # For any record that has been removed or un-linked, we call push_record()
@@ -132,13 +137,14 @@ class Magma
 
       current_record_names.reject { |record_name|
         explicit_revision_exists?(
-          child_model,
+          revisions,
+          child_model.model_name,
           record_name,
           parent_model.model_name)
        }.each do |record_name|
         push_record(
-          attribute.link_model, record_name,
-          model.model_name.to_sym => nil,
+          child_model, record_name,
+          parent_model.model_name.to_sym => nil,
           updated_at: @now)
       end
     end
