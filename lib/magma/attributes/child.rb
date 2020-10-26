@@ -1,6 +1,19 @@
 class Magma
   class ChildAttribute < Attribute
     include Magma::Link
+
+    def entry(value, loader)
+      # The link model should be updated via
+      #   revision_to_links, so we return nil
+      #   here so the loader doesn't try
+      #   to update a non-existent column.
+      nil
+    end
+
+    def revision_to_links(record_name, new_id)
+      yield link_model, [ new_id ]
+    end
+
     def query_to_payload(value)
       value
     end

@@ -7,7 +7,8 @@ class Magma
     end
 
     def entry(value, loader)
-      return nil if value.nil?
+      # This allows you to orphan records.
+      return [ foreign_id, nil ] if value.nil?
 
       if value.is_a? Magma::TempId
         [ foreign_id, value.real_id ]

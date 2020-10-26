@@ -24,6 +24,8 @@ class UpdateController < Magma::Controller
       end
     end
 
+    @loader.push_implicit_link_revisions(@revisions)
+
     return @loader.dispatch_record_set
   rescue Magma::LoadFailed => m
     log(m.complaints)

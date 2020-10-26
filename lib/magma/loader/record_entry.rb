@@ -71,11 +71,11 @@ class Magma
 
     def insert_entry
       entry = {}
-      
+
       id_column = @model.identity.column_name.to_sym
 
       entry[id_column] = @record_name unless id_column == :id
-      
+
       entry.update(
         @record.map do |att_name,value|
           # filter out temp ids

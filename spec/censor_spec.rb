@@ -1,5 +1,4 @@
 require_relative '../lib/magma'
-require 'pry'
 
 describe Magma::Censor do
   def to_record_set(model, revisions)
