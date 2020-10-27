@@ -76,6 +76,35 @@ describe QueryController do
     end
   end
 
+  context 'orphans' do
+    it 'hides orphans by default' do
+      labors = create_list(:labor, 3, project: @project)
+      orphaned_labors = create_list(:labor, 3)
+
+      query(
+        [ 'labor', '::all', '::identifier' ]
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
+    end
+
+    it 'shows orphans if asked' do
+      labors = create_list(:labor, 3, project: @project)
+      orphaned_labors = create_list(:labor, 3)
+
+      auth_header(:viewer)
+      json_post(:query,
+        project_name: 'labors',
+        query: [ 'labor', '::all', '::identifier' ],
+        show_orphans: true
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last).sort).to match_array((orphaned_labors + labors).map(&:identifier))
+    end
+  end
+
   context Magma::ModelPredicate do
     before(:each) do
       @hydra = create(:labor, :hydra, project: @project)
