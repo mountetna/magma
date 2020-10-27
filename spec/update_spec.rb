@@ -260,7 +260,7 @@ describe UpdateController do
         hydra_monster.refresh
         habitat.refresh
         expect(hydra_monster.habitat).to eq(habitat)
-        expect(habitat.monster).to eq([lion_monster, hydra_monster])
+        expect(habitat.monster).to match_array([lion_monster, hydra_monster])
       end
     end
 
@@ -494,7 +494,7 @@ describe UpdateController do
         habitat.refresh
         expect(lion_monster.habitat).to eq(habitat)
         expect(hydra_monster.habitat).to eq(habitat)
-        expect(habitat.monster).to eq([ lion_monster, hydra_monster ])
+        expect(habitat.monster).to match_array([ lion_monster, hydra_monster ])
       end
     end
 
@@ -846,7 +846,7 @@ describe UpdateController do
         project.refresh
         expect(lion.project).to eq(project)
         expect(hydra.project).to eq(project)
-        expect(project.labor).to eq([ hydra, lion ])
+        expect(project.labor).to match_array([ hydra, lion ])
       end
 
       it 'via a parent in parent-collection' do
@@ -881,7 +881,7 @@ describe UpdateController do
         project.refresh
         expect(lion.project).to eq(project)
         expect(hydra.project).to eq(project)
-        expect(project.labor).to eq([ hydra, lion ])
+        expect(project.labor).to match_array([ hydra, lion ])
       end
 
       it 'via the child of a link model' do
