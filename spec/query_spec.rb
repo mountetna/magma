@@ -43,7 +43,7 @@ describe QueryController do
       [ 'labor', '::ball', '::bidentifier' ]
     )
 
-    expect(json_body[:errors]).to eq(['::ball is not a valid argument to Magma::ModelPredicate'])
+    expect(json_body[:errors]).to eq(['::ball is not a valid argument to Magma::StartPredicate'])
     expect(last_response.status).to eq(422)
   end
 
@@ -124,7 +124,7 @@ describe QueryController do
 
       expect(json_body[:answer]).to eq([
         [ 'Augean Stables', 2 ],
-        #[ 'Ceryneian Hind', 0 ],
+        [ 'Ceryneian Hind', 0 ],
         [ 'Lernean Hydra', 1 ],
         [ 'Nemean Lion', 1 ]
       ])

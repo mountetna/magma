@@ -260,6 +260,7 @@ end
 require_relative 'verb'
 require_relative 'predicate/column'
 require_relative 'predicate/model'
+require_relative 'predicate/start'
 require_relative 'predicate/record'
 require_relative 'predicate/boolean'
 require_relative 'predicate/date_time'
