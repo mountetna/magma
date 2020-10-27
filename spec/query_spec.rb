@@ -11,6 +11,7 @@ describe QueryController do
     ])
     stub_request(:any, /https:\/\/metis.test/).
       to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+    @project = create(:project, name: 'The Twelve Labors of Hercules')
   end
 
   def query(question,user_type=:viewer)
@@ -24,7 +25,7 @@ describe QueryController do
   end
 
   it 'can post a basic query' do
-    labors = create_list(:labor, 3)
+    labors = create_list(:labor, 3, project: @project)
 
     query(
       [ 'labor', '::all', '::identifier' ]
@@ -76,9 +77,16 @@ describe QueryController do
   end
 
   context Magma::ModelPredicate do
+    before(:each) do
+      @hydra = create(:labor, :hydra, project: @project)
+      @stables = create(:labor, :stables, project: @project)
+      @lion = create(:labor, :lion, project: @project)
+      @hind = create(:labor, :hind, project: @project)
+    end
+
     it 'supports ::first' do
-      poison = create(:prize, name: 'poison', worth: 5)
-      poop = create(:prize, name: 'poop')
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
 
       query(['prize', '::first', 'name'])
 
@@ -87,8 +95,8 @@ describe QueryController do
     end
 
     it 'supports ::all' do
-      poison = create(:prize, name: 'poison', worth: 5)
-      poop = create(:prize, name: 'poop')
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
 
       query(['prize', '::all', 'name'])
 
@@ -97,8 +105,8 @@ describe QueryController do
     end
 
     it 'supports ::any' do
-      poison = create(:prize, name: 'poison', worth: 5)
-      poop = create(:prize, name: 'poop', worth: 0)
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', worth: 0, labor: @stables)
 
       query(['prize', [ 'worth', '::>', 0 ], '::any' ])
 
@@ -107,21 +115,16 @@ describe QueryController do
     end
 
     it 'supports ::count' do
-      hydra = create(:labor, :hydra)
-      stables = create(:labor, :stables)
-      lion = create(:labor, :lion)
-      hind = create(:labor, :hind)
-
-      poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
-      poop = create(:prize, labor: stables, name: 'poop', worth: 0)
-      iou = create(:prize, labor: stables, name: 'iou', worth: 2)
-      skin = create(:prize, labor: lion, name: 'skin', worth: 6)
+      poison = create(:prize, labor: @hydra, name: 'poison', worth: 5)
+      poop = create(:prize, labor: @stables, name: 'poop', worth: 0)
+      iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+      skin = create(:prize, labor: @lion, name: 'skin', worth: 6)
 
       query(['labor', '::all', 'prize', '::count' ])
 
       expect(json_body[:answer]).to eq([
         [ 'Augean Stables', 2 ],
-        [ 'Ceryneian Hind', 0 ],
+        #[ 'Ceryneian Hind', 0 ],
         [ 'Lernean Hydra', 1 ],
         [ 'Nemean Lion', 1 ]
       ])
@@ -130,9 +133,14 @@ describe QueryController do
   end
 
   context Magma::RecordPredicate do
+    before(:each) do
+      @hydra = create(:labor, :hydra, project: @project)
+      @stables = create(:labor, :stables, project: @project)
+    end
+
     it 'supports ::has' do
-      poison = create(:prize, name: 'poison', worth: 5)
-      poop = create(:prize, name: 'poop')
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
 
       query(['prize', ['::has', 'worth'], '::all', 'name'])
 
@@ -142,8 +150,8 @@ describe QueryController do
     end
 
     it 'supports ::lacks' do
-      poison = create(:prize, name: 'poison', worth: 5)
-      poop = create(:prize, name: 'poop')
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
 
       query(['prize', ['::lacks', 'worth'], '::all', 'name'])
 
@@ -152,11 +160,8 @@ describe QueryController do
     end
 
     it 'can retrieve metrics' do
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
-
-      poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
-      poop = create(:prize, labor: stables, name: 'poop', worth: 0)
+      poison = create(:prize, labor: @hydra, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, labor: @stables, name: 'poop', worth: 0, labor: @stables)
       query(['labor', '::all', '::metrics'])
 
       answer = Hash[json_body[:answer]]
@@ -166,9 +171,9 @@ describe QueryController do
 
   context Magma::StringPredicate do
     before(:each) do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
     end
 
     it 'supports ::matches' do
@@ -219,9 +224,9 @@ describe QueryController do
 
   context Magma::NumberPredicate do
     before(:each) do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
 
       hide = create(:prize, labor: lion, name: 'hide', worth: 6)
       poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
@@ -258,9 +263,9 @@ describe QueryController do
 
   context Magma::DateTimePredicate do
     before(:each) do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, year: '02-01-0001', completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, year: '03-15-0002', completed: false)
-      stables = create(:labor, name: 'Augean Stables', number: 5, year: '06-07-0005', completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, year: '02-01-0001', completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, year: '03-15-0002', completed: false, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, year: '06-07-0005', completed: false, project: @project)
     end
 
     it 'supports comparisons' do
@@ -286,9 +291,14 @@ describe QueryController do
 
   context Magma::FilePredicate do
     before(:each) do
-      lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}')
-      hydra = create(:monster, name: 'Lernean Hydra', stats: '{"filename": "hydra-stats.tsv", "original_filename": "alpha-hydra.tsv"}')
-      stables = create(:monster, name: 'Augean Stables', stats: '{"filename": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}')
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}', labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, name: 'Lernean Hydra', stats: '{"filename": "hydra-stats.tsv", "original_filename": "alpha-hydra.tsv"}', labor: labor)
+
+      labor = create(:labor, :stables, project: @project)
+      stables = create(:monster, name: 'Augean Stables', stats: '{"filename": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}', labor: labor)
     end
 
     it 'returns a path' do
@@ -429,27 +439,27 @@ describe QueryController do
 
   context Magma::BooleanPredicate do
     it 'checks ::true' do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
       query([ 'labor', [ 'completed', '::true' ], '::all', 'name' ])
       expect(json_body[:answer].map(&:last)).to eq([ 'Nemean Lion' ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'checks ::false' do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
       query([ 'labor', [ 'completed', '::false' ], '::all', 'name' ])
       expect(json_body[:answer].map(&:last)).to eq([ 'Augean Stables' ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
     it 'checks ::untrue' do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
       query([ 'labor', [ 'completed', '::untrue' ], '::all', 'name' ])
       expect(json_body[:answer].map(&:last)).to match_array([ 'Lernean Hydra', 'Augean Stables' ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
@@ -468,9 +478,9 @@ describe QueryController do
         [ 20, 20, 20, 20 ],
         [ 30, 30, 30, 30 ]
       ]
-      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
-      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
 
       query(
         [ 'labor',
@@ -490,9 +500,9 @@ describe QueryController do
         [ 20, 21, 22, 23 ],
         [ 30, 31, 32, 33 ]
       ]
-      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
-      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
 
       query(
         [ 'labor',
@@ -532,9 +542,9 @@ describe QueryController do
     end
 
     it 'returns nil values for empty rows' do
-      stables = create(:labor, name: 'Augean Stables', number: 5)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2)
-      lion = create(:labor, name: 'Nemean Lion', number: 1)
+      stables = create(:labor, name: 'Augean Stables', number: 5, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, project: @project)
 
       query(
         [ 'labor',
@@ -568,9 +578,9 @@ describe QueryController do
         [ 20, 20, 20, 20 ],
         [ 30, 30, 30, 30 ]
       ]
-      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
-      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
 
       query(
         [ 'labor',
@@ -615,7 +625,8 @@ describe QueryController do
         lore: {
           type: 'String',
           value: 'fur'
-        }
+        },
+        project: @project
       )
     end
 
@@ -644,9 +655,9 @@ describe QueryController do
     end
 
     it 'can return an arrayed result' do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, contributions: [ 10, 10, 10, 10 ])
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, contributions: [ 10, 10, 10, 10 ], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
 
       poison = create(:prize, labor: hydra, name: 'poison', worth: 5)
       poop = create(:prize, labor: stables, name: 'poop', worth: 0)
@@ -691,9 +702,14 @@ describe QueryController do
   end
 
   context 'restriction' do
+    before(:each) do
+      labor = create(:labor, :lion, project: @project)
+      @lion = create(:monster, :lion, labor: labor)
+    end
+
     it 'hides restricted records' do
-      restricted_victim_list = create_list(:victim, 9, restricted: true)
-      unrestricted_victim_list = create_list(:victim, 9)
+      restricted_victim_list = create_list(:victim, 9, restricted: true, monster: @lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: @lion)
 
       query(
         [ 'victim', '::all',
@@ -706,8 +722,8 @@ describe QueryController do
     end
 
     it 'shows restricted records to people with permissions' do
-      restricted_victim_list = create_list(:victim, 9, restricted: true)
-      unrestricted_victim_list = create_list(:victim, 9)
+      restricted_victim_list = create_list(:victim, 9, restricted: true, monster: @lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: @lion)
 
       query(
         [ 'victim', '::all',
@@ -727,7 +743,7 @@ describe QueryController do
     end
 
     it 'prevents queries on restricted attributes' do
-      victim_list = create_list(:victim, 9, country: 'thrace')
+      victim_list = create_list(:victim, 9, country: 'thrace', monster: @lion)
 
       query([ 'victim', '::all', 'country' ])
       expect(last_response.status).to eq(403)

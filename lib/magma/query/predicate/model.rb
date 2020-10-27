@@ -26,6 +26,16 @@ class Magma
 
     attr_reader :model
 
+    def each_ancestor
+      current_model = @model
+      ancestral_path = []
+      while current_model do
+        yield current_model, ancestral_path
+        ancestral_path << current_model.parent_model_name&.to_s
+        current_model = current_model.parent_model
+      end
+    end
+
     def initialize(question, model, *query_args)
       super(question)
       @model = model
@@ -33,16 +43,19 @@ class Magma
 
       if question.restrict?
       # the model can be restricted, and we should withhold restricted data
-        restriction_model = model
-        ancestral_path = []
-        while restriction_model do
+        each_ancestor do |restriction_model, ancestors|
           if restriction_model.has_attribute?(:restricted)
-            query_args.unshift(
-              ancestral_path + [ 'restricted', '::untrue' ]
-            )
+            query_args.unshift(ancestors + [ 'restricted', '::untrue' ])
           end
-          ancestral_path << restriction_model.parent_model_name&.to_s
-          restriction_model = restriction_model.parent_model
+        end
+      end
+
+      # filter out orphans
+      unless question.show_orphans?
+        each_ancestor do |orphan_model, ancestors|
+          if orphan_model.parent_model
+            query_args.unshift(ancestors + [ '::has', orphan_model.parent_model_name ])
+          end
         end
       end
 

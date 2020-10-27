@@ -62,6 +62,10 @@ class Magma
       @options[:restrict]
     end
 
+    def show_orphans?
+      @options[:show_orphans]
+    end
+
     def answer
       table = to_table(query)
 

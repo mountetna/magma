@@ -16,6 +16,10 @@ describe Magma::Censor do
     end.to_h
   end
 
+  before(:each) do
+    @project = create(:project, name: 'The Twelve Labors of Hercules')
+  end
+
   it 'nothing censored for authorized users with unrestricted permissions' do
     victim = create(:victim, name: 'Apollodorus', country: 'Greece')
     model = Magma.instance.magma_projects[:labors].models[:victim]
@@ -71,7 +75,9 @@ describe Magma::Censor do
   end
 
   it 'revisions censored for users with restricted model' do
-    victim = create(:victim, name: 'Apollodorus', country: 'Greece', restricted: true)
+    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
+    monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+    victim = create(:victim, name: 'Apollodorus', country: 'Greece', restricted: true, monster: monster)
     model = Magma.instance.magma_projects[:labors].models[:victim]
     user = Etna::User.new(
         email: 'zeus@mountolympus.org',
