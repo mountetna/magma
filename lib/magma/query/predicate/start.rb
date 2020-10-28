@@ -7,11 +7,11 @@ class Magma
     def add_filters
       super
 
-      # filter out orphans
-      unless @question.show_orphans?
-        each_ancestor do |orphan_model, ancestors|
-          if orphan_model.parent_model
-            create_filter(ancestors + [ '::has', orphan_model.parent_model_name ])
+      # filter out disconnected records
+      unless @question.show_disconnected?
+        each_ancestor do |disc_model, ancestors|
+          if disc_model.parent_model
+            create_filter(ancestors + [ '::has', disc_model.parent_model_name ])
           end
         end
       end

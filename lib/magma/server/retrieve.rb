@@ -45,7 +45,7 @@ class RetrieveController < Magma::Controller
     @page = @params[:page]
     @page_size = @params[:page_size]
     @order = @params[:order]
-    @show_orphans = @params[:show_orphans]
+    @show_disconnected = @params[:show_disconnected]
 
     @attribute_names = @params[:attribute_names]
 
@@ -131,7 +131,7 @@ class RetrieveController < Magma::Controller
       @attribute_names,
       filters: [ Magma::Retrieval::StringFilter.new(@filter) ],
       collapse_tables: true,
-      show_orphans: @show_orphans,
+      show_disconnected: @show_disconnected,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 
@@ -153,7 +153,7 @@ class RetrieveController < Magma::Controller
       page: use_pages && @page,
       page_size: use_pages && @page_size,
       order: use_pages && @order,
-      show_orphans: @show_orphans,
+      show_disconnected: @show_disconnected,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 

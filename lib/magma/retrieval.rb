@@ -17,7 +17,7 @@ class Magma
       @page = opts[:page]
       @restrict = opts[:restrict]
       @order = opts[:order]
-      @show_orphans = opts[:show_orphans]
+      @show_disconnected = opts[:show_disconnected]
 
       @model = model
       @record_names = record_names
@@ -96,7 +96,7 @@ class Magma
     end
 
     def question
-      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict, order: @order, show_orphans: @show_orphans)
+      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict, order: @order, show_disconnected: @show_disconnected)
     end
 
     def query

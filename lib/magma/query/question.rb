@@ -62,8 +62,8 @@ class Magma
       @options[:restrict]
     end
 
-    def show_orphans?
-      @options[:show_orphans]
+    def show_disconnected?
+      @options[:show_disconnected]
     end
 
     def answer

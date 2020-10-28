@@ -11,7 +11,7 @@ class QueryController < Magma::Controller
       end
       question = Magma::Question.new(
         @project_name, @params[:query],
-        show_orphans: @params[:show_orphans],
+        show_disconnected: @params[:show_disconnected],
         restrict: !@user.can_see_restricted?(@project_name),
         timeout: Magma.instance.config(:query_timeout)
       )

@@ -478,7 +478,7 @@ describe UpdateController do
       end
     end
 
-    context 'can create orphans' do
+    context 'can create disconnected records' do
       it 'via the child itself for parent-child' do
         hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
@@ -721,7 +721,7 @@ describe UpdateController do
       end
     end
 
-    context 'can re-attach orphaned records' do
+    context 'can re-attach disconnected records' do
       it 'via the child itself for parent-child' do
         hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
@@ -904,14 +904,14 @@ describe UpdateController do
       end
     end
 
-    context 'trying to re-attach orphans but not to the graph throws exception for' do
-      xit 'orphaned parent, parent-collection' do
+    context 'trying to re-attach disconnected records but not to the graph throws exception for' do
+      xit 'disconnected parent, parent-collection' do
       end
 
       xit 'non-existent parent record, parent-collection' do
       end
 
-      xit 'orphaned parent, parent-child' do
+      xit 'disconnected parent, parent-child' do
       end
 
       xit 'non-existent parent record, parent-child' do
@@ -920,7 +920,7 @@ describe UpdateController do
       xit 'non-existent link model' do
       end
 
-      xit 'orphaned link model' do
+      xit 'disconnected link model' do
       end
     end
 

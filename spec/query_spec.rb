@@ -76,8 +76,8 @@ describe QueryController do
     end
   end
 
-  context 'orphans' do
-    it 'hides orphans by default' do
+  context 'disconnected data' do
+    it 'hides disconnected records by default' do
       labors = create_list(:labor, 3, project: @project)
       orphaned_labors = create_list(:labor, 3)
 
@@ -89,7 +89,7 @@ describe QueryController do
       expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
     end
 
-    it 'shows orphans if asked' do
+    it 'shows disconnected records if asked' do
       labors = create_list(:labor, 3, project: @project)
       orphaned_labors = create_list(:labor, 3)
 
@@ -97,7 +97,7 @@ describe QueryController do
       json_post(:query,
         project_name: 'labors',
         query: [ 'labor', '::all', '::identifier' ],
-        show_orphans: true
+        show_disconnected: true
       )
 
       expect(last_response.status).to eq(200)

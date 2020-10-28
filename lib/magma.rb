@@ -101,7 +101,7 @@ class Magma
 
         validate_attributes(model)
 
-        # Check for orphan models. Make and exception for the root model.
+        # Check for disconnected models. Make and exception for the root model.
         if(
           !model.attributes.values.any?{|att| att.is_a?(Magma::Link)} &&
           model_name != :project
