@@ -107,7 +107,7 @@ class Magma
     end
 
     def create_filter(args)
-      filter = RecordPredicate.new(@question, @model, alias_name, *args)
+      filter = FilterPredicate.new(@question, @model, alias_name, *args)
 
       unless filter.reduced_type == TrueClass
         raise ArgumentError,

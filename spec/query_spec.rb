@@ -113,6 +113,44 @@ describe QueryController do
       @hind = create(:labor, :hind, project: @project)
     end
 
+    context 'filtering' do
+      it 'allows filters' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+
+        query(['prize', [ 'worth', '::>=', 5 ], '::all', 'name'])
+
+        expect(last_response.status).to eq(200)
+        expect(json_body[:answer].first.last).to eq('poison')
+        expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+      end
+
+      it 'combines filters' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, name: 'iou', worth: 5, labor: @hind)
+        skin = create(:prize, name: 'skin', worth: 2, labor: @lion)
+
+        query(['prize', [ 'name', '::matches', '^po' ], [ 'worth', '::>=', 5 ], '::all', 'name'])
+
+        expect(last_response.status).to eq(200)
+        expect(json_body[:answer].first.last).to eq('poison')
+        expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+      end
+
+      it 'combines filters with ::or' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, name: 'iou', worth: 5, labor: @hind)
+        skin = create(:prize, name: 'skin', worth: 2, labor: @lion)
+
+        query(['prize', [ '::or', [ 'name', '::matches', '^po' ], [ 'worth', '::>=', 5 ] ], '::all', 'name'])
+
+        expect(last_response.status).to eq(200)
+        expect(json_body[:answer].map(&:last)).to match_array([ 'poop', 'poison', 'iou' ])
+        expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+      end
+    end
     it 'supports ::first' do
       poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
       poop = create(:prize, name: 'poop', labor: @stables)
