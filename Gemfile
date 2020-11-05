@@ -11,6 +11,7 @@ gem 'carrierwave-sequel'
 gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
+gem 'puma', '5.0.2'
 
 group :test do
   gem 'simplecov'
