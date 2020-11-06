@@ -2,7 +2,7 @@ source 'http://rubygems.org'
 
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/85c0a54efc9d6a4d353d457d09771ed8d26ff5a7'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/f5710d118d6e5e9b20760c0865a2c011f4e321a9'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
@@ -12,6 +12,7 @@ gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
 gem 'puma', '5.0.2'
+
 group :test do
   gem 'simplecov'
   gem 'rack-test', require: "rack/test"
