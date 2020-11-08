@@ -2,7 +2,7 @@ source 'http://rubygems.org'
 
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/e16decf036171d23f18761d3d17e6257a4c16241'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/f5710d118d6e5e9b20760c0865a2c011f4e321a9'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
@@ -11,6 +11,7 @@ gem 'carrierwave-sequel'
 gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
+gem 'puma', '5.0.2'
 
 group :test do
   gem 'simplecov'
