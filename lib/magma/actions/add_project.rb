@@ -39,7 +39,7 @@ $$;
     private
 
     def setup_metis
-      # Create a Metis bucket and temp folder, owned by Magma,
+      # Create a Metis bucket, owned by Magma,
       #   for linking files into.
       host = Magma.instance.config(:storage).fetch(:host)
 
