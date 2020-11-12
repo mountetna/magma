@@ -1,4 +1,9 @@
 describe Magma::ModelUpdateActions do
+  let(:user) {Etna::User.new({
+    email: "outis@mountolympus.org",
+    token: "fake"
+  })}
+
   describe '#perform' do
     context 'with invalid action_name' do
       let(:actions) do
@@ -9,7 +14,8 @@ describe Magma::ModelUpdateActions do
             model_name: "monster",
             attribute_name: "name",
             description: "The monster's name"
-          }]
+          }],
+          user
         )
       end
 
@@ -36,7 +42,8 @@ describe Magma::ModelUpdateActions do
               attribute_name: "attribute_two",
               type: "integer"
             }
-          ]
+          ],
+          user
         )
       end
 
@@ -74,7 +81,8 @@ describe Magma::ModelUpdateActions do
               attribute_name: "species",
               validation: "invalid"
             }
-          ]
+          ],
+          user
         )
       end
 

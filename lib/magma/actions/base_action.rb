@@ -2,9 +2,10 @@ require_relative 'action_error'
 
 class Magma
   class BaseAction
-    def initialize(project_name, action_params = {})
+    def initialize(project_name, user, action_params = {})
       @project_name = project_name
       @action_params = action_params
+      @user = user
       @errors = []
     end
 

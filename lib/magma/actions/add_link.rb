@@ -90,10 +90,10 @@ class Magma
 
     def make_actions
       [
-          LinkAddAttributeAction.new(@project_name, @action_params[:links][0].slice(:model_name, :attribute_name, :type).update({
+          LinkAddAttributeAction.new(@project_name, @user, @action_params[:links][0].slice(:model_name, :attribute_name, :type).update({
               link_model_name: @action_params[:links][1][:model_name]
           })),
-          LinkAddAttributeAction.new(@project_name, @action_params[:links][1].slice(:model_name, :attribute_name, :type).update({
+          LinkAddAttributeAction.new(@project_name, @user, @action_params[:links][1].slice(:model_name, :attribute_name, :type).update({
               link_model_name: @action_params[:links][0][:model_name]
           })),
       ]

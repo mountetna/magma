@@ -3,7 +3,8 @@ require_relative '../actions/model_update_actions'
 
 class UpdateModelController < Magma::Controller
   def action
-    model_update_actions = Magma::ModelUpdateActions.build(@project_name, @params[:actions])
+    model_update_actions = Magma::ModelUpdateActions.build(
+      @project_name, @params[:actions], @user)
 
     if model_update_actions.perform
       @payload = Magma::Payload.new

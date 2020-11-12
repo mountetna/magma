@@ -153,7 +153,7 @@ class Magma
     def temporary_filepath(user)
       Magma.instance.storage.upload_url(
         @magma_model.project_name,
-        "tmp/#{Magma.instance.sign.uid}",
+        "tmp-#{Magma.instance.sign.uid}",
         email: user.email,
         first: user.first,
         last: user.last

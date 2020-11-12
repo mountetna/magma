@@ -18,6 +18,7 @@ BEGIN
 END
 $$;
       SQL
+      setup_metis
       super
     end
 
@@ -37,6 +38,56 @@ $$;
 
     private
 
+    def setup_metis
+      # Create a Metis bucket and temp folder, owned by Magma,
+      #   for linking files into.
+      host = Magma.instance.config(:storage).fetch(:host)
+
+      client = Etna::Client.new("https://#{host}", @user.token)
+
+      bucket_create_route = client.routes.find { |r| r[:name] == 'bucket_create' }
+
+      @errors << Magma::ActionError.new(
+        message: "No bucket_create route on the Metis storage host -- will not be able to link files for this"
+      ) unless bucket_create_route
+
+      path = client.route_path(
+        bucket_create_route,
+        project_name: @project_name,
+        bucket_name: 'magma'
+      )
+
+      params = {
+        owner: 'magma',
+        description: 'For magma use only',
+        access: 'administrator'
+      }
+
+      # Now populate the standard headers
+      hmac_params = {
+        method: 'POST',
+        host: host,
+        path: path,
+
+        expiration: (DateTime.now + 10).iso8601,
+        id: 'magma',
+        nonce: SecureRandom.hex,
+        headers: params,
+      }
+
+      hmac = Etna::Hmac.new(Magma.instance, hmac_params)
+
+      client.send(
+        'body_request',
+        Net::HTTP::Post,
+        hmac.url_params[:path] + '?' + hmac.url_params[:query],
+        params)
+
+      return nil
+    rescue Etna::Error => e
+      Magma.instance.logger.log_error(e)
+    end
+
     def project
       Magma.instance.get_or_load_project(@project_name)
     end
@@ -45,7 +96,7 @@ $$;
       if project.models.include? :project
         []
       else
-        [AddModelAction.new(@project_name, model_name: 'project', identifier: 'name')]
+        [AddModelAction.new(@project_name, @user, model_name: 'project', identifier: 'name')]
       end
     end
   end

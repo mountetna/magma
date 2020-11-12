@@ -8,7 +8,14 @@ describe Magma::AddProjectAction do
 
   describe "#perform" do
     def run_once
-      action = Magma::AddProjectAction.new(project_name, action_params)
+      action = Magma::AddProjectAction.new(
+        project_name,
+        Etna::User.new({
+          email: "outis@mountolympus.org",
+          token: "fake"
+        }),
+        action_params
+      )
       action.validate
       expect(action.errors).to eql([])
       expect(action.validate).to eql(true)
@@ -19,12 +26,25 @@ describe Magma::AddProjectAction do
       action
     end
 
+    before(:each) do
+      setup_metis_bucket_stubs(project_name)
+    end
+
     it 'idempotently adds the project' do
       run_once
       expect(Magma.instance.get_model(project_name, :project)).to_not be_nil
 
       run_once
       expect(Magma.instance.get_model(project_name, :project)).to_not be_nil
+
+      # Make sure the Metis create_bucket endpoint was called
+      expect(WebMock).to have_requested(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create\/magma/).
+      with(query: hash_including({
+        "X-Etna-Headers": "owner,description,access"
+      }), body: hash_including({
+        "owner": "magma",
+        "access": "administrator"
+      })).times(2)
     end
 
     it 'captures an error on invalid project names' do

@@ -1,5 +1,9 @@
 describe Magma::UpdateAttributeAction do
-  let(:action) { Magma::UpdateAttributeAction.new("labors", action_params) }
+  let(:user) { Etna::User.new({
+    email: "outis@mountolympus.org",
+    token: "fake"
+  }) }
+  let(:action) { Magma::UpdateAttributeAction.new("labors", user, action_params) }
 
   describe '#perform' do
     let(:action_params) do
