@@ -47,9 +47,13 @@ $$;
 
       bucket_create_route = client.routes.find { |r| r[:name] == 'bucket_create' }
 
-      @errors << Magma::ActionError.new(
-        message: "No bucket_create route on the Metis storage host -- will not be able to link files for this"
-      ) unless bucket_create_route
+      begin
+        @errors << Magma::ActionError.new(
+          message: "No bucket_create route on the Metis storage host -- will not be able to link files for this",
+          source: 'setup_metis'
+        )
+        return nil
+      end unless bucket_create_route
 
       path = client.route_path(
         bucket_create_route,

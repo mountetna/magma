@@ -63,6 +63,41 @@ describe Magma::AddProjectAction do
       end
     end
 
+    it 'does not call Metis if no create_bucket route exists' do
+      # Change the stub
+      route_payload = JSON.generate([])
+      stub_request(:options, 'https://metis.test').
+        to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+      action = Magma::AddProjectAction.new(
+        project_name,
+        Etna::User.new({
+          email: "outis@mountolympus.org",
+          token: "fake"
+        }),
+        action_params
+      )
+      action.validate
+      expect(action.errors).to eql([])
+      expect(action.validate).to eql(true)
+      action.perform
+      expect(action.errors).to eql([{
+        message: "No bucket_create route on the Metis storage host -- will not be able to link files for this",
+        reason: nil,
+        source: "setup_metis"}])
+
+      expect(Magma.instance.get_model(project_name, :project)).to_not be_nil
+
+      # Make sure the Metis create_bucket endpoint was NOT called
+      expect(WebMock).not_to have_requested(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create\/magma/).
+      with(query: hash_including({
+        "X-Etna-Headers": "owner,description,access"
+      }), body: hash_including({
+        "owner": "magma",
+        "access": "administrator"
+      }))
+    end
+
     # Does not work due to sequel caching, normally a restart is required to fully clear caches.
     xit 'would load projects that only exist in the db' do
       run_once
