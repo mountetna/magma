@@ -326,6 +326,6 @@ def setup_metis_bucket_stubs(project_name)
   route_payload = JSON.generate([
     {:bucket=>{}}
   ])
-  stub_request(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create?/).
+  stub_request(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create/).
     to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
 end

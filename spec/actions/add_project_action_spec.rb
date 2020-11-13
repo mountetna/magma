@@ -35,11 +35,11 @@ describe Magma::AddProjectAction do
       expect(Magma.instance.get_model(project_name, :project)).to_not be_nil
 
       # Change the stub because Metis should complain the second time.
-      route_payload = JSON.generate([
-        {:bucket=>{}}
-      ])
-      stub_request(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create?/).
-        to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+      route_payload = JSON.generate(
+        {:error=>'Duplicate bucket.'}
+      )
+      stub_request(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create/).
+        to_return(status: 422, body: route_payload, headers: {'Content-Type': 'application/json'})
 
       run_once
       expect(Magma.instance.get_model(project_name, :project)).to_not be_nil
