@@ -6,7 +6,7 @@ class Magma
     end
 
     def revision_to_loader(record_name, file)
-      [ name, file.update(filename: filename(record_name, file[:path])) ]
+      [ name, file.update(filename: filename(record_name, file[:path], file[:original_filename])) ]
     end
 
     def revision_to_payload(record_name, new_value, loader)
@@ -78,7 +78,7 @@ class Magma
       return nil unless path = file&.dig(:path)
 
       if path.start_with? 'metis://'
-        copy_revisions[ path ] = "metis://#{project_name}/magma/#{filename(record_name, path)}"
+        copy_revisions[ path ] = "metis://#{project_name}/magma/#{filename(record_name, path, file[:original_filename])}"
       end
 
       return nil
@@ -144,8 +144,10 @@ class Magma
 
     private
 
-    def filename(record_name, path)
+    def filename(record_name, path, original_filename=nil)
       ext = path ? ::File.extname(path) : ''
+      original_ext = original_filename ? ::File.extname(original_filename) : ''
+      ext = original_ext if ext.empty?
       ext = '.dat' if ext.empty?
       "#{@magma_model.model_name}-#{record_name}-#{name}#{ext}"
     end
