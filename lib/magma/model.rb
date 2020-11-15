@@ -1,12 +1,10 @@
 class Magma
   class Model < Sequel::Model
     class << self
-      Magma::Attribute.descendants.
-                      reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
-                      each do |attribute|
-        define_method attribute.attribute_type do |attribute_name = nil, opts = {}|
-          @parent = attribute_name if attribute == Magma::ParentAttribute
-          attributes[attribute_name] = attribute.new(opts.merge(
+      Magma::Attribute.type_attributes.each do |attribute|
+          define_method attribute.attribute_type do |attribute_name=nil, opts={}|
+            @parent = attribute_name if attribute == Magma::ParentAttribute
+            attributes[attribute_name] = attribute.new(opts.merge(
               project_name: project_name,
               model_name: model_name,
               attribute_name: attribute_name,

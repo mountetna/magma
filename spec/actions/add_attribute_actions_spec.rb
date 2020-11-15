@@ -61,7 +61,15 @@ describe Magma::AddAttributeAction do
       it 'captures a model error' do
         action = Magma::AddAttributeAction.new(project_name, action_params.except(:type))
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("type is not present")
+        expect(action.errors.first[:message]).to eq("Type is invalid")
+      end
+    end
+
+    context "when the type is an invalid type" do
+      it 'captures a model error' do
+        action = Magma::AddAttributeAction.new(project_name, action_params.merge(type: 'boot'))
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("Type is invalid")
       end
     end
 
