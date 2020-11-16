@@ -1,9 +1,5 @@
 describe Magma::AddModelAction do
-  let(:user) {Etna::User.new({
-    email: "outis@mountolympus.org",
-    token: "fake"
-  })}
-  let(:action) { Magma::AddModelAction.new("labors", user, action_params) }
+  let(:action) { Magma::AddModelAction.new("labors", action_params) }
 
   describe "#perform" do
     context "for child/collection parent_link_type" do

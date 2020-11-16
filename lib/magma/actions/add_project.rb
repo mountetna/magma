@@ -43,7 +43,7 @@ $$;
       #   for linking files into.
       host = Magma.instance.config(:storage).fetch(:host)
 
-      client = Etna::Client.new("https://#{host}", @user.token)
+      client = Etna::Client.new("https://#{host}", @action_params[:user].token)
 
       bucket_create_route = client.routes.find { |r| r[:name] == 'bucket_create' }
 
@@ -100,7 +100,7 @@ $$;
       if project.models.include? :project
         []
       else
-        [AddModelAction.new(@project_name, @user, model_name: 'project', identifier: 'name')]
+        [AddModelAction.new(@project_name, model_name: 'project', identifier: 'name')]
       end
     end
   end

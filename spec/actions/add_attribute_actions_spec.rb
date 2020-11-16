@@ -18,12 +18,8 @@ describe Magma::AddAttributeAction do
       validation: {"type": "Regexp", "value": "^[a-z\\s]+$"}
     }
   end
-  let(:user) {Etna::User.new({
-    email: "outis@mountolympus.org",
-    token: "fake"
-  })}
 
-  let(:action) { Magma::AddAttributeAction.new(project_name, user, action_params) }
+  let(:action) { Magma::AddAttributeAction.new(project_name, action_params) }
   let(:model_name) { "labor" }
   let(:attribute_name) { "number_of_claws" }
   let(:attribute_group) { "info" }

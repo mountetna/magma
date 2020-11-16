@@ -3,17 +3,17 @@ require 'securerandom'
 describe Magma::AddProjectAction do
   let(:project_name) { "test_project_#{SecureRandom.uuid.gsub('-', '_')}" }
   let(:action_params) { {
-    project_name: project_name
+    project_name: project_name,
+    user: Etna::User.new({
+      email: "outis@mountolympus.org",
+      token: "fake"
+    })
    } }
 
   describe "#perform" do
     def run_once
       action = Magma::AddProjectAction.new(
         project_name,
-        Etna::User.new({
-          email: "outis@mountolympus.org",
-          token: "fake"
-        }),
         action_params
       )
       action.validate
@@ -71,10 +71,6 @@ describe Magma::AddProjectAction do
 
       action = Magma::AddProjectAction.new(
         project_name,
-        Etna::User.new({
-          email: "outis@mountolympus.org",
-          token: "fake"
-        }),
         action_params
       )
       action.validate
