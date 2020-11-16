@@ -90,7 +90,7 @@ class Magma
         action_class = "Magma::#{action_params[:action_name].classify}Action".safe_constantize
 
         if action_class
-          action_params.update!({user: @user}) if action_params[:action_name] == 'add_project'
+          action_params.update({user: @user}) if action_params[:action_name] == 'add_project'
 
           @actions << action_class.new(
             project_name,
