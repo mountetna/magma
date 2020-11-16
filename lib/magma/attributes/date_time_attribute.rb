@@ -5,7 +5,11 @@ class Magma
     end
 
     def revision_to_loader(record_name, new_value)
-      [ name, DateTime.parse(new_value) ]
+      [ name, new_value ? DateTime.parse(new_value) : nil ]
+    end
+
+    def revision_to_payload(record_name, new_value, loader)
+      [ name, new_value ]
     end
   end
 end

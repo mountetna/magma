@@ -6,32 +6,47 @@ class Magma
       @project_name = project_name
     end
 
-    def censored?(model, revisions)
-      censored_reasons(model, revisions).length > 0
-    end
-
-    def censored_reasons(model, revisions)
+    def censored_reasons(model, record_set)
       reasons = []
       return reasons unless restrict?
 
-      if model.has_attribute?(:restricted)
-        restricted_identifiers = model.where(
-          model.identity.column_name.to_sym => revisions.map(&:record_name).map(&:to_s),
-          restricted: true
-        ).select_map(model.identity.column_name.to_sym)
+      record_names = record_set.values.map(&:record_name).reject {|name| name =~ Magma::Loader::TEMP_ID_MATCH }
 
-        unless restricted_identifiers.empty?
-          restricted_identifiers.each do |restricted_identifier|
-            reasons << "Cannot revise restricted #{model.model_name} '#{restricted_identifier}'"
-          end
+      unrestricted_identifiers = Magma::Question.new(
+        @project_name,
+        [
+          model.model_name.to_s,
+          [ '::identifier', '::in', record_names ],
+          '::all',
+          '::identifier'
+        ],
+        restrict: true
+      ).answer.map(&:last)
+
+      existing_identifiers = Magma::Question.new(
+          @project_name,
+          [
+              model.model_name.to_s,
+              [ '::identifier', '::in', record_names ],
+              '::all',
+              '::identifier'
+          ],
+          restrict: false
+      ).answer.map(&:last)
+
+      restricted_identifiers = existing_identifiers - unrestricted_identifiers
+
+      unless restricted_identifiers.empty?
+        restricted_identifiers.each do |restricted_identifier|
+          reasons << "Cannot revise restricted #{model.model_name} '#{restricted_identifier}'"
         end
       end
 
       restricted_attributes = model.attributes.values
         .select(&:restricted).map(&:name) + [:restricted]
 
-      revisions.each do |revision|
-        (restricted_attributes & revision.attribute_names).each do |attribute_name|
+      record_set.each do |record_name, revision|
+        (restricted_attributes & revision.attribute_key).each do |attribute_name|
           reasons << "Cannot revise restricted attribute :#{ attribute_name } on #{model.model_name} '#{revision.record_name}'"
         end
       end

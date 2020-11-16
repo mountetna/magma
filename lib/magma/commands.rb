@@ -64,21 +64,11 @@ class Magma
     end
   end
 
-  class Help < Etna::Command
-    usage 'List this help'
-
-    def execute
-      puts 'Commands:'
-      Magma.instance.commands.each do |name,cmd|
-        puts cmd.usage
-      end
-    end
-  end
-
   class Migrate < Etna::Command
     usage '[<version_number>] # Run migrations for the current environment.'
+    string_flags << '--version'
 
-    def execute(version=nil)
+    def execute(version: nil)
       Sequel.extension(:migration)
       db = Magma.instance.db
 
@@ -102,8 +92,9 @@ class Magma
 
   class GlobalMigrate < Etna::Command
     usage "Run database wide migrations"
+    string_flags << '--version'
 
-    def execute(version = nil)
+    def execute(version: nil)
       Sequel.extension(:migration)
       db = Magma.instance.db
 

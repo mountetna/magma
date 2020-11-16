@@ -289,11 +289,25 @@ describe RetrieveController do
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
       expect(header).to eq(required_atts)
-      expect(table.length).to eq(12)
+      expect(table).to match_array(labor_list.map{|l| [ l.name, l.completed.to_s, l.number.to_s ] })
+    end
+
+    it 'can retrieve the whole TSV' do
+      labor_list = create_list(:labor, 20000)
+      required_atts = ['name', 'completed', 'number']
+      retrieve(
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: required_atts,
+        format: 'tsv',
+        project_name: 'labors'
+      )
+      expect(last_response.status).to eq(200)
+      expect(last_response.body.count("\n")).to eq(20001)
     end
 
     it 'can retrieve a TSV of data without an identifier' do
-      prize_list = create_list(:prize, 12)
+      prize_list = create_list(:prize, 12, worth: 5)
       retrieve(
         project_name: 'labors',
         model_name: 'prize',
@@ -303,7 +317,7 @@ describe RetrieveController do
       )
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
-      expect(table.length).to eq(12)
+      expect(table).to match_array(prize_list.map{|l| header.map{|h| l.send(h)&.to_s} })
     end
 
     it 'can retrieve a TSV of collection attribute' do
@@ -319,8 +333,31 @@ describe RetrieveController do
       )
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(table).to eq([ [ "The Twelve Labors of Hercules", labors.map(&:identifier).join(', ') ] ])
+    end
 
-      expect(table.length).to eq(1)
+    it 'retrieves a TSV with file attributes as urls' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, :lion, stats: '{"filename": "lion.txt", "original_filename": ""}')
+      hydra = create(:monster, :hydra, stats: '{"filename": "hydra.txt", "original_filename": ""}')
+      hind = create(:monster, :hind, stats: '{"filename": "hind.txt", "original_filename": ""}')
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: [ 'stats' ],
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      uris = table.map{|l| URI.parse(l.last)}
+      expect(uris.map(&:host)).to all(eq(Magma.instance.config(:storage)[:host]))
+      expect(uris.map(&:path)).to all(match(%r!/labors/download/magma/\w+.txt!))
+
+      Timecop.return
     end
   end
 
@@ -403,6 +440,61 @@ describe RetrieveController do
   end
 
   context 'pagination' do
+    it 'can order by an additional parameter across pages' do
+      labor_list = []
+      labor_list << create(:labor, name: "d")
+      labor_list << create(:labor, name: "a")
+      labor_list << create(:labor, name: "c")
+      labor_list << create(:labor, name: "b")
+
+      retrieve(
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+          order: 'updated_at',
+          page: 1,
+          page_size: 2,
+      )
+
+      expect(json_body[:models][:labor][:documents].keys).to eq([:d, :a])
+    end
+
+    it 'can order results for a total query' do
+      labor_list = []
+      labor_list << create(:labor, name: "a", updated_at: Time.now + 5)
+      labor_list << create(:labor, name: "c", updated_at: Time.now - 3)
+      labor_list << create(:labor, name: "b", updated_at: Time.now - 2)
+
+      labor_list_by_identifier = labor_list.sort_by { |n| n.name.to_s }
+
+      retrieve(
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+      )
+
+      names_by_identifier = labor_list_by_identifier.map(&:name).map(&:to_sym)
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names_by_identifier)
+
+      labor_list_by_updated_at = labor_list.sort_by(&:updated_at)
+      retrieve(
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+          order: 'updated_at'
+      )
+
+      names_by_updated_at = labor_list_by_updated_at.map(&:name).map(&:to_sym)
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].keys).to eq(names_by_updated_at)
+
+      expect(names_by_updated_at).to_not eql(names_by_identifier)
+    end
+
     it 'can page results' do
       labor_list = create_list(:labor, 9)
       third_page_labors = labor_list.sort_by(&:name)[6..8]
@@ -453,6 +545,7 @@ describe RetrieveController do
         model_name: 'monster',
         record_names: 'all',
         attribute_names: 'all',
+        order: 'reference_monster',
         page: 3,
         page_size: 3
       )
@@ -508,6 +601,44 @@ describe RetrieveController do
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
     end
 
+    it 'hides the children of restricted records' do
+      lion = create(:monster, :lion, restricted: true)
+      hydra = create(:monster, :hydra, restricted: false)
+      restricted_victim_list = create_list(:victim, 9, monster: lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: 'all'
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
+    end
+
+    it 'conservatively hides if any ancestor is restricted' do
+      lion = create(:monster, :lion, restricted: true)
+      hydra = create(:monster, :hydra, restricted: false)
+
+      # some of the victims are not restricted
+      restricted_victim_list = create_list(:victim, 3, monster: lion, restricted: true)
+      unrestricted_victim_list = create_list(:victim, 3, monster: lion, restricted: false)
+      unrestricted_victim_list2 = create_list(:victim, 3, monster: lion, restricted: nil)
+
+      # some of the victims are not restricted
+      restricted_victim_list2 = create_list(:victim, 3, monster: hydra, restricted: true)
+      unrestricted_victim_list3 = create_list(:victim, 3, monster: hydra, restricted: false)
+      unrestricted_victim_list4 = create_list(:victim, 3, monster: hydra, restricted: nil)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: 'all'
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to match_array((unrestricted_victim_list3 + unrestricted_victim_list4).map(&:identifier).map(&:to_sym))
+    end
+
     it 'shows restricted records to users with restricted permission' do
       restricted_victim_list = create_list(:victim, 9, restricted: true)
       unrestricted_victim_list = create_list(:victim, 9)
@@ -519,7 +650,29 @@ describe RetrieveController do
           record_names: 'all',
           attribute_names: 'all'
         },
-        :editor
+        :privileged_editor
+      )
+      expect(json_body[:models][:victim][:documents].keys.sort).to eq(
+        (
+          unrestricted_victim_list + restricted_victim_list
+        ).map(&:identifier).map(&:to_sym).sort
+      )
+    end
+
+    it 'shows the children of restricted records to users with restricted permission' do
+      lion = create(:monster, :lion, restricted: true)
+      hydra = create(:monster, :hydra, restricted: false)
+      restricted_victim_list = create_list(:victim, 9, monster: lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
+
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'victim',
+          record_names: 'all',
+          attribute_names: 'all'
+        },
+        :privileged_editor
       )
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(
         (
@@ -551,7 +704,7 @@ describe RetrieveController do
           record_names: 'all',
           attribute_names: [ 'country' ]
         },
-        :editor
+        :privileged_editor
       )
       countries = json_body[:models][:victim][:documents].values.map{|victim| victim[:country]}
       expect(countries).to all(eq('thrace'))

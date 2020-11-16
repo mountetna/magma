@@ -5,11 +5,19 @@ describe Magma::Loader do
     OUTER_APP
   end
 
+  before(:each) do
+    @user = Etna::User.new(
+        email: 'zeus@mountolympus.org',
+        first: 'Zeus',
+        perm: 'A:labors'
+    )
+  end
+
   it 'bulk-creates records' do
-    loader = Magma::Loader.new
-    loader.push_record(Labors::Labor, name: 'Nemean Lion', number: 1, completed: true)
-    loader.push_record(Labors::Labor, name: 'Lernean Hydra', number: 2, completed: false)
-    loader.push_record(Labors::Labor, name: 'Augean Stables', number: 5, completed: false)
+    loader = Magma::Loader.new(@user, 'labors')
+    loader.push_record(Labors::Labor, 'Nemean Lion', number: 1, completed: true)
+    loader.push_record(Labors::Labor, 'Lernean Hydra', number: 2, completed: false)
+    loader.push_record(Labors::Labor, 'Augean Stables', number: 5, completed: false)
 
     loader.dispatch_record_set
 
@@ -17,10 +25,10 @@ describe Magma::Loader do
   end
 
   it 'bulk-creates records with different data' do
-    loader = Magma::Loader.new
-    loader.push_record(Labors::Labor, name: 'Nemean Lion', number: 1)
-    loader.push_record(Labors::Labor, name: 'Lernean Hydra', completed: false)
-    loader.push_record(Labors::Labor, name: 'Augean Stables', number: 5)
+    loader = Magma::Loader.new(@user, 'labors')
+    loader.push_record(Labors::Labor, 'Nemean Lion', number: 1)
+    loader.push_record(Labors::Labor, 'Lernean Hydra', completed: false)
+    loader.push_record(Labors::Labor, 'Augean Stables', number: 5)
 
     loader.dispatch_record_set
 
@@ -39,9 +47,9 @@ describe Magma::Loader do
     lion = create(:labor, name: 'Nemean Lion', number: 1, completed: false)
     hydra = create(:labor, name: "Lernean Hydra", number: 2, completed: false)
 
-    loader = Magma::Loader.new
-    loader.push_record(Labors::Labor, name: 'Nemean Lion', number: 1, completed: true)
-    loader.push_record(Labors::Labor, name: 'Augean Stables', number: 5, completed: false)
+    loader = Magma::Loader.new(@user, 'labors')
+    loader.push_record(Labors::Labor, 'Nemean Lion', number: 1, completed: true)
+    loader.push_record(Labors::Labor, 'Augean Stables', number: 5, completed: false)
 
     loader.dispatch_record_set
     lion.refresh
@@ -54,9 +62,9 @@ describe Magma::Loader do
     lion = create(:labor, name: 'Nemean Lion', number: 1, completed: false)
     hydra = create(:labor, name: "Lernean Hydra", number: 3, completed: false)
 
-    loader = Magma::Loader.new
-    loader.push_record(Labors::Labor, name: 'Nemean Lion', completed: true)
-    loader.push_record(Labors::Labor, name: 'Lernean Hydra', number: 2)
+    loader = Magma::Loader.new(@user, 'labors')
+    loader.push_record(Labors::Labor, 'Nemean Lion', completed: true)
+    loader.push_record(Labors::Labor, 'Lernean Hydra', number: 2)
 
     loader.dispatch_record_set
 
@@ -72,16 +80,16 @@ describe Magma::Loader do
   end
 
   it 'validates records' do
-    loader = Magma::Loader.new
-    loader.push_record(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
+    loader = Magma::Loader.new(@user, 'labors')
+    loader.push_record(Labors::Monster, 'Nemean Lion', species: 'Lion')
 
     expect { loader.dispatch_record_set }.to raise_error(Magma::LoadFailed)
   end
 
   it 'creates associations' do
-    loader = Magma::Loader.new
-    loader.push_record(Labors::Labor, temp_id: loader.temp_id(:lion), name: 'Nemean Lion')
-    loader.push_record(Labors::Prize, temp_id: loader.temp_id(:hide), labor: loader.temp_id(:lion), name: 'hide')
+    loader = Magma::Loader.new(@user, 'labors')
+    loader.push_record(Labors::Labor, 'Nemean Lion', species: 'Lion', prize: [ '::temphide' ]) 
+    loader.push_record(Labors::Prize, '::temphide', labor: 'Nemean Lion', name: 'hide')
 
     loader.dispatch_record_set
     lion = Labors::Labor[name: 'Nemean Lion']

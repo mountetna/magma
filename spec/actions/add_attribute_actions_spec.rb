@@ -11,6 +11,7 @@ describe Magma::AddAttributeAction do
       format_hint: "incoming format hint",
       hidden: true,
       index: false,
+      attribute_group: attribute_group,
       read_only: true,
       restricted: false,
       unique: true,
@@ -19,20 +20,21 @@ describe Magma::AddAttributeAction do
   end
 
   let(:action) { Magma::AddAttributeAction.new(project_name, action_params) }
-  let(:model_name) { "monster" }
+  let(:model_name) { "labor" }
   let(:attribute_name) { "number_of_claws" }
+  let(:attribute_group) { "info" }
 
   describe '#perform' do
     context "when it succeeds" do
       after do
         # Clear out new test attributes that are cached in memory
-        Labors::Monster.attributes.delete(attribute_name.to_sym)
+        Labors::Labor.attributes.delete(attribute_name.to_sym)
       end
 
       it 'adds a new attribute and returns no errors' do
         expect(action.perform).to eq(true)
         expect(action.errors).to be_empty
-        expect(Labors::Monster.attributes[attribute_name.to_sym].display_name).to eq("name")
+        expect(Labors::Labor.attributes[attribute_name.to_sym].display_name).to eq("name")
       end
     end
 
@@ -42,7 +44,7 @@ describe Magma::AddAttributeAction do
       it "captures the error and doesn't add the attribute" do
         expect(action.perform).to eq(false)
         expect(action.errors).not_to be_empty
-        expect(Labors::Monster.attributes[attribute_name.to_sym]).to be_nil
+        expect(Labors::Labor.attributes[attribute_name.to_sym]).to be_nil
       end
     end
   end
@@ -86,7 +88,7 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name already exists on Labors::Monster")
+        expect(action.errors.first[:message]).to eq("attribute_name already exists on Labors::Labor")
       end
     end
 
@@ -95,11 +97,34 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case")
+        expect(action.errors.first[:message]).to eq("attribute_name must be snake_case with no spaces")
       end
     end
 
-    context "when adding a link attribute with a link_model_name that doesn't exist" do
+    context "when attribute_name has spaces or leading numbers" do
+      let(:attribute_name) { @attribute_name }
+
+      it 'captures an attribute error' do
+        [ "first\nname", ' first_name', 'first_name	' , '1x_attribute'].each do |name|
+          @attribute_name = name
+          expect(action.validate).to eq(false)
+          expect(action.errors.first[:message]).to eq("attribute_name must be snake_case with no spaces")
+        end
+      end
+    end
+
+    context "when attribute_group is not a snake_case word" do
+      let(:attribute_group) { @attribute_group }
+
+      it 'captures an attribute error' do
+        [ "infor\nmation", ' information', 'info_group	' , '1x_info'].each do |group|
+          @attribute_group = group
+          expect(action.validate).to eq(false)
+          expect(action.errors.first[:message]).to eq("attribute_group must be snake_case with no spaces")
+        end
+      end
+    end
+    context "when adding a link attribute" do
       let(:action_params) do
         {
           action_name: "add_attribute",
@@ -112,23 +137,7 @@ describe Magma::AddAttributeAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("link_model_name doesn't match an existing model")
-      end
-    end
-
-    context "when adding a link attribute with an attribute_name that doesn't exist" do
-      let(:action_params) do
-        {
-          action_name: "add_attribute",
-          model_name: model_name,
-          attribute_name: "houdini",
-          type: "parent"
-        }
-      end
-
-      it 'captures an attribute error' do
-        expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name doesn't match an existing model")
+        expect(action.errors.first[:message]).to eq("type cannot be a relation, use add_link instead.")
       end
     end
 

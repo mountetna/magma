@@ -41,6 +41,34 @@ describe UpdateController do
     expect(last_response.status).to eq(403)
   end
 
+  it 'updates updated_at' do
+    now = Time.now
+    later = now + 1500
+    Timecop.freeze(now)
+    project = create(:project, name: 'The Two Labors of Hercules')
+
+    Timecop.freeze(later)
+    update(
+      'project' => {
+        'The Two Labors of Hercules' => {
+          name: 'The Ten Labors of Hercules'
+        }
+      }
+    )
+
+    expect(last_response.status).to eq(200)
+    expect(json_document(:project, 'The Ten Labors of Hercules')).to eq(name: 'The Ten Labors of Hercules')
+
+    # the update happened
+    expect(Labors::Project.count).to eq(1)
+    project.refresh
+    expect(project.name).to eq('The Ten Labors of Hercules')
+
+    # we updated updated_at
+    expect(project.updated_at).to be_within(0.001).of(later)
+    Timecop.return
+  end
+
   it 'updates the identifier' do
     project = create(:project, name: 'The Two Labors of Hercules')
     update(
@@ -87,7 +115,7 @@ describe UpdateController do
     skin.refresh
     expect(last_response.status).to eq(200)
     expect(skin.worth).to eq(8)
-    expect(json_document(:prize,skin.id.to_s)).to eq(worth: 8)
+    #expect(json_document(:prize,skin.id.to_s)).to eq(worth: 8)
   end
 
   it 'updates a date-time attribute' do
@@ -106,46 +134,1016 @@ describe UpdateController do
     expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: '0003-01-01T00:00:00+00:00')
   end
 
-  it 'updates a foreign-key attribute' do
-    lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
-    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
-
-    monster = create(:monster, name: 'Lernean Hydra', labor: lion)
+  it 'empties a date-time attribute' do
+    lion = create(:labor, name: 'Nemean Lion', year: '0002-01-01')
     update(
-      monster: {
-        'Lernean Hydra': {
-          labor: 'The Lernean Hydra'
+      labor: {
+        'Nemean Lion': {
+          year: nil
         }
       }
     )
-    monster.refresh
-    hydra.refresh
-    expect(monster.labor).to eq(hydra)
 
+    lion.refresh
     expect(last_response.status).to eq(200)
-    expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
+    expect(lion.year).to eq(nil)
+    expect(json_document(:labor,'Nemean Lion')).to eq(name: 'Nemean Lion', year: nil)
   end
 
-  it 'updates a link attribute' do
-    hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+  context 'linking records' do
+    context 'from the "child" record' do
+      it 'updates a parent attribute for parent-child' do
+        project = create(:project, name: 'The Twelve Labors of Hercules')
 
-    reference_monster = create(:monster, name: 'Cnidaria')
-    other_monster = create(:monster, name: 'Nemean Lion')
-    monster = create(:monster, name: 'Lernean Hydra', labor: hydra, reference_monster: other_monster)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
 
-    update(
-      monster: {
-        'Lernean Hydra': {
-          reference_monster: 'Cnidaria'
-        }
-      }
-    )
+        monster = create(:monster, name: 'Lernean Hydra', labor: lion)
+        update(
+          monster: {
+            'Lernean Hydra': {
+              labor: 'The Lernean Hydra'
+            }
+          }
+        )
 
-    monster.refresh
-    expect(monster.reference_monster).to eq(reference_monster)
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
 
-    expect(last_response.status).to eq(200)
-    expect(json_document(:monster,'Lernean Hydra')).to include(reference_monster: 'Cnidaria')
+        monster.refresh
+        hydra.refresh
+        expect(monster.labor).to eq(hydra)
+      end
+
+      it 'updates a parent attribute for parent-collection' do
+        project = create(:project, name: 'The Twelve Labors of Hercules')
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
+
+        expect(project.labor.count).to eq(1)
+
+        update(
+          'project' => {
+            'The Twelve Labors of Hercules' => {
+              labor: [
+                'The Nemean Lion',
+                'The Lernean Hydra'
+              ]
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:project,'The Twelve Labors of Hercules')).to include(labor: [ 'The Nemean Lion', 'The Lernean Hydra' ])
+
+        project.refresh
+        lion.refresh
+        hydra.refresh
+        expect(project.labor.count).to eq(2)
+        expect(hydra.project).to eq(project)
+      end
+
+      it 'updates a link attribute when link exists in the graph' do
+        project = create(:project, name: 'The Twelve Labors of Hercules')
+
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+        habitat = create(:habitat, name: 'Underground', project: project)
+
+        expect(monster.habitat).to eq(nil)
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              habitat: 'Underground'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(habitat: 'Underground')
+
+        # the links are added in both directions
+        monster.refresh
+        habitat.refresh
+        expect(monster.habitat).to eq(habitat)
+        expect(habitat.monster).to eq([monster])
+      end
+
+      it 'updates a link collection' do
+        project = create(:project, name: 'The Twelve Labors of Hercules')
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+        habitat = create(:habitat, name: 'Underground', project: project)
+        lion_monster = create(:monster, name: 'Nemean Lion', labor: lion, habitat: habitat)
+
+        expect(hydra_monster.habitat).to eq(nil)
+        expect(habitat.monster).to eq([lion_monster])
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              habitat: 'Underground'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(habitat: 'Underground')
+
+        # the links are added in both directions
+        hydra_monster.refresh
+        habitat.refresh
+        expect(hydra_monster.habitat).to eq(habitat)
+        expect(habitat.monster).to match_array([lion_monster, hydra_monster])
+      end
+    end
+
+    context 'from the "parent" or "link model" record' do
+      it 'creates new child records for parent-collection' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+
+        expect(Labors::Labor.count).to be(0)
+
+        update(
+          'project' => {
+            'The Two Labors of Hercules' => {
+              labor: [
+                'The Nemean Lion',
+                'The Lernean Hydra'
+              ]
+            }
+          }
+        )
+
+        # we have created some new records
+        expect(Labors::Labor.count).to be(2)
+        expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
+        expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
+
+        # the labors are linked to the project
+        project.refresh
+        expect(project.labor.count).to eq(2)
+        expect(Labors::Labor.first.project).to eq(project)
+        expect(Labors::Labor.last.project).to eq(project)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'The Lernean Hydra', 'The Nemean Lion' ])
+      end
+
+      it 'updates a collection from existing records for parent-collection' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+
+        habitat = create(:habitat, name: 'Underground', project: project)
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
+        lion_monster = create(:monster, name: 'Nemean Lion', labor: lion, habitat: habitat)
+
+        expect(Labors::Labor.count).to be(1)
+        expect(project.labor.count).to eq(0)
+
+        update(
+          'project' => {
+            'The Two Labors of Hercules' => {
+              labor: [
+                'The Nemean Lion'
+              ]
+            }
+          }
+        )
+
+        # No new records created
+        expect(Labors::Labor.count).to be(1)
+
+        # the labor is linked to the project
+        project.refresh
+        lion.refresh
+        expect(project.labor.count).to eq(1)
+        expect(project.labor).to eq([ lion ])
+        expect(lion.project).to eq(project)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'The Nemean Lion' ])
+      end
+
+      it 'creates a new child record for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+
+        expect(Labors::Monster.count).to be(0)
+
+        update(
+          labor: {
+            'The Nemean Lion': {
+              monster: 'Nemean Lion'
+            }
+          }
+        )
+
+        # we have created a new record
+        expect(Labors::Monster.count).to be(1)
+        monster = Labors::Monster.first
+        expect(monster.name).to eq('Nemean Lion')
+
+        # the links are created in both directions
+        lion.refresh
+        expect(lion.monster).to eq(monster)
+        expect(monster.labor).to eq(lion)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor, 'The Nemean Lion')).to include(monster: 'Nemean Lion')
+      end
+
+      it 'updates a child from an existing record for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra', labor: lion)
+
+        expect(Labors::Monster.count).to be(1)
+        expect(lion.monster).to eq(monster)
+        expect(hydra.monster).to eq(nil)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              monster: 'Lernean Hydra'
+            }
+          }
+        )
+
+        # we have not created a new record
+        expect(Labors::Monster.count).to be(1)
+
+        # the links are updated in both directions
+        hydra.refresh
+        lion.refresh
+        monster.refresh
+        expect(lion.monster).to eq(nil)
+        expect(hydra.monster).to eq(monster)
+        expect(monster.labor).to eq(hydra)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor, 'The Lernean Hydra')).to include(monster: 'Lernean Hydra')
+      end
+
+      it 'from the parent for parent-child with multiple revisions' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        lion_monster = create(:monster, name: 'Nemean Lion', labor: hydra)
+        hydra_monster = create(:monster, name: 'Lernean Hydra', labor: lion)
+
+        expect(Labors::Labor.count).to eq(2)
+        expect(Labors::Monster.count).to eq(2)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              monster: 'Lernean Hydra'
+            },
+            'The Nemean Lion': {
+              monster: 'Nemean Lion'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor,'The Lernean Hydra')).to include(monster: 'Lernean Hydra')
+        expect(json_document(:labor,'The Nemean Lion')).to include(monster: 'Nemean Lion')
+
+        expect(Labors::Labor.count).to eq(2)
+        expect(Labors::Monster.count).to eq(2)
+
+        lion_monster.refresh
+        lion.refresh
+        hydra_monster.refresh
+        hydra.refresh
+        expect(lion_monster.labor).to eq(lion)
+        expect(lion.monster).to eq(lion_monster)
+        expect(hydra_monster.labor).to eq(hydra)
+        expect(hydra.monster).to eq(hydra_monster)
+      end
+
+      it 'can add a collection from a linked model and create new records' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        habitat = create(:habitat, name: 'Underground', project: project)
+
+        expect(Labors::Monster.count).to eq(0)
+
+        update(
+          habitat: {
+            'Underground': {
+              monster: ['Nemean Lion']
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:habitat,'Underground')).to include(monster: [ 'Nemean Lion' ])
+
+        # the links are added in both directions
+        expect(Labors::Monster.count).to eq(1)
+        monster = Labors::Monster.first
+        habitat.refresh
+        expect(monster.habitat).to eq(habitat)
+        expect(habitat.monster).to eq([ monster ])
+      end
+
+      it 'can add a collection from a linked model to existing records' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        lion_monster = create(:monster, name: 'Nemean Lion', labor: lion)
+        hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+
+        habitat = create(:habitat, name: 'Underground', project: project)
+
+        expect(lion_monster.habitat).to eq(nil)
+        expect(hydra_monster.habitat).to eq(nil)
+        expect(Labors::Monster.count).to eq(2)
+
+        update(
+          habitat: {
+            'Underground': {
+              monster: ['Nemean Lion', 'Lernean Hydra']
+            }
+          }
+        )
+
+        expect(Labors::Monster.count).to eq(2)
+        expect(last_response.status).to eq(200)
+        expect(json_document(:habitat,'Underground')).to include(monster: [ 'Nemean Lion', 'Lernean Hydra' ])
+
+        # the links are added in both directions
+        lion_monster.refresh
+        hydra_monster.refresh
+        habitat.refresh
+        expect(lion_monster.habitat).to eq(habitat)
+        expect(hydra_monster.habitat).to eq(habitat)
+        expect(habitat.monster).to match_array([ lion_monster, hydra_monster ])
+      end
+    end
+
+    context 'can create orphans' do
+      it 'via the child itself for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              labor: nil
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(labor: nil)
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        monster.refresh
+        hydra.refresh
+        expect(monster.labor).to eq(nil)
+        expect(hydra.monster).to eq(nil)
+      end
+
+      it 'from the parent for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              monster: nil
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor,'The Lernean Hydra')).to include(monster: nil)
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        monster.refresh
+        hydra.refresh
+        expect(monster.labor).to eq(nil)
+        expect(hydra.monster).to eq(nil)
+      end
+
+      it 'from the parent when switching children, for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        lion_monster = create(:monster, name: 'Nemean Lion', labor: hydra)
+        hydra_monster = create(:monster, name: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(2)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              monster: 'Lernean Hydra'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor,'The Lernean Hydra')).to include(monster: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(2)
+
+        lion_monster.refresh
+        hydra_monster.refresh
+        hydra.refresh
+        expect(lion_monster.labor).to eq(nil)
+        expect(hydra_monster.labor).to eq(hydra)
+        expect(hydra.monster).to eq(hydra_monster)
+      end
+
+      it 'from the child itself for parent-collection' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        project.refresh
+
+        expect(project.labor.count).to eq(2)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              project: nil
+            }
+          }
+        )
+
+        # we have not created any new records
+        expect(Labors::Labor.count).to be(2)
+
+        # the lion labor is still linked to the project
+        project.refresh
+        lion.refresh
+        hydra.refresh
+        expect(project.labor.count).to eq(1)
+        expect(project.labor.first).to eq(lion)
+        expect(lion.project).to eq(project)
+        expect(hydra.project).to eq(nil)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor, 'The Lernean Hydra')).to include(project: nil)
+      end
+
+      it 'when updating the parent collection for parent-collection' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        project.refresh
+
+        expect(project.labor.count).to eq(2)
+
+        update(
+          'project' => {
+            'The Two Labors of Hercules' => {
+              labor: [
+                'The Nemean Lion'
+              ]
+            }
+          }
+        )
+
+        # we have not created any new records
+        expect(Labors::Labor.count).to be(2)
+
+        # the first labors is still linked to the project
+        project.refresh
+        lion.refresh
+        hydra.refresh
+        expect(project.labor.count).to eq(1)
+        expect(project.labor.first).to eq(lion)
+        expect(lion.project).to eq(project)
+        expect(hydra.project).to eq(nil)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'The Nemean Lion' ])
+      end
+
+      it 'when setting the collection to [], from a parent' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        project.refresh
+
+        expect(project.labor.count).to eq(2)
+
+        update(
+          'project' => {
+            'The Two Labors of Hercules' => {
+              labor: []
+            }
+          }
+        )
+
+        # we have not deleted any records
+        expect(Labors::Labor.count).to be(2)
+
+        # No labors are linked to the project
+        project.refresh
+        lion.refresh
+        hydra.refresh
+        expect(project.labor.count).to eq(0)
+        expect(lion.project).to eq(nil)
+        expect(hydra.project).to eq(nil)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ ])
+      end
+
+      it 'from the child of a link_model' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        habitat = create(:habitat, name: 'Underground', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra', habitat: habitat)
+
+        expect(monster.habitat).to eq(habitat)
+        expect(habitat.monster).to eq([ monster ])
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              habitat: nil
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(habitat: nil)
+
+        # the link has been removed
+        monster.refresh
+        habitat.refresh
+        expect(monster.habitat).to eq(nil)
+        expect(habitat.monster).to eq([])
+      end
+
+      it 'via the link model' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        habitat = create(:habitat, name: 'Underground', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra', habitat: habitat)
+
+        expect(monster.habitat).to eq(habitat)
+        expect(habitat.monster).to eq([ monster ])
+
+        update(
+          habitat: {
+            'Underground': {
+              monster: []
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:habitat,'Underground')).to include(monster: [])
+
+        # the link has been removed
+        monster.refresh
+        habitat.refresh
+        expect(monster.habitat).to eq(nil)
+        expect(habitat.monster).to eq([])
+      end
+    end
+
+    context 'can re-attach orphaned records' do
+      it 'via the child itself for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        expect(monster.labor).to eq(nil)
+        expect(hydra.monster).to eq(nil)
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              labor: 'The Lernean Hydra'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(labor: 'The Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        monster.refresh
+        hydra.refresh
+        expect(monster.labor).to eq(hydra)
+        expect(hydra.monster).to eq(monster)
+      end
+
+      it 'via a parent record for parent-child' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        expect(monster.labor).to eq(nil)
+        expect(hydra.monster).to eq(nil)
+
+        update(
+          labor: {
+            'The Lernean Hydra': {
+              monster: 'Lernean Hydra'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor,'The Lernean Hydra')).to include(monster: 'Lernean Hydra')
+
+        expect(Labors::Labor.count).to eq(1)
+        expect(Labors::Monster.count).to eq(1)
+
+        monster.refresh
+        hydra.refresh
+        expect(monster.labor).to eq(hydra)
+        expect(hydra.monster).to eq(monster)
+      end
+
+      it 'via a child in parent-collection' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        expect(Labors::Labor.count).to eq(2)
+
+        expect(lion.project).to eq(nil)
+        expect(hydra.project).to eq(project)
+        expect(project.labor).to eq([ hydra ])
+
+        update(
+          labor: {
+            'The Nemean Lion': {
+              project: 'The Two Labors of Hercules'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor,'The Nemean Lion')).to include(project: 'The Two Labors of Hercules')
+
+        expect(Labors::Labor.count).to eq(2)
+
+        lion.refresh
+        hydra.refresh
+        project.refresh
+        expect(lion.project).to eq(project)
+        expect(hydra.project).to eq(project)
+        expect(project.labor).to match_array([ hydra, lion ])
+      end
+
+      it 'via a parent in parent-collection' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        expect(Labors::Labor.count).to eq(2)
+
+        expect(lion.project).to eq(nil)
+        expect(hydra.project).to eq(project)
+        expect(project.labor).to eq([ hydra ])
+
+        update(
+          project: {
+            'The Two Labors of Hercules': {
+              labor: [
+                'The Lernean Hydra',
+                'The Nemean Lion'
+              ]
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:project,'The Two Labors of Hercules')).to include(labor: [ 'The Lernean Hydra', 'The Nemean Lion' ])
+
+        expect(Labors::Labor.count).to eq(2)
+
+        lion.refresh
+        hydra.refresh
+        project.refresh
+        expect(lion.project).to eq(project)
+        expect(hydra.project).to eq(project)
+        expect(project.labor).to match_array([ hydra, lion ])
+      end
+
+      it 'via the child of a link model' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        habitat = create(:habitat, name: 'Underground', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra')
+
+        expect(monster.habitat).to eq(nil)
+        expect(habitat.monster).to eq([])
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              habitat: 'Underground'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(habitat: 'Underground')
+
+        # the link has been added in both directions
+        monster.refresh
+        habitat.refresh
+        expect(monster.habitat).to eq(habitat)
+        expect(habitat.monster).to eq([ monster ])
+      end
+
+      it 'via the link model' do
+        project = create(:project, name: 'The Two Labors of Hercules')
+        habitat = create(:habitat, name: 'Underground', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+
+        monster = create(:monster, name: 'Lernean Hydra')
+
+        expect(monster.habitat).to eq(nil)
+        expect(habitat.monster).to eq([])
+
+        update(
+          habitat: {
+            'Underground': {
+              monster: [ 'Lernean Hydra' ]
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:habitat,'Underground')).to include(monster: [ 'Lernean Hydra' ])
+
+        # the link has been added in both directions
+        monster.refresh
+        habitat.refresh
+        expect(monster.habitat).to eq(habitat)
+        expect(habitat.monster).to eq([ monster ])
+      end
+    end
+
+    context 'trying to re-attach orphans but not to the graph throws exception for' do
+      xit 'orphaned parent, parent-collection' do
+      end
+
+      xit 'non-existent parent record, parent-collection' do
+      end
+
+      xit 'orphaned parent, parent-child' do
+      end
+
+      xit 'non-existent parent record, parent-child' do
+      end
+
+      xit 'non-existent link model' do
+      end
+
+      xit 'orphaned link model' do
+      end
+    end
+
+      # child => parent
+      # collection => parent
+      # table => parent
+      #
+      # link_record(s) exist
+      #   new value =>
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) don't exist => create and set parent to record_name
+      #     old_value record(s) NOT in new_value => set parent to nil
+      #   nil => set parent for all old records to nil
+      #
+      # link_record(s) don't exist
+      #   new value =>
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) don't exist => create and set parent to record_name
+      #   nil => do nothing
+      #
+      # child => link
+      # collection => link
+      # table => link
+      #
+      # link_record(s) exist
+      #   new value =>
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) don't exist => validation error
+      #     old_value record(s) NOT in new_value => set parent to nil
+      #   nil => set parent for all old records to nil
+      #
+      # link_record(s) don't exist
+      #   new value =>
+      #     new_value record(s) exist => set parent to record_name
+      #     new_value record(s) won't exist after this update => validation error
+      #   nil => do nothing
+      #
+      # parent => child
+      # parent => collection
+      # parent => table
+      # link => child
+      # link => collection
+      # link => table
+      #
+      # link_record(s) don't exist
+      #   new_value =>
+      #     new_value record exists => set new_value
+      #     new_value record won't exists => validation error
+      #   nil => do nothing
+      #
+      # link_record(s) exist
+      #   new_value =>
+      #     new_value record exists => set new_value
+      #     new_value record won't exist => validation error
+      #
+      # link
+      #
+      # new_value =>
+      #   new_value record exists => set new_value
+      #   new_value record won't exist => validation error
+
+    context 'table attributes' do
+      before(:each) do
+        @apple_of_joy = { name: 'apple of joy', worth: 2000 }
+        @apple_of_discord = { name: 'apple of discord', worth: 3000 }
+      end
+
+      it 'updates a table' do
+        labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        update(
+          'labor' => {
+            'The Golden Apples of the Hesperides' => {
+              prize: [
+                '::temp1',
+                '::temp2'
+              ]
+            },
+          },
+          'prize' => {
+            '::temp1' => @apple_of_joy,
+            '::temp2' => @apple_of_joy
+          }
+        )
+        expect(last_response.status).to eq(200)
+
+        # we have created some new records
+        expect(Labors::Prize.count).to eq(2)
+
+        # the prizes are linked to the labor
+        labor.refresh
+        expect(labor.prize.count).to eq(2)
+
+        # the updated record is returned
+        expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
+      end
+
+      it 'updates a table for a new record' do
+        update(
+          'labor' => {
+            'The Golden Apples of the Hesperides' => {
+              prize: [
+                '::temp1',
+                '::temp2'
+              ]
+            },
+          },
+          'prize' => {
+            '::temp1' => @apple_of_joy,
+            '::temp2' => @apple_of_joy
+          }
+        )
+        expect(last_response.status).to eq(200)
+
+        # we have created some new records
+        expect(Labors::Prize.count).to eq(2)
+
+        # the prizes are linked to the labor
+        labor = Labors::Labor.first
+        expect(labor.prize.count).to eq(2)
+
+        # the updated record is returned
+        expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
+      end
+
+      it 'appends to an existing table' do
+        labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
+        update(
+          'prize' => {
+            '::temp1' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides'),
+            '::temp2' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides')
+          }
+        )
+
+        # we have created some new records
+        expect(Labors::Prize.count).to eq(5)
+
+        # the prizes are linked to the labor
+        labor.refresh
+        expect(labor.prize.map(&:name)).to match_array([ 'apple of joy' ] * 2 + [ 'apple of discord' ] * 3)
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:prize][:documents].values.map{|p|p[:name]}).to eq(['apple of joy']*2)
+      end
+
+      it 'replaces an existing table' do
+        lion_labor = create(:labor, name: 'The Nemean Lion')
+        hide = create(:prize, name: 'hide', labor: lion_labor)
+
+        apple_labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        apples = create_list(:prize, 3, @apple_of_discord.merge(labor: apple_labor))
+
+        update(
+          'labor' => {
+            'The Golden Apples of the Hesperides' => {
+              prize: [
+                '::temp1',
+                '::temp2'
+              ]
+            },
+          },
+          'prize' => {
+            '::temp1' => @apple_of_joy,
+            '::temp2' => @apple_of_joy
+          }
+        )
+
+        # we have created some new records replacing the old
+        expect(Labors::Prize.count).to eq(3)
+
+        # the new prizes are linked to the labor
+        apple_labor.refresh
+        expect(apple_labor.prize.count).to eq(2)
+        expect(apple_labor.prize.map(&:name)).to all( eq('apple of joy') )
+
+        # tables we did not update are intact
+        lion_labor.refresh
+        expect(lion_labor.prize.count).to eq(1)
+        expect(lion_labor.prize.map(&:name)).to all( eq('hide') )
+
+        # the updated record is returned
+        expect(last_response.status).to eq(200)
+        expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(apple_labor.prize.map(&:id))
+      end
+    end
   end
 
   it 'updates a match' do
@@ -354,14 +1352,14 @@ describe UpdateController do
         }
       )
 
+      expect(last_response.status).to eq(200)
+
       lion.refresh
       expect(lion.stats.to_json).to eq({
         location: "metis://labors/files/lion-stats.txt",
         filename: "monster-Nemean Lion-stats.txt",
         original_filename: "original-file.txt"
       }.to_json)
-
-      expect(last_response.status).to eq(200)
 
       # but we do get an download url for Metis
       uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
@@ -376,6 +1374,41 @@ describe UpdateController do
 
       # Make sure the Metis copy endpoint was called
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }), body: hash_including({
+          "revisions": [{
+            "source": "metis://labors/files/lion-stats.txt",
+            "dest": "metis://labors/magma/monster-Nemean Lion-stats.txt"
+          }]
+        }))
+
+      Timecop.return
+    end
+
+    it 'does not link a file from metis for an invalid update' do
+      Timecop.freeze(DateTime.new(500))
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      update(
+        monster: {
+          'Nemean Lion' => {
+            species: 'Lion',
+            stats: {
+              path: 'metis://labors/files/lion-stats.txt',
+              original_filename: 'original-file.txt'
+            }
+          }
+        }
+      )
+
+      # the record is unchanged
+      lion.refresh
+      expect(lion.stats).to be_nil
+      expect(lion.species).to eq('lion')
+      expect(last_response.status).to eq(422)
+
+      # The metis endpoint was NOT called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
         with(query: hash_including({
           "X-Etna-Headers": "revisions"
         }))
@@ -584,155 +1617,14 @@ describe UpdateController do
       expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
         with(query: hash_including({
           "X-Etna-Headers": "revisions"
+        }), body: hash_including({
+          "revisions": [{
+            "source": "metis://labors/files/lion.jpg",
+            "dest": "metis://labors/magma/monster-Nemean Lion-selfie.jpg"
+          }]
         }))
 
       Timecop.return
-    end
-  end
-
-  context 'collection attributes' do
-    it 'updates a collection' do
-      project = create(:project, name: 'The Two Labors of Hercules')
-      update(
-        'project' => {
-          'The Two Labors of Hercules' => {
-            labor: [
-              'Nemean Lion',
-              'Lernean Hydra'
-            ]
-          }
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Labor.count).to be(2)
-      expect(Labors::Labor.select_map(:created_at)).to all( be_a(Time) )
-      expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
-
-      # the labors are linked to the project
-      project.refresh
-      expect(project.labor.count).to eq(2)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'Lernean Hydra', 'Nemean Lion' ])
-    end
-  end
-
-  context 'table attributes' do
-    before(:each) do
-      @apple_of_joy = { name: 'apple of joy', worth: 2000 }
-      @apple_of_discord = { name: 'apple of discord', worth: 3000 }
-    end
-
-    it 'updates a table' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(2)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.count).to eq(2)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      #expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
-    end
-
-    xit 'updates a table and returns the correct id' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(2)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.count).to eq(2)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
-    end
-
-    it 'appends to an existing table' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
-      update(
-        'prize' => {
-          '::temp1' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides'),
-          '::temp2' => @apple_of_joy.merge(labor: 'The Golden Apples of the Hesperides')
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(5)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.map(&:name)).to match_array([ 'apple of joy' ] * 2 + [ 'apple of discord' ] * 3)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_body[:models][:prize][:documents].values.map{|p|p[:name]}).to eq(['apple of joy']*2)
-    end
-
-    xit 'replaces an existing table' do
-      labor = create(:labor, name: 'The Golden Apples of the Hesperides')
-      apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
-      update(
-        'labor' => {
-          'The Golden Apples of the Hesperides' => {
-            prize: [
-              '::temp1',
-              '::temp2'
-            ]
-          },
-        },
-        'prize' => {
-          '::temp1' => @apple_of_joy,
-          '::temp2' => @apple_of_joy
-        }
-      )
-
-      # we have created some new records
-      expect(Labors::Prize.count).to eq(2)
-
-      # the prizes are linked to the labor
-      labor.refresh
-      expect(labor.prize.count).to eq(2)
-
-      # the updated record is returned
-      expect(last_response.status).to eq(200)
-      expect(json_document(:labor, 'The Golden Apples of the Hesperides')[:prize]).to match_array(Labors::Prize.select_map(:id))
     end
   end
 
@@ -810,7 +1702,30 @@ describe UpdateController do
             }
           }
         },
-        :restricted_editor
+        :editor
+      )
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Cannot revise restricted victim '#{orig_name}'"])
+
+      restricted_victim.refresh
+      expect(restricted_victim.name).to eq(orig_name)
+    end
+
+    it 'prevents updates to the child of a restricted record by a restricted user' do
+      orig_name = 'Outis Koutsonadis'
+      new_name  = 'Outis Koutsomadis'
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', restricted: true)
+      restricted_victim = create(:victim, monster: lion, name: orig_name)
+
+      update(
+        {
+          victim: {
+            orig_name => {
+              name: new_name
+            }
+          }
+        },
+        :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted victim '#{orig_name}'"])
@@ -832,7 +1747,31 @@ describe UpdateController do
             }
           }
         },
-        :editor
+        :privileged_editor
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_document(:victim,new_name)).to eq(name: new_name)
+
+      expect(Labors::Victim.count).to eq(1)
+      restricted_victim.refresh
+      expect(restricted_victim.name).to eq(new_name)
+    end
+
+    it 'allows updates to a child of a restricted record by a privileged user' do
+      orig_name = 'Outis Koutsonadis'
+      new_name  = 'Outis Koutsomadis'
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', restricted: true)
+      restricted_victim = create(:victim, monster: lion, name: orig_name)
+
+      update(
+        {
+          victim: {
+            orig_name => {
+              name: new_name
+            }
+          }
+        },
+        :privileged_editor
       )
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,new_name)).to eq(name: new_name)
@@ -853,7 +1792,7 @@ describe UpdateController do
             }
           }
         },
-        :restricted_editor
+        :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted attribute :country on victim 'Outis Koutsonadis'"])
@@ -873,7 +1812,7 @@ describe UpdateController do
                   }
               }
           },
-          :restricted_editor
+          :editor
       )
       expect(last_response.status).to eq(422)
       expect(json_body[:errors]).to eq(["Cannot revise restricted attribute :restricted on victim 'Outis Koutsonadis'"])
@@ -892,7 +1831,7 @@ describe UpdateController do
             }
           }
         },
-        :editor
+        :privileged_editor
       )
       expect(last_response.status).to eq(200)
       expect(json_document(:victim,'Outis Koutsonadis')).to include(country: 'thrace')
@@ -912,7 +1851,7 @@ describe UpdateController do
                   }
               }
           },
-          :editor
+          :privileged_editor
       )
       expect(last_response.status).to eq(200)
 

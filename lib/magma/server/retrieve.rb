@@ -44,6 +44,7 @@ class RetrieveController < Magma::Controller
     @format = @params[:format] || "json"
     @page = @params[:page]
     @page_size = @params[:page_size]
+    @order = @params[:order]
 
     @attribute_names = @params[:attribute_names]
 
@@ -149,6 +150,7 @@ class RetrieveController < Magma::Controller
       collapse_tables: @collapse_tables,
       page: use_pages && @page,
       page_size: use_pages && @page_size,
+      order: use_pages && @order,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 

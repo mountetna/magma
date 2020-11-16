@@ -19,25 +19,6 @@ describe Magma::ModelUpdateActions do
       end
     end
 
-    context "with non-existing project" do
-      let(:actions) do
-        Magma::ModelUpdateActions.build(
-          "not_a_project",
-          [{
-            action_name: "update_attribute",
-            model_name: "monster",
-            attribute_name: "name",
-            description: "The monster's name"
-          }]
-        )
-      end
-
-      it 'produces a project error' do
-        expect(actions.perform).to eq(false)
-        expect(actions.errors.first[:message]).to eq("Project does not exist")
-      end
-    end
-
     context "with valid actions" do
       let(:actions) do
         Magma::ModelUpdateActions.build(

@@ -63,6 +63,20 @@ monster:
     type: link
     link_model_name: monster
     column_name: reference_monster_id
+  restricted:
+    type: boolean
+  habitat:
+    type: link
+    link_model_name: habitat
+    column_name: habitat_id
+habitat:
+  project:
+    type: parent
+    column_name: project_id
+  name:
+    type: identifier
+  monster:
+    type: collection
 prize:
   labor:
     type: parent
@@ -75,11 +89,13 @@ prize:
 project:
   name:
     type: identifier
-    description: "Name for this project"
+    description: 'Name for this project'
   labor:
     type: collection
   codex:
     type: table
+  habitat:
+    type: collection
 victim:
   monster:
     type: parent

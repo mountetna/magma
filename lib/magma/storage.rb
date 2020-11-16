@@ -16,10 +16,7 @@ class Magma
     def download_url project_name, path
     end
 
-    def upload_url project_name, path
-    end
-
-    def setup_uploader(model, name, type)
+    def upload_url(project_name, path, params={})
     end
 
     class Metis < Magma::Storage
@@ -36,17 +33,13 @@ class Magma
         )
       end
 
-      def upload_url project_name, path, user
+      def upload_url(project_name, path, params = {})
         hmac_url(
           'POST',
           @config[:host],
           "/#{project_name}/upload/magma/#{path}",
           @config[:upload_expiration],
-          {
-            email: user.email,
-            first: user.first,
-            last: user.last
-          }
+          params
         )
       end
 
@@ -73,8 +66,6 @@ class Magma
         require 'fog/aws'
         require 'carrierwave/sequel'
         require 'carrierwave/storage/fog'
-        require_relative '../magma/file_uploader'
-        require_relative '../magma/image_uploader'
 
         @config = config
         @fog = Fog::Storage.new(@config[:credentials])
@@ -98,15 +89,6 @@ class Magma
           Time.now + @config[:expiration]*60,
           path_style: true
         )
-      end
-
-      def setup_uploader(model, name, type)
-        case type
-        when :file
-          model.mount_uploader name, Magma::FileUploader
-        when :image
-          model.mount_uploader name, Magma::ImageUploader
-        end
       end
 
       private

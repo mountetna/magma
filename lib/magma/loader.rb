@@ -35,34 +35,238 @@ class Magma
       end
     end
 
-    attr_reader :validator
+    attr_reader :validator, :user
 
-    def initialize
+    def initialize(user, project_name)
+      @user = user
+      @project_name = project_name
+      @validator = Magma::Validation.new
+      @censor = Magma::Censor.new(@user,@project_name)
       @records = {}
       @temp_id_counter = 0
-      @validator = Magma::Validation.new
       @attribute_entries = {}
       @identifiers = {}
+      @now = Time.now.iso8601
     end
 
-    def push_record(model, record)
-      id = record[:temp_id]&.is_a?(Magma::TempId) ? record[:temp_id] : record[model.identity.column_name.to_sym]
-      records(model)[id] ||= RecordEntry.new(model, self)
-      records(model)[id] << record
+    def push_record(model, record_name, revision)
+      records(model)[record_name] ||= RecordEntry.new(model, record_name, self)
+
+      records(model)[record_name] << revision
+    end
+
+    def to_payload
+      payload = Magma::Payload.new
+
+      @records.each do |model, record_set|
+        next if record_set.empty?
+
+        payload.add_model(model)
+
+        payload.add_records(model, record_set.values.map(&:payload_entry))
+      end
+
+      return payload.to_hash
+    end
+
+    def is_collection_attribute?(attribute)
+      attribute.is_a?(Magma::CollectionAttribute)
+    end
+
+    def is_child_attribute?(attribute)
+      attribute.is_a?(Magma::ChildAttribute)
+    end
+
+    def is_table_attribute?(attribute)
+      attribute.is_a?(Magma::TableAttribute)
+    end
+
+    def is_incoming_link?(attribute)
+      # Based on the attribute class, determines if this is the incoming attribute,
+      #   for a foreign-key relationship. If so, return true.
+      is_collection_attribute?(attribute) ||
+      is_child_attribute?(attribute) ||
+      is_table_attribute?(attribute)
+    end
+
+    def explicit_child_revision_exists?(revisions, model_name, record_name, attribute_name)
+      # Check if the child's parent / link is being explicitly set by the user
+      !!revisions.dig(model_name.to_sym, record_name.to_sym, attribute_name.to_sym)
+    end
+
+    def explicit_link_revision_exists?(revisions, model_name, record_name, attribute, child_record_name)
+      # We need to check if the child record has
+      #   been set for ANY record in the same parent_model.
+
+      # NOTE: different check behavior for CollectionAttribute vs. ChildAttribute!
+      explicit_revisions_found = 0
+
+      revisions[model_name.to_sym].each do |record_name, record_revisions|
+        next unless record_revisions.key?(attribute.attribute_name.to_sym)
+
+        attribute_revision = record_revisions[attribute.attribute_name.to_sym]
+
+        explicit_revisions_found += 1 if is_collection_attribute?(attribute) && attribute_revision.include?(child_record_name)
+        explicit_revisions_found += 1 if is_child_attribute?(attribute) && child_record_name == attribute_revision
+      end
+
+      explicit_revisions_found > 0
+    end
+
+    def explicit_revision_exists?(revisions:, parent_model:, parent_record_name:, child_record_name:, parent_attribute:)
+      # Cannot find explicit revisions from @records, because
+      #   some of those are calculated! So we have to look for
+      #   explicit revisions from the user-supplied revisions hash.
+      # Note that because explicit revisions can be either parent / link -> child
+      #   or child -> parent / link, we need to check both cases.
+      explicit_child_revision_exists?(
+        revisions,
+        parent_attribute.link_model.model_name,
+        child_record_name,
+        parent_model.model_name) ||
+      explicit_link_revision_exists?(
+        revisions,
+        parent_model.model_name,
+        parent_record_name,
+        parent_attribute,
+        child_record_name)
+    end
+
+    def push_implicit_link_revisions(revisions)
+      # When updating link or parent attributes from the top-down,
+      #   we may not know what the previous relationships were.
+      # For example, changing a link child from record A to B,
+      #   the explicit revision is LinkModel -> B.
+      # But there is also an implicit revision, of updating
+      #   record A to have a `nil` parent.
+      # So we also have to push records for all the
+      #   implicit link revisions, when the attribute
+      #   is a Child or Collection type (i.e. the revision
+      #   comes from the parent / link).
+      # But, in a multi-revision scenario, we should
+      #   only push the implicit revisions when those records + attributes
+      #   themselves aren't being revised, otherwise we risk
+      #   overwriting an explicit revision.
+
+      # We iterate over revisions to see what all has been updated.
+      # If there are any ChildAttribute or CollectionAttribute values
+      #   that changed, we'll need to investigate further if any implicit
+      #   revisions exist.
+      # Do not do this over @records, because some of those revisions
+      #   are calculated and could lead to incorrectly orphaning
+      #   currently-attached records.
+
+      revisions.each do |model_name, model_revisions|
+        model = Magma.instance.get_model(@project_name, model_name)
+
+        # For each model, collect all the record_names being revised
+        #   for each child / collection attribute.
+        revised_model_records = {}
+
+        model_revisions.each do |record_name, revision|
+          revision.each do |attribute_name, value|
+            attribute = model.attributes[attribute_name]
+
+            if is_collection_attribute?(attribute) || is_child_attribute?(attribute)
+              revised_model_records[attribute] ||= []
+              revised_model_records[attribute] << record_name.to_s
+            end
+          end
+        end
+
+        implicit_revisions(revisions, model, revised_model_records) do |child_model, record_name, attribute_name|
+          push_record(
+            child_model, record_name.to_s,
+            attribute_name.to_sym => nil,
+            updated_at: @now)
+        end
+      end
+    end
+
+    def implicit_revisions(revisions, parent_model, revised_model_records)
+      # Here we fetch all current records that have one of the parent model::record_names as the
+      #   parent, and exclude any the user is explicitly setting in `revisions`.
+      revised_model_records.keys.each do |attribute|
+        child_model = attribute.link_model
+        parent_record_names = revised_model_records[attribute]
+
+        question = Magma::Question.new(@project_name, [
+          child_model.model_name,
+          [parent_model.model_name, '::identifier', '::in', parent_record_names],
+            '::all', parent_model.model_name, '::identifier'
+        ])
+
+        current_record_names = question.answer
+
+        current_record_names.reject { |child_record_name, parent_record_name|
+          explicit_revision_exists?(
+            revisions: revisions,
+            parent_model: parent_model,
+            parent_record_name: parent_record_name,
+            child_record_name: child_record_name,
+            parent_attribute: attribute)
+         }.each do |child_record_name, parent_record_name|
+          yield [child_model, child_record_name, parent_model.model_name]
+        end
+      end
+    end
+
+    def push_links(model, record_name, revision)
+      revision.each do |attribute_name, value|
+        next unless model.has_attribute?(attribute_name)
+
+        attribute = model.attributes[attribute_name]
+
+        attribute.revision_to_links(record_name, value) do |link_model, link_identifiers|
+          # When the explicit revision is from the parent / link -> children, the
+          #   new link records need to be single-entry records,
+          #   because they are linking from child up to a single
+          #   parent.
+          # When the explicit revision is from the child -> parent / link,
+          #   the new link records need to be Arrays,
+          #   because they are linking from parent to a collection
+          #   of records.
+          link_record_name = is_incoming_link?(attribute) ?
+            record_name.to_s :
+            [ record_name.to_s ]
+
+          link_identifiers&.each do |link_identifier|
+            next if link_identifier.nil?
+            push_record(
+              link_model, link_identifier,
+              model.model_name.to_sym => link_record_name,
+              created_at: @now,
+              updated_at: @now
+            )
+          end
+        end
+      end
     end
 
     # Once we have loaded up all the records we wish to insert/update (upsert)
     # we run this function to kick off the DB insert and update queries.
     def dispatch_record_set
-      find_complaints
+      validate!
+
+      censor_revisions!
+
+      run_attribute_hooks!
+
       upsert
+
       update_temp_ids
+
+      payload = to_payload
+
       reset
+
+      return payload
     end
 
     def reset
       @records = {}
       @validator = Magma::Validation.new
+      @censor = Magma::Censor.new(@user,@project_name)
       @attribute_entries = {}
       @identifiers = {}
       GC.start
@@ -75,20 +279,30 @@ class Magma
       temp_ids[obj] ||= TempId.new(new_temp_id, obj)
     end
 
+    TEMP_ID_MATCH=/^::temp/
+
     def identifier_id(model, identifier)
-      @identifiers[model] ||= Hash[model.select_map([model.identity.column_name.to_sym, :id])]
+      return nil unless identifier
+
+      @identifiers[model] ||= model.select_map(
+        [model.identity.column_name.to_sym, :id]
+      ).map do |identifier, id|
+        [ identifier.to_s, id ]
+      end.to_h
+
+      @identifiers[model][identifier] ||= temp_id([ model, identifier ])
 
       @identifiers[model][identifier]
     end
 
-    alias_method :identifier_exists?, :identifier_id
-
-    def attribute_entry(model, att_name, value)
-      return [:id, value] if att_name == :id
-      model.attributes[att_name].entry(value, self)
+    def real_id(model, identifier)
+      id = identifier_id(model, identifier)
+      id.is_a?(TempId) ? id.real_id : id
     end
 
-    private
+    def identifier_exists?(model, identifier)
+      !identifier_id(model, identifier).is_a?(TempId)
+    end
 
     def records(model)
       return @records[model] if @records[model]
@@ -100,13 +314,9 @@ class Magma
       @records[model]
     end
 
-    def validate(model, record)
-      @validator.validate(model,record) do |error|
-        yield error
-      end
-    end
+    private
 
-    def find_complaints
+    def validate!
       complaints = []
 
       @records.each do |model, record_set|
@@ -115,7 +325,50 @@ class Magma
       end
 
       complaints.flatten!
+
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+    end
+
+    def censor_revisions!
+      complaints = []
+      @records.each do |model, record_set|
+        reasons = @censor.censored_reasons(model, record_set)
+
+        next if reasons.empty?
+
+        complaints += reasons
+      end
+
+      raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+    end
+
+    def run_attribute_hooks!
+      bulk_load_type = {}
+      @records.each do |model, record_set|
+        model.attributes.each do |att_name, attribute|
+          bulk_load_attribute = {}
+
+          record_set.each do |record_name, record|
+            next unless record.has_key?(att_name)
+            error = attribute.load_hook(self, record_name, record[att_name], bulk_load_attribute)
+
+            raise Magma::LoadFailed.new([error]) if error
+          end
+
+          error = attribute.bulk_load_hook(self, bulk_load_attribute)
+          raise Magma::LoadFailed.new([error]) if error
+
+          unless bulk_load_attribute.empty?
+            bulk_load_type[ attribute.class ] ||= {}
+            bulk_load_type[ attribute.class ][ attribute ] = bulk_load_attribute
+          end
+        end
+      end
+
+      bulk_load_type.each do |attribute_class, bulk_type_attributes|
+        error = attribute_class.type_bulk_load_hook(self, @project_name, bulk_type_attributes)
+        raise Magma::LoadFailed.new([error]) if error
+      end
     end
 
     # This 'upsert' function will look at the records and either insert or
@@ -131,12 +384,12 @@ class Magma
         insert_records = record_set.values.select(&:valid_new_entry?)
         update_records = record_set.values.select(&:valid_update_entry?)
 
+
         # Run the record insertion.
         multi_insert(model, insert_records)
 
         # Run the record updates.
         multi_update(model, update_records)
-
       end
     end
 
@@ -157,7 +410,6 @@ class Magma
 
     def multi_update(model, update_records)
       by_attribute_key(update_records) do |records|
-
         MultiUpdate.new(model, records.map(&:update_entry), :id, :id).update
       end
     end
@@ -192,5 +444,3 @@ class Magma
     end
   end
 end
-
-require_relative './loader/tsv'

@@ -10,16 +10,12 @@ class Magma
       value.join(", ")
     end
 
-    def revision_to_loader record, new_ids
-      nil
-    end
-
     def revision_to_links(record_name, new_ids)
       yield link_model, new_ids
     end
 
-    def revision_to_payload(record_name, value, user)
-      [ name, value ]
+    def entry(value, loader)
+      nil
     end
 
     def missing_column?

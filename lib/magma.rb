@@ -7,7 +7,6 @@ require_relative 'magma/validation_object'
 require_relative 'magma/loader'
 require_relative 'magma/migration'
 require_relative 'magma/dictionary'
-require_relative 'magma/revision'
 require_relative 'magma/censor'
 require_relative 'magma/commands'
 require_relative 'magma/payload'
@@ -48,13 +47,28 @@ class Magma
     setup_sequel
 
     @storage = Magma::Storage.setup
+    load_config_projects
+    load_db_projects
 
+    validate_models if validate
+  end
+
+  def load_config_projects
     config(:project_path).split(/\s+/).each do |project_dir|
       project = Magma::Project.new(project_dir: project_dir)
       magma_projects[ project.project_name ] = project
     end
+  end
 
-    validate_models if validate
+  def load_db_projects
+    Magma.instance.db[:models].distinct.select(:project_name).to_a.each do |row|
+      get_or_load_project(row[:project_name])
+    end
+  end
+
+  def get_or_load_project(project_name)
+    project_name = project_name.to_sym
+    magma_projects[project_name] ||= Magma::Project.new(project_name: project_name)
   end
 
   def setup_sequel
@@ -103,17 +117,6 @@ class Magma
     model.attributes.each do |attribute_name, attribute|
       # Check that attribute has a column in the model's table
       raise Magma::ValidationError, "Missing column for #{model}##{attribute_name}." if attribute.missing_column?
-
-      next unless attribute.respond_to?(:link_model)
-
-      # Check reciprocal links
-      link_model = attribute.link_model
-
-      link_attribute = link_model.attributes.values.find do |attribute|
-        attribute.respond_to?(:link_model) && attribute.link_model == model
-      end
-
-      raise Magma::ValidationError, "Missing reciprocal link for #{model.model_name}##{attribute_name} from #{link_model.model_name}." unless link_attribute
     end
   end
 
@@ -133,6 +136,13 @@ class Magma
   end
 
   def server_pid
-    File.read(config(:server_pidfile)).chomp.to_i
+    pid_file = config(:server_pidfile)
+    if ::File.exists?(pid_file)
+      File.read(pid_file).chomp.to_i
+    else
+      # Oh boy.  Not ideal, but best effort here.  This could end up just restarting the wrong puma process if
+      # it was hosted together.  Ideally we're running these processes in separate containers so it should be ok.
+      `pidof puma | tail -n 1`.chomp.to_i
+    end
   end
 end
