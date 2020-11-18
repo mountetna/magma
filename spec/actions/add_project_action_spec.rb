@@ -55,10 +55,10 @@ describe Magma::AddProjectAction do
     end
 
     it 'captures an error on invalid project names' do
-      [ "my\nmproject", ' my_project', 'my_project	' , '1x_project', 'pg_project'].each do |name|
+      [ "my\nmproject", ' my_project', 'my_project	' , '1x_project', 'pg_project', 'my_project_2'].each do |name|
         action = Magma::AddProjectAction.new(name, action_params)
         action.validate
-        expect(action.errors.first[:message]).to eql("project_name must be snake_case with no spaces")
+        expect(action.errors.first[:message]).to eql("project_name must only consist of lowercase letters and numbers, and not start with a number.")
         expect(action.validate).to eql(false)
       end
     end
