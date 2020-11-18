@@ -46,7 +46,7 @@ class Magma
 
       @errors << Magma::ActionError.new(
         message: 'Type is invalid',
-        source: @action_params.slice(:action_name, :model_name)
+        source: @action_params.slice(:action_name, :type)
       )
     end
 
