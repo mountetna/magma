@@ -12,7 +12,7 @@ describe Magma::AddLinkAction do
       ]
     }
   end
-  let(:project_name) { 'add_link_test_project' }
+  let(:project_name) { 'addlinktestproject' }
   let(:action) { Magma::AddLinkAction.new(project_name, action_params) }
 
   before(:each) do
@@ -125,7 +125,7 @@ describe Magma::AddLinkAction do
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("attribute_name already exists on AddLinkTestProject::ModelA")
+        expect(action.errors.first[:message]).to eq("attribute_name already exists on Addlinktestproject::ModelA")
       end
     end
   end

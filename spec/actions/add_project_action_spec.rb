@@ -1,7 +1,7 @@
 require 'securerandom'
 
 describe Magma::AddProjectAction do
-  let(:project_name) { "test_project_#{SecureRandom.uuid.gsub('-', '_')}" }
+  let(:project_name) { "testproject#{SecureRandom.uuid.gsub('-', '')}" }
   let(:action_params) { {
     project_name: project_name,
     user: Etna::User.new({
