@@ -29,9 +29,9 @@ $$;
     end
 
     def validate_project_name
-      return if @project_name =~ /\A[a-z][a-z0-9]*\Z/ && !@project_name.start_with?('pg_')
+      return if @project_name =~ /\A[a-z][a-z0-9]*(_[a-z][a-z0-9]+)*\Z/ && !@project_name.start_with?('pg_')
       @errors << Magma::ActionError.new(
-          message: "project_name must only consist of lowercase letters and numbers, and not start with a number.",
+          message: "project_name must be snake_case with no spaces",
           source: @action_params.slice(:project_name)
       )
     end
