@@ -1,8 +1,9 @@
 class Magma
   class FileSerializer
 
-    def initialize(magma_model:)
+    def initialize(magma_model:, attribute:)
       @magma_model = magma_model
+      @attribute = attribute
     end
 
     def to_loader_format(record_name, file_hash)
@@ -92,7 +93,7 @@ class Magma
         }
       end
 
-      [ column_name, value.to_json ]
+      [ @attribute.column_name, value.to_json ]
     end
 
     def filename(record_name, path, original_filename=nil)
@@ -100,7 +101,7 @@ class Magma
       original_ext = original_filename ? ::File.extname(original_filename) : ''
       ext = original_ext if ext.empty?
       ext = '.dat' if ext.empty?
-      "#{@magma_model.model_name}-#{record_name}-#{name}#{ext}"
+      "#{@magma_model.model_name}-#{record_name}-#{@attribute.name}#{ext}"
     end
 
     private

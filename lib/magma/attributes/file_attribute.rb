@@ -7,7 +7,7 @@ class Magma
     end
 
     def serializer
-      @serializer ||= FileSerializer.new(magma_model: @magma_model)
+      @serializer ||= FileSerializer.new(magma_model: @magma_model, attribute: self)
     end
 
     def revision_to_loader(record_name, file)
@@ -16,7 +16,7 @@ class Magma
     end
 
     def revision_to_payload(record_name, new_value, loader)
-      [name, serializer.to_payload_format(record_name, new_value, user) ]
+      [name, serializer.to_payload_format(record_name, new_value, loader.user) ]
     end
 
     def query_to_payload(data)
@@ -32,10 +32,14 @@ class Magma
     end
 
     def load_hook(loader, record_name, file, copy_revisions)
-      return nil unless path = file&.dig(:path)
+      # At this point, when load_hook() gets called in the loader,
+      #   the `file` attribute is in the loader format, so
+      #   the relevant key is `location`. `path` was for a revision format
+      #   from the user.
+      return nil unless location = file&.dig(:location)
 
-      if path.start_with? 'metis://'
-        copy_revisions[ path ] = "metis://#{project_name}/magma/#{serializer.filename(record_name, path, file[:original_filename])}"
+      if location.start_with? 'metis://'
+        copy_revisions[ location ] = "metis://#{project_name}/magma/#{serializer.filename(record_name, location, file[:original_filename])}"
       end
 
       return nil

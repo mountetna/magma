@@ -1180,9 +1180,9 @@ describe UpdateController do
       # May be overkill ... but making sure each of the anticipated
       #   exceptions from Metis bulk_copy results in a failed Magma update.
       bad_request_statuses = [400, 403, 404, 422, 500]
-      req_counter = 0
+      req_counter = 1
       bad_request_statuses.each do |status|
-        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy/).
           to_return(status: status, body: '{}')
 
         update(
@@ -1194,10 +1194,15 @@ describe UpdateController do
             }
           }
         )
-        req_counter += 1
         lion.refresh
         expect(lion.stats).to eq nil  # Did not change from the create state
         expect(last_response.status).to eq(422)
+
+        expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+          with(query: hash_including({
+            "X-Etna-Headers": "revisions"
+          })).times(req_counter)
+        req_counter += 1
       end
 
       Timecop.return
@@ -1424,9 +1429,9 @@ describe UpdateController do
       # May be overkill ... but making sure each of the anticipated
       #   exceptions from Metis bulk_copy results in a failed Magma update.
       bad_request_statuses = [400, 403, 404, 422, 500]
-      req_counter = 0
+      req_counter = 1
       bad_request_statuses.each do |status|
-        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy/).
           to_return(status: status, body: '{}')
 
         update(
@@ -1438,10 +1443,16 @@ describe UpdateController do
             }
           }
         )
-        req_counter += 1
         lion.refresh
         expect(lion.selfie).to eq nil  # Did not change from the create state
         expect(last_response.status).to eq(422)
+
+        expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+          with(query: hash_including({
+            "X-Etna-Headers": "revisions"
+          })).times(req_counter)
+
+        req_counter += 1
       end
 
       Timecop.return
