@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: a28d5124de34d6d9c826e2243933203ae843f9ab
-  branch: refs/artifacts/gem-etna/62cf1216a0f46d0b31a9b0e1e80ba583199bd7ec
+  revision: fcb191dd30e0c9e4ea951952a138c9115cb1ce19
+  branch: refs/artifacts/gem-etna/1abb3b6c4d4fab5f8a0216c94351e0173751cafe
   specs:
     etna (0.1.16)
       jwt
