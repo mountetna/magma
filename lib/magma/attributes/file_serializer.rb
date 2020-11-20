@@ -7,28 +7,30 @@ class Magma
     end
 
     def to_loader_format(record_name, file_hash)
-      case file_hash[:path]
+      loader_data = case file_hash[:path]
       when '::blank'
-        return {
+        {
           location: '::blank',
           filename: '::blank',
           original_filename: '::blank'
         }
       when '::temp'
-        return nil
+        {}
       when %r!^metis://!
-        return {
+        {
           location: file_hash[:path],
           filename: filename(record_name, file_hash[:path], file_hash[:original_filename]),
           original_filename: file_hash[:original_filename]
         }
       else
-        return {
+        {
           location: nil,
           filename: nil,
           original_filename: nil
         }
       end
+
+      file_hash.update(loader_data)
     end
 
     def to_payload_format(record_name, file_hash, user)
@@ -38,7 +40,7 @@ class Magma
       when '::blank'
         return { path: '::blank' }
       when %r!^metis://!
-        _, value = to_loader_format(record_name, file_hash)
+        value = to_loader_format(record_name, file_hash)
         return to_query_payload_format(value)
       when nil
         return nil

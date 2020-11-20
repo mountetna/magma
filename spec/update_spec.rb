@@ -1332,7 +1332,7 @@ describe UpdateController do
       # but we do get an upload url for Metis
       upload_url = json_document(:monster, 'Nemean Lion')[:stats][:path]
       expect(upload_url.
-        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+        start_with?('https://metis.test/labors/upload/magma/tmp-')).to eq(true)
       expect(upload_url.
         include?('X-Etna-Signature=')).to eq(true)
 
@@ -1574,13 +1574,12 @@ describe UpdateController do
       # the field is updated
       lion.refresh
       expect(lion.selfie).to eq(nil)
-
       expect(last_response.status).to eq(200)
 
       # but we do get an upload url for Metis
       upload_url = json_document(:monster, 'Nemean Lion')[:selfie][:path]
       expect(upload_url.
-        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+        start_with?('https://metis.test/labors/upload/magma/tmp-')).to eq(true)
       expect(upload_url.
         include?('X-Etna-Signature=')).to eq(true)
 
