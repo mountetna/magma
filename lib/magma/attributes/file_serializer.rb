@@ -6,7 +6,7 @@ class Magma
       @attribute = attribute
     end
 
-    def to_loader_format(record_name, file_hash)
+    def to_loader_format(record_name, file_hash, index=nil)
       loader_data = case file_hash[:path]
       when '::blank'
         {
@@ -19,7 +19,11 @@ class Magma
       when %r!^metis://!
         {
           location: file_hash[:path],
-          filename: filename(record_name, file_hash[:path], file_hash[:original_filename]),
+          filename: filename(
+            record_name: record_name,
+            path: file_hash[:path],
+            original_filename: file_hash[:original_filename],
+            index: index),
           original_filename: file_hash[:original_filename]
         }
       else
@@ -33,14 +37,14 @@ class Magma
       file_hash.update(loader_data)
     end
 
-    def to_payload_format(record_name, file_hash, user)
+    def to_payload_format(record_name, file_hash, user, index=nil)
       case file_hash[:path]
       when '::temp'
         return { path: temporary_filepath(user) }
       when '::blank'
         return { path: '::blank' }
       when %r!^metis://!
-        value = to_loader_format(record_name, file_hash)
+        value = to_loader_format(record_name, file_hash, index)
         return to_query_payload_format(value)
       when nil
         return nil
@@ -72,7 +76,7 @@ class Magma
     end
 
     def to_loader_entry_format(file)
-      value = case file[:path]
+      case file[:path]
       when '::blank'
         {
           location: '::blank',
@@ -94,11 +98,9 @@ class Magma
           original_filename: nil
         }
       end
-
-      [ @attribute.column_name, value.to_json ]
     end
 
-    def filename(record_name, path, original_filename=nil)
+    def filename(record_name:, path:, original_filename: nil, index: nil)
       ext = path ? ::File.extname(path) : ''
       original_ext = original_filename ? ::File.extname(original_filename) : ''
       ext = original_ext if ext.empty?

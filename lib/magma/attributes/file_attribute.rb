@@ -28,14 +28,14 @@ class Magma
     end
 
     def entry(file, loader)
-      serializer.to_loader_entry_format(file)
+      [ column_name, serializer.to_loader_entry_format(file).to_json ]
     end
 
     def load_hook(loader, record_name, file, copy_revisions)
       return nil unless path = file&.dig(:path)
 
       if path.start_with? 'metis://'
-        copy_revisions[ path ] = "metis://#{project_name}/magma/#{serializer.filename(record_name, path, file[:original_filename])}"
+        copy_revisions[ path ] = "metis://#{project_name}/magma/#{serializer.filename(record_name: record_name, path: path, original_filename: file[:original_filename])}"
       end
 
       return nil

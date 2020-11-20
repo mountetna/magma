@@ -69,6 +69,8 @@ monster:
     type: link
     link_model_name: habitat
     column_name: habitat_id
+  certificates:
+    type: files
 habitat:
   project:
     type: parent

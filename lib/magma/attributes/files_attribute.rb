@@ -12,28 +12,111 @@ class Magma
     end
 
     def serializer
-      @serializer ||= FileSerializer.new(magma_model: @magma_model)
+      @serializer ||= FileSerializer.new(magma_model: @magma_model, attribute: self)
     end
 
     def revision_to_loader(record_name, files)
-      loader_format = files.map { |revision| serializer.to_loader_format(record_name, revision) }
+      loader_format = files.each_with_index.map do |revision, index|
+        serializer.to_loader_format(record_name, revision, index)
+      end
       [ name, loader_format ]
     end
 
-    def revision_to_payload(record_name, files, user)
-      serializer.to_payload_format(record_name, files, user)
+    def revision_to_payload(record_name, files, loader)
+      payload_format = files.each_with_index.map do |file_hash, index|
+        serializer.to_payload_format(record_name, file_hash, loader.user, index)
+      end
+      [name, payload_format ]
     end
 
     def query_to_payload(data)
-      serializer.to_query_payload_format(data)
+      data.map do |datum|
+        serializer.to_query_payload_format(datum)
+      end
     end
 
-    def query_to_tsv(value)
-      serializer.to_query_tsv_format(value)
+    def query_to_tsv(files)
+      files.map do |file|
+        serializer.to_query_tsv_format(file)
+      end
     end
 
-    def entry(file, loader)
-      serializer.to_loader_entry_format(file)
+    def entry(files, loader)
+      entry_format = files.map do |file|
+        serializer.to_loader_entry_format(file)
+      end
+
+      [ column_name, entry_format.to_json ]
+    end
+
+    def load_hook(loader, record_name, file, copy_revisions)
+      return nil unless path = file&.dig(:path)
+
+      if path.start_with? 'metis://'
+        copy_revisions[ path ] = "metis://#{project_name}/magma/#{serializer.filename(record_name, path, file[:original_filename])}"
+      end
+
+      return nil
+    end
+
+    def self.type_bulk_load_hook(loader, project_name, attribute_copy_revisions)
+      # Ideally here we would clean up the deleted linked files
+      #   from Metis, too, instead of just creating new copies.
+      revisions = attribute_copy_revisions.values.map(&:to_a).flatten(1).map{|rev|
+        {source: rev[0], dest: rev[1]}}
+
+      host = Magma.instance.config(:storage).fetch(:host)
+
+      client = Etna::Client.new("https://#{host}", loader.user.token)
+
+      bulk_copy_route = client.routes.find { |r| r[:name] == 'file_bulk_copy' }
+
+      return nil unless bulk_copy_route
+
+      # At some point, when Metis supports changing project names,
+      # this parameter should be the old file project name (metis_file_location_parts[2]))
+      # and the new project name in the HMAC headers should
+      # be project_name
+
+      path = client.route_path(
+        bulk_copy_route,
+        project_name: project_name
+      )
+
+      bulk_copy_params = {
+        revisions: revisions
+      }
+
+      # Now populate the standard headers
+      hmac_params = {
+        method: 'POST',
+        host: host,
+        path: path,
+
+        expiration: (DateTime.now + 10).iso8601,
+        id: 'magma',
+        nonce: SecureRandom.hex,
+        headers: bulk_copy_params,
+      }
+
+      hmac = Etna::Hmac.new(Magma.instance, hmac_params)
+
+      cgi_hash = CGI.parse(hmac.url_params[:query])
+      cgi_hash.delete('X-Etna-Revisions') # this could be too long for URI
+
+      hmac_params_hash = Hash[cgi_hash.map {|key,values| [key.to_sym, values[0]||true]}]
+
+      client.send(
+        'body_request',
+        Net::HTTP::Post,
+        hmac.url_params[:path] + '?' + URI.encode_www_form(cgi_hash),
+        bulk_copy_params)
+
+      return nil
+
+    rescue Etna::Error => e
+      # We receive a stringified JSON error from Metis
+      return JSON.parse(e.message)
     end
   end
 end
