@@ -3,12 +3,15 @@ require 'logger'
 require 'factory_bot'
 require 'database_cleaner'
 require 'rack/test'
-require 'etna'
 require 'simplecov'
 require 'timecop'
 require 'webmock/rspec'
 
 SimpleCov.start
+require 'bundler'
+Bundler.require(:default, :test)
+
+require 'etna'
 
 
 ENV['MAGMA_ENV'] = 'test'

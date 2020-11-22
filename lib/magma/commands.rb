@@ -1,5 +1,6 @@
 require 'date'
 require 'logger'
+require 'etna/command'
 
 class Magma
   class LoadProject < Etna::Command
@@ -65,7 +66,6 @@ class Magma
   end
 
   class Migrate < Etna::Command
-    usage '[<version_number>] # Run migrations for the current environment.'
     string_flags << '--version'
 
     def execute(version: nil)

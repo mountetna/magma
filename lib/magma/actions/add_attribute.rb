@@ -8,6 +8,14 @@ class Magma
       true
     end
 
+    def target_models
+      if model
+        [model]
+      else
+        []
+      end
+    end
+
     private
 
     def save_attribute

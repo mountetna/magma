@@ -8,6 +8,10 @@ class Magma
       @errors = []
     end
 
+    def target_models
+      []
+    end
+
     def validate
       validations.each do |validation|
         send(validation)
@@ -46,6 +50,10 @@ class Magma
 
     def make_actions
       []
+    end
+
+    def target_models
+      inner_actions.flat_map(&:target_models)
     end
 
     def inner_actions
