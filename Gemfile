@@ -2,7 +2,7 @@ source 'http://rubygems.org'
 
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/d391529b39753077642498565f76d028ce24a853'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/cd3f4203efb74bc1d91c0d8afa2dceea0f9eed6f'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
