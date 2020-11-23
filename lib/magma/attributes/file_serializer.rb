@@ -6,15 +6,23 @@ class Magma
       @attribute = attribute
     end
 
+    def temp
+      '::temp'
+    end
+
+    def blank
+      '::blank'
+    end
+
     def to_loader_format(record_name, file_hash, index=nil)
       loader_data = case file_hash[:path]
-      when '::blank'
+      when blank
         {
-          location: '::blank',
-          filename: '::blank',
-          original_filename: '::blank'
+          location: blank,
+          filename: blank,
+          original_filename: blank
         }
-      when '::temp'
+      when temp
         {}
       when %r!^metis://!
         {
@@ -39,10 +47,10 @@ class Magma
 
     def to_payload_format(record_name, file_hash, user, index=nil)
       case file_hash[:path]
-      when '::temp'
+      when temp
         return { path: temporary_filepath(user) }
-      when '::blank'
-        return { path: '::blank' }
+      when blank
+        return { path: blank }
       when %r!^metis://!
         value = to_loader_format(record_name, file_hash, index)
         return to_query_payload_format(value)
@@ -58,9 +66,9 @@ class Magma
       return nil unless path
 
       case path
-      when '::blank'
+      when blank
         return { path: path }
-      when '::temp'
+      when temp
         return { path: path }
       else
         return {
@@ -77,13 +85,13 @@ class Magma
 
     def to_loader_entry_format(file)
       case file[:path]
-      when '::blank'
+      when blank
         {
-          location: '::blank',
-          filename: '::blank',
-          original_filename: '::blank'
+          location: blank,
+          filename: blank,
+          original_filename: blank
         }
-      when '::temp'
+      when temp
         return nil
       when %r!^metis://!
         {
@@ -105,7 +113,10 @@ class Magma
       original_ext = original_filename ? ::File.extname(original_filename) : ''
       ext = original_ext if ext.empty?
       ext = '.dat' if ext.empty?
-      "#{@magma_model.model_name}-#{record_name}-#{@attribute.name}#{ext}"
+
+      return "#{@magma_model.model_name}-#{record_name}-#{@attribute.name}#{ext}" unless index
+
+      "#{@magma_model.model_name}-#{record_name}-#{@attribute.name}-#{index}#{ext}"
     end
 
     private

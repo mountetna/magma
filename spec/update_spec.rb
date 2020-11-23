@@ -1231,7 +1231,7 @@ describe UpdateController do
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:stats][:path]).to eq('::blank')
       expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
 
@@ -1480,7 +1480,7 @@ describe UpdateController do
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:selfie][:path]).to eq('::blank')
       expect(json_document(:monster, 'Nemean Lion')[:selfie][:url]).to be_nil
 
@@ -1631,6 +1631,402 @@ describe UpdateController do
           "revisions": [{
             "source": "metis://labors/files/lion.jpg",
             "dest": "metis://labors/magma/monster-Nemean Lion-selfie.jpg"
+          }]
+        }))
+
+      Timecop.return
+    end
+  end
+
+  context 'file collection attributes' do
+    it 'fails the update when the bulk copy request fails' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      # May be overkill ... but making sure each of the anticipated
+      #   exceptions from Metis bulk_copy results in a failed Magma update.
+      bad_request_statuses = [400, 403, 404, 422, 500]
+      req_counter = 1
+      bad_request_statuses.each do |status|
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy/).
+          to_return(status: status, body: '{}')
+
+        update(
+          monster: {
+            'Nemean Lion' => {
+              certificates: [{
+                path: 'metis://labors/files/lion-stats.txt'
+              }]
+            }
+          }
+        )
+        lion.refresh
+        expect(lion.certificates).to eq nil  # Did not change from the create state
+        expect(last_response.status).to eq(422)
+
+        expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+          with(query: hash_including({
+            "X-Etna-Headers": "revisions"
+          })).times(req_counter)
+        req_counter += 1
+      end
+
+      Timecop.return
+    end
+
+    it 'removes a set of existing files' do
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: [{
+          filename: 'monster-Nemean Lion-certificates-0.txt'
+        }, {
+          filename: 'monster-Nemean Lion-certificates-1.txt'
+        }].to_json)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: []
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.certificates).to eq([])
+
+      expect(last_response.status).to eq(200)
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes a file reference from an existing set' do
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: [{
+          filename: 'monster-Nemean Lion-certificates-0.txt'
+        }, {
+          filename: 'monster-Nemean Lion-certificates-1.txt'
+        }].to_json)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [
+              {
+                path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+              }
+            ]
+          }
+        }
+      )
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq([{
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: nil
+      }].to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do get a download url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].length).to eq(1)
+      url = json_document(:monster, 'Nemean Lion')[:certificates].first[:url]
+      expect(url.
+        start_with?('https://metis.test/labors/download/magma/monster-Nemean%20Lion-certificates-0.txt')).to eq(true)
+      expect(url.
+        include?('X-Etna-Signature=')).to eq(true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'rejects the update if revision missing :path' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              original_filename: 'CharmSchool.pdf'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq original_certs  # Did not change from the create state
+
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'rejects the update if existing file revisions not in ascending order' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq original_certs  # Did not change from the create state
+
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'rejects the update if new files are not at the end of the array' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/files/CharmSchool.pdf'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq original_certs  # Did not change from the create state
+
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'returns a temporary Metis path when using ::temp' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              path: '::temp'
+            }, {
+              path: '::temp'
+            }]
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.certificates.to_json).to eq([{
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: nil
+      }, {
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: nil
+      }].to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis, for the temporary paths!
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].length).to eq(4)
+      urls = []
+      urls << json_document(:monster, 'Nemean Lion')[:certificates][2][:path]
+      urls << json_document(:monster, 'Nemean Lion')[:certificates].last[:path]
+
+      expect(urls.all? { |u|
+          u.start_with?('https://metis.test/labors/upload/magma/tmp-')
+        }).to eq(true)
+      expect(urls.all? { |u|
+          u.include?('X-Etna-Signature=')
+        }).to eq(true)
+
+      # Make sure the Metis copy endpoint was called (for the original files)
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'rejects an update if temporary Metis paths are not at the end' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              path: '::temp'
+            }, {
+              path: 'metis://labors/files/new-pirate-certificate.txt'
+            }, {
+              path: '::temp'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq original_certs  # Did not change from the create state
+
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'links a new file from metis' do
+      Timecop.freeze(DateTime.new(500))
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              path: 'metis://labors/files/CharmSchool.pdf'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+
+      lion.refresh
+      expect(lion.certificates.to_json).not_to eq original_certs
+
+      # and we do get an download url for Metis
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:certificates].last[:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-certificates-2.pdf')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].last.key?(:path)).to eq (true)
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].last.key?(:original_filename)).to eq (true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }), body: hash_including({
+          "revisions": [{
+            "source":"metis://labors/magma/monster-Nemean Lion-certificates-0.txt",
+            "dest":"metis://labors/magma/monster-Nemean Lion-certificates-0.txt"
+          }, {
+            "source":"metis://labors/magma/monster-Nemean Lion-certificates-1.txt",
+            "dest":"metis://labors/magma/monster-Nemean Lion-certificates-1.txt"
+          }, {
+            "source": "metis://labors/files/CharmSchool.pdf",
+            "dest": "metis://labors/magma/monster-Nemean Lion-certificates-2.pdf"
           }]
         }))
 

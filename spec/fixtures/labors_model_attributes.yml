@@ -70,7 +70,7 @@ monster:
     link_model_name: habitat
     column_name: habitat_id
   certificates:
-    type: files
+    type: file_collection
 habitat:
   project:
     type: parent
