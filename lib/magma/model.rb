@@ -2,18 +2,18 @@ class Magma
   class Model < Sequel::Model
     class << self
       Magma::Attribute.descendants.
-        reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
-        each do |attribute|
-          define_method attribute.attribute_type do |attribute_name=nil, opts={}|
-            @parent = attribute_name if attribute == Magma::ParentAttribute
-            attributes[attribute_name] = attribute.new(opts.merge(
+                      reject { |attribute| attribute == Magma::ForeignKeyAttribute }.
+                      each do |attribute|
+        define_method attribute.attribute_type do |attribute_name = nil, opts = {}|
+          @parent = attribute_name if attribute == Magma::ParentAttribute
+          attributes[attribute_name] = attribute.new(opts.merge(
               project_name: project_name,
               model_name: model_name,
               attribute_name: attribute_name,
               magma_model: self
-            ))
-          end
+          ))
         end
+      end
 
       alias_method :document, :file
 
@@ -59,20 +59,20 @@ class Magma
 
       def base_attributes
         {
-          created_at: Magma::DateTimeAttribute.new(
-            attribute_name: :created_at,
-            project_name: project_name,
-            model_name: model_name,
-            magma_model: self,
-            hidden: true
-          ),
-          updated_at: Magma::DateTimeAttribute.new(
-            attribute_name: :updated_at,
-            project_name: project_name,
-            model_name: model_name,
-            magma_model: self,
-            hidden: true
-          )
+            created_at: Magma::DateTimeAttribute.new(
+                attribute_name: :created_at,
+                project_name: project_name,
+                model_name: model_name,
+                magma_model: self,
+                hidden: true
+            ),
+            updated_at: Magma::DateTimeAttribute.new(
+                attribute_name: :updated_at,
+                project_name: project_name,
+                model_name: model_name,
+                magma_model: self,
+                hidden: true
+            )
         }
       end
 
@@ -110,16 +110,18 @@ class Magma
       def json_template(attribute_names = nil)
         attribute_names ||= attributes.keys
         {
-          name: model_name,
-          attributes: Hash[
-            attribute_names.map do |name|
-              [ name, attributes[name].json_template ]
-            end
-          ],
-          identifier: identity.attribute_name.to_sym,
-          dictionary: @dictionary && @dictionary.to_hash,
-          parent: parent_model_name
-        }.delete_if {|k,v| v.nil? }
+            name: model_name,
+            attributes: Hash[
+                attribute_names.map do |name|
+                  [name, attributes[name].json_template]
+                end
+            ],
+            identifier: identity.attribute_name.to_sym,
+            dictionary: @dictionary && @dictionary.to_hash,
+            parent: parent_model_name,
+            # Consider adding again if we decide for using version based locking.
+            # version: version,
+        }.delete_if { |k, v| v.nil? }
       end
 
       def schema
@@ -128,8 +130,7 @@ class Magma
 
       # This function is too bulky, it needs to be refactored into smaller
       # pieces.
-      def multi_update(records:, src_id: identity, dest_id: identity)
-      end
+      def multi_update(records:, src_id: identity, dest_id: identity) end
 
       def update_or_create(*args)
         obj = find_or_create(*args)
@@ -138,7 +139,7 @@ class Magma
       end
 
       def metrics
-        constants.map{|c| const_get(c)}.select do |c|
+        constants.map { |c| const_get(c) }.select do |c|
           c.is_a?(Class) && c < Magma::Metric
         end
       end
@@ -153,8 +154,8 @@ class Magma
         # and anonymous classes don't have names.
         if magma_model.name
           set_schema(
-            magma_model.project_name,
-            magma_model.model_name.to_s.pluralize.to_sym
+              magma_model.project_name,
+              magma_model.model_name.to_s.pluralize.to_sym
           )
         end
 
@@ -166,6 +167,15 @@ class Magma
       # schema/table.
       def set_schema(project_name, table_name)
         set_dataset(Sequel[project_name][table_name])
+      end
+
+      def version
+        m = Magma.instance.db[:models].where(project_name: project_name.to_s, model_name: model_name.to_s).first
+        if m.nil?
+          0
+        else
+          m[:version]
+        end
       end
     end
 
@@ -190,12 +200,12 @@ class Magma
       # A JSON version of this record (actually a hash). Each attribute
       # reports in its own fashion
       Hash[
-        (attribute_names || model.attributes.keys).map do |name|
-          [ name, model.attributes[att_name].json_for(self) ]
-        end
+          (attribute_names || model.attributes.keys).map do |name|
+            [name, model.attributes[att_name].json_for(self)]
+          end
       ].update(
-        # always ensure some sort of identifier
-        model.identity => identifier
+          # always ensure some sort of identifier
+          model.identity => identifier
       )
     end
   end

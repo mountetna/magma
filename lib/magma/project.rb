@@ -118,6 +118,5 @@ class Magma
     def project_file *filenames
       File.join(File.dirname(__FILE__), '../..', @project_dir, *filenames)
     end
-
   end
 end

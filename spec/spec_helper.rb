@@ -3,12 +3,15 @@ require 'logger'
 require 'factory_bot'
 require 'database_cleaner'
 require 'rack/test'
-require 'etna'
 require 'simplecov'
 require 'timecop'
 require 'webmock/rspec'
 
 SimpleCov.start
+require 'bundler'
+Bundler.require(:default, :test)
+
+require 'etna'
 
 
 ENV['MAGMA_ENV'] = 'test'
@@ -314,4 +317,18 @@ end
 
 def json_post(endpoint, hash)
   post("/#{endpoint}", hash.to_json, {'CONTENT_TYPE'=> 'application/json'})
+end
+
+def setup_metis_bucket_stubs(project_name)
+  route_payload = JSON.generate([
+    {:method=>"POST", :route=>"/:project_name/bucket/create/:bucket_name", :name=>"bucket_create", :params=>["project_name","bucket_name"]}
+  ])
+  stub_request(:options, 'https://metis.test').
+  to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+  route_payload = JSON.generate([
+    {:bucket=>{}}
+  ])
+  stub_request(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create/).
+    to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
 end
