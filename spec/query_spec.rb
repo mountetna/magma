@@ -340,6 +340,93 @@ describe QueryController do
     end
   end
 
+  context Magma::FileCollectionPredicate do
+    before(:each) do
+      @lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+      @hydra_certs = [{
+        filename: 'monster-Lernean Hydra-certificates-0.txt',
+        original_filename: 'ba_diploma_hydra.txt'
+      }, {
+        filename: 'monster-Lernean Hydra-certificates-1.txt',
+        original_filename: 'phd_diploma_hydra.txt'
+      }]
+      @stable_certs = [{
+        filename: 'monster-Augean Stables-certificates-0.txt',
+        original_filename: 'aa_diploma_stables.txt'
+      }, {
+        filename: 'monster-Augean Stables-certificates-1.txt',
+        original_filename: 'jd_diploma_stables.txt'
+      }]
+      lion = create(:monster, name: 'Nemean Lion', certificates: @lion_certs.to_json)
+      hydra = create(:monster, name: 'Lernean Hydra', certificates: @hydra_certs.to_json)
+      stables = create(:monster, name: 'Augean Stables', certificates: @stable_certs.to_json)
+    end
+
+    it 'returns paths' do
+      query(
+        [ 'monster', '::all', 'certificates', '::path' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([
+        ["monster-Augean Stables-certificates-0.txt", "monster-Augean Stables-certificates-1.txt"],
+        ["monster-Lernean Hydra-certificates-0.txt", "monster-Lernean Hydra-certificates-1.txt"],
+        ["monster-Nemean Lion-certificates-0.txt", "monster-Nemean Lion-certificates-1.txt"]
+      ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
+    end
+
+    it 'returns a url' do
+      query(
+        [ 'monster', '::all', 'certificates', '::url' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).flatten).to all(match(/^https/))
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
+    end
+
+    it 'returns the original filename' do
+      query(
+        [ 'monster', '::all', 'certificates', '::original_filename' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([
+        ["aa_diploma_stables.txt", "jd_diploma_stables.txt"],
+        ["ba_diploma_hydra.txt", "phd_diploma_hydra.txt"],
+        ["sb_diploma_lion.txt", "sm_diploma_lion.txt"]
+      ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
+    end
+
+    it 'returns all the file data' do
+      query(
+        [ 'monster', '::all', 'certificates', '::all' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      sorted_answer = json_body[:answer].map(&:last).sort_by { |arry| arry.first[:filename] }
+      expect(sorted_answer.length).to eq(3)
+      expect(sorted_answer.flatten.map {|a| a[:url] }).to all(match(/^https/))
+      expect(sorted_answer.map {|a| a.each { |hsh| hsh.delete(:url) } }).to eq([
+        @stable_certs,
+        @hydra_certs,
+        @lion_certs])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
+    end
+  end
+
   context Magma::BooleanPredicate do
     it 'checks ::true' do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true)

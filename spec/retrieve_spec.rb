@@ -121,6 +121,47 @@ describe RetrieveController do
     end
   end
 
+  context 'file collection' do
+    it 'retrieves file attributes with storage links' do
+      Timecop.freeze(DateTime.new(500))
+
+      lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+
+      monster = create(
+        :monster,
+        :lion,
+        certificates: lion_certs.to_json)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: [ 'Nemean Lion' ],
+        attribute_names: [ 'certificates' ]
+      )
+
+      expect(last_response.status).to eq(200)
+      uris = []
+      uris << URI.parse(json_document(:monster, 'Nemean Lion')[:certificates].first[:url])
+      uris << URI.parse(json_document(:monster, 'Nemean Lion')[:certificates].last[:url])
+      params = uris.map { |u| Rack::Utils.parse_nested_query(u.query) }
+
+      expect(uris.all? { |u| u.host == Magma.instance.config(:storage)[:host] }).to eq(true)
+      expect(uris.first.path).to eq('/labors/download/magma/monster-Nemean%20Lion-certificates-0.txt')
+      expect(uris.last.path).to eq('/labors/download/magma/monster-Nemean%20Lion-certificates-1.txt')
+      expect(params.all? { |p| p['X-Etna-Id'] == 'magma' }).to eq(true)
+      expect(params.all? { |p|
+        p['X-Etna-Expiration'] == (Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601 }).to eq(true)
+
+      Timecop.return
+    end
+  end
+
   context 'identifiers' do
     it 'allows grabbing the entire set of identifiers' do
       labors = create_list(:labor,3)

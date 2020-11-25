@@ -4,10 +4,10 @@ class Magma
       child String
 
       extract do |table, identity|
-        Magma.instance.storage.download_url(
+        table.first[column_name] ? Magma.instance.storage.download_url(
           @model.project_name,
-          table.first[column_name] ? table.first[column_name]["filename"] : nil
-        )
+          table.first[column_name]["filename"]
+        ) : nil
       end
     end
 

@@ -26,6 +26,8 @@ class Magma
     end
 
     def query_to_payload(data)
+      return nil unless data
+
       data.map do |datum|
         serializer.to_query_payload_format(datum)
       end

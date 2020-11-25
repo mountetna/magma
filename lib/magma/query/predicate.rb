@@ -9,11 +9,11 @@
 #                    of filters on that list and various options to reduce that
 #                    list.
 # RecordPredicate  - represents a single record, its arguments are mostly a
-#                    list of attribute names 
+#                    list of attribute names
 # ColumnPredicate  - represents a value from a database table, its arguments
 #                    are boolean tests on that value
 # TablePredicate   - represents an array of mapped values
-# 
+#
 # From these predicates we wish to produce a SQL query. The basic form of such
 # a query is defined by SELECT, FROM+JOIN, WHERE. Each predicate must therefore
 # respond to #select, #join, #constraint. The Question will collect these and
@@ -264,6 +264,7 @@ require_relative 'predicate/record'
 require_relative 'predicate/boolean'
 require_relative 'predicate/date_time'
 require_relative 'predicate/file'
+require_relative 'predicate/file_collection'
 require_relative 'predicate/match'
 require_relative 'predicate/number'
 require_relative 'predicate/string'
