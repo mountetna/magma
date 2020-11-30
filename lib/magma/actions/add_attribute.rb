@@ -32,12 +32,22 @@ class Magma
     def validations
       [
         :validate_model,
+        :validate_type,
         :validate_attribute_name_unique,
         :validate_restricted_attribute,
         :validate_options,
         :validate_not_link,
         :validate_attribute,
       ]
+    end
+
+    def validate_type
+      return if Magma::Attribute.attribute_types.include?(@action_params[:type])
+
+      @errors << Magma::ActionError.new(
+        message: 'Type is invalid',
+        source: @action_params.slice(:action_name, :type)
+      )
     end
 
     def validate_model
@@ -59,7 +69,7 @@ class Magma
     end
 
     def validate_attribute_name_unique
-      return if !model&.has_attribute?(attribute.attribute_name)
+      return if !model&.has_attribute?(attribute&.attribute_name)
 
       @errors << Magma::ActionError.new(
         message: "attribute_name already exists on #{model.name}",
@@ -77,7 +87,7 @@ class Magma
     end
 
     def validate_options
-      return unless model
+      return unless model && attribute
       @action_params.except(:action_name, :model_name, :attribute_name).keys.each do |option|
         if !attribute.respond_to?(option)
           @errors << Magma::ActionError.new(
@@ -89,7 +99,7 @@ class Magma
     end
 
     def validate_attribute
-      return unless model
+      return unless model && attribute
       return if attribute.valid?
 
       attribute.errors.full_messages.each do |error|
@@ -101,11 +111,11 @@ class Magma
     end
 
     def attribute
-      @attribute ||= attribute_class.new(attribute_params)
+      @attribute ||= attribute_class&.new(attribute_params)
     end
 
     def attribute_class
-      Magma::Attribute.sti_class_from_sti_key(@action_params[:type])
+      @action_params[:type] && Magma::Attribute.sti_class_from_sti_key(@action_params[:type])
     end
 
     def attribute_params

@@ -34,6 +34,16 @@ class Magma
 :format_hint, :loader, :link_model_name, :restricted]
       end
 
+      def type_attributes
+        descendants.reject do |att_class|
+          att_class == Magma::ForeignKeyAttribute
+        end
+      end
+
+      def attribute_types
+        type_attributes.map(&:attribute_type)
+      end
+
       def attribute_type
         @attribute_type ||= name.match("Magma::(.*)Attribute")[1].underscore
       end

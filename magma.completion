@@ -22,23 +22,6 @@ return
 fi
 COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
 return
-elif [[ -z "$(echo $all_flag_completion_names | xargs)" ]]; then
-return
-elif [[ "$all_flag_completion_names" =~ $1\  ]]; then
-all_flag_completion_names="${all_flag_completion_names//$1\ /}"
-a=$1
-shift
-if [[ "$string_flag_completion_names" =~ $a\  ]]; then
-if [[ "$#" == "1" ]];  then
-a="${a//--/}"
-a="${a//-/_}"
-i="_completions_for_$a"
-all_completion_names="${!i}"
-COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
-return
-fi
-shift
-fi
 elif [[ "$1" == "console" ]]; then
 shift
 all_flag_completion_names="$all_flag_completion_names  "
@@ -445,6 +428,23 @@ return
 fi
 done
 return
+elif [[ -z "$(echo $all_flag_completion_names | xargs)" ]]; then
+return
+elif [[ "$all_flag_completion_names" =~ $1\  ]]; then
+all_flag_completion_names="${all_flag_completion_names//$1\ /}"
+a=$1
+shift
+if [[ "$string_flag_completion_names" =~ $a\  ]]; then
+if [[ "$#" == "1" ]];  then
+a="${a//--/}"
+a="${a//-/_}"
+i="_completions_for_$a"
+all_completion_names="${!i}"
+COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
+return
+fi
+shift
+fi
 else
 return
 fi
