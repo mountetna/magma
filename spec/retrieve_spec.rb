@@ -400,6 +400,46 @@ describe RetrieveController do
 
       Timecop.return
     end
+
+    it 'retrieves a TSV with file collection attributes as urls' do
+      Timecop.freeze(DateTime.new(500))
+      lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+      hydra_certs = [{
+        filename: 'monster-Lernean Hydra-certificates-0.txt',
+        original_filename: 'ba_diploma_hydra.txt'
+      }, {
+        filename: 'monster-Lernean Hydra-certificates-1.txt',
+        original_filename: 'phd_diploma_hydra.txt'
+      }]
+
+      lion = create(:monster, :lion, certificates: lion_certs.to_json)
+      hydra = create(:monster, :hydra, certificates: hydra_certs.to_json)
+      hind = create(:monster, :hind)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: [ 'certificates' ],
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(table.first.last).to eq(nil)
+      uris = table.slice(1, 2).map{|l| JSON.parse(l.last).map{|u| URI.parse(u)}}.flatten
+      expect(uris.map(&:host)).to all(eq(Magma.instance.config(:storage)[:host]))
+      expect(uris.map(&:path)).to all(match(%r!/labors/download/magma/.+.txt!))
+
+      Timecop.return
+    end
   end
 
   context 'filtering' do

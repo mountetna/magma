@@ -72,7 +72,7 @@ class Magma
         return { path: path }
       else
         return {
-          url: Magma.instance.storage.download_url(@magma_model.project_name, path),
+          url: Magma.instance.storage.download_url(@magma_model.project_name, path).to_s,
           path: path,
           original_filename: file_hash[:original_filename]
         }

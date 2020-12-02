@@ -34,6 +34,8 @@ class Magma
     end
 
     def query_to_tsv(files)
+      return nil unless files
+
       files.map do |file|
         serializer.to_query_tsv_format(file)
       end

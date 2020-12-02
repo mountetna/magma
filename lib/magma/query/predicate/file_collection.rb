@@ -10,7 +10,7 @@ class Magma
           Magma.instance.storage.download_url(
             @model.project_name,
             f["filename"]
-          )
+          ).to_s
         end : nil
       end
     end
@@ -40,7 +40,7 @@ class Magma
             url: Magma.instance.storage.download_url(
               @model.project_name,
               f["filename"]
-            )
+            ).to_s
           })
         end : nil
       end
