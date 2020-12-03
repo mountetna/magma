@@ -22,7 +22,7 @@ class Magma
 
     post '/update', as: :update, action: 'update#action', auth: { user: { can_edit?: :project_name } } 
 
-    post '/update_model', action: 'update_model#action', auth: { user: { is_superuser?: :project_name } }
+    post '/update_model', action: 'update_model#action', auth: { user: { is_admin?: :project_name } }
 
     get '/' do
       [ 200, {}, [ 'Magma is available.' ] ]
