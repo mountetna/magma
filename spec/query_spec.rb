@@ -440,9 +440,15 @@ describe QueryController do
         filename: 'monster-Augean Stables-certificates-1.txt',
         original_filename: 'jd_diploma_stables.txt'
       }]
-      lion = create(:monster, name: 'Nemean Lion', certificates: @lion_certs.to_json)
-      hydra = create(:monster, name: 'Lernean Hydra', certificates: @hydra_certs.to_json)
-      stables = create(:monster, name: 'Augean Stables', certificates: @stable_certs.to_json)
+
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, name: 'Nemean Lion', certificates: @lion_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, name: 'Lernean Hydra', certificates: @hydra_certs.to_json, labor: labor)
+
+      labor = create(:labor, :stables, project: @project)
+      stables = create(:monster, name: 'Augean Stables', certificates: @stable_certs.to_json, labor: labor)
     end
 
     it 'returns paths' do

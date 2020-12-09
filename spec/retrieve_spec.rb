@@ -138,9 +138,11 @@ describe RetrieveController do
         original_filename: 'sm_diploma_lion.txt'
       }]
 
+      labor = create(:labor, :lion, project: @project)
       monster = create(
         :monster,
         :lion,
+        labor: labor,
         certificates: lion_certs.to_json)
 
       retrieve(
@@ -167,10 +169,10 @@ describe RetrieveController do
     end
   end
 
-  context 'orphans' do
-    it 'does not retrieve orphaned records' do
+  context 'disconnected data' do
+    it 'does not retrieve disconnected records' do
       labors = create_list(:labor,3, project: @project)
-      orphaned_labors = create_list(:labor,3)
+      disconnected_labors = create_list(:labor,3)
 
       retrieve(
         project_name: 'labors',
@@ -185,22 +187,22 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].keys).to match_array(labors.map(&:name).map(&:to_sym))
     end
 
-    it 'retrieves orphaned records if asked' do
+    it 'retrieves disconnected records if asked' do
       labors = create_list(:labor,3, project: @project)
-      orphaned_labors = create_list(:labor,3)
+      disconnected_labors = create_list(:labor,3)
 
       retrieve(
         project_name: 'labors',
-        model_name: 'all',
+        model_name: 'labor',
         record_names: 'all',
         attribute_names: 'identifier',
-        show_orphans: true
+        show_disconnected: true
       )
 
       expect(last_response.status).to eq(200)
 
       # only attached models are returned
-      expect(json_body[:models][:labor][:documents].keys).to match_array((orphaned_labors + labors).map(&:name).map(&:to_sym))
+      expect(json_body[:models][:labor][:documents].keys).to match_array((disconnected_labors + labors).map(&:name).map(&:to_sym))
     end
   end
 
@@ -458,9 +460,14 @@ describe RetrieveController do
         original_filename: 'phd_diploma_hydra.txt'
       }]
 
-      lion = create(:monster, :lion, certificates: lion_certs.to_json)
-      hydra = create(:monster, :hydra, certificates: hydra_certs.to_json)
-      hind = create(:monster, :hind)
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, certificates: lion_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, :hydra, certificates: hydra_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hind, project: @project)
+      hind = create(:monster, :hind, labor: labor)
 
       retrieve(
         project_name: 'labors',

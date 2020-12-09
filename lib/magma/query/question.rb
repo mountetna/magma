@@ -188,7 +188,9 @@ class Magma
         query = join.apply(query)
       end
 
-      query = @start_predicate.constrain(query)
+      constraints.each do |constraint|
+        query = constraint.apply(query)
+      end
 
       query.select(
           *order_by_column_names.zip(order_by_aliases).map { |c, a| c.as(a) }
