@@ -74,6 +74,27 @@ describe Magma::AddDictionaryAction do
       end
     end
 
+    context "when the model does not exist in the database" do
+      let(:action_params) do
+        {
+          action_name: "add_dictionary",
+          model_name: "iliad",
+          dictionary: {
+            dictionary_model: 'Labors::Codex',
+            name: 'name'
+          }
+        }
+      end
+
+      it "returns false and adds an error" do
+        # Wish there were a better way to test this...but because
+        #   the specs use the yml project loader, all spec models
+        #   are defined in the database.
+        action.send('validate_db_model')
+        expect(action.errors.first[:message]).to eq("Model is defined in code, not in the database.")
+      end
+    end
+
     context "when the dictionary_model doesn't exist" do
       let(:action_params) do
         {

@@ -1,6 +1,7 @@
 class Magma
   class AddDictionaryAction < BaseAction
-    # Action to add a dictionary definition to an existing model
+    # Action to add a dictionary definition to an existing model.
+    # NOTE: This will only work for DB-defined models, not legacy models.
     def perform
       return false if @errors.any?
 
@@ -12,16 +13,17 @@ class Magma
     private
 
     def save_dictionary
-      magma_model = Magma.instance.db[:models].where(
+      Magma.instance.db[:models].where(
         project_name: @project_name,
-        model_name: @action_params[:model_name]
-      ).first
-      magma_model.update(dictionary: JSON.generate(@action_params[:dictionary]))
+        model_name: @action_params[:model_name]).update(
+        dictionary: JSON.generate(@action_params[:dictionary])
+      )
     end
 
     def validations
       [
         :validate_model,
+        :validate_db_model,
         :validate_model_attribute_names,
         :validate_dictionary_model,
         :validate_dictionary_attribute_names,
@@ -35,6 +37,16 @@ class Magma
         message: 'Model does not exist.',
         source: @action_params.slice(:action_name, :model_name)
       )
+    end
+
+    def validate_db_model
+      @errors << Magma::ActionError.new(
+        message: 'Model is defined in code, not in the database.',
+        source: @action_params.slice(:action_name, :model_name)
+      ) unless Magma.instance.db[:models].where(
+        project_name: @project_name,
+        model_name: @action_params[:model_name]
+      ).first
     end
 
     def validate_dictionary_model
