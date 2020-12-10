@@ -18,8 +18,7 @@ describe Magma::AddDictionaryAction do
       model = Magma.instance.db[:models].where(
         project_name: 'labors',
         model_name: 'monster'
-      ).first
-      model.update(dictionary: nil)
+      ).update(dictionary: nil)
     end
 
     it "adds the dictionary to the model" do
