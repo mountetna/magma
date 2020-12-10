@@ -12,8 +12,11 @@ class Magma
     private
 
     def save_dictionary
-      model.update(dictionary: JSON.generate(@action_params[:dictionary]))
-      model.refresh
+      magma_model = Magma.instance.db[:models].where(
+        project_name: @project_name,
+        model_name: @action_params[:model_name]
+      ).first
+      magma_model.update(dictionary: JSON.generate(@action_params[:dictionary]))
     end
 
     def validations
@@ -29,42 +32,48 @@ class Magma
       return if model
 
       @errors << Magma::ActionError.new(
-        message: 'Model does not exist',
+        message: 'Model does not exist.',
         source: @action_params.slice(:action_name, :model_name)
       )
     end
 
     def validate_dictionary_model
       @errors << Magma::ActionError.new(
-        message: 'Must include :dictionary_model',
+        message: 'Must include :dictionary_model in :dictionary.',
         source: @action_params.slice(:action_name, :dictionary)
       ) unless @action_params[:dictionary][:dictionary_model]
 
       @errors << Magma::ActionError.new(
-        message: 'Dictionary model does not exist',
+        message: 'Dictionary model does not exist.',
         source: @action_params.slice(:action_name, :dictionary)
       ) unless dictionary_model
     end
 
     def validate_model_attribute_names
+      return unless model
+
       @action_params[:dictionary].symbolize_keys.keys.reject do |key|
         :dictionary_model == key
       end.each do |key|
         @errors << Magma::ActionError.new(
-          message: "Dictionary attribute_name #{key} does not exist on #{model.name}",
+          message: "attribute_name \"#{key}\" does not exist on \"#{model.name}\".",
           source: @action_params.slice(:project_name, :model_name, :dictionary)
         ) if !model&.has_attribute?(key)
       end
     end
 
     def validate_dictionary_attribute_names
+      return unless dictionary_model
+
       @action_params[:dictionary].symbolize_keys.keys.reject do |key|
         :dictionary_model == key
       end.each do |key|
+        dictionary_key = @action_params[:dictionary][key]
+
         @errors << Magma::ActionError.new(
-          message: "Dictionary attribute_name #{key} does not exist on dictionary #{dictionary_model.name}",
+          message: "attribute_name \"#{dictionary_key}\" does not exist on dictionary \"#{dictionary_model.name}\".",
           source: @action_params.slice(:project_name, :model_name, :dictionary)
-        ) if !dictionary_model&.has_attribute?(key)
+        ) if !dictionary_model&.has_attribute?(dictionary_key)
       end
     end
 
@@ -82,7 +91,9 @@ class Magma
       return @dictionary_model if defined? @dictionary_model
 
       @dictionary_model = begin
-        Magma.instance.get_model(@project_name, @action_params[:dictionary][:dictionary_model])
+        Magma.instance.get_model(
+          @project_name,
+          @action_params[:dictionary][:dictionary_model].split('::').last.downcase)
       rescue
         nil
       end
