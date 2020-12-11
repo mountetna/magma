@@ -16,7 +16,13 @@ class Magma
           FilterPredicate.new(@question, @model, @alias_name, *args)
         end
 
-        TrueClass
+        @query_args = []
+
+        terminal TrueClass
+      end
+
+      join do
+        join_filters
       end
     end
 

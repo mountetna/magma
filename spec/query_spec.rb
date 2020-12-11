@@ -227,8 +227,8 @@ describe QueryController do
     end
 
     it 'can retrieve metrics' do
-      poison = create(:prize, labor: @hydra, name: 'poison', worth: 5, labor: @hydra)
-      poop = create(:prize, labor: @stables, name: 'poop', worth: 0, labor: @stables)
+      poison = create(:prize, labor: @hydra, name: 'poison', worth: 5)
+      poop = create(:prize, labor: @stables, name: 'poop', worth: 0)
       query(['labor', '::all', '::metrics'])
 
       answer = Hash[json_body[:answer]]

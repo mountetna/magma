@@ -50,9 +50,19 @@ class Magma
       @child_predicate
     end
 
+    def inspect
+      <<EOT
+#<#{self.class.name}:#{object_id}
+    @alias_name=#{@alias_name}
+    @arguments=#{@arguments}
+    @child_predicate=#<#{@child_predicate.class.name}:#{@child_predicate.object_id}
+  >
+EOT
+    end
+
     def join
       if @verb && @verb.gives?(:join)
-        [ @verb.do(:join) ].compact
+        [ @verb.do(:join) ].flatten.compact
       else
         []
       end
@@ -137,6 +147,12 @@ class Magma
       @verb.do(:validate,@arguments)
 
       @child_predicate = @verb.do(:child)
+    end
+
+    def join_filters
+      @filters.map do |filter|
+        filter.flatten.map(&:join).inject(&:+) || []
+      end.inject(&:+) || []
     end
 
     # Code relating to defining and looking up predicate verbs

@@ -133,9 +133,7 @@ class Magma
     end
 
     def join
-      @filters.map do |filter|
-        filter.flatten.map(&:join).inject(&:+) || []
-      end.inject(&:+) || []
+      join_filters
     end
 
     def select
