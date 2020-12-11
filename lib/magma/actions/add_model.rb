@@ -28,15 +28,15 @@ class Magma
         model_name: @action_params[:model_name]
       }
 
+      params[:dictionary] = @action_params[:dictionary] if @action_params[:dictionary]
+
       # Here dictionary needs to be a JSON string, otherwise
       #   Sequel will try to find a column for each dictionary key.
-      params[:dictionary] = JSON.generate(@action_params[:dictionary]) if @action_params[:dictionary]
+      Magma.instance.db[:models].insert(
+        params.key?(:dictionary) ?
+        params.merge(dictionary: params[:dictionary].to_json) :
+        params)
 
-      Magma.instance.db[:models].insert(params)
-
-      # But here project.load_model() needs the dictionary to be some hash-like object, as if
-      #   it came out of the database.
-      params[:dictionary] = @action_params[:dictionary] if @action_params[:dictionary]
       project.load_model(params)
     end
 
