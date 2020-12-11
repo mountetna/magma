@@ -113,6 +113,12 @@ describe Magma::AddModelAction do
           project_name: :labors,
           model_name: :labor,
           attributes: {name: :name}})
+
+        # Remove the new dictionary from the database
+        Magma.instance.db[:models].where(
+          project_name: 'labors',
+          model_name: 'new_table_model'
+        ).update(dictionary: nil)
       end
     end
   end

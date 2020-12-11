@@ -5,7 +5,7 @@ describe Magma::AddDictionaryAction do
     let(:action_params) do
       {
         action_name: "add_dictionary",
-        model_name: "monster",
+        model_name: "new_child_model",
         dictionary: {
           dictionary_model: 'Labors::Codex',
           name: 'name'
@@ -13,22 +13,30 @@ describe Magma::AddDictionaryAction do
       }
     end
 
+    before do
+      Magma::AddModelAction.new("labors",         {
+        action_name: "add_model",
+        model_name: "new_child_model",
+        identifier: "name",
+        parent_model_name: "labor",
+        parent_link_type: "child"
+      }).perform
+    end
+
     after do
-      # Remove the new dictionary from memory
-      model = Magma.instance.db[:models].where(
-        project_name: 'labors',
-        model_name: 'monster'
-      ).update(dictionary: nil)
+      # Remove test model and link relationships from memory
+      project = Magma.instance.get_project(:labors)
+      project.models.delete(:new_child_model)
+      Labors.send(:remove_const, :NewChildModel)
+      Labors::Labor.attributes.delete(:new_child_model)
     end
 
     it "adds the dictionary to the model" do
-      model = Labors::Monster
-      expect(model.dictionary).to eq(nil)
+      expect(Labors::NewChildModel.dictionary).to eq(nil)
 
       expect(action.perform).to eq(true)
 
-      model = Labors::Monster
-      expect(model.dictionary.to_hash).to eq({
+      expect(Labors::NewChildModel.dictionary.to_hash).to eq({
         dictionary_model: "Labors::Codex",
         project_name: :labors,
         model_name: :codex,
