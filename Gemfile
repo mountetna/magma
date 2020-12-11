@@ -1,5 +1,8 @@
 source 'http://rubygems.org'
 
+# HACK to maybe fix stupid rubygems bug
+require 'fileutils'
+
 ruby '~> 2.5'
 
 gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/a73fe1c69e9c8c49c1e134d548ea3bda90aabea6'
