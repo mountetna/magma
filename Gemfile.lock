@@ -120,8 +120,6 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.9.0)
     rspec-support (3.9.2)
-    ruby-debug-ide (0.7.2)
-      rake (>= 0.8.1)
     ruby-ole (1.2.12.2)
     ruby-vips (2.0.17)
       ffi (~> 1.9)
@@ -166,7 +164,6 @@ DEPENDENCIES
   puma (= 5.0.2)
   rack-test
   rspec
-  ruby-debug-ide
   sequel (= 5.28.0)
   simplecov
   spreadsheet
