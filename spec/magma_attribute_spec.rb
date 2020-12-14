@@ -15,27 +15,6 @@ describe Magma::Attribute do
       expect(template[:format_hint]).to eq("Hint")
     end
 
-    it "continues reporting attribute_class as 'Magma::Attribute' for old Magma::Attributes" do
-      attribute = Magma::BooleanAttribute.new(attribute_name: "name")
-      template = attribute.json_template
-
-      expect(template[:attribute_class]).to eq("Magma::Attribute")
-    end
-
-    it "continues reporting attribute_class as 'Magma::ForeignKeyAttribute' for old Magma::ForeignKeyAttributes" do
-      attribute = Labors::Monster.attributes[:labor]
-      template = attribute.json_template
-
-      expect(template[:attribute_class]).to eq("Magma::ForeignKeyAttribute")
-    end
-
-    it "reports attribute_class as 'Magma::ForeignKeyAttribute' for Magma::LinkAttributes" do
-      attribute = Labors::Monster.attributes[:reference_monster]
-      template = attribute.json_template
-
-      expect(template[:attribute_class]).to eq("Magma::ForeignKeyAttribute")
-    end
-
     it "includes validation arrays as options" do
       attribute = Magma::Attribute.new(
         attribute_name: "fruits",
