@@ -202,7 +202,7 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
 
       # only attached models are returned
-      expect(json_body[:models][:labor][:documents].keys).to match_array((disconnected_labors + labors).map(&:name).map(&:to_sym))
+      expect(json_body[:models][:labor][:documents].keys).to match_array((disconnected_labors).map(&:name).map(&:to_sym))
     end
   end
 
