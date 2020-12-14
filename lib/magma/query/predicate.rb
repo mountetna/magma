@@ -254,6 +254,24 @@ EOT
       )
     end
 
+    def or_constraint constraints
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.|(
+          *constraints.map(&:conditions)
+        )
+      )
+    end
+
+    def and_constraint constraints
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.&(
+          *constraints.map(&:conditions)
+        )
+      )
+    end
+
     def basic_constraint column_name, value
       Magma::Constraint.new(
         alias_name,
@@ -267,7 +285,7 @@ EOT
     end
 
     def terminal value
-      raise QuestionError, 'Trailing arguments after terminal value!' unless @query_args.empty?
+      raise QuestionError, "Trailing arguments after terminal value! #{@query_args}" unless @query_args.empty?
       Magma::TerminalPredicate.new(@question, value)
     end
   end

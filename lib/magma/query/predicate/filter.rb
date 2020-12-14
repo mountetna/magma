@@ -8,26 +8,44 @@ class Magma
       process_args(query_args)
     end
 
-    verb '::or' do
-      child do
-        invalid_argument!(@query_args.join(', ')) unless @query_args.all?{|q| q.is_a?(Array)}
+    def create_filters
+      invalid_argument!(@query_args.join(', ')) unless @query_args.all?{|q| q.is_a?(Array)}
 
-        @filters = @query_args.map do |args|
-          FilterPredicate.new(@question, @model, @alias_name, *args)
-        end
-
-        @query_args = []
-
-        terminal TrueClass
+      @filters = @query_args.map do |args|
+        FilterPredicate.new(@question, @model, @alias_name, *args)
       end
 
-      join do
-        join_filters
+      @query_args = []
+
+      terminal TrueClass
+    end
+
+    verb '::or' do
+      child :create_filters
+
+      join :join_filters
+
+      constraint do
+        or_constraint( 
+          @filters.map do |filter|
+            filter.flatten.map(&:constraint)
+          end.flatten
+        )
       end
     end
 
     verb '::and' do
-      child TrueClass
+      child :create_filters
+
+      join :join_filters
+
+      constraint do
+        and_constraint( 
+          @filters.map do |filter|
+            filter.flatten.map(&:constraint)
+          end.flatten
+        )
+      end
     end
 
     verb do

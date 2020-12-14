@@ -79,7 +79,7 @@ describe QueryController do
   context 'disconnected data' do
     it 'hides disconnected records by default' do
       labors = create_list(:labor, 3, project: @project)
-      orphaned_labors = create_list(:labor, 3)
+      disconnected_labors = create_list(:labor, 3)
 
       query(
         [ 'labor', '::all', '::identifier' ]
@@ -89,9 +89,9 @@ describe QueryController do
       expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
     end
 
-    it 'shows disconnected records if asked' do
+    it 'shows only disconnected records if asked' do
       labors = create_list(:labor, 3, project: @project)
-      orphaned_labors = create_list(:labor, 3)
+      disconnected_labors = create_list(:labor, 3)
 
       auth_header(:viewer)
       json_post(:query,
@@ -101,7 +101,7 @@ describe QueryController do
       )
 
       expect(last_response.status).to eq(200)
-      expect(json_body[:answer].map(&:last).sort).to match_array((orphaned_labors + labors).map(&:identifier))
+      expect(json_body[:answer].map(&:last).sort).to match_array((disconnected_labors).map(&:identifier))
     end
   end
 
@@ -148,6 +148,54 @@ describe QueryController do
 
         expect(last_response.status).to eq(200)
         expect(json_body[:answer].map(&:last)).to match_array([ 'poop', 'poison', 'iou' ])
+        expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+      end
+
+      it 'combines several ::and filters with ::or' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, name: 'iou', worth: 5, labor: @hind)
+        skin = create(:prize, name: 'skin', worth: 2, labor: @lion)
+
+        query(['prize', [ '::or',
+            [ '::and', [ 'name', '::matches', '^po' ], [ 'worth', '::>=', 5 ] ],
+            [ '::and', [ 'name', '::matches', 'i' ], [ 'worth', '::=', 2 ] ]
+          ], '::all', 'name'])
+
+        expect(last_response.status).to eq(200)
+        expect(json_body[:answer].map(&:last)).to match_array([ 'skin', 'poison' ])
+        expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+      end
+
+      it 'combines several ::or filters with ::and' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, name: 'iou', worth: 5, labor: @hind)
+        skin = create(:prize, name: 'skin', worth: 2, labor: @lion)
+
+        query(['prize', [ '::and',
+            [ '::or', [ 'name', '::matches', '^po' ], [ 'worth', '::>=', 5 ] ],
+            [ '::or', [ 'name', '::matches', 'on$' ], [ 'worth', '::<=', 2 ] ]
+          ], '::all', 'name'])
+
+        expect(last_response.status).to eq(200)
+        expect(json_body[:answer].map(&:last)).to match_array([ 'poison' ])
+        expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+      end
+
+      it 'combines several ::or filters' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, name: 'iou', worth: 5, labor: @hind)
+        skin = create(:prize, name: 'skin', worth: 2, labor: @lion)
+
+        query(['prize', 
+            [ '::or', [ 'name', '::matches', '^po' ], [ 'worth', '::>=', 5 ] ],
+            [ '::or', [ 'name', '::matches', 'on$' ], [ 'worth', '::<=', 2 ] ],
+            '::all', 'name'])
+
+        expect(last_response.status).to eq(200)
+        expect(json_body[:answer].map(&:last)).to match_array([ 'poison' ])
         expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
       end
     end
