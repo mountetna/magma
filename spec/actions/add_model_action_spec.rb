@@ -80,6 +80,45 @@ describe Magma::AddModelAction do
         parent_link = Labors::Labor.attributes[:new_table_model]
         expect(parent_link).to be_a(Magma::TableAttribute)
         expect(parent_link).not_to be_new
+
+        model = Labors::NewTableModel
+        expect(model.dictionary).to eq(nil)
+      end
+
+      it "accepts a dictionary when adding the model" do
+        action_params[:dictionary] = {
+          dictionary_model: "Labors::Labor",
+          name: "name"
+        }
+        expect(action.perform).to eq(true)
+
+        expect(
+          Magma.instance.db[:models].
+            where(project_name: "labors", model_name: "new_table_model")
+        ).not_to be_nil
+
+        expect { Labors::NewTableModel }.not_to raise_error(NameError)
+
+        parent = Labors::NewTableModel.attributes[:labor]
+        expect(parent).to be_a(Magma::ParentAttribute)
+        expect(parent).not_to be_new
+
+        parent_link = Labors::Labor.attributes[:new_table_model]
+        expect(parent_link).to be_a(Magma::TableAttribute)
+        expect(parent_link).not_to be_new
+
+        model = Labors::NewTableModel
+        expect(model.dictionary.to_hash).to eq({
+          dictionary_model: "Labors::Labor",
+          project_name: :labors,
+          model_name: :labor,
+          attributes: {name: :name}})
+
+        # Remove the new dictionary from the database
+        Magma.instance.db[:models].where(
+          project_name: 'labors',
+          model_name: 'new_table_model'
+        ).update(dictionary: nil)
       end
     end
   end
