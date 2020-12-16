@@ -20,9 +20,9 @@ class Magma
         end
       end
 
-      def validate(document, &block)
+      def validate(record_name, document, &block)
         validations.each do |validation|
-          validation.validate(document, &block)
+          validation.validate(record_name, document, &block)
         end
       end
     end
@@ -31,3 +31,4 @@ end
 
 require_relative 'attribute'
 require_relative 'dictionary'
+require_relative 'project'

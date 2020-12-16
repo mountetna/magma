@@ -10,7 +10,7 @@ class Magma
         @entries ||= @dictionary.entries
       end
 
-      def validate(document)
+      def validate(record_name, document)
         return unless @dictionary
 
         entry = entries.find do |entry|

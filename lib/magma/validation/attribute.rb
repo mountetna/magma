@@ -6,7 +6,7 @@ class Magma
         @attribute_validations = {}
       end
 
-      def validate(document)
+      def validate(record_name, document)
         document.each do |att_name,value|
           next if att_name == :id || att_name == :$identifier
           if att_name == :temp_id
@@ -66,7 +66,7 @@ class Magma
         end
 
         def link_validate(value, &block)
-          @validator.validate(@attribute.link_model, @attribute.link_model.identity.attribute_name.to_sym => value) do |error|
+          @validator.validate(@attribute.link_model, value, @attribute.link_model.identity.attribute_name.to_sym => value) do |error|
             yield format_error(value)
           end
         end
