@@ -83,7 +83,8 @@ describe Magma::Client do
   end
 
   it 'invokes the query endpoint correctly.' do
-    create_list(:labor, 3)
+    project = create(:project)
+    create_list(:labor, 3, project: project)
 
     response = nil
     expect do

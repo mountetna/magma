@@ -37,8 +37,8 @@ class Magma
 
     def join
       constraints = @column_predicates.map do |column|
-        column.flatten.map(&:constraint).inject(&:+) || []
-      end.inject(&:+) || []
+        column.flatten.map(&:constraint)
+      end.flatten
 
       constraints = constraints.group_by(&:table_alias)
 

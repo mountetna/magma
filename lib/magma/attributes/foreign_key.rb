@@ -7,7 +7,7 @@ class Magma
     end
 
     def entry(value, loader)
-      # This allows you to orphan records.
+      # This allows you to disconnect records.
       return [ foreign_id, nil ] if value.nil?
 
       if value.is_a? Magma::TempId

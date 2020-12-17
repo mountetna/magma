@@ -84,7 +84,7 @@ class Magma
     def load_project_files
       base_file = project_file('requirements.rb')
       if File.exists?(base_file)
-        require base_file 
+        require base_file
       else
         require_files('models')
         require_files('loaders')
@@ -118,6 +118,5 @@ class Magma
     def project_file *filenames
       File.join(File.dirname(__FILE__), '../..', @project_dir, *filenames)
     end
-
   end
 end

@@ -26,38 +26,29 @@ class Magma
 
     attr_reader :model
 
+    def each_ancestor
+      current_model = @model
+      ancestral_path = []
+      while current_model do
+        yield current_model, ancestral_path
+        ancestral_path << current_model.parent_model_name&.to_s
+        current_model = current_model.parent_model
+      end
+    end
+
     def initialize(question, model, *query_args)
       super(question)
       @model = model
       @filters = []
 
-      if question.restrict?
-      # the model can be restricted, and we should withhold restricted data
-        restriction_model = model
-        ancestral_path = []
-        while restriction_model do
-          if restriction_model.has_attribute?(:restricted)
-            query_args.unshift(
-              ancestral_path + [ 'restricted', '::untrue' ]
-            )
-          end
-          ancestral_path << restriction_model.parent_model_name&.to_s
-          restriction_model = restriction_model.parent_model
-        end
-      end
-
       # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
       while query_args.first.is_a?(Array)
-        filter = RecordPredicate.new(@question, @model, alias_name, *query_args.shift)
-
-        err_msg = "Filter #{filter} does not reduce to Boolean "
-        err_msg += "#{filter.argument} #{filter.reduced_type}!"
-        raise ArgumentError, err_msg unless filter.reduced_type == TrueClass
-
-        @filters.push(filter)
+        create_filter(query_args.shift)
       end
+
+      add_filters
 
       process_args(query_args)
     end
@@ -115,14 +106,34 @@ class Magma
       format { 'Numeric' }
     end
 
+    def create_filter(args)
+      filter = FilterPredicate.new(@question, @model, alias_name, *args)
+
+      unless filter.reduced_type == TrueClass
+        raise ArgumentError,
+          "Filter #{filter} does not reduce to Boolean #{filter.argument} #{filter.reduced_type}!"
+      end
+
+      @filters.push(filter)
+    end
+
+    def add_filters
+      if @question.restrict?
+      # the model can be restricted, and we should withhold restricted data
+        each_ancestor do |restriction_model, ancestors|
+          if restriction_model.has_attribute?(:restricted)
+            create_filter(ancestors + [ 'restricted', '::untrue' ])
+          end
+        end
+      end
+    end
+
     def record_child
       RecordPredicate.new(@question, @model, alias_name, *@query_args)
     end
 
     def join
-      @filters.map do |filter|
-        filter.flatten.map(&:join).inject(&:+) || []
-      end.inject(&:+) || []
+      join_filters
     end
 
     def select

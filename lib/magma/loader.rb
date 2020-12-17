@@ -153,7 +153,7 @@ class Magma
       #   that changed, we'll need to investigate further if any implicit
       #   revisions exist.
       # Do not do this over @records, because some of those revisions
-      #   are calculated and could lead to incorrectly orphaning
+      #   are calculated and could lead to incorrectly disconnecting
       #   currently-attached records.
 
       revisions.each do |model_name, model_revisions|

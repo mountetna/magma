@@ -1,8 +1,11 @@
 source 'http://rubygems.org'
 
+# HACK to maybe fix stupid rubygems bug
+require 'fileutils'
+
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/f5710d118d6e5e9b20760c0865a2c011f4e321a9'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/ae373a9dec4d57e09ed2e3749cdbf511e56ff1d5'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
@@ -26,7 +29,6 @@ group :test do
   gem 'net-http-persistent'
   gem 'multipart-post'
   gem 'debase'
-  gem 'ruby-debug-ide'
 end
 
 Dir.glob File.expand_path("projects/*/Gemfile",__dir__) do |file|

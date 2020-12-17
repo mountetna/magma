@@ -10,6 +10,10 @@ describe RetrieveController do
     json_post(:retrieve, post)
   end
 
+  before(:each) do
+    @project = create(:project, name: 'The Twelve Labors of Hercules')
+  end
+
   it 'fails for non-users' do
     retrieve(
       {
@@ -40,7 +44,7 @@ describe RetrieveController do
     )
 
     # attributes are well-formed
-    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_class, :display_name, :name, :hidden))
+    expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_type, :display_name, :name, :hidden))
 
     # the identifier is reported
     expect(json_template[:identifier]).to eq('id')
@@ -99,7 +103,8 @@ describe RetrieveController do
   context 'files' do
     it 'retrieves file attributes with storage links' do
       Timecop.freeze(DateTime.new(500))
-      monster = create(:monster, :lion, stats: '{"filename": "stats.txt", "original_filename": ""}')
+      labor = create(:labor, :lion, project: @project)
+      monster = create(:monster, :lion, stats: '{"filename": "stats.txt", "original_filename": ""}', labor: labor)
 
       retrieve(
         project_name: 'labors',
@@ -121,11 +126,91 @@ describe RetrieveController do
     end
   end
 
+  context 'file collection' do
+    it 'retrieves file attributes with storage links' do
+      Timecop.freeze(DateTime.new(500))
+
+      lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+
+      labor = create(:labor, :lion, project: @project)
+      monster = create(
+        :monster,
+        :lion,
+        labor: labor,
+        certificates: lion_certs.to_json)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: [ 'Nemean Lion' ],
+        attribute_names: [ 'certificates' ]
+      )
+
+      expect(last_response.status).to eq(200)
+      uris = []
+      uris << URI.parse(json_document(:monster, 'Nemean Lion')[:certificates].first[:url])
+      uris << URI.parse(json_document(:monster, 'Nemean Lion')[:certificates].last[:url])
+      params = uris.map { |u| Rack::Utils.parse_nested_query(u.query) }
+
+      expect(uris.all? { |u| u.host == Magma.instance.config(:storage)[:host] }).to eq(true)
+      expect(uris.first.path).to eq('/labors/download/magma/monster-Nemean%20Lion-certificates-0.txt')
+      expect(uris.last.path).to eq('/labors/download/magma/monster-Nemean%20Lion-certificates-1.txt')
+      expect(params.all? { |p| p['X-Etna-Id'] == 'magma' }).to eq(true)
+      expect(params.all? { |p|
+        p['X-Etna-Expiration'] == (Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601 }).to eq(true)
+
+      Timecop.return
+    end
+  end
+
+  context 'disconnected data' do
+    it 'does not retrieve disconnected records' do
+      labors = create_list(:labor,3, project: @project)
+      disconnected_labors = create_list(:labor,3)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'all',
+        record_names: 'all',
+        attribute_names: 'identifier'
+      )
+
+      expect(last_response.status).to eq(200)
+
+      # only attached models are returned
+      expect(json_body[:models][:labor][:documents].keys).to match_array(labors.map(&:name).map(&:to_sym))
+    end
+
+    it 'retrieves disconnected records if asked' do
+      labors = create_list(:labor,3, project: @project)
+      disconnected_labors = create_list(:labor,3)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'identifier',
+        show_disconnected: true
+      )
+
+      expect(last_response.status).to eq(200)
+
+      # only attached models are returned
+      expect(json_body[:models][:labor][:documents].keys).to match_array((disconnected_labors).map(&:name).map(&:to_sym))
+    end
+  end
+
   context 'identifiers' do
     it 'allows grabbing the entire set of identifiers' do
-      labors = create_list(:labor,3)
-      monsters = create_list(:monster,3)
-      prizes = create_list(:prize,3)
+      labors = create_list(:labor,3, project: @project)
+      monsters = create_list(:monster,3, labor: labors.first)
+      prizes = create_list(:prize,3, labor: labors.last)
       retrieve(
         project_name: 'labors',
         model_name: 'all',
@@ -144,7 +229,7 @@ describe RetrieveController do
     end
 
     it 'retrieves records by identifier' do
-      labors = create_list(:labor,3)
+      labors = create_list(:labor,3, project: @project)
 
       names = labors.map(&:name).map(&:to_sym)
 
@@ -162,7 +247,8 @@ describe RetrieveController do
     end
 
     it 'can retrieve records by id if there is no identifier' do
-      prizes = create_list(:prize,3)
+      labor = create(:labor, :lion, project: @project)
+      prizes = create_list(:prize,3, labor: labor)
       retrieve(
         project_name: 'labors',
         model_name: 'prize',
@@ -176,33 +262,30 @@ describe RetrieveController do
 
   context 'collections' do
     it 'retrieves collections as a list of identifiers' do
-      project = create(:project, name: 'The Twelve Labors of Hercules')
-      labors = create_list(:labor, 3, project: project)
+      labors = create_list(:labor, 3, project: @project)
 
       retrieve(
         model_name: 'project',
-        record_names: [ project.name ],
+        record_names: [ @project.name ],
         attribute_names: [ 'labor' ],
         project_name: 'labors'
       )
 
-      project_doc = json_body[:models][:project][:documents][project.name.to_sym]
+      project_doc = json_body[:models][:project][:documents][@project.name.to_sym]
 
       expect(project_doc).not_to be_nil
       expect(project_doc[:labor]).to match_array(labors.map(&:name))
     end
 
     it 'returns an empty list for empty collections' do
-      project = create(:project, name: 'The Twelve Labors of Hercules')
-
       retrieve(
         model_name: 'project',
-        record_names: [ project.name ],
+        record_names: [ @project.name ],
         attribute_names: [ 'labor' ],
         project_name: 'labors'
       )
 
-      project_doc = json_body[:models][:project][:documents][project.name.to_sym]
+      project_doc = json_body[:models][:project][:documents][@project.name.to_sym]
 
       expect(project_doc).not_to be_nil
       expect(project_doc[:labor]).to eq([])
@@ -211,9 +294,9 @@ describe RetrieveController do
 
   context 'tables' do
     it 'retrieves table associations' do
-      lion = create(:labor, :lion)
-      hydra = create(:labor, :hydra)
-      stables = create(:labor, :stables)
+      lion = create(:labor, :lion, project: @project)
+      hydra = create(:labor, :hydra, project: @project)
+      stables = create(:labor, :stables, project: @project)
       lion_prizes = create_list(:prize, 3, labor: lion)
       hydra_prizes = create_list(:prize, 3, labor: hydra)
       stables_prizes = create_list(:prize, 3, labor: stables)
@@ -244,9 +327,9 @@ describe RetrieveController do
     end
 
     it 'does not retrieve table associations with collapse_tables' do
-      lion = create(:labor, :lion)
-      hydra = create(:labor, :hydra)
-      stables = create(:labor, :stables)
+      lion = create(:labor, :lion, project: @project)
+      hydra = create(:labor, :hydra, project: @project)
+      stables = create(:labor, :stables, project: @project)
       lion_prizes = create_list(:prize, 3, labor: lion)
       hydra_prizes = create_list(:prize, 3, labor: hydra)
       stables_prizes = create_list(:prize, 3, labor: stables)
@@ -277,7 +360,7 @@ describe RetrieveController do
 
   context 'tsv format' do
     it 'can retrieve a TSV of data from the endpoint' do
-      labor_list = create_list(:labor, 12)
+      labor_list = create_list(:labor, 12, project: @project)
       required_atts = ['name', 'completed', 'number']
       retrieve(
         model_name: 'labor',
@@ -293,7 +376,7 @@ describe RetrieveController do
     end
 
     it 'can retrieve the whole TSV' do
-      labor_list = create_list(:labor, 20000)
+      labor_list = create_list(:labor, 200, project: @project)
       required_atts = ['name', 'completed', 'number']
       retrieve(
         model_name: 'labor',
@@ -303,11 +386,12 @@ describe RetrieveController do
         project_name: 'labors'
       )
       expect(last_response.status).to eq(200)
-      expect(last_response.body.count("\n")).to eq(20001)
+      expect(last_response.body.count("\n")).to eq(201)
     end
 
     it 'can retrieve a TSV of data without an identifier' do
-      prize_list = create_list(:prize, 12, worth: 5)
+      labor = create(:labor, :lion, project: @project)
+      prize_list = create_list(:prize, 12, worth: 5, labor: labor)
       retrieve(
         project_name: 'labors',
         model_name: 'prize',
@@ -317,23 +401,22 @@ describe RetrieveController do
       )
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
-      expect(table).to match_array(prize_list.map{|l| header.map{|h| l.send(h)&.to_s} })
+      expect(table).to match_array(prize_list.map{|l| header.map{|h| h == "labor" ? l.labor.identifier : l.send(h)&.to_s} })
     end
 
     it 'can retrieve a TSV of collection attribute' do
-      project = create(:project, name: 'The Twelve Labors of Hercules')
-      labors = create_list(:labor, 3, project: project)
+      labors = create_list(:labor, 3, project: @project)
 
       retrieve(
         model_name: 'project',
-        record_names: [ project.name ],
+        record_names: [ @project.name ],
         attribute_names: [ 'labor' ],
         project_name: 'labors',
         format: 'tsv'
       )
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(table).to eq([ [ "The Twelve Labors of Hercules", labors.map(&:identifier).join(', ') ] ])
+      expect(table).to match_array([ [ "The Twelve Labors of Hercules", labors.map(&:identifier).join(', ') ] ])
     end
 
     it 'retrieves a TSV with file attributes as urls' do
@@ -359,13 +442,58 @@ describe RetrieveController do
 
       Timecop.return
     end
+
+    it 'retrieves a TSV with file collection attributes as urls' do
+      Timecop.freeze(DateTime.new(500))
+      lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+      hydra_certs = [{
+        filename: 'monster-Lernean Hydra-certificates-0.txt',
+        original_filename: 'ba_diploma_hydra.txt'
+      }, {
+        filename: 'monster-Lernean Hydra-certificates-1.txt',
+        original_filename: 'phd_diploma_hydra.txt'
+      }]
+
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, certificates: lion_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, :hydra, certificates: hydra_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hind, project: @project)
+      hind = create(:monster, :hind, labor: labor)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: [ 'certificates' ],
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(table.first.last).to eq(nil)
+      uris = table.slice(1, 2).map{|l| JSON.parse(l.last).map{|u| URI.parse(u)}}.flatten
+      expect(uris.map(&:host)).to all(eq(Magma.instance.config(:storage)[:host]))
+      expect(uris.map(&:path)).to all(match(%r!/labors/download/magma/.+.txt!))
+
+      Timecop.return
+    end
   end
 
   context 'filtering' do
     it 'can use a filter' do
-      lion = create(:labor, :lion)
-      hydra = create(:labor, :hydra)
-      stables = create(:labor, :stables)
+      lion = create(:labor, :lion, project: @project)
+      hydra = create(:labor, :hydra, project: @project)
+      stables = create(:labor, :stables, project: @project)
       retrieve(
         project_name: 'labors',
         model_name: 'labor',
@@ -379,10 +507,11 @@ describe RetrieveController do
     end
 
     it 'can filter on numbers' do
-      poison = create(:prize, name: 'poison', worth: 5)
-      poop = create(:prize, name: 'poop', worth: 0)
-      iou = create(:prize, name: 'iou', worth: 2)
-      skin = create(:prize, name: 'skin', worth: 6)
+      stables = create(:labor, :stables, project: @project)
+      poison = create(:prize, name: 'poison', worth: 5, labor: stables)
+      poop = create(:prize, name: 'poop', worth: 0, labor: stables)
+      iou = create(:prize, name: 'iou', worth: 2, labor: stables)
+      skin = create(:prize, name: 'skin', worth: 6, labor: stables)
       retrieve(
         project_name: 'labors',
         model_name: 'prize',
@@ -398,8 +527,8 @@ describe RetrieveController do
     end
 
     it 'can filter on dates' do
-      old_labors = create_list(:labor, 3, year: DateTime.new(500))
-      new_labors = create_list(:labor, 3, year: DateTime.new(2000))
+      old_labors = create_list(:labor, 3, year: DateTime.new(500), project: @project)
+      new_labors = create_list(:labor, 3, year: DateTime.new(2000), project: @project)
 
       retrieve(
         project_name: 'labors',
@@ -417,10 +546,10 @@ describe RetrieveController do
 
     it 'can filter on updated_at, created_at' do
       Timecop.freeze(DateTime.new(500))
-      old_labors = create_list(:labor, 3)
+      old_labors = create_list(:labor, 3, project: @project)
 
       Timecop.freeze(DateTime.new(2000))
-      new_labors = create_list(:labor, 3)
+      new_labors = create_list(:labor, 3, project: @project)
 
       retrieve(
         project_name: 'labors',
@@ -442,10 +571,10 @@ describe RetrieveController do
   context 'pagination' do
     it 'can order by an additional parameter across pages' do
       labor_list = []
-      labor_list << create(:labor, name: "d")
-      labor_list << create(:labor, name: "a")
-      labor_list << create(:labor, name: "c")
-      labor_list << create(:labor, name: "b")
+      labor_list << create(:labor, name: "d", project: @project)
+      labor_list << create(:labor, name: "a", project: @project)
+      labor_list << create(:labor, name: "c", project: @project)
+      labor_list << create(:labor, name: "b", project: @project)
 
       retrieve(
           project_name: 'labors',
@@ -462,9 +591,9 @@ describe RetrieveController do
 
     it 'can order results for a total query' do
       labor_list = []
-      labor_list << create(:labor, name: "a", updated_at: Time.now + 5)
-      labor_list << create(:labor, name: "c", updated_at: Time.now - 3)
-      labor_list << create(:labor, name: "b", updated_at: Time.now - 2)
+      labor_list << create(:labor, name: "a", updated_at: Time.now + 5, project: @project)
+      labor_list << create(:labor, name: "c", updated_at: Time.now - 3, project: @project)
+      labor_list << create(:labor, name: "b", updated_at: Time.now - 2, project: @project)
 
       labor_list_by_identifier = labor_list.sort_by { |n| n.name.to_s }
 
@@ -496,7 +625,7 @@ describe RetrieveController do
     end
 
     it 'can page results' do
-      labor_list = create_list(:labor, 9)
+      labor_list = create_list(:labor, 9, project: @project)
       third_page_labors = labor_list.sort_by(&:name)[6..8]
       labor_with_prize = third_page_labors[1]
       prize_list = create_list(:prize, 3, labor: labor_with_prize)
@@ -533,7 +662,8 @@ describe RetrieveController do
     end
 
     it 'can page results with joined collections' do
-      monster_list = create_list(:monster, 9)
+      labor = create(:labor, :lion, project: @project)
+      monster_list = create_list(:monster, 9, labor: labor)
       victim_list = monster_list.map do |monster|
         create_list(:victim, 2, monster: monster)
       end.flatten
@@ -554,7 +684,7 @@ describe RetrieveController do
     end
 
     it 'returns a count of total records for page 1' do
-      labor_list = create_list(:labor, 9)
+      labor_list = create_list(:labor, 9, project: @project)
 
       retrieve(
         project_name: 'labors',
@@ -589,8 +719,10 @@ describe RetrieveController do
 
   context 'restriction' do
     it 'hides restricted records' do
-      restricted_victim_list = create_list(:victim, 9, restricted: true)
-      unrestricted_victim_list = create_list(:victim, 9)
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, labor: labor)
+      restricted_victim_list = create_list(:victim, 9, restricted: true, monster: lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: lion)
 
       retrieve(
         project_name: 'labors',
@@ -598,12 +730,15 @@ describe RetrieveController do
         record_names: 'all',
         attribute_names: 'all'
       )
+      expect(last_response.status).to eq(200)
       expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
     end
 
     it 'hides the children of restricted records' do
-      lion = create(:monster, :lion, restricted: true)
-      hydra = create(:monster, :hydra, restricted: false)
+      labor = create(:labor, :lion, project: @project)
+      labor2 = create(:labor, :hydra, project: @project)
+      lion = create(:monster, :lion, restricted: true, labor: labor)
+      hydra = create(:monster, :hydra, restricted: false, labor: labor2)
       restricted_victim_list = create_list(:victim, 9, monster: lion)
       unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
 
@@ -617,8 +752,10 @@ describe RetrieveController do
     end
 
     it 'conservatively hides if any ancestor is restricted' do
-      lion = create(:monster, :lion, restricted: true)
-      hydra = create(:monster, :hydra, restricted: false)
+      labor = create(:labor, :lion, project: @project)
+      labor2 = create(:labor, :hydra, project: @project)
+      lion = create(:monster, :lion, restricted: true, labor: labor)
+      hydra = create(:monster, :hydra, restricted: false, labor: labor2)
 
       # some of the victims are not restricted
       restricted_victim_list = create_list(:victim, 3, monster: lion, restricted: true)
@@ -640,8 +777,10 @@ describe RetrieveController do
     end
 
     it 'shows restricted records to users with restricted permission' do
-      restricted_victim_list = create_list(:victim, 9, restricted: true)
-      unrestricted_victim_list = create_list(:victim, 9)
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, restricted: true, labor: labor)
+      restricted_victim_list = create_list(:victim, 9, restricted: true, monster: lion)
+      unrestricted_victim_list = create_list(:victim, 9, monster: lion)
 
       retrieve(
         {
@@ -660,8 +799,9 @@ describe RetrieveController do
     end
 
     it 'shows the children of restricted records to users with restricted permission' do
-      lion = create(:monster, :lion, restricted: true)
-      hydra = create(:monster, :hydra, restricted: false)
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, restricted: true, labor: labor)
+      hydra = create(:monster, :hydra, restricted: false, labor: labor)
       restricted_victim_list = create_list(:victim, 9, monster: lion)
       unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
 

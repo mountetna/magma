@@ -50,7 +50,7 @@ class Magma
     def initialize(project_name, query_args, options = {})
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @options = options
-      @start_predicate = ModelPredicate.new(self, @model, *query_args)
+      @start_predicate = StartPredicate.new(self, @model, *query_args)
     end
 
     # allow us to re-use the same question for a different page
@@ -60,6 +60,10 @@ class Magma
 
     def restrict?
       @options[:restrict]
+    end
+
+    def show_disconnected?
+      @options[:show_disconnected]
     end
 
     def answer

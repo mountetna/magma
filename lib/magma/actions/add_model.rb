@@ -23,15 +23,21 @@ class Magma
     end
 
     def create_model
-      Magma.instance.db[:models].insert(
-          project_name: @project_name,
-          model_name: @action_params[:model_name]
-      )
+      params = {
+        project_name: @project_name,
+        model_name: @action_params[:model_name]
+      }
 
-      project.load_model(
-          project_name: @project_name,
-          model_name: @action_params[:model_name]
-      )
+      params[:dictionary] = @action_params[:dictionary] if @action_params[:dictionary]
+
+      # Here dictionary needs to be a JSON string, otherwise
+      #   Sequel will try to find a column for each dictionary key.
+      Magma.instance.db[:models].insert(
+        params.key?(:dictionary) ?
+        params.merge(dictionary: params[:dictionary].to_json) :
+        params)
+
+      project.load_model(params)
     end
 
     def validations

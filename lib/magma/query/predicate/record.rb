@@ -134,6 +134,8 @@ class Magma
         return Magma::ModelPredicate.new(@question, attribute.link_model, *@query_args)
       when Magma::FileAttribute, Magma::ImageAttribute
         return Magma::FilePredicate.new(@question, @model, alias_name, attribute, *@query_args)
+      when Magma::FileCollectionAttribute
+        return Magma::FileCollectionPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::MatchAttribute
         return Magma::MatchPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::MatrixAttribute

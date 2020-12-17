@@ -9,9 +9,12 @@ class QueryController < Magma::Controller
       if @params[:query] == '::predicates'
         return success(Magma::Predicate.to_json, 'application/json')
       end
-      question = Magma::Question.new(@project_name, @params[:query],
-                                     restrict: !@user.can_see_restricted?(@project_name),
-                                     timeout: Magma.instance.config(:query_timeout))
+      question = Magma::Question.new(
+        @project_name, @params[:query],
+        show_disconnected: @params[:show_disconnected],
+        restrict: !@user.can_see_restricted?(@project_name),
+        timeout: Magma.instance.config(:query_timeout)
+      )
       return_data = {answer: question.answer, type: question.type, format: question.format}
       return success(return_data.to_json, 'application/json')
     rescue Magma::QuestionError => e

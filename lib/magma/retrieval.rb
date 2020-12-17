@@ -17,6 +17,7 @@ class Magma
       @page = opts[:page]
       @restrict = opts[:restrict]
       @order = opts[:order]
+      @show_disconnected = opts[:show_disconnected]
 
       @model = model
       @record_names = record_names
@@ -95,7 +96,7 @@ class Magma
     end
 
     def question
-      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict, order: @order)
+      @question ||= Magma::Question.new(@model.project_name, query, page: @page, page_size: @page_size, restrict: @restrict, order: @order, show_disconnected: @show_disconnected)
     end
 
     def query
@@ -131,7 +132,7 @@ class Magma
           [ att.name.to_s, '::all', '::identifier' ]
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
           [ att.name.to_s, '::identifier' ]
-        when Magma::FileAttribute, Magma::ImageAttribute
+        when Magma::FileAttribute, Magma::ImageAttribute, Magma::FileCollectionAttribute
           # Change to ::all because File.query_to_payload
           #   now expects a hash
           [ att.name.to_s, '::all' ]

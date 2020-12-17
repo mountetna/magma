@@ -19,6 +19,7 @@ describe UpdateController do
     ])
     stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
       to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+    @project = create(:project, name: 'The Twelve Labors of Hercules')
   end
 
   def update(revisions, user_type=:editor)
@@ -45,12 +46,11 @@ describe UpdateController do
     now = Time.now
     later = now + 1500
     Timecop.freeze(now)
-    project = create(:project, name: 'The Two Labors of Hercules')
 
     Timecop.freeze(later)
     update(
       'project' => {
-        'The Two Labors of Hercules' => {
+        'The Twelve Labors of Hercules' => {
           name: 'The Ten Labors of Hercules'
         }
       }
@@ -61,19 +61,18 @@ describe UpdateController do
 
     # the update happened
     expect(Labors::Project.count).to eq(1)
-    project.refresh
-    expect(project.name).to eq('The Ten Labors of Hercules')
+    @project.refresh
+    expect(@project.name).to eq('The Ten Labors of Hercules')
 
     # we updated updated_at
-    expect(project.updated_at).to be_within(0.001).of(later)
+    expect(@project.updated_at).to be_within(0.001).of(later)
     Timecop.return
   end
 
   it 'updates the identifier' do
-    project = create(:project, name: 'The Two Labors of Hercules')
     update(
       'project' => {
-        'The Two Labors of Hercules' => {
+        'The Twelve Labors of Hercules' => {
           name: 'The Ten Labors of Hercules'
         }
       }
@@ -82,8 +81,8 @@ describe UpdateController do
     expect(last_response.status).to eq(200)
     expect(json_document(:project, 'The Ten Labors of Hercules')).to eq(name: 'The Ten Labors of Hercules')
     expect(Labors::Project.count).to eq(1)
-    project.refresh
-    expect(project.name).to eq('The Ten Labors of Hercules')
+    @project.refresh
+    expect(@project.name).to eq('The Ten Labors of Hercules')
   end
 
   it 'updates a string attribute' do
@@ -153,12 +152,9 @@ describe UpdateController do
   context 'linking records' do
     context 'from the "child" record' do
       it 'updates a parent attribute for parent-child' do
-        project = create(:project, name: 'The Twelve Labors of Hercules')
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
-
-        monster = create(:monster, name: 'Lernean Hydra', labor: lion)
+        monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
         update(
           monster: {
             'Lernean Hydra': {
@@ -176,12 +172,10 @@ describe UpdateController do
       end
 
       it 'updates a parent attribute for parent-collection' do
-        project = create(:project, name: 'The Twelve Labors of Hercules')
-
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: @project)
         hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')
 
-        expect(project.labor.count).to eq(1)
+        expect(@project.labor.count).to eq(1)
 
         update(
           'project' => {
@@ -197,20 +191,18 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(json_document(:project,'The Twelve Labors of Hercules')).to include(labor: [ 'The Nemean Lion', 'The Lernean Hydra' ])
 
-        project.refresh
+        @project.refresh
         lion.refresh
         hydra.refresh
-        expect(project.labor.count).to eq(2)
-        expect(hydra.project).to eq(project)
+        expect(@project.labor.count).to eq(2)
+        expect(hydra.project).to eq(@project)
       end
 
       it 'updates a link attribute when link exists in the graph' do
-        project = create(:project, name: 'The Twelve Labors of Hercules')
-
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
-        habitat = create(:habitat, name: 'Underground', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
 
         expect(monster.habitat).to eq(nil)
 
@@ -233,13 +225,11 @@ describe UpdateController do
       end
 
       it 'updates a link collection' do
-        project = create(:project, name: 'The Twelve Labors of Hercules')
-
-        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
-        habitat = create(:habitat, name: 'Underground', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
         lion_monster = create(:monster, name: 'Nemean Lion', labor: lion, habitat: habitat)
 
         expect(hydra_monster.habitat).to eq(nil)
@@ -266,13 +256,11 @@ describe UpdateController do
 
     context 'from the "parent" or "link model" record' do
       it 'creates new child records for parent-collection' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-
         expect(Labors::Labor.count).to be(0)
 
         update(
           'project' => {
-            'The Two Labors of Hercules' => {
+            'The Twelve Labors of Hercules' => {
               labor: [
                 'The Nemean Lion',
                 'The Lernean Hydra'
@@ -287,30 +275,28 @@ describe UpdateController do
         expect(Labors::Labor.select_map(:updated_at)).to all( be_a(Time) )
 
         # the labors are linked to the project
-        project.refresh
-        expect(project.labor.count).to eq(2)
-        expect(Labors::Labor.first.project).to eq(project)
-        expect(Labors::Labor.last.project).to eq(project)
+        @project.refresh
+        expect(@project.labor.count).to eq(2)
+        expect(Labors::Labor.first.project).to eq(@project)
+        expect(Labors::Labor.last.project).to eq(@project)
 
         # the updated record is returned
         expect(last_response.status).to eq(200)
-        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'The Lernean Hydra', 'The Nemean Lion' ])
+        expect(json_document(:project, 'The Twelve Labors of Hercules')[:labor]).to match_array([ 'The Lernean Hydra', 'The Nemean Lion' ])
       end
 
       it 'updates a collection from existing records for parent-collection' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-
-        habitat = create(:habitat, name: 'Underground', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
 
         lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
         lion_monster = create(:monster, name: 'Nemean Lion', labor: lion, habitat: habitat)
 
         expect(Labors::Labor.count).to be(1)
-        expect(project.labor.count).to eq(0)
+        expect(@project.labor.count).to eq(0)
 
         update(
           'project' => {
-            'The Two Labors of Hercules' => {
+            'The Twelve Labors of Hercules' => {
               labor: [
                 'The Nemean Lion'
               ]
@@ -322,20 +308,19 @@ describe UpdateController do
         expect(Labors::Labor.count).to be(1)
 
         # the labor is linked to the project
-        project.refresh
+        @project.refresh
         lion.refresh
-        expect(project.labor.count).to eq(1)
-        expect(project.labor).to eq([ lion ])
-        expect(lion.project).to eq(project)
+        expect(@project.labor.count).to eq(1)
+        expect(@project.labor).to eq([ lion ])
+        expect(lion.project).to eq(@project)
 
         # the updated record is returned
         expect(last_response.status).to eq(200)
-        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'The Nemean Lion' ])
+        expect(json_document(:project, 'The Twelve Labors of Hercules')[:labor]).to match_array([ 'The Nemean Lion' ])
       end
 
       it 'creates a new child record for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: @project)
 
         expect(Labors::Monster.count).to be(0)
 
@@ -363,9 +348,8 @@ describe UpdateController do
       end
 
       it 'updates a child from an existing record for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra', labor: lion)
 
@@ -398,10 +382,8 @@ describe UpdateController do
       end
 
       it 'from the parent for parent-child with multiple revisions' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         lion_monster = create(:monster, name: 'Nemean Lion', labor: hydra)
         hydra_monster = create(:monster, name: 'Lernean Hydra', labor: lion)
@@ -438,8 +420,7 @@ describe UpdateController do
       end
 
       it 'can add a collection from a linked model and create new records' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        habitat = create(:habitat, name: 'Underground', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
 
         expect(Labors::Monster.count).to eq(0)
 
@@ -463,14 +444,13 @@ describe UpdateController do
       end
 
       it 'can add a collection from a linked model to existing records' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         lion_monster = create(:monster, name: 'Nemean Lion', labor: lion)
         hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
 
-        habitat = create(:habitat, name: 'Underground', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
 
         expect(lion_monster.habitat).to eq(nil)
         expect(hydra_monster.habitat).to eq(nil)
@@ -498,10 +478,9 @@ describe UpdateController do
       end
     end
 
-    context 'can create orphans' do
+    context 'can create disconnected records' do
       it 'via the child itself for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
 
@@ -529,8 +508,7 @@ describe UpdateController do
       end
 
       it 'from the parent for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
 
@@ -558,8 +536,7 @@ describe UpdateController do
       end
 
       it 'from the parent when switching children, for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         lion_monster = create(:monster, name: 'Nemean Lion', labor: hydra)
         hydra_monster = create(:monster, name: 'Lernean Hydra')
@@ -590,14 +567,12 @@ describe UpdateController do
       end
 
       it 'from the child itself for parent-collection' do
-        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
-        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        @project.refresh
 
-        project.refresh
-
-        expect(project.labor.count).to eq(2)
+        expect(@project.labor.count).to eq(2)
 
         update(
           labor: {
@@ -611,12 +586,12 @@ describe UpdateController do
         expect(Labors::Labor.count).to be(2)
 
         # the lion labor is still linked to the project
-        project.refresh
+        @project.refresh
         lion.refresh
         hydra.refresh
-        expect(project.labor.count).to eq(1)
-        expect(project.labor.first).to eq(lion)
-        expect(lion.project).to eq(project)
+        expect(@project.labor.count).to eq(1)
+        expect(@project.labor.first).to eq(lion)
+        expect(lion.project).to eq(@project)
         expect(hydra.project).to eq(nil)
 
         # the updated record is returned
@@ -625,18 +600,16 @@ describe UpdateController do
       end
 
       it 'when updating the parent collection for parent-collection' do
-        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
-        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        @project.refresh
 
-        project.refresh
-
-        expect(project.labor.count).to eq(2)
+        expect(@project.labor.count).to eq(2)
 
         update(
           'project' => {
-            'The Two Labors of Hercules' => {
+            'The Twelve Labors of Hercules' => {
               labor: [
                 'The Nemean Lion'
               ]
@@ -648,32 +621,30 @@ describe UpdateController do
         expect(Labors::Labor.count).to be(2)
 
         # the first labors is still linked to the project
-        project.refresh
+        @project.refresh
         lion.refresh
         hydra.refresh
-        expect(project.labor.count).to eq(1)
-        expect(project.labor.first).to eq(lion)
-        expect(lion.project).to eq(project)
+        expect(@project.labor.count).to eq(1)
+        expect(@project.labor.first).to eq(lion)
+        expect(lion.project).to eq(@project)
         expect(hydra.project).to eq(nil)
 
         # the updated record is returned
         expect(last_response.status).to eq(200)
-        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ 'The Nemean Lion' ])
+        expect(json_document(:project, 'The Twelve Labors of Hercules')[:labor]).to match_array([ 'The Nemean Lion' ])
       end
 
       it 'when setting the collection to [], from a parent' do
-        project = create(:project, name: 'The Two Labors of Hercules')
+        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
-        lion = create(:labor, name: 'The Nemean Lion', year: '0003-01-01', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        @project.refresh
 
-        project.refresh
-
-        expect(project.labor.count).to eq(2)
+        expect(@project.labor.count).to eq(2)
 
         update(
           'project' => {
-            'The Two Labors of Hercules' => {
+            'The Twelve Labors of Hercules' => {
               labor: []
             }
           }
@@ -683,22 +654,21 @@ describe UpdateController do
         expect(Labors::Labor.count).to be(2)
 
         # No labors are linked to the project
-        project.refresh
+        @project.refresh
         lion.refresh
         hydra.refresh
-        expect(project.labor.count).to eq(0)
+        expect(@project.labor.count).to eq(0)
         expect(lion.project).to eq(nil)
         expect(hydra.project).to eq(nil)
 
         # the updated record is returned
         expect(last_response.status).to eq(200)
-        expect(json_document(:project, 'The Two Labors of Hercules')[:labor]).to match_array([ ])
+        expect(json_document(:project, 'The Twelve Labors of Hercules')[:labor]).to match_array([ ])
       end
 
       it 'from the child of a link_model' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        habitat = create(:habitat, name: 'Underground', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra', habitat: habitat)
 
@@ -724,11 +694,10 @@ describe UpdateController do
       end
 
       it 'via the link model' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        habitat = create(:habitat, name: 'Underground', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
-        monster = create(:monster, name: 'Lernean Hydra', habitat: habitat)
+        monster = create(:monster, name: 'Lernean Hydra', habitat: habitat, labor: hydra)
 
         expect(monster.habitat).to eq(habitat)
         expect(habitat.monster).to eq([ monster ])
@@ -752,10 +721,9 @@ describe UpdateController do
       end
     end
 
-    context 'can re-attach orphaned records' do
+    context 'can re-attach disconnected records' do
       it 'via the child itself for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra')
 
@@ -786,8 +754,7 @@ describe UpdateController do
       end
 
       it 'via a parent record for parent-child' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra')
 
@@ -818,51 +785,49 @@ describe UpdateController do
       end
 
       it 'via a child in parent-collection' do
-        project = create(:project, name: 'The Two Labors of Hercules')
         lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         expect(Labors::Labor.count).to eq(2)
 
         expect(lion.project).to eq(nil)
-        expect(hydra.project).to eq(project)
-        expect(project.labor).to eq([ hydra ])
+        expect(hydra.project).to eq(@project)
+        expect(@project.labor).to eq([ hydra ])
 
         update(
           labor: {
             'The Nemean Lion': {
-              project: 'The Two Labors of Hercules'
+              project: 'The Twelve Labors of Hercules'
             }
           }
         )
 
         expect(last_response.status).to eq(200)
-        expect(json_document(:labor,'The Nemean Lion')).to include(project: 'The Two Labors of Hercules')
+        expect(json_document(:labor,'The Nemean Lion')).to include(project: 'The Twelve Labors of Hercules')
 
         expect(Labors::Labor.count).to eq(2)
 
         lion.refresh
         hydra.refresh
-        project.refresh
-        expect(lion.project).to eq(project)
-        expect(hydra.project).to eq(project)
-        expect(project.labor).to match_array([ hydra, lion ])
+        @project.refresh
+        expect(lion.project).to eq(@project)
+        expect(hydra.project).to eq(@project)
+        expect(@project.labor).to match_array([ hydra, lion ])
       end
 
       it 'via a parent in parent-collection' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01')
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: nil)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         expect(Labors::Labor.count).to eq(2)
 
         expect(lion.project).to eq(nil)
-        expect(hydra.project).to eq(project)
-        expect(project.labor).to eq([ hydra ])
+        expect(hydra.project).to eq(@project)
+        expect(@project.labor).to eq([ hydra ])
 
         update(
           project: {
-            'The Two Labors of Hercules': {
+            'The Twelve Labors of Hercules': {
               labor: [
                 'The Lernean Hydra',
                 'The Nemean Lion'
@@ -872,22 +837,21 @@ describe UpdateController do
         )
 
         expect(last_response.status).to eq(200)
-        expect(json_document(:project,'The Two Labors of Hercules')).to include(labor: [ 'The Lernean Hydra', 'The Nemean Lion' ])
+        expect(json_document(:project,'The Twelve Labors of Hercules')).to include(labor: [ 'The Lernean Hydra', 'The Nemean Lion' ])
 
         expect(Labors::Labor.count).to eq(2)
 
         lion.refresh
         hydra.refresh
-        project.refresh
-        expect(lion.project).to eq(project)
-        expect(hydra.project).to eq(project)
-        expect(project.labor).to match_array([ hydra, lion ])
+        @project.refresh
+        expect(lion.project).to eq(@project)
+        expect(hydra.project).to eq(@project)
+        expect(@project.labor).to match_array([ hydra, lion ])
       end
 
       it 'via the child of a link model' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        habitat = create(:habitat, name: 'Underground', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra')
 
@@ -913,9 +877,8 @@ describe UpdateController do
       end
 
       it 'via the link model' do
-        project = create(:project, name: 'The Two Labors of Hercules')
-        habitat = create(:habitat, name: 'Underground', project: project)
-        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: project)
+        habitat = create(:habitat, name: 'Underground', project: @project)
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
 
         monster = create(:monster, name: 'Lernean Hydra')
 
@@ -941,14 +904,14 @@ describe UpdateController do
       end
     end
 
-    context 'trying to re-attach orphans but not to the graph throws exception for' do
-      xit 'orphaned parent, parent-collection' do
+    context 'trying to re-attach disconnected records but not to the graph throws exception for' do
+      xit 'disconnected parent, parent-collection' do
       end
 
       xit 'non-existent parent record, parent-collection' do
       end
 
-      xit 'orphaned parent, parent-child' do
+      xit 'disconnected parent, parent-child' do
       end
 
       xit 'non-existent parent record, parent-child' do
@@ -957,7 +920,7 @@ describe UpdateController do
       xit 'non-existent link model' do
       end
 
-      xit 'orphaned link model' do
+      xit 'disconnected link model' do
       end
     end
 
@@ -1026,7 +989,7 @@ describe UpdateController do
       end
 
       it 'updates a table' do
-        labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        labor = create(:labor, name: 'The Golden Apples of the Hesperides', project: @project)
         update(
           'labor' => {
             'The Golden Apples of the Hesperides' => {
@@ -1083,7 +1046,7 @@ describe UpdateController do
       end
 
       it 'appends to an existing table' do
-        labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        labor = create(:labor, name: 'The Golden Apples of the Hesperides', project: @project)
         apples = create_list(:prize, 3, @apple_of_discord.merge(labor: labor))
         update(
           'prize' => {
@@ -1105,10 +1068,10 @@ describe UpdateController do
       end
 
       it 'replaces an existing table' do
-        lion_labor = create(:labor, name: 'The Nemean Lion')
+        lion_labor = create(:labor, name: 'The Nemean Lion', project: @project)
         hide = create(:prize, name: 'hide', labor: lion_labor)
 
-        apple_labor = create(:labor, name: 'The Golden Apples of the Hesperides')
+        apple_labor = create(:labor, name: 'The Golden Apples of the Hesperides', project: @project)
         apples = create_list(:prize, 3, @apple_of_discord.merge(labor: apple_labor))
 
         update(
@@ -1180,9 +1143,9 @@ describe UpdateController do
       # May be overkill ... but making sure each of the anticipated
       #   exceptions from Metis bulk_copy results in a failed Magma update.
       bad_request_statuses = [400, 403, 404, 422, 500]
-      req_counter = 0
+      req_counter = 1
       bad_request_statuses.each do |status|
-        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy/).
           to_return(status: status, body: '{}')
 
         update(
@@ -1194,10 +1157,15 @@ describe UpdateController do
             }
           }
         )
-        req_counter += 1
         lion.refresh
         expect(lion.stats).to eq nil  # Did not change from the create state
         expect(last_response.status).to eq(422)
+
+        expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+          with(query: hash_including({
+            "X-Etna-Headers": "revisions"
+          })).times(req_counter)
+        req_counter += 1
       end
 
       Timecop.return
@@ -1226,7 +1194,7 @@ describe UpdateController do
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:stats][:path]).to eq('::blank')
       expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
 
@@ -1327,7 +1295,7 @@ describe UpdateController do
       # but we do get an upload url for Metis
       upload_url = json_document(:monster, 'Nemean Lion')[:stats][:path]
       expect(upload_url.
-        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+        start_with?('https://metis.test/labors/upload/magma/tmp-')).to eq(true)
       expect(upload_url.
         include?('X-Etna-Signature=')).to eq(true)
 
@@ -1424,9 +1392,9 @@ describe UpdateController do
       # May be overkill ... but making sure each of the anticipated
       #   exceptions from Metis bulk_copy results in a failed Magma update.
       bad_request_statuses = [400, 403, 404, 422, 500]
-      req_counter = 0
+      req_counter = 1
       bad_request_statuses.each do |status|
-        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy?/).
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy/).
           to_return(status: status, body: '{}')
 
         update(
@@ -1438,10 +1406,16 @@ describe UpdateController do
             }
           }
         )
-        req_counter += 1
         lion.refresh
         expect(lion.selfie).to eq nil  # Did not change from the create state
         expect(last_response.status).to eq(422)
+
+        expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+          with(query: hash_including({
+            "X-Etna-Headers": "revisions"
+          })).times(req_counter)
+
+        req_counter += 1
       end
 
       Timecop.return
@@ -1469,7 +1443,7 @@ describe UpdateController do
 
       expect(last_response.status).to eq(200)
 
-      # but we do get an upload url for Metis
+      # and we do not get an upload url for Metis
       expect(json_document(:monster, 'Nemean Lion')[:selfie][:path]).to eq('::blank')
       expect(json_document(:monster, 'Nemean Lion')[:selfie][:url]).to be_nil
 
@@ -1563,13 +1537,12 @@ describe UpdateController do
       # the field is updated
       lion.refresh
       expect(lion.selfie).to eq(nil)
-
       expect(last_response.status).to eq(200)
 
       # but we do get an upload url for Metis
       upload_url = json_document(:monster, 'Nemean Lion')[:selfie][:path]
       expect(upload_url.
-        start_with?('https://metis.test/labors/upload/magma/tmp/')).to eq(true)
+        start_with?('https://metis.test/labors/upload/magma/tmp-')).to eq(true)
       expect(upload_url.
         include?('X-Etna-Signature=')).to eq(true)
 
@@ -1628,8 +1601,447 @@ describe UpdateController do
     end
   end
 
+  context 'file collection attributes' do
+    it 'fails the update when the bulk copy request fails' do
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+
+      # May be overkill ... but making sure each of the anticipated
+      #   exceptions from Metis bulk_copy results in a failed Magma update.
+      bad_request_statuses = [400, 403, 404, 422, 500]
+      req_counter = 1
+      bad_request_statuses.each do |status|
+        stub_request(:post, /https:\/\/metis.test\/labors\/files\/copy/).
+          to_return(status: status, body: '{}')
+
+        update(
+          monster: {
+            'Nemean Lion' => {
+              certificates: [{
+                path: 'metis://labors/files/lion-stats.txt'
+              }]
+            }
+          }
+        )
+        lion.refresh
+        expect(lion.certificates).to eq nil  # Did not change from the create state
+        expect(last_response.status).to eq(422)
+
+        expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+          with(query: hash_including({
+            "X-Etna-Headers": "revisions"
+          })).times(req_counter)
+        req_counter += 1
+      end
+
+      Timecop.return
+    end
+
+    it 'removes a set of existing files' do
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: [{
+          filename: 'monster-Nemean Lion-certificates-0.txt'
+        }, {
+          filename: 'monster-Nemean Lion-certificates-1.txt'
+        }].to_json)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: []
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.certificates).to eq([])
+
+      expect(last_response.status).to eq(200)
+
+      # Make sure the Metis copy endpoint was not called
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'removes a file reference from an existing set' do
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: [{
+          filename: 'monster-Nemean Lion-certificates-0.txt'
+        }, {
+          filename: 'monster-Nemean Lion-certificates-1.txt'
+        }].to_json)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [
+              {
+                path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+              }
+            ]
+          }
+        }
+      )
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq([{
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: nil
+      }].to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # and we do get a download url for Metis
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].length).to eq(1)
+      url = json_document(:monster, 'Nemean Lion')[:certificates].first[:url]
+      expect(url.
+        start_with?('https://metis.test/labors/download/magma/monster-Nemean%20Lion-certificates-0.txt')).to eq(true)
+      expect(url.
+        include?('X-Etna-Signature=')).to eq(true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'rejects the update if revision missing :path' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              original_filename: 'CharmSchool.pdf'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq original_certs  # Did not change from the create state
+
+      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'can update even if existing file revisions not in ascending order' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'certificate-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'certificate-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+              original_filename: 'certificate-1.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+              original_filename: 'certificate-0.txt'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq([{
+        location: "metis://labors/magma/monster-Nemean Lion-certificates-1.txt",
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'certificate-1.txt'
+      }, {
+        location: "metis://labors/magma/monster-Nemean Lion-certificates-0.txt",
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'certificate-0.txt'
+      }].to_json)
+
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'can update even if new files are not at the end of the array' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+              original_filename: 'certificate-0.txt'
+            }, {
+              path: 'metis://labors/files/CharmSchool.pdf',
+              original_filename: 'CharmSchool.pdf'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+              original_filename: 'certificate-1.txt'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+
+      lion.refresh
+
+      expect(lion.certificates.to_json).to eq([{
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'certificate-0.txt'
+      }, {
+        location: 'metis://labors/files/CharmSchool.pdf',
+        filename: 'monster-Nemean Lion-certificates-1.pdf',
+        original_filename: 'CharmSchool.pdf'
+      }, {
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+        filename: 'monster-Nemean Lion-certificates-2.txt',
+        original_filename: 'certificate-1.txt'
+      }].to_json)
+
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'returns a temporary Metis path when using ::temp' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              path: '::temp'
+            }, {
+              path: '::temp'
+            }]
+          }
+        }
+      )
+
+      # the field is updated
+      lion.refresh
+      expect(lion.certificates.to_json).to eq([{
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: nil
+      }, {
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: nil
+      }].to_json)
+
+      expect(last_response.status).to eq(200)
+
+      # but we do get an upload url for Metis, for the temporary paths!
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].length).to eq(4)
+      urls = []
+      urls << json_document(:monster, 'Nemean Lion')[:certificates][2][:path]
+      urls << json_document(:monster, 'Nemean Lion')[:certificates].last[:path]
+
+      expect(urls.all? { |u|
+          u.start_with?('https://metis.test/labors/upload/magma/tmp-')
+        }).to eq(true)
+      expect(urls.all? { |u|
+          u.include?('X-Etna-Signature=')
+        }).to eq(true)
+
+      # Make sure the Metis copy endpoint was called (for the original files)
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+      with(query: hash_including({
+        "X-Etna-Headers": "revisions"
+      }))
+    end
+
+    it 'can update even if temporary Metis paths are not at the end' do
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+              original_filename: 'certificate-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+              original_filename: 'certificate-1.txt'
+            }, {
+              path: '::temp'
+            }, {
+              path: 'metis://labors/files/new-pirate-certificate.txt',
+              original_filename: 'new-pirate-certificate.txt'
+            }, {
+              path: '::temp'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+
+      lion.refresh
+      expect(lion.certificates.to_json).to eq([{
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt',
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'certificate-0.txt'
+      }, {
+        location: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt',
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'certificate-1.txt'
+      }, {
+        location: 'metis://labors/files/new-pirate-certificate.txt',
+        filename: 'monster-Nemean Lion-certificates-3.txt',
+        original_filename: 'new-pirate-certificate.txt'
+      }].to_json)
+
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }))
+    end
+
+    it 'links a new file from metis' do
+      Timecop.freeze(DateTime.new(500))
+      original_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt'
+      }].to_json
+
+      lion = create(
+        :monster,
+        name: 'Nemean Lion',
+        species: 'lion',
+        certificates: original_certs)
+
+      update(
+        monster: {
+          'Nemean Lion' => {
+            certificates: [{
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-0.txt'
+            }, {
+              path: 'metis://labors/magma/monster-Nemean Lion-certificates-1.txt'
+            }, {
+              path: 'metis://labors/files/CharmSchool.pdf'
+            }]
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+
+      lion.refresh
+      expect(lion.certificates.to_json).not_to eq original_certs
+
+      # and we do get an download url for Metis
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:certificates].last[:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-certificates-2.pdf')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].last.key?(:path)).to eq (true)
+      expect(json_document(:monster, 'Nemean Lion')[:certificates].last.key?(:original_filename)).to eq (true)
+
+      # Make sure the Metis copy endpoint was called
+      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
+        with(query: hash_including({
+          "X-Etna-Headers": "revisions"
+        }), body: hash_including({
+          "revisions": [{
+            "source":"metis://labors/magma/monster-Nemean Lion-certificates-0.txt",
+            "dest":"metis://labors/magma/monster-Nemean Lion-certificates-0.txt"
+          }, {
+            "source":"metis://labors/magma/monster-Nemean Lion-certificates-1.txt",
+            "dest":"metis://labors/magma/monster-Nemean Lion-certificates-1.txt"
+          }, {
+            "source": "metis://labors/files/CharmSchool.pdf",
+            "dest": "metis://labors/magma/monster-Nemean Lion-certificates-2.pdf"
+          }]
+        }))
+
+      Timecop.return
+    end
+  end
+
   it 'updates a matrix' do
-    labor = create(:labor, name: 'Nemean Lion')
+    labor = create(:labor, name: 'Nemean Lion', project: @project)
     update(
       'labor' => {
         'Nemean Lion' => {
@@ -1651,7 +2063,7 @@ describe UpdateController do
   end
 
   it 'complains about incorrectly-sized matrix rows' do
-    labor = create(:labor, name: 'Nemean Lion')
+    labor = create(:labor, name: 'Nemean Lion', project: @project)
     update(
       'labor' => {
         'Nemean Lion' => {
@@ -1692,7 +2104,9 @@ describe UpdateController do
     it 'prevents updates to a restricted record by a restricted user' do
       orig_name = 'Outis Koutsonadis'
       new_name  = 'Outis Koutsomadis'
-      restricted_victim = create(:victim, name: orig_name, restricted: true)
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, labor: labor)
+      restricted_victim = create(:victim, name: orig_name, restricted: true, monster: lion)
 
       update(
         {
@@ -1714,7 +2128,8 @@ describe UpdateController do
     it 'prevents updates to the child of a restricted record by a restricted user' do
       orig_name = 'Outis Koutsonadis'
       new_name  = 'Outis Koutsomadis'
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', restricted: true)
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion', restricted: true, labor: labor)
       restricted_victim = create(:victim, monster: lion, name: orig_name)
 
       update(
