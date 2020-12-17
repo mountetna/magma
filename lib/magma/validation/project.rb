@@ -9,9 +9,11 @@ class Magma
         @project_name ||= @model.select_map( @model.identity.column_name.to_sym ).first
       end
 
-      def validate(record_name, document)
-        return unless @model.model_name == :project
+      def self.skip?(model)
+        model.model_name != :project
+      end
 
+      def validate(record_name, document)
         if project_name && record_name != project_name
           yield "Project name must match '#{project_name}'"
         end

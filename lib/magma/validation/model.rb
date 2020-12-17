@@ -16,8 +16,12 @@ class Magma
 
       def validations
         @validations ||= self.class.validations.map do |validation_class|
-          validation_class.new(@model, @validator)
-        end
+          validation_class.new(@model, @validator) unless validation_class.skip?(@model)
+        end.compact
+      end
+
+      def self.skip?(model)
+        false
       end
 
       def validate(record_name, document, &block)
