@@ -2109,6 +2109,14 @@ describe UpdateController do
       expect(json_body[:errors]).to eq(["Project name must match 'The Twelve Labors of Hercules'"])
     end
 
+    it 'prevents additional project parents from being created' do
+      update(labor: { "The Nemean Lion": { project: "The Ten Labors of Hercules" } })
+
+      expect(Labors::Project.count).to eq(1)
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Project name must match 'The Twelve Labors of Hercules'"])
+    end
+
     it 'allows a root record to be created if there is none' do
       Labors::Project.first.delete
 

@@ -58,16 +58,24 @@ class Magma
         private
 
         def format_error(value)
-          if @attribute.format_hint
-            "On #{@attribute.name}, '#{value}' should be like '#{@attribute.format_hint}'."
+          if link_attribute.format_hint
+            "On #{@attribute.name}, '#{value}' should be like '#{link_attribute.format_hint}'."
           else
             "On #{@attribute.name}, '#{value}' is improperly formatted."
           end
         end
 
+        def link_attribute
+          @attribute.link_model.identity
+        end
+
         def link_validate(value, &block)
-          @validator.validate(@attribute.link_model, value, @attribute.link_model.identity.attribute_name.to_sym => value) do |error|
-            yield format_error(value)
+          @validator.validate(@attribute.link_model, value, link_attribute.attribute_name.to_sym => value) do |error|
+            if error =~ /format/
+              yield format_error(value)
+            else
+              yield error
+            end
           end
         end
       end
