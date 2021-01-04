@@ -2100,6 +2100,33 @@ describe UpdateController do
     expect(lion.species).to eq('lion')
   end
 
+  context 'projects' do
+    it 'prevents additional project records from being created' do
+      update(project: { "The Ten Labors of Hercules": { } })
+
+      expect(Labors::Project.count).to eq(1)
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Project name must match 'The Twelve Labors of Hercules'"])
+    end
+
+    it 'prevents additional project parents from being created' do
+      update(labor: { "The Nemean Lion": { project: "The Ten Labors of Hercules" } })
+
+      expect(Labors::Project.count).to eq(1)
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Project name must match 'The Twelve Labors of Hercules'"])
+    end
+
+    it 'allows a root record to be created if there is none' do
+      Labors::Project.first.delete
+
+      update(project: { "The Ten Labors of Hercules": { } })
+
+      expect(last_response.status).to eq(200)
+      expect(Labors::Project.count).to eq(1)
+    end
+  end
+
   context 'restriction' do
     it 'prevents updates to a restricted record by a restricted user' do
       orig_name = 'Outis Koutsonadis'

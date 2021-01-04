@@ -6,8 +6,8 @@ class Magma
       @models = {}
     end
 
-    def validate(model, document)
-      model_validation(model).validate(document) do |error|
+    def validate(model, record_name, record)
+      model_validation(model).validate(record_name, record) do |error|
         yield error
       end
     end

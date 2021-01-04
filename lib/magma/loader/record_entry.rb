@@ -135,7 +135,7 @@ class Magma
 
     def check_document_validity
       @complaints = []
-      @loader.validator.validate(@model, @record) do |complaint|
+      @loader.validator.validate(@model, @record_name, @record) do |complaint|
         @complaints << complaint
       end
     end
