@@ -27,7 +27,6 @@ x-base-etna-service: &base-etna-service
     - 'janus.development.local:172.16.238.10'
     - 'timur.development.local:172.16.238.10'
     - 'rtemis.development.local:172.16.238.10'
-    - 'archimedes.development.local:172.16.238.10'
     - 'polyphemus.development.local:172.16.238.10'
 
 x-base-etna-services: &base-etna-services
