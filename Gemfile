@@ -5,7 +5,7 @@ require 'fileutils'
 
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/e517e860c12861f89309d40ce28040652f7f3d3e'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/ec9f6bb76d1751a644f803a36d75ab68e3a23beb'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
@@ -15,6 +15,7 @@ gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
 gem 'puma', '5.0.2'
+gem 'curb' # used by ipi project.
 
 group :test do
   gem 'simplecov'
