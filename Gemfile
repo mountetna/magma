@@ -23,7 +23,7 @@ group :test do
   gem 'factory_bot'
   gem 'webmock'
   gem 'rspec'
-  gem 'database_cleaner'
+  gem 'database_cleaner', '1.8.0'
   gem 'pry'
   gem 'pry-byebug'
   gem 'timecop'
