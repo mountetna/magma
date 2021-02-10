@@ -1,8 +1,8 @@
 describe Magma::Validation do
-  def validate(model, document)
+  def validate(model, record_name, document)
     @validator ||= Magma::Validation.new
     errors = []
-    @validator.validate(model,document) do |error|
+    @validator.validate(model, record_name, document) do |error|
       errors.push error
     end
     errors
@@ -35,11 +35,11 @@ describe Magma::Validation do
       stub_validation(Labors::Monster, :species, { type: "Regexp", value: /^[a-z\s]+$/ })
 
       # fails
-      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'Lion')
       expect(errors).to eq(["On species, 'Lion' is improperly formatted."])
 
       # passes
-      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'lion')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'lion')
       expect(errors).to be_empty
     end
 
@@ -50,11 +50,11 @@ describe Magma::Validation do
       })
 
       # fails
-      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'leo')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'leo')
       expect(errors).to eq(["On species, 'leo' is improperly formatted."])
 
       # passes
-      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'panthera leo')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'panthera leo')
       expect(errors).to be_empty
     end
 
@@ -64,11 +64,11 @@ describe Magma::Validation do
       })
 
       # fails
-      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'Lion')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'Lion')
       expect(errors).to eq(["On species, 'Lion' should be one of lion, Panthera leo."])
 
       # passes
-      errors = validate(Labors::Monster, name: 'Nemean Lion', species: 'lion')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'lion')
       expect(errors).to be_empty
     end
 
@@ -78,11 +78,11 @@ describe Magma::Validation do
       })
 
       # fails
-      errors = validate(Labors::Labor, name: 'Nemean Lion', monster: 'nemean lion')
+      errors = validate(Labors::Labor, 'Nemean Lion', name: 'Nemean Lion', monster: 'nemean lion')
       expect(errors).to eq(["On monster, 'nemean lion' is improperly formatted."])
 
       # passes
-      errors = validate(Labors::Labor, name: 'Nemean Lion', monster: 'Nemean Lion')
+      errors = validate(Labors::Labor, 'Nemean Lion', name: 'Nemean Lion', monster: 'Nemean Lion')
       expect(errors).to be_empty
     end
 
@@ -92,11 +92,11 @@ describe Magma::Validation do
       })
 
       # fails
-      errors = validate(Labors::Victim, name: 'Outis Koutsonadis', monster: 'nemean lion')
+      errors = validate(Labors::Victim, 'Outis Koutsonadis', name: 'Outis Koutsonadis', monster: 'nemean lion')
       expect(errors).to eq(["On monster, 'nemean lion' is improperly formatted."])
 
       # passes
-      errors = validate(Labors::Victim, name: 'Outis Koutsonadis', monster: 'Nemean Lion')
+      errors = validate(Labors::Victim, 'Outis Koutsonadis', name: 'Outis Koutsonadis', monster: 'Nemean Lion')
       expect(errors).to be_empty
     end
 
@@ -106,15 +106,15 @@ describe Magma::Validation do
       })
 
       # fails
-      errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'augean stables', 'lernean hydra' ])
+      errors = validate(Labors::Project, 'The Three Labors of Hercules', name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'augean stables', 'lernean hydra' ])
       expect(errors).to eq(["On labor, 'augean stables' is improperly formatted.", "On labor, 'lernean hydra' is improperly formatted."])
 
       # fails
-      errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: 'labors.txt')
+      errors = validate(Labors::Project, 'The Three Labors of Hercules', name: 'The Three Labors of Hercules', labor: 'labors.txt')
       expect(errors).to eq(["labors.txt is not an Array."])
 
       # passes
-      errors = validate(Labors::Project, name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'Augean Stables', 'Lernean Hydra' ])
+      errors = validate(Labors::Project,'The Three Labors of Hercules',  name: 'The Three Labors of Hercules', labor: [ 'Nemean Lion', 'Augean Stables', 'Lernean Hydra' ])
       expect(errors).to be_empty
     end
 
@@ -122,6 +122,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Codex,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         aspect: 'hide',
         tome: 'Bullfinch',
@@ -137,6 +138,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Codex,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         aspect: 'hide',
         tome: 'Bullfinch',
@@ -152,13 +154,13 @@ describe Magma::Validation do
       stub_validation(Labors::Labor, :number, { type: "Range", begin: 1, end: 5 })
 
       # fails
-      errors = validate(Labors::Labor, name: "Rick", number: 10)
+      errors = validate(Labors::Labor, 'Rick', name: "Rick", number: 10)
       expect(errors).to eq([
         "On number, 10 should be greater than or equal to 1 and less than or equal to 5."
       ])
 
       # passes
-      errors = validate(Labors::Labor, name: "Rick", number: 3)
+      errors = validate(Labors::Labor, 'Rick', name: "Rick", number: 3)
       expect(errors).to be_empty
     end
 
@@ -169,7 +171,7 @@ describe Magma::Validation do
         { type: "Range", begin: 1, end: 5, exclude_end: true }
       )
 
-      errors = validate(Labors::Labor, name: "Rick", number: 5)
+      errors = validate(Labors::Labor, 'Rick', name: "Rick", number: 5)
       expect(errors).to eq([
         "On number, 5 should be greater than or equal to 1 and less than 5."
       ])
@@ -180,6 +182,7 @@ describe Magma::Validation do
     it 'fails to validate with an empty dictionary' do
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'hide',
         source: 'Bullfinch',
@@ -235,6 +238,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'hide',
         source: 'Bullfinch',
@@ -245,6 +249,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'hide',
         source: 'Bullfinch',
@@ -258,6 +263,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'mass_in_stones',
         source: 'Bullfinch',
@@ -268,6 +274,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'mass_in_stones',
         source: 'Bullfinch',
@@ -281,6 +288,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'victim_count',
         source: 'Bullfinch',
@@ -291,6 +299,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'victim_count',
         source: 'Bullfinch',
@@ -304,6 +313,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'cries',
         source: 'Bullfinch',
@@ -314,6 +324,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'cries',
         source: 'Bullfinch',
@@ -327,6 +338,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'cries',
         source: 'Graves',
@@ -337,6 +349,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'cries',
         source: 'Graves',
@@ -350,6 +363,7 @@ describe Magma::Validation do
       # fails
       errors = validate(
         Labors::Aspect,
+        'Nemean Lion',
         monster: 'Nemean Lion',
         name: 'cries',
         source: 'Graves',
@@ -360,6 +374,7 @@ describe Magma::Validation do
       # passes
       errors = validate(
         Labors::Aspect,
+        'Lernean Hydra',
         monster: 'Lernean Hydra',
         name: 'cries',
         source: 'Graves',
@@ -370,6 +385,7 @@ describe Magma::Validation do
       # also passes
       errors = validate(
         Labors::Aspect,
+        'Lernean Hydra',
         monster: 'Lernean Hydra',
         name: 'cries',
         source: 'Bullfinch',
