@@ -5,7 +5,7 @@ require 'fileutils'
 
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/9e9d2746302e2e029a79d76870b04cf50aa876eb'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/97a84cafbfff41c9c195a8ba9dfb5717e9752334'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
@@ -21,7 +21,7 @@ group :test do
   gem 'factory_bot'
   gem 'webmock'
   gem 'rspec'
-  gem 'database_cleaner'
+  gem 'database_cleaner', '1.8.0'
   gem 'pry'
   gem 'pry-byebug'
   gem 'timecop'
