@@ -9,8 +9,6 @@ gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/arti
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
-gem 'carrierwave-sequel'
-gem 'carrierwave'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
 gem 'puma', '5.0.2'
