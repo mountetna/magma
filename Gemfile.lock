@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: 3033142e105acefe881dfcd4a613bfee19492d55
-  branch: refs/artifacts/gem-etna/16affb162128c387c5bb09156fc5624084553ba0
+  revision: 71d2992a0b6437f41a32cfcd2d1fa23909e958ac
+  branch: refs/artifacts/gem-etna/f57d85374a85ffc6353f6cf488e0b5f7df6404d8
   specs:
     etna (0.1.28)
       jwt
@@ -46,14 +46,17 @@ GEM
     jwt (2.2.2)
     method_source (1.0.0)
     mini_magick (4.11.0)
-    mini_portile2 (2.4.0)
+    mini_portile2 (2.5.0)
     minitest (5.14.2)
     multipart-post (2.1.1)
     net-http-persistent (4.0.1)
       connection_pool (~> 2.2)
     nio4r (2.5.4)
-    nokogiri (1.10.10)
-      mini_portile2 (~> 2.4.0)
+    nokogiri (1.11.1)
+      mini_portile2 (~> 2.5.0)
+      racc (~> 1.4)
+    nokogiri (1.11.1-x86_64-linux)
+      racc (~> 1.4)
     pg (1.2.3)
     pry (0.13.1)
       coderay (~> 1.1)
@@ -64,6 +67,7 @@ GEM
     public_suffix (4.0.6)
     puma (5.0.2)
       nio4r (~> 2.0)
+    racc (1.5.2)
     rack (2.2.3)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
