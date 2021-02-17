@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: 4d54b194b1867114fd719eb133514d417c033bf9
-  branch: refs/artifacts/gem-etna/97a84cafbfff41c9c195a8ba9dfb5717e9752334
+  revision: 608773af6c4936811241c048dc970011d4373276
+  branch: refs/artifacts/gem-etna/9e9d2746302e2e029a79d76870b04cf50aa876eb
   specs:
     etna (0.1.27)
       jwt
@@ -13,6 +13,8 @@ GIT
 GEM
   remote: http://rubygems.org/
   specs:
+    activemodel (6.1.0)
+      activesupport (= 6.1.0)
     activesupport (6.1.0)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
@@ -22,6 +24,17 @@ GEM
     addressable (2.7.0)
       public_suffix (>= 2.0.2, < 5.0)
     byebug (11.1.3)
+    carrierwave (2.1.1)
+      activemodel (>= 5.0.0)
+      activesupport (>= 5.0.0)
+      addressable (~> 2.6)
+      image_processing (~> 1.1)
+      mimemagic (>= 0.3.0)
+      mini_mime (>= 0.1.3)
+      ssrf_filter (~> 1.0)
+    carrierwave-sequel (0.1.1)
+      carrierwave
+      sequel
     coderay (1.1.3)
     concurrent-ruby (1.1.7)
     connection_pool (2.2.3)
@@ -35,12 +48,18 @@ GEM
     docile (1.3.2)
     factory_bot (6.1.0)
       activesupport (>= 5.0.0)
+    ffi (1.14.2)
     hashdiff (1.0.1)
     i18n (1.8.5)
       concurrent-ruby (~> 1.0)
+    image_processing (1.12.1)
+      mini_magick (>= 4.9.5, < 5)
+      ruby-vips (>= 2.0.17, < 3)
     jwt (2.2.2)
     method_source (1.0.0)
+    mimemagic (0.3.5)
     mini_magick (4.11.0)
+    mini_mime (1.0.2)
     mini_portile2 (2.4.0)
     minitest (5.14.2)
     multipart-post (2.1.1)
@@ -62,7 +81,7 @@ GEM
     rack (2.2.3)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
-    rollbar (3.1.2)
+    rollbar (3.1.1)
     rspec (3.10.0)
       rspec-core (~> 3.10.0)
       rspec-expectations (~> 3.10.0)
@@ -77,6 +96,8 @@ GEM
       rspec-support (~> 3.10.0)
     rspec-support (3.10.0)
     ruby-ole (1.2.12.2)
+    ruby-vips (2.0.17)
+      ffi (~> 1.9)
     sequel (5.28.0)
     simplecov (0.20.0)
       docile (~> 1.1)
@@ -86,6 +107,7 @@ GEM
     simplecov_json_formatter (0.1.2)
     spreadsheet (1.2.6)
       ruby-ole (>= 1.0)
+    ssrf_filter (1.0.7)
     timecop (0.9.2)
     tzinfo (2.0.4)
       concurrent-ruby (~> 1.0)
@@ -101,6 +123,8 @@ PLATFORMS
 
 DEPENDENCIES
   activesupport (>= 4.2.6)
+  carrierwave
+  carrierwave-sequel
   curb
   database_cleaner (= 1.8.0)
   debase
