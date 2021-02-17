@@ -33,8 +33,7 @@ describe 'Magma::Storage' do
         'foo',
         'root/path/to/file',
         email: 'heracles@mountolympus.org',
-        first: 'Heracles',
-        last: 'of Thebes'
+        name: 'Heracles of Thebes'
       ).to_s
       expect(upload_url.include? 'foo/upload/magma/root/path/to/file').to be true
 

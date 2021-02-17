@@ -25,7 +25,7 @@ describe Magma::Censor do
     model = Magma.instance.magma_projects[:labors].models[:victim]
     user = Etna::User.new(
         email: 'zeus@mountolympus.org',
-        first: 'Zeus',
+        name: 'Zeus',
         perm: 'A:labors'
     )
     censor = Magma::Censor.new(
@@ -41,7 +41,7 @@ describe Magma::Censor do
     model = Magma.instance.magma_projects[:labors].models[:victim]
     user = Etna::User.new(
         email: 'zeus@mountolympus.org',
-        first: 'Zeus',
+        name: 'Zeus',
         perm: 'a:labors'
     )
     censor = Magma::Censor.new(
@@ -58,7 +58,7 @@ describe Magma::Censor do
     model = Magma.instance.magma_projects[:labors].models[:victim]
     user = Etna::User.new(
         email: 'zeus@mountolympus.org',
-        first: 'Zeus',
+        name: 'Zeus',
         perm: 'a:labors'
     )
     censor = Magma::Censor.new(
@@ -81,7 +81,7 @@ describe Magma::Censor do
     model = Magma.instance.magma_projects[:labors].models[:victim]
     user = Etna::User.new(
         email: 'zeus@mountolympus.org',
-        first: 'Zeus',
+        name: 'Zeus',
         perm: 'a:labors'
     )
     censor = Magma::Censor.new(
