@@ -13,6 +13,11 @@ GIT
 GEM
   remote: http://rubygems.org/
   specs:
+    activemodel (6.1.0)
+      activesupport (= 6.1.0)
+    activerecord (6.1.0)
+      activemodel (= 6.1.0)
+      activesupport (= 6.1.0)
     activesupport (6.1.0)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
@@ -100,6 +105,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  activerecord
   activesupport (>= 4.2.6)
   curb
   database_cleaner (= 1.8.0)
