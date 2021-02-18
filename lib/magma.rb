@@ -1,4 +1,6 @@
 require 'sequel'
+require 'active_record'
+require 'active_support'
 require "active_support/core_ext/class/subclasses"
 
 require_relative 'magma/project'
@@ -107,7 +109,7 @@ class Magma
           model_name != :project
         )
 
-          raise Magma::ValidationError, "Orphan model #{model_name}." 
+          raise Magma::ValidationError, "Orphan model #{model_name}."
         end
       end
     end
