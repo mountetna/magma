@@ -126,8 +126,7 @@ class Magma
         @magma_model.project_name,
         "tmp-#{Magma.instance.sign.uid}",
         email: user.email,
-        first: user.first,
-        last: user.last
+        name: user.name
       )
     end
   end
