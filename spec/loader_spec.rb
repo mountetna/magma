@@ -8,7 +8,7 @@ describe Magma::Loader do
   before(:each) do
     @user = Etna::User.new(
         email: 'zeus@mountolympus.org',
-        first: 'Zeus',
+        name: 'Zeus',
         perm: 'A:labors'
     )
   end
