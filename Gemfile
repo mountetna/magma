@@ -15,6 +15,7 @@ gem 'spreadsheet'
 gem 'puma', '5.0.2'
 gem 'nokogiri'
 gem 'curb' # used by ipi project.
+gem 'concurrent-ruby'
 
 group :test do
   gem 'simplecov'
