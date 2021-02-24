@@ -1,9 +1,11 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: 51daa9ba0dea59052f67043a2825df7c1f732fb0
-  branch: refs/artifacts/gem-etna/60667019a69dda8b6246a241d9962b717081b9bd
+  revision: 0cf81d27da546ba7972a434405a8d22250243df2
+  branch: refs/artifacts/gem-etna/c5b3582280310610a86b6fe9945543a7d9a5f820
   specs:
-    etna (0.1.28)
+    etna (0.1.29)
+      concurrent-ruby
+      concurrent-ruby-ext
       jwt
       multipart-post
       nokogiri
@@ -28,7 +30,9 @@ GEM
       public_suffix (>= 2.0.2, < 5.0)
     byebug (11.1.3)
     coderay (1.1.3)
-    concurrent-ruby (1.1.7)
+    concurrent-ruby (1.1.8)
+    concurrent-ruby-ext (1.1.8)
+      concurrent-ruby (= 1.1.8)
     connection_pool (2.2.3)
     crack (0.4.4)
     curb (0.9.11)
@@ -120,7 +124,6 @@ DEPENDENCIES
   mini_magick
   multipart-post
   net-http-persistent
-  nokogiri
   pg
   pry
   pry-byebug
