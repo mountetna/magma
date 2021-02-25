@@ -44,7 +44,7 @@ class MD5Set
       )
 
       @requested_md5s = response[:files].map do |file|
-        file.values_at(:file_name, :filehash)
+        file.values_at(:file_name, :file_hash)
       end.to_h
     end
 

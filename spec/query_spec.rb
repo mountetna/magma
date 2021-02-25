@@ -459,7 +459,7 @@ describe QueryController do
             file_name: monster.stats["filename"],
             project_name: "labors",
             bucket_name: "magma",
-            filehash: "hashfor#{monster.stats["filename"]}"
+            file_hash: "hashfor#{monster.stats["filename"]}"
           }
         end,
         folders: []
@@ -579,7 +579,7 @@ describe QueryController do
               file_name: f["filename"],
               project_name: "labors",
               bucket_name: "magma",
-              filehash: "hashfor#{f["filename"]}"
+              file_hash: "hashfor#{f["filename"]}"
             }
           end
         end.flatten,
