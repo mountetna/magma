@@ -13,6 +13,7 @@ class QueryController < Magma::Controller
         @project_name, @params[:query],
         show_disconnected: @params[:show_disconnected],
         restrict: !@user.can_see_restricted?(@project_name),
+        user: @user,
         timeout: Magma.instance.config(:query_timeout)
       )
       return_data = {answer: question.answer, type: question.type, format: question.format}

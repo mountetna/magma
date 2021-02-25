@@ -20,7 +20,8 @@ class Magma
           '::all',
           '::identifier'
         ],
-        restrict: true
+        restrict: true,
+        user: @user
       ).answer.map(&:last)
 
       existing_identifiers = Magma::Question.new(
@@ -31,7 +32,8 @@ class Magma
               '::all',
               '::identifier'
           ],
-          restrict: false
+          restrict: false,
+          user: @user
       ).answer.map(&:last)
 
       restricted_identifiers = existing_identifiers - unrestricted_identifiers

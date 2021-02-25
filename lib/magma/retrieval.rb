@@ -16,6 +16,7 @@ class Magma
       @page_size = opts[:page_size]
       @page = opts[:page]
       @restrict = opts[:restrict]
+      @user = @user
       @order = opts[:order]
       @show_disconnected = opts[:show_disconnected]
 

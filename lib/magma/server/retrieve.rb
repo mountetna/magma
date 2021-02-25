@@ -132,6 +132,7 @@ class RetrieveController < Magma::Controller
       filters: [ Magma::Retrieval::StringFilter.new(@filter) ],
       collapse_tables: true,
       show_disconnected: @show_disconnected,
+      user: @user,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 
@@ -154,6 +155,7 @@ class RetrieveController < Magma::Controller
       page_size: use_pages && @page_size,
       order: use_pages && @order,
       show_disconnected: @show_disconnected,
+      user: @user,
       restrict: !@user.can_see_restricted?(@project_name)
     )
 

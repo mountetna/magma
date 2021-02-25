@@ -194,7 +194,7 @@ class Magma
           child_model.model_name,
           [parent_model.model_name, '::identifier', '::in', parent_record_names],
             '::all', parent_model.model_name, '::identifier'
-        ])
+        ], user: @user)
 
         current_record_names = question.answer
 

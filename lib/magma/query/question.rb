@@ -47,9 +47,11 @@ class Magma
   end
 
   class Question
+    attr_reader :user
     def initialize(project_name, query_args, options = {})
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @options = options
+      @user = options[:user]
       @start_predicate = StartPredicate.new(self, @model, *query_args)
     end
 
