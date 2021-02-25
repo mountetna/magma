@@ -33,7 +33,7 @@ class Magma
       child String
 
       extract do |table, identity|
-        @md5s << table.first[column_name]["filename"]
+        table.first[column_name] ? (@md5s << table.first[column_name]["filename"]) : nil
       end
     end
 
