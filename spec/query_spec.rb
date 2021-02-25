@@ -571,6 +571,39 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
     end
 
+    it 'returns md5s' do
+      route_payload = JSON.generate({
+        files: Labors::Monster.all.map do |monster|
+          monster.certificates.map do |f|
+            {
+              file_name: f["filename"],
+              project_name: "labors",
+              bucket_name: "magma",
+              filehash: "hashfor#{f["filename"]}"
+            }
+          end
+        end.flatten,
+        folders: []
+      })
+
+      stub_request(:post, %r!https://metis.test/labors/find/magma!).
+        to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+
+      query(
+        [ 'monster', '::all', 'certificates', '::md5' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([
+        ["hashformonster-Augean Stables-certificates-0.txt", "hashformonster-Augean Stables-certificates-1.txt"],
+        ["hashformonster-Lernean Hydra-certificates-0.txt", "hashformonster-Lernean Hydra-certificates-1.txt"],
+        ["hashformonster-Nemean Lion-certificates-0.txt", "hashformonster-Nemean Lion-certificates-1.txt"]
+      ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
+    end
+
     it 'returns all the file data' do
       query(
         [ 'monster', '::all', 'certificates', '::all' ]

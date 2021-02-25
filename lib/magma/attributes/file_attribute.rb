@@ -45,8 +45,7 @@ class Magma
     end
 
     def self.type_bulk_load_hook(loader, project_name, attribute_copy_revisions)
-      copier = FileCopier.new(loader, project_name, attribute_copy_revisions)
-      copier.bulk_copy_files
+      return FileCopier.new(loader, project_name, attribute_copy_revisions).bulk_copy_files
     end
   end
 end
