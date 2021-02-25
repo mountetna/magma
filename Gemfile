@@ -5,7 +5,7 @@ require 'fileutils'
 
 ruby '~> 2.5'
 
-gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/60667019a69dda8b6246a241d9962b717081b9bd'
+gem 'etna', git: 'https://github.com/mountetna/monoetna.git', branch: 'refs/artifacts/gem-etna/73a560c4e5875f2bd115dd2668b95bb8f1c17442'
 gem 'pg'
 gem 'sequel', '5.28.0'
 gem 'mini_magick'
@@ -13,7 +13,6 @@ gem 'activerecord'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
 gem 'puma', '5.0.2'
-gem 'nokogiri'
 gem 'curb' # used by ipi project.
 gem 'concurrent-ruby'
 
