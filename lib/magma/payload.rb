@@ -24,7 +24,7 @@ class Magma
       @models[model].reset
     end
 
-    def to_hash
+    def to_hash(hide_templates=nil)
       response = {}
 
       if !@models.empty?
@@ -32,7 +32,7 @@ class Magma
           models: Hash[
             @models.map do |model, model_payload|
               [
-                model.model_name, model_payload.to_hash
+                model.model_name, model_payload.to_hash(hide_templates)
               ]
             end
           ]
@@ -74,7 +74,7 @@ class Magma
         @records = []
       end
 
-      def to_hash
+      def to_hash(hide_templates=nil)
         {
           documents: Hash[
             @records.map do |record|
@@ -83,9 +83,9 @@ class Magma
               ]
             end
           ],
-          template: @model.json_template,
+          template: hide_templates ? nil : @model.json_template,
           count: @count
-        }.reject {|k,v| v.nil? }
+        }.compact
       end
 
       def json_document record

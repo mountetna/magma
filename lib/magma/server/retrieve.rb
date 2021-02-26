@@ -46,6 +46,7 @@ class RetrieveController < Magma::Controller
     @page_size = @params[:page_size]
     @order = @params[:order]
     @show_disconnected = @params[:show_disconnected]
+    @hide_templates = !!@params[:hide_templates]
 
     @attribute_names = @params[:attribute_names]
 
@@ -60,7 +61,14 @@ class RetrieveController < Magma::Controller
 
       return failure(422, errors: @errors) unless success?
 
-      perform
+      @payload = Magma::Payload.new
+
+      case @format
+      when 'tsv'
+        return tsv_payload
+      else
+        return json_payload
+      end
     rescue Magma::QuestionError => e
       return failure(422, errors: [ e.message ])
     rescue ArgumentError => e
@@ -88,17 +96,6 @@ class RetrieveController < Magma::Controller
       @record_names == 'all'
   end
 
-  def perform
-    @payload = Magma::Payload.new
-
-    case @format
-    when 'tsv'
-      tsv_payload
-    else
-      json_payload
-    end
-  end
-
   def json_payload
     if @model_name == 'all'
       Magma.instance.get_project(@project_name).models.each do |model_name, model|
@@ -119,7 +116,7 @@ class RetrieveController < Magma::Controller
       )
     end
 
-    return success(@payload.to_hash.to_json, 'application/json')
+    return success(@payload.to_hash(@hide_templates).to_json, 'application/json')
   end
 
   def tsv_payload
