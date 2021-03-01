@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/mountetna/monoetna.git
-  revision: 3cec742ba648cd7dcb2af4e07a7b6bf691dbfddf
-  branch: refs/artifacts/gem-etna/e95581f0ec78dff9f9ab6997bab6212358cfe9cf
+  revision: 55c3514374e95110e5d2a5b8116df060ef0c7339
+  branch: refs/artifacts/gem-etna/4c1ca78fa5e0a44233ae51e1858e25669033ead3
   specs:
     etna (0.1.29)
       concurrent-ruby
