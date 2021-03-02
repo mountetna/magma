@@ -64,6 +64,20 @@ describe RetrieveController do
     )
   end
 
+  it 'optionally does not return a template' do
+    retrieve(
+      model_name: 'project',
+      record_names: 'all',
+      attribute_names: 'all',
+      project_name: 'labors',
+      hide_templates: true
+    )
+    expect(last_response.status).to eq(200)
+
+    expect(json_body[:models][:project][:documents].size).to eq(1)
+    expect(json_body[:models][:project][:template]).to be_nil
+  end
+
   it 'complains with missing params.' do
     retrieve(project_name: 'labors')
     expect(last_response.status).to eq(422)
