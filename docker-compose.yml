@@ -1,9 +1,9 @@
 
 version: '3.4'
 
-x-base-etna-service: &base-etna-service
-  # Base configuration used by most etna services.
-  image: etna-base
+x-base-etna-service:
+  &base-etna-service # Base configuration used by most etna services.
+  image: etna-base-dev
   volumes: &base-etna-service-volumes
     - .:/app:delegated
     - magma-app-gems:/app/vendor/bundle:rw
@@ -14,8 +14,8 @@ x-base-etna-service: &base-etna-service
     - magma-opt-dir:/usr/opt:rw
     - ../etna:/etna:delegated
   environment: &base-etna-env
-    "MAGMA_ENV": "development"
-    APP_NAME: "magma"
+    'MAGMA_ENV': 'development'
+    APP_NAME: 'magma'
   entrypoint: /entrypoints/development.sh
 
   networks:
@@ -30,51 +30,50 @@ x-base-etna-service: &base-etna-service
     - 'archimedes.development.local:172.16.238.10'
     - 'polyphemus.development.local:172.16.238.10'
 
-x-base-etna-services: &base-etna-services
-  # Default list of services an etna app may have.
-  "magma_app": &base-etna-app
-    # The ruby webserver
+x-base-etna-services:
+  &base-etna-services # Default list of services an etna app may have.
+  'magma_app': &base-etna-app # The ruby webserver
     <<: *base-etna-service
     command: ./bin/puma.sh
     depends_on:
-      - "magma_db"
+      - 'magma_db'
 
-  "magma_webpack": &base-etna-webpack
-    # The ruby webpack server watching for changes
+  'magma_webpack':
+    &base-etna-webpack # The ruby webpack server watching for changes
     <<: *base-etna-service
     environment:
       <<: *base-etna-env
-      RUN_NPM_INSTALL: "true"
-      SKIP_RUBY_SETUP: "true"
+      RUN_NPM_INSTALL: 'true'
+      SKIP_RUBY_SETUP: 'true'
     command: npm run webpack
 
-  "magma_db": &base-etna-db
-    # The application specific database.  Overwrite with development-psql-9 to use psql 9 instead.
+  'magma_db':
+    &base-etna-db # The application specific database.  Overwrite with development-psql-9 to use psql 9 instead.
     image: development-psql
     volumes:
       - magma-db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: "magma_development"
+      POSTGRES_DB: 'magma_development'
       POSTGRES_PASSWORD: password
       POSTGRES_USER: developer
-      APP_NAME: "magma"
-    container_name: "magma_db_1"
+      APP_NAME: 'magma'
+    container_name: 'magma_db_1'
 
-  "magma_app_fe": &base-etna-fe
-    # The application level apache frontend serving static assets, data, and proxying the main app.
+  'magma_app_fe':
+    &base-etna-fe # The application level apache frontend serving static assets, data, and proxying the main app.
     image: etna-apache
     volumes:
       - magma-public-dir:/app/public:ro
       - magma-opt-dir:/usr/opt:ro
-      - ../docker/etna-base/entrypoints:/entrypoints:ro
+      - ../docker/etna-base-dev/entrypoints:/entrypoints:ro
     depends_on:
-      - "magma_app"
+      - 'magma_app'
     entrypoint: /entrypoints/development.sh
-    command: ["httpd", "-DFOREGROUND"]
+    command: ['httpd', '-DFOREGROUND']
     environment:
-      SKIP_BUILD: "1"
-      WAIT_FOR_APP: "1"
-      APP_NAME: "magma"
+      SKIP_BUILD: '1'
+      WAIT_FOR_APP: '1'
+      APP_NAME: 'magma'
 
 networks:
   edge_net:
