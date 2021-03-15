@@ -12,7 +12,7 @@ gem 'mini_magick'
 gem 'activerecord'
 gem 'activesupport', '>= 4.2.6'
 gem 'spreadsheet'
-gem 'puma', '5.0.2'
+gem 'puma', '>=5.0.2'
 gem 'curb' # used by ipi project.
 gem 'concurrent-ruby'
 
