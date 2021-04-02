@@ -4,7 +4,7 @@ class Magma
   class FileCollectionPredicate < Magma::ColumnPredicate
     def initialize question, model, alias_name, attribute, *query_args
       super
-      @md5s = MD5Set.new(@question.user, @model)
+      @metis_metadata = MetisMetadata.new(@question.user, @model)
     end
 
     verb '::url' do
@@ -40,7 +40,15 @@ class Magma
       child String
 
       extract do |table, identity|
-        table.first[column_name]&.map { |f| @md5s << f["filename"] }
+        table.first[column_name]&.map { |f| (@metis_metadata << f["filename"])[:file_hash] }
+      end
+    end
+
+    verb '::updated_at' do
+      child String
+
+      extract do |table, identity|
+        table.first[column_name]&.map { |f| (@metis_metadata << f["filename"])[:updated_at] }
       end
     end
 

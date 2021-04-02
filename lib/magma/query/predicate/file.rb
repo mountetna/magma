@@ -1,13 +1,13 @@
-require_relative '../md5_set'
+require_relative '../metis_metadata'
 
 class Magma
   class FilePredicate < Magma::ColumnPredicate
     def initialize question, model, alias_name, attribute, *query_args
       super
-      @md5s = MD5Set.new(@question.user, @model)
+      @metis_metadata = MetisMetadata.new(@question.user, @model)
     end
 
-    attr_reader :requested_md5_paths
+    attr_reader :requested_file_paths
     verb '::url' do
       child String
 
@@ -20,12 +20,12 @@ class Magma
     end
 
 
-    class MD5Value
+    class MetisMetadataValue
       def initialize(predicate, file)
         @predicate = predicate
         @file = file
 
-        @predicate.requested_md5_paths << file
+        @predicate.requested_file_paths << file
       end
     end
 
@@ -33,7 +33,15 @@ class Magma
       child String
 
       extract do |table, identity|
-        table.first[column_name] ? (@md5s << table.first[column_name]["filename"]) : nil
+        table.first[column_name] ? (@metis_metadata << table.first[column_name]["filename"])[:file_hash] : nil
+      end
+    end
+
+    verb '::updated_at' do
+      child String
+
+      extract do |table, identity|
+        table.first[column_name] ? (@metis_metadata << table.first[column_name]["filename"])[:updated_at] : nil
       end
     end
 

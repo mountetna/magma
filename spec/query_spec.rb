@@ -480,6 +480,34 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
     end
 
+    it 'returns the updated_at' do
+      route_payload = JSON.generate({
+        files: Labors::Monster.all.map do |monster|
+          {
+            file_name: monster.stats["filename"],
+            project_name: "labors",
+            bucket_name: "magma",
+            updated_at: "updatedatfor#{monster.stats["filename"]}"
+          }
+        end,
+        folders: []
+      })
+
+      stub_request(:post, %r!https://metis.test/labors/find/magma!).
+        to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+      query(
+        [ 'monster', '::all', 'stats', '::md5' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([
+        'updatedatforhydra-stats.tsv', 'updatedatforlion-stats.tsv', 'updatedatforstables-stats.tsv'
+      ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
+    end
+
     it 'returns all the file data' do
       query(
         [ 'monster', '::all', 'stats', '::all' ]
@@ -600,6 +628,39 @@ describe QueryController do
         ["hashformonster-Augean Stables-certificates-0.txt", "hashformonster-Augean Stables-certificates-1.txt"],
         ["hashformonster-Lernean Hydra-certificates-0.txt", "hashformonster-Lernean Hydra-certificates-1.txt"],
         ["hashformonster-Nemean Lion-certificates-0.txt", "hashformonster-Nemean Lion-certificates-1.txt"]
+      ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
+    end
+
+    it 'returns file updated_at' do
+      route_payload = JSON.generate({
+        files: Labors::Monster.all.map do |monster|
+          monster.certificates.map do |f|
+            {
+              file_name: f["filename"],
+              project_name: "labors",
+              bucket_name: "magma",
+              updated_at: "updatedatfor#{f["filename"]}"
+            }
+          end
+        end.flatten,
+        folders: []
+      })
+
+      stub_request(:post, %r!https://metis.test/labors/find/magma!).
+        to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
+
+
+      query(
+        [ 'monster', '::all', 'certificates', '::md5' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([
+        ["updatedatformonster-Augean Stables-certificates-0.txt", "updatedatformonster-Augean Stables-certificates-1.txt"],
+        ["updatedatformonster-Lernean Hydra-certificates-0.txt", "updatedatformonster-Lernean Hydra-certificates-1.txt"],
+        ["updatedatformonster-Nemean Lion-certificates-0.txt", "updatedatformonster-Nemean Lion-certificates-1.txt"]
       ])
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#certificates'])
     end
