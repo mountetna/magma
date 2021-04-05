@@ -497,7 +497,7 @@ describe QueryController do
         to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
 
       query(
-        [ 'monster', '::all', 'stats', '::md5' ]
+        [ 'monster', '::all', 'stats', '::updated_at' ]
       )
 
       expect(last_response.status).to eq(200)
@@ -652,7 +652,7 @@ describe QueryController do
 
 
       query(
-        [ 'monster', '::all', 'certificates', '::md5' ]
+        [ 'monster', '::all', 'certificates', '::updated_at' ]
       )
 
       expect(last_response.status).to eq(200)
