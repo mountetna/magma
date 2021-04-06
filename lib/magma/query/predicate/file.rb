@@ -1,10 +1,12 @@
-require_relative '../metis_metadata'
+require_relative '../md5_set'
+require_relative '../updated_at_set'
 
 class Magma
   class FilePredicate < Magma::ColumnPredicate
     def initialize question, model, alias_name, attribute, *query_args
       super
-      @metis_metadata = MetisMetadata.new(@question.user, @model)
+      @md5_set = Md5Set.new(@question.user, @model)
+      @updated_at_set = UpdatedAtSet.new(@question.user, @model)
     end
 
     attr_reader :requested_file_paths
@@ -33,7 +35,7 @@ class Magma
       child String
 
       extract do |table, identity|
-        table.first[column_name] ? (@metis_metadata << table.first[column_name]["filename"])[:file_hash] : nil
+        table.first[column_name] ? @md5_set << table.first[column_name]["filename"] : nil
       end
     end
 
@@ -41,7 +43,7 @@ class Magma
       child String
 
       extract do |table, identity|
-        table.first[column_name] ? (@metis_metadata << table.first[column_name]["filename"])[:updated_at] : nil
+        table.first[column_name] ? @updated_at_set << table.first[column_name]["filename"] : nil
       end
     end
 
