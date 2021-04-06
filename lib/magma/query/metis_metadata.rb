@@ -30,7 +30,7 @@ class MetisMetadata
       host = Magma.instance.config(:storage).fetch(:host)
 
       client = Etna::Client.new("https://#{host}", @user.token)
-      puts @requested_file_paths
+
       response = client.bucket_find(
         project_name: @model.project_name.to_s,
         bucket_name: "magma",
@@ -46,7 +46,6 @@ class MetisMetadata
       @requested_files = response[:files].map do |file|
         [file[:file_name], file]
       end.to_h
-      puts @requested_files
     end
   end
 end
