@@ -14,7 +14,10 @@ class QueryController < Magma::Controller
         show_disconnected: @params[:show_disconnected],
         restrict: !@user.can_see_restricted?(@project_name),
         user: @user,
-        timeout: Magma.instance.config(:query_timeout)
+        timeout: Magma.instance.config(:query_timeout),
+        page: @params[:page],
+        order: @params[:order],
+        page_size: @params[:page_size]
       )
       return_data = {answer: question.answer, type: question.type, format: question.format}
       return success(return_data.to_json, 'application/json')

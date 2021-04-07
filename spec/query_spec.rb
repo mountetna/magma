@@ -17,9 +17,13 @@ describe QueryController do
     @project = create(:project, name: 'The Twelve Labors of Hercules')
   end
 
-  def query(question,user_type=:viewer)
+  def query(question,user_type=:viewer,opts={})
     auth_header(user_type)
-    json_post(:query, {project_name: 'labors', query: question})
+    json_post(:query, {project_name: 'labors', query: question}.update(opts))
+  end
+
+  def query_opts(question,opts={})
+    query(question, :viewer, opts)
   end
 
   def update(revisions, user_type=:editor)
@@ -944,6 +948,104 @@ describe QueryController do
           'labors::prize#worth'
         ]
       ])
+    end
+  end
+
+  context 'pagination' do
+    it 'can order by an additional parameter across pages' do
+      labor_list = []
+      labor_list << create(:labor, name: "d", project: @project)
+      labor_list << create(:labor, name: "a", project: @project)
+      labor_list << create(:labor, name: "c", project: @project)
+      labor_list << create(:labor, name: "b", project: @project)
+
+      query_opts(
+        [ 'labor', '::all', '::identifier'],
+        order: 'updated_at',
+        page: 1,
+        page_size: 2
+      )
+
+      expect(json_body[:answer].map {|a| a.first }).to eq(["d", "a"])
+    end
+
+    it 'can order results for a total query' do
+      labor_list = []
+      labor_list << create(:labor, name: "a", updated_at: Time.now + 5, project: @project)
+      labor_list << create(:labor, name: "c", updated_at: Time.now - 3, project: @project)
+      labor_list << create(:labor, name: "b", updated_at: Time.now - 2, project: @project)
+
+      labor_list_by_identifier = labor_list.sort_by { |n| n.name.to_s }
+
+      query(
+        [ 'labor', '::all', 'name']
+      )
+
+      names_by_identifier = labor_list_by_identifier.map(&:name)
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map { |a| a.last }).to eq(names_by_identifier)
+
+      labor_list_by_updated_at = labor_list.sort_by(&:updated_at)
+      query_opts(
+        [ 'labor', '::all', 'name'],
+        order: 'updated_at'
+      )
+
+      names_by_updated_at = labor_list_by_updated_at.map(&:name)
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map { |a| a.last }).to eq(names_by_updated_at)
+
+      expect(names_by_updated_at).to_not eql(names_by_identifier)
+    end
+
+    it 'can page results' do
+      labor_list = create_list(:labor, 9, project: @project)
+      third_page_labors = labor_list.sort_by(&:name)[6..8]
+
+      query_opts(
+        [ 'labor', '::all', 'name'],
+        page: 3,
+        page_size: 3
+      )
+
+      names = third_page_labors.map(&:name)
+      
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map { |a| a.last }).to eq(names)
+    end
+
+    it 'can page results with joined collections' do
+      labor = create(:labor, :lion, project: @project)
+      monster_list = create_list(:monster, 9, labor: labor)
+      victim_list = monster_list.map do |monster|
+        create_list(:victim, 2, monster: monster)
+      end.flatten
+
+      names = monster_list.sort_by(&:name)[6..8].map(&:name)
+
+      query_opts(
+        [ 'monster', '::all', 'name'],
+        order: 'reference_monster',
+        page: 3,
+        page_size: 3
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq(names)
+    end
+
+    it 'returns a descriptive error when no results are retrieved on paginated query' do
+      lion = create(:labor, :lion)
+      hydra = create(:labor, :hydra)
+      stables = create(:labor, :stables)
+
+      query_opts(
+        [ 'labor', '::all', 'name'],
+        page: 3,
+        page_size: 3
+      )
+
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(["Page 3 not found"])
     end
   end
 
