@@ -299,7 +299,7 @@ describe QueryController do
 
       @lion_difficulty = create(:characteristic, labor: lion, name: "difficulty", value: "10" )
       @hydra_difficulty = create(:characteristic, labor: hydra, name: "difficulty", value: "2" )
-      @stables_difficulty = create(:characteristic, labor: stables, name: "difficulty", value: "5" )
+      @stables_difficulty = create(:characteristic, labor: stables, name: "difficulty", value: "5.1" )
     
       lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling" )
       hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking" )
@@ -353,10 +353,17 @@ describe QueryController do
 
     it 'supports ::> for numeric strings' do
       query(
-        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5"], '::all', '::identifier' ]
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5.1"], '::all', '::identifier' ]
       )
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
@@ -371,7 +378,7 @@ describe QueryController do
 
     it 'supports ::>= for numeric strings' do
       query(
-        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>=", "5"], '::all', '::identifier' ]
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>=", "5.1"], '::all', '::identifier' ]
       )
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
@@ -389,10 +396,17 @@ describe QueryController do
 
     it 'supports ::< for numeric strings' do
       query(
-        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<", "5"], '::all', '::identifier' ]
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<", "5.1"], '::all', '::identifier' ]
       )
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<", "5.2"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
@@ -407,7 +421,7 @@ describe QueryController do
 
     it 'supports ::<= for numeric strings' do
       query(
-        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<=", "5"], '::all', '::identifier' ]
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<=", "5.1"], '::all', '::identifier' ]
       )
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
