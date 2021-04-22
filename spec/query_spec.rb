@@ -360,7 +360,7 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::> for strings' do
+    it 'ignores ::> for non-numeric strings' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::>", "5"], '::all', '::identifier' ]
       )
@@ -378,7 +378,7 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::>= for strings' do
+    it 'ignores ::>= for non-numeric strings' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::>=", "5"], '::all', '::identifier' ]
       )
@@ -396,7 +396,7 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::< for strings' do
+    it 'ignores ::< for non-numeric strings' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::<", "5"], '::all', '::identifier' ]
       )
@@ -414,7 +414,7 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::<= for strings' do
+    it 'ignores ::<= for non-numeric strings' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::<=", "5"], '::all', '::identifier' ]
       )
