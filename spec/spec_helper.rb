@@ -283,7 +283,7 @@ FactoryBot.define do
 
   factory :characteristic, class: Labors::Characteristic do
     to_create(&:save)
-    sequence(:name) { |n| "favorite#{n}" }
+    sequence(:name) { |n| "characteristic#{n}" }
   end
 end
 
