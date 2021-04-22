@@ -279,7 +279,7 @@ EOT
       )
     end
 
-    def double_cast_constraint column_name, operator, value
+    def double_cast_comparison_constraint column_name, operator, value
       Magma::Constraint.new(
         alias_name,
         Sequel.lit(

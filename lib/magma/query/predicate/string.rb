@@ -51,7 +51,7 @@ class Magma
         and_constraint(
           [
             is_numeric_constraint(@column_name),
-            double_cast_constraint(@column_name, @arguments[0], @arguments[1].to_f)
+            double_cast_comparison_constraint(@column_name, @arguments[0], @arguments[1].to_f)
           ]
         )
       end
