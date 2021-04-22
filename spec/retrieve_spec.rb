@@ -546,6 +546,17 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(1)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name=Lernean Hydra']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(1)
     end
 
 
