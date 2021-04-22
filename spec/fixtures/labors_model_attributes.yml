@@ -41,6 +41,8 @@ labor:
     type: matrix
     validation: '{"type":"Array", "value":["Athens","Sparta","Sidon","Thebes"]}'
     column_name: old_contributions
+  characteristic:
+    type: table
 monster:
   labor:
     type: parent
@@ -88,6 +90,14 @@ prize:
   worth:
     type: integer
     column_name: old_worth
+characteristic:
+  labor:
+    type: parent
+    column_name: labor_id
+  name:
+    type: string
+  value:
+    type: string
 project:
   name:
     type: identifier

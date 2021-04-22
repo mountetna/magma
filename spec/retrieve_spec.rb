@@ -520,6 +520,42 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].count).to eq(2)
     end
 
+    it 'can filter numeric strings' do
+      lion = create(:labor, :lion, project: @project)
+      hydra = create(:labor, :hydra, project: @project)
+      stables = create(:labor, :stables, project: @project)
+
+      lion_difficulty = create(:characteristic, labor: lion, name: "difficulty", value: "10" )
+      hydra_difficulty = create(:characteristic, labor: hydra, name: "difficulty", value: "2" )
+      stables_difficulty = create(:characteristic, labor: stables, name: "difficulty", value: "5" )
+    
+      lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling" )
+      hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking" )
+      stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling" )
+    
+      retrieve(
+        project_name: 'labors',
+        model_name: 'characteristic',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'name~difficulty value>5'
+      )
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:characteristic][:documents].count).to eq(1)
+
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'characteristic',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'name~stance value>5'
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:characteristic][:documents].count).to eq(0)
+    end
+
     it 'can filter on numbers' do
       stables = create(:labor, :stables, project: @project)
       poison = create(:prize, name: 'poison', worth: 5, labor: stables)

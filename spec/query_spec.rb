@@ -296,6 +296,14 @@ describe QueryController do
       lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: false, project: @project)
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
+
+      @lion_difficulty = create(:characteristic, labor: lion, name: "difficulty", value: "10" )
+      @hydra_difficulty = create(:characteristic, labor: hydra, name: "difficulty", value: "2" )
+      @stables_difficulty = create(:characteristic, labor: stables, name: "difficulty", value: "5" )
+    
+      lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling" )
+      hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking" )
+      stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling" )
     end
 
     it 'supports ::matches' do
@@ -341,6 +349,78 @@ describe QueryController do
 
       expect(json_body[:answer].first.last).to eq('Augean Stables')
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
+
+    it 'supports ::> for numeric strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'ignores ::> for strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::>", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer]).to eq([])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'supports ::>= for numeric strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>=", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'ignores ::>= for strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::>=", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer]).to eq([])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'supports ::< for numeric strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'ignores ::< for strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::<", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer]).to eq([])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'supports ::<= for numeric strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<=", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+    end
+
+    it 'ignores ::<= for strings' do
+      query(
+        [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::<=", "5"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer]).to eq([])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
   end
 

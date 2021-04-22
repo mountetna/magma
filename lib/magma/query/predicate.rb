@@ -279,6 +279,24 @@ EOT
       )
     end
 
+    def double_cast_constraint column_name, operator, value
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.lit(
+          "CAST(? as DOUBLE PRECISION) #{operator.sub(/::/,'')} ?",
+          Sequel.qualify(alias_name, column_name),
+          value
+        )
+      )
+    end
+
+    def is_numeric_constraint column_name      
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.qualify(alias_name, column_name) => Regexp.new(/\d+/)
+      )
+    end
+
     def invalid_argument! argument
       raise QuestionError, "Expected an argument to #{self.class.name}" if argument.nil?
       raise QuestionError, "#{argument} is not a valid argument to #{self.class.name}"

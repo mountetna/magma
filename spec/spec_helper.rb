@@ -257,6 +257,7 @@ FactoryBot.define do
     to_create(&:save)
     sequence(:name) { |n| "prize#{n}" }
   end
+
   factory :codex, class: Labors::Codex do
     to_create(&:save)
 
@@ -278,6 +279,11 @@ FactoryBot.define do
 
   factory :habitat, class: Labors::Habitat do
     to_create(&:save)
+  end
+
+  factory :characteristic, class: Labors::Characteristic do
+    to_create(&:save)
+    sequence(:name) { |n| "favorite#{n}" }
   end
 end
 

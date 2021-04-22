@@ -43,5 +43,18 @@ class Magma
         not_constraint(@column_name, @arguments[1])
       end
     end
+
+    verb [ '::<=', '::<', '::>=', '::>' ], String do
+      child TrueClass
+
+      constraint do
+        and_constraint(
+          [
+            is_numeric_constraint(@column_name),
+            double_cast_constraint(@column_name, @arguments[0], @arguments[1].to_f)
+          ]
+        )
+      end
+    end
   end
 end

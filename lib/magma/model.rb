@@ -26,6 +26,9 @@ class Magma
             alias_method "#{attribute.attribute_name}=", "#{attribute.column_name}="
           end
         end
+
+        # Table models should always have an identifier attribute
+        self.attributes[self.identity.name] = self.identity unless self.attributes.key?(self.identity.name)
       end
 
       def project_name

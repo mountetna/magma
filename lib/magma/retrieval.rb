@@ -207,6 +207,8 @@ class Magma
           return "::equals"
         when "~"
           return "::matches"
+        when "<=", ">=", ">", "<"
+          return "::#{operator}"
         else
           raise ArgumentError, "Invalid operator #{operator} for string attribute!"
         end
