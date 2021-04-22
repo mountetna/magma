@@ -520,6 +520,35 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].count).to eq(2)
     end
 
+    it 'can use a JSON filter' do
+      lion = create(:labor, :lion, completed: true, project: @project)
+      hydra = create(:labor, :hydra, completed: false, project: @project)
+      stables = create(:labor, :stables, completed: true, project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name~L']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(2)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name~L', 'completed=true']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(1)
+    end
+
+
     it 'can filter numeric strings' do
       lion = create(:labor, :lion, project: @project)
       hydra = create(:labor, :hydra, project: @project)

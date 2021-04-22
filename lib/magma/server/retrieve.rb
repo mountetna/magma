@@ -110,7 +110,7 @@ class RetrieveController < Magma::Controller
         Magma.instance.get_model(@project_name, @model_name),
         @record_names,
         @attribute_names,
-        [ Magma::Retrieval::StringFilter.new(@filter) ],
+        filter,
         true,
         !@collapse_tables
       )
@@ -126,7 +126,7 @@ class RetrieveController < Magma::Controller
       model,
       @record_names,
       @attribute_names,
-      filters: [ Magma::Retrieval::StringFilter.new(@filter) ],
+      filters: filter,
       collapse_tables: true,
       show_disconnected: @show_disconnected,
       user: @user,
@@ -185,5 +185,11 @@ class RetrieveController < Magma::Controller
         false
       )
     end
+  end
+
+  def filter
+    @filter.is_a?(Array) ?
+      [ Magma::Retrieval::JsonFilter.new(@filter) ] :
+      [ Magma::Retrieval::StringFilter.new(@filter) ]
   end
 end
