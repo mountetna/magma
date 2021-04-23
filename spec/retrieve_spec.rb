@@ -546,6 +546,12 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(1)
+    end
+
+    it 'can have spaces when using a JSON filter' do
+      lion = create(:labor, :lion, completed: true, project: @project)
+      hydra = create(:labor, :hydra, completed: false, project: @project)
+      stables = create(:labor, :stables, completed: true, project: @project)
 
       retrieve(
         project_name: 'labors',
