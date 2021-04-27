@@ -163,7 +163,7 @@ class Magma
     class Filter
       FILTER_TERM = /^
         ([\w]+)
-        (=|<|>|>=|<=|~|\[\])
+        (=|<|>|>=|<=|~|\[\]|\^@)
         (.*)
         $/x
 
@@ -177,24 +177,55 @@ class Magma
         when Magma::CollectionAttribute, Magma::TableAttribute
           raise ArgumentError, "Cannot filter on collection attributes"
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
-          return [ att_name, '::identifier', string_op(operator), string_val(operator, value) ]
+          return [ att_name, '::identifier', string_op(operator), array_or_value(operator, value) ]
         when Magma::IntegerAttribute, Magma::FloatAttribute
-          return [ att_name, numeric_op(operator), value.to_f ]
+          return [ att_name, *numeric_filter(operator, value.to_f) ]
         when Magma::DateTimeAttribute
-          return [ att_name, numeric_op(operator), value ]
+          return [ att_name, *numeric_filter(operator, value) ]
         when Magma::StringAttribute
-          return [ att_name, string_op(operator), string_val(operator, value) ]
+          return [ att_name, *string_filter(operator, value) ]
         when Magma::BooleanAttribute
           return [ att_name, boolean_op(operator, value) ]
+        when Magma::FileAttribute, Magma::ImageAttribute
+          return [ att_name, *file_filter(operator, value) ]
         else
           raise ArgumentError, "Cannot query for #{att_name}"
         end
       end
 
-      def string_val(operator, value)
+      def numeric_filter(operator, value)
+        [ numeric_op(operator), value_or_nil(operator, value) ].compact
+      end
+
+      def file_filter(operator, value)
+        [ file_op(operator), value_or_nil(operator, value) ].compact
+      end
+
+      def string_filter(operator, value)
+        [ string_op(operator), array_or_value(operator, value) ].compact
+      end
+
+      def array_or_value(operator, value)
         return value.split(",") if "[]" == operator
+        
+        value_or_nil(operator, value)
+      end
+
+      def value_or_nil(operator, value)
+        return nil if "^@" == operator
 
         value
+      end
+
+      def file_op operator
+        case operator
+        when "="
+          return "::equals"
+        when "^@"
+          return "::nil"
+        else
+          raise ArgumentError, "Invalid operator #{operator} for file attribute!"
+        end
       end
 
       def string_op operator
@@ -207,6 +238,8 @@ class Magma
           return "::#{operator}"
         when "[]"
           return "::in"
+        when "^@"
+          return "::nil"
         else
           raise ArgumentError, "Invalid operator #{operator} for string attribute!"
         end
@@ -216,13 +249,18 @@ class Magma
         case operator
         when "=", "<=", ">=", ">", "<"
           return "::#{operator}"
+        when "^@"
+          return "::nil"
         else
           raise ArgumentError, "Invalid operator #{operator} for string attribute!"
         end
       end
 
       def boolean_op operator, value
-        raise ArgumentError, "Invalid operator #{operator} for boolean column!" unless operator == "="
+        raise ArgumentError, "Invalid operator #{operator} for boolean column!" unless ["=", "^@"].include?(operator)
+        
+        return "::nil" if "^@" == operator
+
         case value
         when "true"
           return "::true"

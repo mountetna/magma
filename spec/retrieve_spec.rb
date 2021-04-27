@@ -519,6 +519,45 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(2)
     end
+    
+    it 'can filter on a string list using JSON' do
+      lion = create(:labor, :lion, completed: true, project: @project)
+      hydra = create(:labor, :hydra, completed: false, project: @project)
+      stables = create(:labor, :stables, completed: true, project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name[]Lernean Hydra,Nemean Lion']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(2)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name[]Lernean Hydra,Nemean L']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(1)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ["project[]none,#{@project.name}"]
+      )
+      
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(3)
+    end
 
     it 'can use an "in" filter for a string' do
       lion = create(:labor, :lion, notes: "hard", project: @project)
@@ -534,6 +573,22 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(2)
+    end
+
+    it 'can use a "nil" filter for a string' do
+      lion = create(:labor, :lion, notes: "hard", project: @project)
+      hydra = create(:labor, :hydra, notes: "easy", project: @project)
+      stables = create(:labor, :stables, notes: nil, project: @project)
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'notes^@'
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(1)
     end
 
     it 'can use a JSON filter' do
@@ -656,6 +711,26 @@ describe RetrieveController do
       expect(json_body[:models][:characteristic][:documents].count).to eq(0)
     end
 
+    it 'can filter numbers with "nil"' do
+      stables = create(:labor, :stables, project: @project)
+      poison = create(:prize, name: 'poison', worth: 5, labor: stables)
+      poop = create(:prize, name: 'poop', worth: nil, labor: stables)
+      iou = create(:prize, name: 'iou', worth: 2, labor: stables)
+      skin = create(:prize, name: 'skin', worth: nil, labor: stables)
+      retrieve(
+        project_name: 'labors',
+        model_name: 'prize',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'worth^@'
+      )
+
+      expect(last_response.status).to eq(200)
+
+      prize_names = json_body[:models][:prize][:documents].values.map{|d| d[:name]}
+      expect(prize_names).to eq(['poop', 'skin'])
+    end
+
     it 'can filter on numbers' do
       stables = create(:labor, :stables, project: @project)
       poison = create(:prize, name: 'poison', worth: 5, labor: stables)
@@ -694,6 +769,24 @@ describe RetrieveController do
       expect(labor_names).to match_array(new_labors.map(&:name))
     end
 
+    it 'can filter on dates with "nil"' do
+      old_labors = create_list(:labor, 3, year: DateTime.new(500), project: @project)
+      new_labors = create_list(:labor, 3, year: nil, project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'year^@'
+      )
+
+      expect(last_response.status).to eq(200)
+
+      labor_names = json_body[:models][:labor][:documents].values.map{|d| d[:name]}
+      expect(labor_names).to match_array(new_labors.map(&:name))
+    end
+
     it 'can filter on updated_at, created_at' do
       Timecop.freeze(DateTime.new(500))
       old_labors = create_list(:labor, 3, project: @project)
@@ -715,6 +808,99 @@ describe RetrieveController do
       expect(labor_names).to match_array(new_labors.map(&:name))
 
       Timecop.return
+    end
+
+    it 'can filter files with "nil"' do
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}', labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, name: 'Lernean Hydra', stats: nil, labor: labor)
+
+      labor = create(:labor, :stables, project: @project)
+      stables = create(:monster, name: 'Augean Stables', stats: '{"filename": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}', labor: labor)
+    
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'stats^@'
+      )
+
+      expect(last_response.status).to eq(200)
+
+      monster_names = json_body[:models][:monster][:documents].values.map{|d| d[:name]}
+      expect(monster_names).to eq(['Lernean Hydra'])
+    end
+
+    it 'can filter files with "equals"' do
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}', labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, name: 'Lernean Hydra', stats: nil, labor: labor)
+
+      labor = create(:labor, :stables, project: @project)
+      stables = create(:monster, name: 'Augean Stables', stats: '{"filename": "stables-stats.tsv", "original_filename": "alpha-stables.tsv"}', labor: labor)
+    
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'stats=stables-stats.tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+
+      monster_names = json_body[:models][:monster][:documents].values.map{|d| d[:name]}
+      expect(monster_names).to eq(['Augean Stables'])
+    end
+
+    it 'can filter booleans' do
+      lion = create(:labor, :lion, completed: true, project: @project)
+      hydra = create(:labor, :hydra, completed: false, project: @project)
+      stables = create(:labor, :stables, completed: nil, project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'completed=true'
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(
+        json_body[:models][:labor][:documents].values.map{|d| d[:name]}
+      ).to eq(["Nemean Lion"])
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'completed=false'
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(
+        json_body[:models][:labor][:documents].values.map{|d| d[:name]}
+      ).to eq(["Lernean Hydra"])
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: "completed^@"
+      )
+      
+      expect(last_response.status).to eq(200)
+      expect(
+        json_body[:models][:labor][:documents].values.map{|d| d[:name]}
+      ).to eq(["Augean Stables"])
     end
   end
 

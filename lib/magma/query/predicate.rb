@@ -307,7 +307,9 @@ EOT
     def json_constraint column_name, key, value
       Magma::Constraint.new(
         alias_name,
-        Sequel.pg_json_op(column_name.to_sym).get_text(key) => value
+        Sequel.pg_json_op(
+          Sequel.qualify(alias_name, column_name)
+        ).get_text(key) => value
       )
     end
 

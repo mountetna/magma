@@ -869,6 +869,15 @@ describe QueryController do
       expect(json_body[:answer].map(&:last)).to match_array([ 'Lernean Hydra', 'Augean Stables' ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
+
+    it 'checks ::nil' do
+      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil, project: @project)
+      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
+      query([ 'labor', [ 'completed', '::nil' ], '::all', 'name' ])
+      expect(json_body[:answer].map(&:last)).to match_array([ 'Lernean Hydra' ])
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
   end
 
   context Magma::MatrixPredicate do
