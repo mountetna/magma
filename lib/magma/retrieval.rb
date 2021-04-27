@@ -163,7 +163,7 @@ class Magma
     class Filter
       FILTER_TERM = /^
         ([\w]+)
-        (=|<|>|>=|<=|~)
+        (=|<|>|>=|<=|~|\[\])
         (.*)
         $/x
 
@@ -183,12 +183,18 @@ class Magma
         when Magma::DateTimeAttribute
           return [ att_name, numeric_op(operator), value ]
         when Magma::StringAttribute
-          return [ att_name, string_op(operator), value ]
+          return [ att_name, string_op(operator), string_val(operator, value) ]
         when Magma::BooleanAttribute
           return [ att_name, boolean_op(operator, value) ]
         else
           raise ArgumentError, "Cannot query for #{att_name}"
         end
+      end
+
+      def string_val(operator, value)
+        return value unless "[]" == operator
+
+        return value.split(",")
       end
 
       def string_op operator
@@ -199,6 +205,8 @@ class Magma
           return "::matches"
         when "<=", ">=", ">", "<"
           return "::#{operator}"
+        when "[]"
+          return "::in"
         else
           raise ArgumentError, "Invalid operator #{operator} for string attribute!"
         end
