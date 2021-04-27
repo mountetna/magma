@@ -43,6 +43,8 @@ labor:
     column_name: old_contributions
   characteristic:
     type: table
+  notes:
+    type: string
 monster:
   labor:
     type: parent

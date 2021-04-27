@@ -520,6 +520,22 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].count).to eq(2)
     end
 
+    it 'can use an "in" filter for a string' do
+      lion = create(:labor, :lion, notes: "hard", project: @project)
+      hydra = create(:labor, :hydra, notes: "easy", project: @project)
+      stables = create(:labor, :stables, notes: "no sweat", project: @project)
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'notes[]hard,easy'
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(2)
+    end
+
     it 'can use a JSON filter' do
       lion = create(:labor, :lion, completed: true, project: @project)
       hydra = create(:labor, :hydra, completed: false, project: @project)
@@ -548,6 +564,34 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].count).to eq(1)
     end
 
+    it 'can filter on a string list using JSON' do
+      lion = create(:labor, :lion, completed: true, project: @project)
+      hydra = create(:labor, :hydra, completed: false, project: @project)
+      stables = create(:labor, :stables, completed: true, project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name[]Lernean Hydra,Nemean Lion']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(2)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ['name[]Lernean Hydra,Nemean L']
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(1)
+    end
+
     it 'can have spaces when using a JSON filter' do
       lion = create(:labor, :lion, completed: true, project: @project)
       hydra = create(:labor, :hydra, completed: false, project: @project)
@@ -564,7 +608,6 @@ describe RetrieveController do
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(1)
     end
-
 
     it 'can filter numeric strings' do
       lion = create(:labor, :lion, project: @project)
