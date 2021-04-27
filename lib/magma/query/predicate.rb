@@ -245,6 +245,13 @@ EOT
       )
     end
 
+    def null_constraint(column_name)
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.qualify(alias_name, column_name) => nil
+      )
+    end
+
     def not_constraint column_name, value
       Magma::Constraint.new(
         alias_name,
@@ -294,6 +301,13 @@ EOT
       Magma::Constraint.new(
         alias_name,
         Sequel.qualify(alias_name, column_name) => Regexp.new(/\d+/)
+      )
+    end
+
+    def json_constraint column_name, key, value
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.pg_json_op(column_name.to_sym).get_text(key) => value
       )
     end
 

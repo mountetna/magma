@@ -71,6 +71,25 @@ class Magma
       end
     end
 
+    verb [ '::nil' ] do
+      child TrueClass
+
+      constraint do
+        or_constraint([
+          json_constraint(@column_name, "filename", nil),
+          null_constraint(@column_name)
+        ])
+      end
+    end
+
+    verb [ '::equals' ], String do
+      child TrueClass
+
+      constraint do
+        json_constraint(@column_name, "filename", @arguments[1])
+      end
+    end
+
     def select
       [ Sequel[alias_name][@column_name].as(column_name) ]
     end

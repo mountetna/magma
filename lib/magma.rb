@@ -41,6 +41,7 @@ class Magma
     @db = Sequel.connect(config(:db))
     @db.extension :connection_validator
     @db.extension :pg_json
+    Sequel.extension :pg_json_ops
     @db.pool.connection_validation_timeout = -1
   end
 
