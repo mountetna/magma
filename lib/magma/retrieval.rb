@@ -192,9 +192,9 @@ class Magma
       end
 
       def string_val(operator, value)
-        return value unless "[]" == operator
+        return value.split(",") if "[]" == operator
 
-        return value.split(",")
+        value
       end
 
       def string_op operator
