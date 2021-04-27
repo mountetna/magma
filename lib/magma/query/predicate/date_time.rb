@@ -13,14 +13,6 @@ class Magma
       end
     end
 
-    verb [ '::nil' ] do
-      child TrueClass
-
-      constraint do
-        null_constraint(@column_name)
-      end
-    end
-
     def extract table, identity
       table.first[column_name]&.iso8601
     end

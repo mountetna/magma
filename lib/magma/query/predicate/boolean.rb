@@ -24,12 +24,5 @@ class Magma
         not_constraint(@column_name, true)
       end
     end
-
-    verb '::nil' do
-      child TrueClass
-      constraint do
-        null_constraint(@column_name)
-      end
-    end
   end
 end

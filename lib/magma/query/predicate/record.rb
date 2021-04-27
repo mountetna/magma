@@ -52,9 +52,9 @@ class Magma
         attribute = valid_attribute(@arguments[1])
         case attribute
         when Magma::ForeignKeyAttribute
-          basic_constraint(attribute.foreign_id, nil)
+          null_constraint(attribute.foreign_id)
         else
-          basic_constraint(attribute.column_name.to_sym, nil)
+          null_constraint(attribute.column_name.to_sym)
         end
       end
     end

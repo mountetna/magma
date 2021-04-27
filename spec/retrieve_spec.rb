@@ -554,7 +554,7 @@ describe RetrieveController do
         attribute_names: 'all',
         filter: ["project[]none,#{@project.name}"]
       )
-      
+
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(3)
     end
@@ -579,6 +579,7 @@ describe RetrieveController do
       lion = create(:labor, :lion, notes: "hard", project: @project)
       hydra = create(:labor, :hydra, notes: "easy", project: @project)
       stables = create(:labor, :stables, notes: nil, project: @project)
+      
       retrieve(
         project_name: 'labors',
         model_name: 'labor',
@@ -589,6 +590,28 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(1)
+    end
+
+    it 'can use a "nil" filter for a foreign key' do
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, name: 'Nemean Lion', labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, name: 'Lernean Hydra', reference_monster: lion, labor: labor)
+
+      labor = create(:labor, :stables, project: @project)
+      stables = create(:monster, name: 'Augean Stables', reference_monster: hydra, labor: labor)
+          
+      retrieve(
+        project_name: 'labors',
+        model_name: 'monster',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'reference_monster^@'
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:monster][:documents].count).to eq(1)
     end
 
     it 'can use a JSON filter' do
@@ -617,45 +640,6 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(1)
-    end
-
-    it 'can filter on a string list using JSON' do
-      lion = create(:labor, :lion, completed: true, project: @project)
-      hydra = create(:labor, :hydra, completed: false, project: @project)
-      stables = create(:labor, :stables, completed: true, project: @project)
-
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: 'all',
-        filter: ['name[]Lernean Hydra,Nemean Lion']
-      )
-
-      expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].count).to eq(2)
-
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: 'all',
-        filter: ['name[]Lernean Hydra,Nemean L']
-      )
-
-      expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].count).to eq(1)
-
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: 'all',
-        filter: ["project[]none,#{@project.name}"]
-      )
-
-      expect(last_response.status).to eq(200)
-      expect(json_body[:models][:labor][:documents].count).to eq(3)
     end
 
     it 'can have spaces when using a JSON filter' do
@@ -749,6 +733,23 @@ describe RetrieveController do
 
       prize_names = json_body[:models][:prize][:documents].values.map{|d| d[:name]}
       expect(prize_names).to eq(['poison', 'skin'])
+    end
+
+    it 'cannot filter on tables' do
+      stables = create(:labor, :stables, project: @project)
+      poison = create(:prize, name: 'poison', worth: 5, labor: stables)
+      poop = create(:prize, name: 'poop', worth: 0, labor: stables)
+      iou = create(:prize, name: 'iou', worth: 2, labor: stables)
+      skin = create(:prize, name: 'skin', worth: 6, labor: stables)
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'prize>2'
+      )
+
+      expect(last_response.status).to eq(422)
     end
 
     it 'can filter on dates' do

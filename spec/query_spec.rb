@@ -351,15 +351,6 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
-    it 'supports ::nil' do
-      query(
-        [ 'labor', [ 'notes', '::nil'], '::all', '::identifier' ]
-      )
-
-      expect(json_body[:answer].first.last).to eq('Augean Stables')
-      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
-    end
-
     it 'supports ::> for numeric strings' do
       query(
         [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5.1"], '::all', '::identifier' ]
@@ -484,18 +475,6 @@ describe QueryController do
       expect(json_body[:answer].first.last).to eq('Augean Stables')
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
-
-    it 'supports ::nil' do
-      practice = create(:labor, name: 'Practice', number: nil, project: @project)
-
-      query(
-        [ 'labor', [ 'number', '::nil'], '::all', '::identifier' ]
-      )
-
-      expect(json_body[:answer].length).to eq(1)
-      expect(json_body[:answer].first.last).to eq('Practice')
-      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
-    end
   end
 
   context Magma::DateTimePredicate do
@@ -523,18 +502,6 @@ describe QueryController do
 
       expect(json_body[:answer].map(&:last)).to match_array(Labors::Labor.select_map(:year).map(&:iso8601))
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#year'])
-    end
-
-    it 'supports ::nil' do
-      practice = create(:labor, name: 'Practice', year: nil, project: @project)
-
-      query(
-        [ 'labor', [ 'year', '::nil'], '::all', '::identifier' ]
-      )
-
-      expect(json_body[:answer].length).to eq(1)
-      expect(json_body[:answer].first.last).to eq('Practice')
-      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
   end
 
@@ -867,15 +834,6 @@ describe QueryController do
       stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
       query([ 'labor', [ 'completed', '::untrue' ], '::all', 'name' ])
       expect(json_body[:answer].map(&:last)).to match_array([ 'Lernean Hydra', 'Augean Stables' ])
-      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
-    end
-
-    it 'checks ::nil' do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, completed: true, project: @project)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, completed: nil, project: @project)
-      stables = create(:labor, name: 'Augean Stables', number: 5, completed: false, project: @project)
-      query([ 'labor', [ 'completed', '::nil' ], '::all', 'name' ])
-      expect(json_body[:answer].map(&:last)).to match_array([ 'Lernean Hydra' ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
   end
