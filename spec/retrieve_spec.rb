@@ -590,6 +590,17 @@ describe RetrieveController do
 
       expect(last_response.status).to eq(200)
       expect(json_body[:models][:labor][:documents].count).to eq(1)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: ["project[]none,#{@project.name}"]
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(3)
     end
 
     it 'can have spaces when using a JSON filter' do

@@ -177,7 +177,7 @@ class Magma
         when Magma::CollectionAttribute, Magma::TableAttribute
           raise ArgumentError, "Cannot filter on collection attributes"
         when Magma::ForeignKeyAttribute, Magma::ChildAttribute
-          return [ att_name, '::identifier', string_op(operator), value ]
+          return [ att_name, '::identifier', string_op(operator), string_val(operator, value) ]
         when Magma::IntegerAttribute, Magma::FloatAttribute
           return [ att_name, numeric_op(operator), value.to_f ]
         when Magma::DateTimeAttribute
