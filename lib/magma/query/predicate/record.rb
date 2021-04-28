@@ -53,6 +53,18 @@ class Magma
         case attribute
         when Magma::ForeignKeyAttribute
           null_constraint(attribute.foreign_id)
+        when Magma::FileAttribute, Magma::ImageAttribute
+          or_constraint([
+            json_constraint(attribute.column_name.to_sym, "filename", nil),
+            # The string "null" appears if someone fetches a ::temp URL
+            #   for a file attribute, because the FileSerializer returns
+            #   nil to the loader. This gets translated into JSON "null"
+            #   and saved to the database, instead of a SQL NULL.
+            # So when we check for ::lacks here, we also need to check for
+            #   the string "null".
+            json_constraint(attribute.column_name.to_sym, "filename", "null"),
+            null_constraint(attribute.column_name.to_sym),
+          ])
         else
           null_constraint(attribute.column_name.to_sym)
         end

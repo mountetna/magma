@@ -550,17 +550,18 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#stats'])
     end
 
-    it 'can filter on ::nil' do
+    it 'can filter on ::lacks' do
       practice = create(:labor, name: 'Practice', project: @project)
       paper_tiger = create(:monster, name: 'Roar!', stats: nil, labor: practice)
+      paper_dragon = create(:monster, name: 'Whoosh!', stats: 'null', labor: practice)
     
       query(
-        [ 'monster', ['stats', '::nil'], '::all', '::identifier' ]
+        [ 'monster', ['::lacks', 'stats'], '::all', '::identifier' ]
       )
 
       expect(last_response.status).to eq(200)
 
-      expect(json_body[:answer].map(&:last).sort).to eq([ 'Roar!' ])
+      expect(json_body[:answer].map(&:last).sort).to eq([ 'Roar!', 'Whoosh!' ])
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#name'])
     end
 
