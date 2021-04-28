@@ -313,6 +313,17 @@ EOT
       )
     end
 
+    def not_json_constraint column_name, key, value
+      Magma::Constraint.new(
+        alias_name,
+        Sequel.negate(
+          Sequel.pg_json_op(
+            Sequel.qualify(alias_name, column_name)
+          ).get_text(key) => value
+        )
+      )
+    end
+
     def invalid_argument! argument
       raise QuestionError, "Expected an argument to #{self.class.name}" if argument.nil?
       raise QuestionError, "#{argument} is not a valid argument to #{self.class.name}"

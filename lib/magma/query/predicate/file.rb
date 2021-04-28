@@ -79,6 +79,14 @@ class Magma
       end
     end
 
+    verb [ '::not' ], String do
+      child TrueClass
+
+      constraint do
+        not_json_constraint(@column_name, "filename", @arguments[1])
+      end
+    end
+
     def select
       [ Sequel[alias_name][@column_name].as(column_name) ]
     end

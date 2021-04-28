@@ -579,6 +579,20 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#name'])
     end
 
+    it 'can match on not filename with ::not' do
+      practice = create(:labor, name: 'Practice', project: @project)
+      paper_tiger = create(:monster, name: 'Roar!', stats: '{"filename": "::blank", "original_filename": "::blank"}', labor: practice)
+    
+      query(
+        [ 'monster', ['stats', '::not', '::blank'], '::all', '::identifier' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([ 'Augean Stables', 'Lernean Hydra', 'Nemean Lion' ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'labors::monster#name'])
+    end
+
     it 'returns the md5' do
       route_payload = JSON.generate({
         files: Labors::Monster.all.map do |monster|
