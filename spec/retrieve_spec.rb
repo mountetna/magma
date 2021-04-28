@@ -430,7 +430,7 @@ describe RetrieveController do
       )
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(table).to match_array([ [ "The Twelve Labors of Hercules", labors.map(&:identifier).join(', ') ] ])
+      expect(table).to match_array([ [ "The Twelve Labors of Hercules", labors.sort_by(&:name).map(&:identifier).join(', ') ] ])
     end
 
     it 'retrieves a TSV with file attributes as urls' do
