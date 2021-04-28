@@ -575,7 +575,7 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].count).to eq(2)
     end
 
-    it 'can use a "nil" filter for a string' do
+    it 'can use a "lacks" filter for a string' do
       lion = create(:labor, :lion, notes: "hard", project: @project)
       hydra = create(:labor, :hydra, notes: "easy", project: @project)
       stables = create(:labor, :stables, notes: nil, project: @project)
@@ -592,7 +592,7 @@ describe RetrieveController do
       expect(json_body[:models][:labor][:documents].count).to eq(1)
     end
 
-    it 'can use a "nil" filter for a foreign key' do
+    it 'can use a "lacks" filter for a foreign key' do
       labor = create(:labor, :lion, project: @project)
       lion = create(:monster, name: 'Nemean Lion', labor: labor)
 
@@ -695,7 +695,7 @@ describe RetrieveController do
       expect(json_body[:models][:characteristic][:documents].count).to eq(0)
     end
 
-    it 'can filter numbers with "nil"' do
+    it 'can filter numbers with "lacks"' do
       stables = create(:labor, :stables, project: @project)
       poison = create(:prize, name: 'poison', worth: 5, labor: stables)
       poop = create(:prize, name: 'poop', worth: nil, labor: stables)
@@ -770,7 +770,7 @@ describe RetrieveController do
       expect(labor_names).to match_array(new_labors.map(&:name))
     end
 
-    it 'can filter on dates with "nil"' do
+    it 'can filter on dates with "lacks"' do
       old_labors = create_list(:labor, 3, year: DateTime.new(500), project: @project)
       new_labors = create_list(:labor, 3, year: nil, project: @project)
 
@@ -811,7 +811,7 @@ describe RetrieveController do
       Timecop.return
     end
 
-    it 'can filter files with "nil"' do
+    it 'can filter files with "lacks"' do
       labor = create(:labor, :lion, project: @project)
       lion = create(:monster, name: 'Nemean Lion', stats: '{"filename": "lion-stats.tsv", "original_filename": "alpha-lion.tsv"}', labor: labor)
 
