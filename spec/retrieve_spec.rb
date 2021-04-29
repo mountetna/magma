@@ -903,6 +903,53 @@ describe RetrieveController do
         json_body[:models][:labor][:documents].values.map{|d| d[:name]}
       ).to eq(["Augean Stables"])
     end
+
+    it 'returns a slice of matrix data' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # Make these different so we don't run into issues with matrix caching
+      hind = create(:labor, name: 'Ceryneian Hind', number: 3, contributions: matrix[0], project: @project)
+      board = create(:labor, name: 'Erymanthian Boar', number: 4, contributions: matrix[1], project: @project)
+      birds = create(:labor, name: 'Stymphalian birds', number: 6, contributions: matrix[2], project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        output_predicate: "contributions[]Athens,Sparta"
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(
+        json_body[:models][:labor][:documents].values.map{|d| d[:contributions]}
+      ).to eq(matrix.map{|r| r[0..1]})
+    end
+
+    it 'complains about invalid slices' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        output_predicate: "contributions[]Bathens,Sporta"
+      )
+
+      expect(last_response.status).to eq(422)
+      expect(json_body[:errors]).to eq(['Invalid verb arguments ::slice, Bathens, Sporta'])
+    end
   end
 
   context 'pagination' do

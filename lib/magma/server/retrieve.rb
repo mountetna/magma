@@ -47,6 +47,7 @@ class RetrieveController < Magma::Controller
     @order = @params[:order]
     @show_disconnected = @params[:show_disconnected]
     @hide_templates = !!@params[:hide_templates]
+    @output_predicate = @params[:output_predicate]
 
     @attribute_names = @params[:attribute_names]
 
@@ -155,7 +156,8 @@ class RetrieveController < Magma::Controller
       order: use_pages && @order,
       show_disconnected: @show_disconnected,
       user: @user,
-      restrict: !@user.can_see_restricted?(@project_name)
+      restrict: !@user.can_see_restricted?(@project_name),
+      output_predicates: output_predicates
     )
 
     @payload.add_model(model, retrieval.attribute_names)
@@ -193,5 +195,11 @@ class RetrieveController < Magma::Controller
     @filter.is_a?(Array) ?
       [ Magma::Retrieval::JsonFilter.new(@filter) ] :
       [ Magma::Retrieval::StringFilter.new(@filter) ]
+  end
+
+  def output_predicates
+    @output_predicate.is_a?(Array) ?
+      [ Magma::Retrieval::JsonOutputPredicate.new(@output_predicate) ] :
+      [ Magma::Retrieval::StringOutputPredicate.new(@output_predicate) ]
   end
 end

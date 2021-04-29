@@ -19,6 +19,7 @@ class Magma
       @user = @user
       @order = opts[:order]
       @show_disconnected = opts[:show_disconnected]
+      @output_predicates = opts[:output_predicates] || []
 
       @model = model
       @record_names = record_names
@@ -139,10 +140,23 @@ class Magma
           [ att.name.to_s, '::all' ]
         when Magma::MatchAttribute
           [ att.name.to_s ]
+        when Magma::MatrixAttribute
+          # Only return if a ::slice ([]) predicate was passed in
+          match = predicates_list&.find do |predicate|
+            predicate.first == att.name.to_s
+          end
+
+          match ? match : [ att.name.to_s ]
         else
           [ att.name.to_s ]
         end
       end
+    end
+
+    def predicates_list
+      @predicates_list ||= @output_predicates.map do |output_predicate|
+        output_predicate.apply(attributes)
+      end.flatten(1) # Merge all predicates together into a list of output predicates
     end
 
     class ParentFilter
@@ -160,7 +174,15 @@ class Magma
       end
     end
 
-    class Filter
+    class FilterPredicateBase
+      def array_or_value(operator, value)
+        return value.split(",") if "[]" == operator
+        
+        value
+      end
+    end
+
+    class Filter < Magma::Retrieval::FilterPredicateBase
       FILTER_TERM = /^
         ([\w]+)
         (=|<|>|>=|<=|~|\[\]|\^@)
@@ -198,12 +220,6 @@ class Magma
 
       def nil_operator?(operator)
         "^@" == operator
-      end
-
-      def array_or_value(operator, value)
-        return value.split(",") if "[]" == operator
-        
-        value
       end
 
       def file_op operator
@@ -270,6 +286,62 @@ class Magma
       def apply(attributes)
         @filters.map do |term|
           filter_term(term, attributes)
+        end.compact
+      end
+    end
+
+    class OutputPredicate < Magma::Retrieval::FilterPredicateBase
+      PREDICATE_TERM = /^
+        ([\w]+)
+        (\[\])
+        (.*)
+        $/x
+
+      def predicate_term term, attributes
+        match, att_name, operator, value = term.match(PREDICATE_TERM).to_a
+        raise ArgumentError, "Predicate term '#{term}' does not parse" if match.nil?
+
+        att = attributes.find{|a| a.name == att_name.to_sym}
+        raise ArgumentError, "#{att_name} is not an attribute" unless att.is_a?(Magma::Attribute)
+
+        case att
+        when Magma::MatrixAttribute
+          return [ att_name, matrix_op(operator), array_or_value(operator, value) ]
+        else
+          raise ArgumentError, "Cannot submit output predicate for #{att_name}"
+        end
+      end
+
+      def matrix_op operator
+        case operator
+        when "[]"
+          return "::slice"
+        else
+          raise ArgumentError, "Invalid operator #{operator} for matrix attribute!"
+        end
+      end
+    end
+
+    class StringOutputPredicate < Magma::Retrieval::OutputPredicate
+      def initialize output_predicates
+        @output_predicates = output_predicates || ""
+      end
+
+      def apply(attributes)
+        @output_predicates.split(/\s/).map do |term|
+          predicate_term(term, attributes)
+        end.compact
+      end
+    end
+
+    class JsonOutputPredicate < Magma::Retrieval::OutputPredicate
+      def initialize output_predicates
+        @output_predicates = output_predicates || []
+      end
+
+      def apply(attributes)
+        @output_predicates.map do |term|
+          predicate_term(term, attributes)
         end.compact
       end
     end
