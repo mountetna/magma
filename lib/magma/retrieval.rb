@@ -70,6 +70,12 @@ class Magma
       end
     end
 
+    def output_predicate_for_att(att)
+      predicates_list&.find do |predicate|
+        predicate.first == att.name.to_s
+      end
+    end
+
     private
 
     def requested?(att)
@@ -142,9 +148,7 @@ class Magma
           [ att.name.to_s ]
         when Magma::MatrixAttribute
           # Only return if a ::slice ([]) predicate was passed in
-          match = predicates_list&.find do |predicate|
-            predicate.first == att.name.to_s
-          end
+          match = output_predicate_for_att(att)
 
           match ? match : [ att.name.to_s ]
         else

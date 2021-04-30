@@ -9,7 +9,7 @@ class Magma
     def write_tsv
       @payload.add_model(@model, @retrieval.attribute_names)
 
-      yield @payload.tsv_header
+      yield @payload.tsv_header(@retrieval)
 
       @retrieval.each_page do |records|
         @payload.add_records(@model, records)

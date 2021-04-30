@@ -501,6 +501,34 @@ describe RetrieveController do
 
       Timecop.return
     end
+
+    it 'returns a slice of matrix data using output_predicate' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["name", "contributions_Athens", "contributions_Sparta"])
+      expect(table.length).to eq(3)
+      expect(table.first).to eq(["Augean Stables", "10", "11"])
+      expect(table.last).to eq(["Nemean Lion", "30", "31"])
+    end
+
   end
 
   context 'filtering' do

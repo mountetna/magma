@@ -63,7 +63,7 @@ class Magma
       def initialize(predicate, identifier, column_names=nil)
         @predicate = predicate
         @identifier = identifier
-        @column_names = column_names
+        @column_names = column_names ? column_names : @predicate.attribute.validation_object.options
       end
 
       def to_json(options={})

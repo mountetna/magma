@@ -38,17 +38,7 @@ class Magma
       #   that includes the selected columns names + values.
 
       # matrix_value.to_json is actually a JSON string.
-      data_values = JSON.parse(matrix_value.to_json)
-      
-      all_column_names = validation_object.options
-
-      column_names = matrix_value.column_names ?
-      matrix_value.column_names :
-        all_column_names
-        
-      column_indexes(column_names).map.with_index do |col_index, index|
-        "#{all_column_names[col_index]},#{data_values[index]}"
-      end.join("\r\n")
+      JSON.parse(matrix_value.to_json)
     end
 
     def reset_cache

@@ -1,4 +1,5 @@
 require 'csv'
+require 'json'
 
 class Magma
   class Payload
@@ -46,8 +47,8 @@ class Magma
       @models.first.last.to_tsv
     end
 
-    def tsv_header
-      @models.first.last.tsv_header
+    def tsv_header(retrieval)
+      @models.first.last.tsv_header(retrieval)
     end
 
     private
@@ -100,30 +101,63 @@ class Magma
         ]
       end
 
-      def tsv_header
-        tsv_attributes.join("\t") + "\n"
+      def tsv_header(retrieval)
+        # Need to unmelt any matrix attributes and generate
+        #   headers from their columns.
+        [].tap do |headers|
+          tsv_attributes.each do |att_name|
+            is_matrix?(att_name) ?
+              headers.concat(matrix_headers(att_name, retrieval)) :
+              headers << att_name
+          end
+        end.join("\t") + "\n"
       end
 
       def to_tsv
         CSV.generate(col_sep: "\t") do |csv|
           @records.each do |record|
-            csv << tsv_attributes.map do |att_name|
-              if att_name == :id
-                record[att_name]
-              else
-                @model.attributes[att_name].query_to_tsv(record[att_name])
+            # Need to unmelt any matrix attributes and expand
+            #   their row data into the CSV.
+            csv << [].tap do |new_row|
+              tsv_attributes.each do |att_name|
+                if att_name == :id
+                  new_row << record[att_name]
+                elsif is_matrix?(att_name)
+                  new_row.concat(attribute(att_name).query_to_tsv(record[att_name]))
+                else
+                  new_row << attribute(att_name).query_to_tsv(record[att_name])
+                end
               end
             end
           end
         end
       end
 
+      def is_matrix?(att_name)
+        attribute(att_name).is_a?(Magma::MatrixAttribute)
+      end
+
+      def matrix_headers(att_name, retrieval)
+        predicate = retrieval.output_predicate_for_att(attribute(att_name))
+        predicate ?
+          predicate[2].map do |col_name|
+            "#{att_name}_#{col_name}"
+          end :
+          attribute(att_name).validation_object.options.map do |col_name|
+            "#{att_name}_#{col_name}"
+          end
+      end
+
       private
 
       def tsv_attributes
         @tsv_attributes ||= @attribute_names.select do |att_name|
-          att_name == :id || (@model.attributes[att_name].shown? && !@model.attributes[att_name].is_a?(Magma::TableAttribute))
+          att_name == :id || (attribute(att_name).shown? && !attribute(att_name).is_a?(Magma::TableAttribute))
         end
+      end
+
+      def attribute(att_name)
+        @model.attributes[att_name]
       end
     end
   end
