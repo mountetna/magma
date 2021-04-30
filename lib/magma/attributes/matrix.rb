@@ -9,6 +9,7 @@ class Magma
     def entry(value, loader)
       [ column_name, value.to_json ]
     end
+
     class Validation < Magma::Validation::Attribute::BaseAttributeValidation
       def validate(value, &block)
         # nil is a valid value
@@ -29,6 +30,23 @@ class Magma
 
     def revision_to_payload(record_name, new_value, loader)
       [ name, new_value ]
+    end
+
+    def query_to_tsv(matrix_value)
+      # Provide an embedded data frame inside of the TSV
+      #   that includes the selected columns names + values.
+      data_values = matrix_value.to_json
+      
+      all_column_names = validation_object.options
+
+      column_names = matrix_value.column_names ?
+      matrix_value.column_names :
+        all_column_names
+      # puts column_indexes(column_names)
+      # puts data_values
+      column_indexes(column_names).map.with_index do |col_index, index|
+        "#{all_column_names[col_index]},#{data_values[index]}"
+      end.join("\r\n")
     end
 
     def reset_cache

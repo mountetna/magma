@@ -107,6 +107,7 @@ class Magma
       def to_tsv
         CSV.generate(col_sep: "\t") do |csv|
           @records.each do |record|
+            puts record
             csv << tsv_attributes.map do |att_name|
               if att_name == :id
                 record[att_name]

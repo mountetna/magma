@@ -103,7 +103,8 @@ class RetrieveController < Magma::Controller
         next if @attribute_names == 'identifier' && !model.has_identifier?
         retrieve_model(
           model, @record_names, @attribute_names,
-          [], true, false
+          [], true, false,
+          output_predicates
         )
       end
     else
@@ -113,7 +114,8 @@ class RetrieveController < Magma::Controller
         @attribute_names,
         filter,
         true,
-        !@collapse_tables
+        !@collapse_tables,
+        output_predicates
       )
     end
 
@@ -131,7 +133,8 @@ class RetrieveController < Magma::Controller
       collapse_tables: true,
       show_disconnected: @show_disconnected,
       user: @user,
-      restrict: !@user.can_see_restricted?(@project_name)
+      restrict: !@user.can_see_restricted?(@project_name),
+      output_predicates: output_predicates
     )
 
     tsv_stream = Enumerator.new do |stream|
@@ -143,7 +146,7 @@ class RetrieveController < Magma::Controller
     return [ 200, { 'Content-Type' => 'text/tsv', 'Content-Disposition' => "inline; filename=\"#{filename}\"" }, tsv_stream ]
   end
 
-  def retrieve_model(model, record_names, attribute_names, filters, use_pages, get_tables)
+  def retrieve_model(model, record_names, attribute_names, filters, use_pages, get_tables, predicates)
     # Extract the attributes from the model.
     retrieval = Magma::Retrieval.new(
       model,
@@ -157,7 +160,7 @@ class RetrieveController < Magma::Controller
       show_disconnected: @show_disconnected,
       user: @user,
       restrict: !@user.can_see_restricted?(@project_name),
-      output_predicates: output_predicates
+      output_predicates: predicates
     )
 
     @payload.add_model(model, retrieval.attribute_names)
@@ -165,7 +168,6 @@ class RetrieveController < Magma::Controller
 
     return if record_names.empty?
 
-    time = Time.now
     records = retrieval.records
 
     @payload.add_records( model, records )
@@ -186,7 +188,8 @@ class RetrieveController < Magma::Controller
           )
         ],
         false,
-        false
+        false,
+        []
       )
     end
   end
