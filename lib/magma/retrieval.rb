@@ -213,6 +213,12 @@ class Magma
           return [ att_name, boolean_op(operator, value) ]
         when Magma::FileAttribute, Magma::ImageAttribute
           return [ att_name, file_op(operator), value ]
+        when Magma::MatrixAttribute
+          # Since there are no MatrixAttribute filters, we'll
+          #   treat anything passed in as a "::has" filter
+          #   on the matrix attribute. Any slices have to
+          #   be sent as output_predicate values.
+          return [ '::has', att_name ]
         else
           raise ArgumentError, "Cannot query for #{att_name}"
         end

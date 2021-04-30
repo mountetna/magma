@@ -904,7 +904,7 @@ describe RetrieveController do
       ).to eq(["Augean Stables"])
     end
 
-    it 'returns a slice of matrix data' do
+    it 'returns a slice of matrix data using output_predicate' do
       matrix = [
         [ 10, 11, 12, 13 ],
         [ 20, 21, 22, 23 ],
@@ -929,15 +929,40 @@ describe RetrieveController do
       ).to eq(matrix.map{|r| r[0..1]})
     end
 
+    it 'treats matrix filters as ::has' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
+      mares = create(:labor, name: 'Mares of Diomedes', number: 8, contributions: nil, project: @project)
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: "contributions[]Athens,Sparta"
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(
+        json_body[:models][:labor][:documents].values.map{|d| d[:name]}
+      ).to eq([ 'Augean Stables', 'Lernean Hydra', 'Nemean Lion' ])
+    end
+
     it 'complains about invalid slices' do
       matrix = [
         [ 10, 11, 12, 13 ],
         [ 20, 21, 22, 23 ],
         [ 30, 31, 32, 33 ]
       ]
-      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0])
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1])
-      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2])
+      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
+      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
+      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
 
       retrieve(
         project_name: 'labors',
