@@ -508,9 +508,10 @@ describe RetrieveController do
         [ 20, 21, 22, 23 ],
         [ 30, 31, 32, 33 ]
       ]
-      stables = create(:labor, name: 'Augean Stables', number: 5, contributions: matrix[0], project: @project)
-      hydra = create(:labor, name: 'Lernean Hydra', number: 2, contributions: matrix[1], project: @project)
-      lion = create(:labor, name: 'Nemean Lion', number: 1, contributions: matrix[2], project: @project)
+      # New labors, to avoid caching issues with MatrixAttribute
+      belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
+      cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
+      apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
       
       retrieve(
         project_name: 'labors',
@@ -525,8 +526,8 @@ describe RetrieveController do
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
       expect(header).to eq(["name", "contributions_Athens", "contributions_Sparta"])
       expect(table.length).to eq(3)
-      expect(table.first).to eq(["Augean Stables", "10", "11"])
-      expect(table.last).to eq(["Nemean Lion", "30", "31"])
+      expect(table.first).to eq(["Belt of Hippolyta", "10", "11"])
+      expect(table.last).to eq(["Golden Apples of the Hesperides", "30", "31"])
     end
 
   end

@@ -70,10 +70,11 @@ class Magma
       end
     end
 
-    def output_predicate_for_att(att)
-      predicates_list&.find do |predicate|
-        predicate.first == att.name.to_s
-      end
+    def predicate_manager
+      @predicate_manager ||= OutputPredicatesManager.new(
+        @output_predicates,
+        attributes
+      )
     end
 
     private
@@ -148,19 +149,13 @@ class Magma
           [ att.name.to_s ]
         when Magma::MatrixAttribute
           # Only return if a ::slice ([]) predicate was passed in
-          match = output_predicate_for_att(att)
-
-          match ? match : [ att.name.to_s ]
+          predicate_manager.exists_for?(att) ?
+            predicate_manager.predicate_for(att) :
+            [ att.name.to_s ]
         else
           [ att.name.to_s ]
         end
       end
-    end
-
-    def predicates_list
-      @predicates_list ||= @output_predicates.map do |output_predicate|
-        output_predicate.apply(attributes)
-      end.flatten(1) # Merge all predicates together into a list of output predicates
     end
 
     class ParentFilter
@@ -353,6 +348,35 @@ class Magma
         @output_predicates.map do |term|
           predicate_term(term, attributes)
         end.compact
+      end
+    end
+
+    class OutputPredicatesManager
+      def initialize (output_predicates, attributes)
+        @output_predicates = output_predicates
+        @attributes = attributes
+      end
+
+      def exists_for?(att)
+        !!predicate_for(att)
+      end
+
+      def predicate_for(att)
+        predicates_list&.find do |predicate|
+          predicate.first == att.name.to_s
+        end
+      end
+
+      def operand_for(att)
+        predicate_for(att)[2]
+      end
+
+      private
+
+      def predicates_list
+        @predicates_list ||= @output_predicates.map do |output_predicate|
+          output_predicate.apply(@attributes)
+        end.flatten(1) # Merge all predicates together into a list of output predicates
       end
     end
   end

@@ -47,8 +47,14 @@ class Magma
       @models.first.last.to_tsv
     end
 
-    def tsv_header(retrieval)
-      @models.first.last.tsv_header(retrieval)
+    # Because we don't have access to all the records when
+    #   generating the headers, we need some context
+    #   around what data was requested, specifically
+    #   any MatrixAttribute slices. We'll extract that
+    #   info from the predicate manager, passed in from
+    #   the Retrieval object.
+    def tsv_header(predicate_manager)
+      @models.first.last.tsv_header(predicate_manager)
     end
 
     private
@@ -101,13 +107,13 @@ class Magma
         ]
       end
 
-      def tsv_header(retrieval)
+      def tsv_header(predicate_manager)
         # Need to unmelt any matrix attributes and generate
         #   headers from their columns.
         [].tap do |headers|
           tsv_attributes.each do |att_name|
             is_matrix?(att_name) ?
-              headers.concat(matrix_headers(att_name, retrieval)) :
+              headers.concat(matrix_headers(att_name, predicate_manager)) :
               headers << att_name
           end
         end.join("\t") + "\n"
@@ -137,15 +143,16 @@ class Magma
         attribute(att_name).is_a?(Magma::MatrixAttribute)
       end
 
-      def matrix_headers(att_name, retrieval)
-        predicate = retrieval.output_predicate_for_att(attribute(att_name))
-        predicate ?
-          predicate[2].map do |col_name|
-            "#{att_name}_#{col_name}"
-          end :
-          attribute(att_name).validation_object.options.map do |col_name|
-            "#{att_name}_#{col_name}"
-          end
+      def matrix_headers(att_name, predicate_manager)
+        att = attribute(att_name)
+        
+        column_names = predicate_manager.exists_for?(att) ?
+          predicate_manager.operand_for(att) : 
+          att.validation_object.options
+
+        column_names.map do |col_name|
+          "#{att_name}_#{col_name}"
+        end
       end
 
       private
