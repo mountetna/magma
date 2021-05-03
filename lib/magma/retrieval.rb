@@ -383,7 +383,7 @@ class Magma
       def predicates_list
         @predicates_list ||= @output_predicates.map do |output_predicate|
           output_predicate.apply(@attributes)
-        end.flatten(1) # Merge all predicates together into a list of output predicates
+        end.flatten(1) # Flatten all predicates together into a list of output predicates
       end
     end
   end
