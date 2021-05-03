@@ -109,7 +109,7 @@ describe 'TSVWriter' do
     header = lines[0]
     expect(header.include?("contributions_Sidon")).to eq(true)
     expect(header.include?("contributions_Athens")).to eq(false)
-    expect(header.include?("contributions")).to eq(false)
+    expect(header.include?("contributions\n")).to eq(false)
     expect(lines[1].count("\t")).to eq(1)
   end
 
