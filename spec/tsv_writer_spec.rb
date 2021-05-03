@@ -81,6 +81,7 @@ describe 'TSVWriter' do
     model.attributes[:contributions].validation_object.options.each do |opt|
       expect(header.include?("contributions_#{opt}")).to eq(false)
     end
+    expect(header.include?("contributions")).to eq(true)
     expect(lines[1].count("\t")).to eq(1)
   end
 
@@ -108,6 +109,7 @@ describe 'TSVWriter' do
     header = lines[0]
     expect(header.include?("contributions_Sidon")).to eq(true)
     expect(header.include?("contributions_Athens")).to eq(false)
+    expect(header.include?("contributions")).to eq(false)
     expect(lines[1].count("\t")).to eq(1)
   end
 
