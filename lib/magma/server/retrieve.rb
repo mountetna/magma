@@ -48,7 +48,11 @@ class RetrieveController < Magma::Controller
     @show_disconnected = @params[:show_disconnected]
     @hide_templates = !!@params[:hide_templates]
     @output_predicate = @params[:output_predicate]
-    @unmelt_matrices = !!@params[:unmelt_matrices]
+    
+    # Because TSV requests are passed in as forms,
+    #   true / false become strings and always evaluate as
+    #   `true`. We convert it to an actual boolean here.
+    @unmelt_matrices = @params[:unmelt_matrices] ? JSON.parse(@params[:unmelt_matrices]) : nil
 
     @attribute_names = @params[:attribute_names]
 

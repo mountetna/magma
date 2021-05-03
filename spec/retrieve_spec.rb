@@ -532,6 +532,37 @@ describe RetrieveController do
       expect(table.last.length).to eq(2)
     end
 
+    it 'returns an unmelted slice of matrix data using string false for unmelt_matrices' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # New labors, to avoid caching issues with MatrixAttribute
+      belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
+      cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
+      apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv',
+        unmelt_matrices: 'false'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["name", "contributions"])
+      expect(table.length).to eq(3)
+      expect(table.first.first).to eq("Belt of Hippolyta")
+      expect(table.first.length).to eq(2)
+      expect(table.last.first).to eq("Golden Apples of the Hesperides")
+      expect(table.last.length).to eq(2)
+    end
+
     it 'returns a melted slice of matrix data using output_predicate and unmelt_matrices' do
       matrix = [
         [ 10, 11, 12, 13 ],
