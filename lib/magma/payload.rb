@@ -150,6 +150,18 @@ class Magma
         @predicate_manager = predicate_manager
       end
 
+      private
+
+      def tsv_attributes
+        @tsv_attributes ||= @attribute_names.select do |att_name|
+          att_name == :id || (attribute(att_name).shown? && !attribute(att_name).is_a?(Magma::TableAttribute))
+        end
+      end
+
+      def attribute(att_name)
+        @model.attributes[att_name]
+      end
+
       def unmelt_matrix?(att_name)
         predicate_manager&.unmelt_matrices? && is_matrix?(att_name)
       end
@@ -168,18 +180,6 @@ class Magma
         column_names.map do |col_name|
           "#{att_name}_#{col_name}"
         end
-      end
-
-      private
-
-      def tsv_attributes
-        @tsv_attributes ||= @attribute_names.select do |att_name|
-          att_name == :id || (attribute(att_name).shown? && !attribute(att_name).is_a?(Magma::TableAttribute))
-        end
-      end
-
-      def attribute(att_name)
-        @model.attributes[att_name]
       end
     end
   end
