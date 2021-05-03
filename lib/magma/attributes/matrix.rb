@@ -41,6 +41,10 @@ class Magma
       JSON.parse(matrix_value.to_json)
     end
 
+    def query_to_tsv(value)
+      value.to_json
+    end
+
     def reset_cache
       @cached_rows_json = nil
       @cached_rows = nil
