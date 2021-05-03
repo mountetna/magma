@@ -120,7 +120,7 @@ class Magma
         [].tap do |headers|
           tsv_attributes.each do |att_name|
             unmelt_matrix?(att_name) ?
-              headers.concat(matrix_headers(att_name, predicate_manager)) :
+              headers.concat(matrix_headers(att_name)) :
               headers << att_name
           end
         end.join("\t") + "\n"
@@ -158,7 +158,7 @@ class Magma
         attribute(att_name).is_a?(Magma::MatrixAttribute)
       end
 
-      def matrix_headers(att_name, predicate_manager)
+      def matrix_headers(att_name)
         att = attribute(att_name)
         
         column_names = predicate_manager.exists_for?(att) ?
