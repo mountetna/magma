@@ -178,7 +178,7 @@ class Magma
           att.validation_object.options
 
         column_names.map do |col_name|
-          "#{att_name}_#{col_name}"
+          "#{att_name}.#{col_name}"
         end
       end
     end
