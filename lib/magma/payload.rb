@@ -115,11 +115,11 @@ class Magma
       end
 
       def tsv_header
-        # Need to unmelt any matrix attributes and generate
-        #   headers from their columns if `unmelt_matrices` is set.
+        # Need to expand any matrix attributes and generate
+        #   headers from their columns if `expand_matrices` is set.
         [].tap do |headers|
           tsv_attributes.each do |att_name|
-            unmelt_matrix?(att_name) ?
+            expand_matrix?(att_name) ?
               headers.concat(matrix_headers(att_name)) :
               headers << att_name
           end
@@ -129,14 +129,14 @@ class Magma
       def to_tsv
         CSV.generate(col_sep: "\t") do |csv|
           @records.each do |record|
-            # Need to unmelt any matrix attributes and expand
+            # Need to expand any matrix attributes and expand
             #   their row data into the CSV.
             csv << [].tap do |new_row|
               tsv_attributes.each do |att_name|
                 if att_name == :id
                   new_row << record[att_name]
-                elsif unmelt_matrix?(att_name)
-                  new_row.concat(attribute(att_name).unmelt(record[att_name]))
+                elsif expand_matrix?(att_name)
+                  new_row.concat(attribute(att_name).expand(record[att_name]))
                 else
                   new_row << attribute(att_name).query_to_tsv(record[att_name])
                 end
@@ -162,8 +162,8 @@ class Magma
         @model.attributes[att_name]
       end
 
-      def unmelt_matrix?(att_name)
-        predicate_manager&.unmelt_matrices? && is_matrix?(att_name)
+      def expand_matrix?(att_name)
+        predicate_manager&.expand_matrices? && is_matrix?(att_name)
       end
 
       def is_matrix?(att_name)

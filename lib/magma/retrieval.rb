@@ -20,7 +20,7 @@ class Magma
       @order = opts[:order]
       @show_disconnected = opts[:show_disconnected]
       @output_predicates = opts[:output_predicates] || []
-      @unmelt_matrices = opts[:unmelt_matrices]
+      @expand_matrices = opts[:expand_matrices]
 
       @model = model
       @record_names = record_names
@@ -75,7 +75,7 @@ class Magma
       @predicate_manager ||= OutputPredicatesManager.new(
         @output_predicates,
         attributes,
-        @unmelt_matrices
+        @expand_matrices
       )
     end
 
@@ -354,10 +354,10 @@ class Magma
     end
 
     class OutputPredicatesManager
-      def initialize (output_predicates, attributes, unmelt_matrices)
+      def initialize (output_predicates, attributes, expand_matrices)
         @output_predicates = output_predicates
         @attributes = attributes
-        @unmelt_matrices = unmelt_matrices
+        @expand_matrices = expand_matrices
       end
 
       def exists_for?(att)
@@ -374,8 +374,8 @@ class Magma
         predicate_for(att)[2]
       end
 
-      def unmelt_matrices?
-        @unmelt_matrices
+      def expand_matrices?
+        @expand_matrices
       end
 
       private

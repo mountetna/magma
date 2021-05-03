@@ -532,6 +532,39 @@ describe RetrieveController do
       expect(table.last.length).to eq(2)
     end
 
+    it 'returns a transposed matrix' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # New labors, to avoid caching issues with MatrixAttribute
+      another_belt = create(:labor, name: 'Belt of Hippolyta 3', number: 29, contributions: matrix[0], project: @project)
+      another_cattle = create(:labor, name: 'Cattle of Geryon 3', number: 30, contributions: matrix[1], project: @project)
+      another_apples = create(:labor, name: 'Golden Apples of the Hesperides 3', number: 31, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv',
+        transpose: 'true'
+      )
+
+      expect(last_response.status).to eq(200)
+      data = CSV.parse(last_response.body, col_sep: "\t")
+
+      header = data.map { |d| d.first }
+      expect(header).to eq(["name", "contributions"])
+      expect(data.length).to eq(2)
+      expect(data.first.first).to eq("Belt of Hippolyta 3")
+      expect(data.first.length).to eq(3)
+      expect(data.last.first).to eq("Golden Apples of the Hesperides 3")
+      expect(data.last.length).to eq(3)
+    end
+
     it 'returns an unmelted slice of matrix data using string false for unmelt_matrices' do
       matrix = [
         [ 10, 11, 12, 13 ],
@@ -539,9 +572,9 @@ describe RetrieveController do
         [ 30, 31, 32, 33 ]
       ]
       # New labors, to avoid caching issues with MatrixAttribute
-      belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
-      cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
-      apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
+      new_belt = create(:labor, name: 'Belt of Hippolyta 2', number: 19, contributions: matrix[0], project: @project)
+      new_cattle = create(:labor, name: 'Cattle of Geryon 2', number: 20, contributions: matrix[1], project: @project)
+      new_apples = create(:labor, name: 'Golden Apples of the Hesperides 2', number: 21, contributions: matrix[2], project: @project)
       
       retrieve(
         project_name: 'labors',
@@ -557,9 +590,9 @@ describe RetrieveController do
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
       expect(header).to eq(["name", "contributions"])
       expect(table.length).to eq(3)
-      expect(table.first.first).to eq("Belt of Hippolyta")
+      expect(table.first.first).to eq("Belt of Hippolyta 2")
       expect(table.first.length).to eq(2)
-      expect(table.last.first).to eq("Golden Apples of the Hesperides")
+      expect(table.last.first).to eq("Golden Apples of the Hesperides 2")
       expect(table.last.length).to eq(2)
     end
 

@@ -49,12 +49,8 @@ class RetrieveController < Magma::Controller
     @hide_templates = !!@params[:hide_templates]
     @output_predicate = @params[:output_predicate]
 
-    # Because TSV requests are passed in as forms,
-    #   true / false become strings and always evaluate as
-    #   `true`. We convert it to an actual boolean here.
-    @unmelt_matrices = @params[:unmelt_matrices]&.is_a?(String) ?
-      JSON.parse(@params[:unmelt_matrices]) :
-      @params[:unmelt_matrices]
+    @expand_matrices = boolean(@params[:expand_matrices])
+    @transpose = boolean(@params[:transpose])
 
     @attribute_names = @params[:attribute_names]
 
@@ -142,7 +138,7 @@ class RetrieveController < Magma::Controller
       user: @user,
       restrict: !@user.can_see_restricted?(@project_name),
       output_predicates: output_predicates,
-      unmelt_matrices: @unmelt_matrices
+      expand_matrices: @expand_matrices
     )
 
     tsv_stream = Enumerator.new do |stream|
@@ -212,5 +208,14 @@ class RetrieveController < Magma::Controller
     @output_predicate.is_a?(Array) ?
       [ Magma::Retrieval::JsonOutputPredicate.new(@output_predicate) ] :
       [ Magma::Retrieval::StringOutputPredicate.new(@output_predicate) ]
+  end
+
+  def boolean(param)
+    # Because TSV requests are passed in as forms,
+    #   true / false become strings and always evaluate as
+    #   `true`. We convert it to an actual boolean here.
+    !!(param&.is_a?(String) ?
+      JSON.parse(param) :
+      param)
   end
 end

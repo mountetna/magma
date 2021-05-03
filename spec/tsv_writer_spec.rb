@@ -31,6 +31,36 @@ describe 'TSVWriter' do
     expect(tsv_labors_names).to eq(labors_names)
   end
 
+  it 'can transpose the resulting data' do
+    project = create(:project, name: 'The Twelve Labors of Hercules')
+    labors = create_list(:labor, 4, project: project)
+
+    payload = Magma::Payload.new
+    model = Magma.instance.get_model('labors', 'labor')
+    retrieval = Magma::Retrieval.new(
+        model,
+        nil,
+        [:contributions],
+        filter: nil,
+        page: 1,
+        page_size: 5,
+        unmelt_matrices: true,
+        transpost: true
+    )
+
+    file = StringIO.new
+    Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
+
+    lines = file.string.split("\n")
+    header = lines.map { |l| l[0] }
+    
+    expect(lines.length).to eq(5)
+    model.attributes[:contributions].validation_object.options.each do |opt|
+      expect(header.include?("contributions_#{opt}")).to eq(true)
+    end
+    expect(lines.first.count("\t")).to eq(1)
+  end
+
   it 'should contain unmelted matrix header if unmelt_matrices' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
     labors = create_list(:labor, 4, project: project)

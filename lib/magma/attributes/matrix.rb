@@ -33,7 +33,7 @@ class Magma
       [ name, new_value ]
     end
 
-    def unmelt(matrix_value)
+    def expand(matrix_value)
       # Provide an embedded data frame inside of the TSV
       #   that includes the selected columns names + values.
 
