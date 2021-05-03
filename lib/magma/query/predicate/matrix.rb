@@ -59,11 +59,10 @@ class Magma
     end
 
     class MatrixValue
-      attr_reader :column_names
       def initialize(predicate, identifier, column_names=nil)
         @predicate = predicate
         @identifier = identifier
-        @column_names = column_names ? column_names : @predicate.attribute.validation_object.options
+        @column_names = column_names
       end
 
       def to_json(options={})
