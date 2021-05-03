@@ -8,8 +8,9 @@ class Magma
 
     def write_tsv
       @payload.add_model(@model, @retrieval.attribute_names)
+      @payload.set_predicate_manager(@retrieval.predicate_manager)
 
-      yield @payload.tsv_header(@retrieval.predicate_manager)
+      yield @payload.tsv_header
 
       @retrieval.each_page do |records|
         @payload.add_records(@model, records)

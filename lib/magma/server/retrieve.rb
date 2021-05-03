@@ -48,6 +48,7 @@ class RetrieveController < Magma::Controller
     @show_disconnected = @params[:show_disconnected]
     @hide_templates = !!@params[:hide_templates]
     @output_predicate = @params[:output_predicate]
+    @unmelt_matrices = !!@params[:unmelt_matrices]
 
     @attribute_names = @params[:attribute_names]
 
@@ -134,7 +135,8 @@ class RetrieveController < Magma::Controller
       show_disconnected: @show_disconnected,
       user: @user,
       restrict: !@user.can_see_restricted?(@project_name),
-      output_predicates: output_predicates
+      output_predicates: output_predicates,
+      unmelt_matrices: @unmelt_matrices
     )
 
     tsv_stream = Enumerator.new do |stream|

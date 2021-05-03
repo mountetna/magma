@@ -47,14 +47,21 @@ class Magma
       @models.first.last.to_tsv
     end
 
-    # Because we don't have access to all the records when
-    #   generating the headers, we need some context
-    #   around what data was requested, specifically
-    #   any MatrixAttribute slices. We'll extract that
-    #   info from the predicate manager, passed in from
-    #   the Retrieval object.
-    def tsv_header(predicate_manager)
-      @models.first.last.tsv_header(predicate_manager)
+    def tsv_header
+      @models.first.last.tsv_header
+    end
+
+    def set_predicate_manager(predicate_manager)
+      # Because we don't have access to all the records when
+      #   generating the headers or rows, we need some context
+      #   around what data was requested, specifically
+      #   any MatrixAttribute slices. We'll extract that
+      #   info from the predicate manager, passed in from
+      #   the Retrieval object.
+      @predicate_manager = predicate_manager
+      @models.values.each do |model|
+        model.set_predicate_manager(@predicate_manager)
+      end
     end
 
     private
@@ -67,7 +74,7 @@ class Magma
         @records = []
       end
 
-      attr_reader :records, :attribute_names
+      attr_reader :records, :attribute_names, :predicate_manager
 
       def add_records records
         @records.concat records
@@ -107,12 +114,12 @@ class Magma
         ]
       end
 
-      def tsv_header(predicate_manager)
+      def tsv_header
         # Need to unmelt any matrix attributes and generate
-        #   headers from their columns.
+        #   headers from their columns if `unmelt_matrices` is set.
         [].tap do |headers|
           tsv_attributes.each do |att_name|
-            is_matrix?(att_name) ?
+            unmelt_matrix?(att_name) ?
               headers.concat(matrix_headers(att_name, predicate_manager)) :
               headers << att_name
           end
@@ -128,8 +135,8 @@ class Magma
               tsv_attributes.each do |att_name|
                 if att_name == :id
                   new_row << record[att_name]
-                elsif is_matrix?(att_name)
-                  new_row.concat(attribute(att_name).query_to_tsv(record[att_name]))
+                elsif unmelt_matrix?(att_name)
+                  new_row.concat(attribute(att_name).unmelt(record[att_name]))
                 else
                   new_row << attribute(att_name).query_to_tsv(record[att_name])
                 end
@@ -137,6 +144,14 @@ class Magma
             end
           end
         end
+      end
+
+      def set_predicate_manager(predicate_manager)
+        @predicate_manager = predicate_manager
+      end
+
+      def unmelt_matrix?(att_name)
+        predicate_manager&.unmelt_matrices? && is_matrix?(att_name)
       end
 
       def is_matrix?(att_name)
