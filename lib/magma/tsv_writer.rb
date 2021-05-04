@@ -56,8 +56,8 @@ class Magma
       row.split("\t", limit)
     end
 
-    def tsv_records_to_array(tsv)
-      tsv.split("\n").map do |record|
+    def tsv_records_to_array(records)
+      records.split("\n").map do |record|
         tsv_row_to_array(record)
       end
     end
