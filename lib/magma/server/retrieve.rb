@@ -138,11 +138,17 @@ class RetrieveController < Magma::Controller
       user: @user,
       restrict: !@user.can_see_restricted?(@project_name),
       output_predicates: output_predicates,
-      expand_matrices: @expand_matrices
+      expand_matrices: @expand_matrices,
+      transpose: @transpose
     )
 
     tsv_stream = Enumerator.new do |stream|
-      Magma::TSVWriter.new(model, retrieval, @payload).write_tsv{ |lines| stream << lines }
+      Magma::TSVWriter.new(
+        model,
+        retrieval,
+        @payload,
+        expand_matrices: @expand_matrices,
+        transpose: @transpose).write_tsv{ |lines| stream << lines }
     end
 
     filename = "#{@project_name}_#{@model_name}_results_#{DateTime.now.strftime("%Y_%m_%d_%H_%M_%S")}.tsv"

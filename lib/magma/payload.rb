@@ -64,6 +64,12 @@ class Magma
       end
     end
 
+    def set_options(opts)
+      @models.values.each do |model|
+        model.set_options(opts)
+      end
+    end
+
     private
 
     class ModelPayload
@@ -74,7 +80,7 @@ class Magma
         @records = []
       end
 
-      attr_reader :records, :attribute_names, :predicate_manager
+      attr_reader :records, :attribute_names, :predicate_manager, :opts
 
       def add_records records
         @records.concat records
@@ -150,6 +156,10 @@ class Magma
         @predicate_manager = predicate_manager
       end
 
+      def set_options(opts)
+        @opts = opts
+      end
+
       private
 
       def tsv_attributes
@@ -163,7 +173,7 @@ class Magma
       end
 
       def expand_matrix?(att_name)
-        predicate_manager&.expand_matrices? && is_matrix?(att_name)
+        !!opts[:expand_matrices] && is_matrix?(att_name)
       end
 
       def is_matrix?(att_name)

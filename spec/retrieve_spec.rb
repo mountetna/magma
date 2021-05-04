@@ -559,13 +559,13 @@ describe RetrieveController do
       header = data.map { |d| d.first }
       expect(header).to eq(["name", "contributions"])
       expect(data.length).to eq(2)
-      expect(data.first.first).to eq("Belt of Hippolyta 3")
-      expect(data.first.length).to eq(3)
-      expect(data.last.first).to eq("Golden Apples of the Hesperides 3")
-      expect(data.last.length).to eq(3)
+      expect(data.first[1]).to eq("Belt of Hippolyta 3")
+      expect(data.first.length).to eq(4) # 3 labors + 1 header
+      expect(data.first.last).to eq("Golden Apples of the Hesperides 3")
+      expect(data.last).to eq(["contributions", "[10,11]", "[20,21]", "[30,31]"])
     end
 
-    it 'returns an unmelted slice of matrix data using string false for unmelt_matrices' do
+    it 'returns an unmelted slice of matrix data using string false for expand_matrices' do
       matrix = [
         [ 10, 11, 12, 13 ],
         [ 20, 21, 22, 23 ],
@@ -583,7 +583,7 @@ describe RetrieveController do
         attribute_names: ["name", "contributions"],
         output_predicate: "contributions[]Athens,Sparta",
         format: 'tsv',
-        unmelt_matrices: 'false'
+        expand_matrices: 'false'
       )
 
       expect(last_response.status).to eq(200)
@@ -596,7 +596,7 @@ describe RetrieveController do
       expect(table.last.length).to eq(2)
     end
 
-    it 'returns a melted slice of matrix data using output_predicate and unmelt_matrices' do
+    it 'returns a melted slice of matrix data using output_predicate and expand_matrices' do
       matrix = [
         [ 10, 11, 12, 13 ],
         [ 20, 21, 22, 23 ],
@@ -614,12 +614,12 @@ describe RetrieveController do
         attribute_names: ["name", "contributions"],
         output_predicate: "contributions[]Athens,Sparta",
         format: 'tsv',
-        unmelt_matrices: true
+        expand_matrices: true
       )
 
       expect(last_response.status).to eq(200)
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(header).to eq(["name", "contributions_Athens", "contributions_Sparta"])
+      expect(header).to eq(["name", "contributions.Athens", "contributions.Sparta"])
       expect(table.length).to eq(3)
       expect(table.first).to eq(["Belt of Hippolyta", "10", "11"])
       expect(table.last).to eq(["Golden Apples of the Hesperides", "30", "31"])

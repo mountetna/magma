@@ -43,25 +43,30 @@ describe 'TSVWriter' do
         [:contributions],
         filter: nil,
         page: 1,
-        page_size: 5,
-        unmelt_matrices: true,
-        transpost: true
+        page_size: 5
     )
 
     file = StringIO.new
-    Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
+    Magma::TSVWriter.new(
+      model,
+      retrieval,
+      payload,
+      expand_matrices: true,
+      transpose: true).write_tsv{ |lines| file.write lines }
 
     lines = file.string.split("\n")
-    header = lines.map { |l| l[0] }
-    
+    header = lines.map { |l| l.split("\t").first }
+
     expect(lines.length).to eq(5)
     model.attributes[:contributions].validation_object.options.each do |opt|
-      expect(header.include?("contributions_#{opt}")).to eq(true)
+      expect(header.include?("contributions.#{opt}")).to eq(true)
     end
-    expect(lines.first.count("\t")).to eq(1)
+
+    labors_names = labors.map(&:name).sort
+    expect(lines.first).to eq(["name"].concat(labors_names).join("\t"))
   end
 
-  it 'should contain unmelted matrix header if unmelt_matrices' do
+  it 'should contain expanded matrix header if expand_matrices' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
     labors = create_list(:labor, 4, project: project)
 
@@ -73,22 +78,25 @@ describe 'TSVWriter' do
         [:contributions],
         filter: nil,
         page: 1,
-        page_size: 5,
-        unmelt_matrices: true
+        page_size: 5
     )
 
     file = StringIO.new
-    Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
+    Magma::TSVWriter.new(
+      model,
+      retrieval,
+      payload,
+      expand_matrices: true).write_tsv{ |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
     model.attributes[:contributions].validation_object.options.each do |opt|
-      expect(header.include?("contributions_#{opt}")).to eq(true)
+      expect(header.include?("contributions.#{opt}")).to eq(true)
     end
     expect(lines[1].count("\t")).to eq(4)
   end
 
-  it 'should not contain unmelted matrix header if not unmelt_matrices' do
+  it 'should not contain expanded matrix header if not expand_matrices' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
     labors = create_list(:labor, 4, project: project)
 
@@ -109,13 +117,13 @@ describe 'TSVWriter' do
     lines = file.string.split("\n")
     header = lines[0]
     model.attributes[:contributions].validation_object.options.each do |opt|
-      expect(header.include?("contributions_#{opt}")).to eq(false)
+      expect(header.include?("contributions.#{opt}")).to eq(false)
     end
     expect(header.include?("contributions")).to eq(true)
     expect(lines[1].count("\t")).to eq(1)
   end
 
-  it 'should contain unmelted matrix headers with output_predicate if unmelt_matrices' do
+  it 'should contain expanded matrix headers with output_predicate if expand_matrices' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
     labors = create_list(:labor, 4, project: project)
 
@@ -128,22 +136,25 @@ describe 'TSVWriter' do
         filter: nil,
         page: 1,
         page_size: 5,
-        output_predicates: [ Magma::Retrieval::StringOutputPredicate.new("contributions[]Sidon") ],
-        unmelt_matrices: true
+        output_predicates: [ Magma::Retrieval::StringOutputPredicate.new("contributions[]Sidon") ]
     )
 
     file = StringIO.new
-    Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
+    Magma::TSVWriter.new(
+      model,
+      retrieval,
+      payload,
+      expand_matrices: true).write_tsv{ |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
-    expect(header.include?("contributions_Sidon")).to eq(true)
-    expect(header.include?("contributions_Athens")).to eq(false)
+    expect(header.include?("contributions.Sidon")).to eq(true)
+    expect(header.include?("contributions.Athens")).to eq(false)
     expect(header.include?("contributions\n")).to eq(false)
     expect(lines[1].count("\t")).to eq(1)
   end
 
-  it 'should contain only matrix attribute name even with output_predicate if not unmelt_matrices' do
+  it 'should contain only matrix attribute name even with output_predicate if not expand_matrices' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
     labors = create_list(:labor, 4, project: project)
 
@@ -164,7 +175,7 @@ describe 'TSVWriter' do
 
     lines = file.string.split("\n")
     header = lines[0]
-    expect(header.include?("contributions_Sidon")).to eq(false)
+    expect(header.include?("contributions.Sidon")).to eq(false)
     expect(header.include?("contributions")).to eq(true)
     expect(lines[1].count("\t")).to eq(1)
   end
