@@ -33,15 +33,15 @@ class Magma
 
     def transpose_records
       # Collect all data, then yield the transposed results
-      all_data = [ tsv_row_to_array(@payload.tsv_header) ].tap do |buffer|
+      [].tap do |buffer|
+        buffer << tsv_row_to_array(@payload.tsv_header)
+
         @retrieval.each_page do |records|
           @payload.add_records(@model, records)
           buffer.concat(tsv_records_to_array(@payload.to_tsv))
           @payload.reset(@model)
         end
-      end.transpose
-
-      all_data.each do |row|
+      end.transpose.each do |row|
         yield array_to_tsv_row(row)
       end
     end
