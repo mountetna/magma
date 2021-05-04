@@ -184,7 +184,7 @@ class Magma
         # Check each item in output_format[1]. If it
         #   is an Array, check the first item. It
         #   is a matrix if it matches the
-        #   matrix_format_key. The selected options
+        #   att_format_key. The selected options
         #   will appear in the last item of that format tuple.
         # This method assumes that the matrix attribute
         #   will be in the output format, or throws
@@ -192,10 +192,10 @@ class Magma
         #   never reached this point).
         # Use @model.project_name and @model.model_name to force
         #   the names into snake_case, to match output format.
-        matrix_format_key = "#{@model.project_name}::#{@model.model_name}\##{att_name}"
+        att_format_key = "#{@model.project_name}::#{@model.model_name}##{att_name}"
 
         @output_format.last.each do |output|
-          next unless output.is_a?(Array) && output.first == matrix_format_key
+          next unless output.is_a?(Array) && output.first == att_format_key
           
           return output.last.map do |col_name|
             "#{att_name}.#{col_name}"
