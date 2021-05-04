@@ -11,7 +11,7 @@ class Magma
 
     def write_tsv(&block)
       @payload.add_model(@model, @retrieval.attribute_names)
-      @payload.set_predicate_manager(@retrieval.predicate_manager)
+      @payload.set_output_format(@retrieval.output_format)
       @payload.set_options(
         expand_matrices: @expand_matrices
       )

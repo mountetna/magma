@@ -11,7 +11,7 @@ describe 'TSVWriter' do
     retrieval = Magma::Retrieval.new(
         model,
         nil,
-        model.attributes.values,
+        model.attributes.values.map { |a| a.name.to_sym },
         filter: nil,
         page: 1,
         page_size: 5

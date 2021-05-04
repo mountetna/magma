@@ -77,6 +77,10 @@ class Magma
       )
     end
 
+    def output_format
+      question.format
+    end
+
     private
 
     def requested?(att)
@@ -365,10 +369,6 @@ class Magma
         predicates_list&.find do |predicate|
           predicate.first == att.name.to_s
         end
-      end
-
-      def operand_for(att)
-        predicate_for(att)[2]
       end
 
       private

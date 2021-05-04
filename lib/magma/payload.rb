@@ -51,16 +51,14 @@ class Magma
       @models.first.last.tsv_header
     end
 
-    def set_predicate_manager(predicate_manager)
+    def set_output_format(output_format)
       # Because we don't have access to all the records when
       #   generating the headers or rows, we need some context
       #   around what data was requested, specifically
-      #   any MatrixAttribute slices. We'll extract that
-      #   info from the predicate manager, passed in from
-      #   the Retrieval object.
-      @predicate_manager = predicate_manager
+      #   any MatrixAttribute slices. We can extract
+      #   that from the output format.
       @models.values.each do |model|
-        model.set_predicate_manager(@predicate_manager)
+        model.set_output_format(output_format)
       end
     end
 
@@ -80,7 +78,7 @@ class Magma
         @records = []
       end
 
-      attr_reader :records, :attribute_names, :predicate_manager, :opts
+      attr_reader :records, :attribute_names, :opts
 
       def add_records records
         @records.concat records
@@ -152,8 +150,8 @@ class Magma
         end
       end
 
-      def set_predicate_manager(predicate_manager)
-        @predicate_manager = predicate_manager
+      def set_output_format(output_format)
+        @output_format = output_format
       end
 
       def set_options(opts)
@@ -181,15 +179,30 @@ class Magma
       end
 
       def matrix_headers(att_name)
-        att = attribute(att_name)
-        
-        column_names = predicate_manager.exists_for?(att) ?
-          predicate_manager.operand_for(att) : 
-          att.validation_object.options
+        # Output format is a tuple, with index 1
+        #   being an Array of output formats.
+        # Check each item in output_format[1]. If it
+        #   is an Array, check the first item. It
+        #   is a matrix if it matches the
+        #   matrix_format_key. The selected options
+        #   will appear in the last item of that format tuple.
+        # This method assumes that the matrix attribute
+        #   will be in the output format, or throws
+        #   an exception (because the code should have
+        #   never reached this point).
+        # Use @model.project_name and @model.model_name to force
+        #   the names into snake_case, to match output format.
+        matrix_format_key = "#{@model.project_name}::#{@model.model_name}\##{att_name}"
 
-        column_names.map do |col_name|
-          "#{att_name}.#{col_name}"
+        @output_format.last.each do |output|
+          next unless output.is_a?(Array) && output.first == matrix_format_key
+          
+          return output.last.map do |col_name|
+            "#{att_name}.#{col_name}"
+          end
         end
+
+        raise "Matrix attribute #{att_name} not found in output format."
       end
     end
   end
