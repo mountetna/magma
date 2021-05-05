@@ -51,15 +51,11 @@ class Magma
     def tsv_row_to_array(row)
       # Need to set `limit` for split()
       #   to "space-pad" the resulting array
-      row = row.gsub("\n", "")
-      limit = row.count("\t") + 1
-      row.split("\t", limit)
+      CSV.parse_line(row, col_sep: "\t")
     end
 
     def tsv_records_to_array(records)
-      records.split("\n").map do |record|
-        tsv_row_to_array(record)
-      end
+      CSV.parse(records, col_sep: "\t")
     end
 
     def array_to_tsv_row(array)
