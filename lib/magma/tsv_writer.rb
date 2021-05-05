@@ -49,8 +49,6 @@ class Magma
     private
 
     def tsv_row_to_array(row)
-      # Need to set `limit` for split()
-      #   to "space-pad" the resulting array
       CSV.parse_line(row, col_sep: "\t")
     end
 
