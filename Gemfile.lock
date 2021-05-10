@@ -1,7 +1,7 @@
 PATH
   remote: /etna
   specs:
-    etna (0.1.37)
+    etna (0.1.36)
       concurrent-ruby
       jwt
       multipart-post
