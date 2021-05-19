@@ -15,6 +15,9 @@ gem 'spreadsheet'
 gem 'puma', '>=5.0.2'
 gem 'curb' # used by ipi project.
 gem 'concurrent-ruby'
+gem "yabeda"
+gem "yabeda-prometheus"
+gem "yabeda-puma-plugin"
 
 group :test do
   gem 'simplecov'
