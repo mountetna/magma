@@ -10,7 +10,7 @@ class Magma
       reasons = []
       return reasons unless restrict?
 
-      record_names = record_set.values.map(&:record_name).reject {|name| name =~ Magma::Loader::TEMP_ID_MATCH }
+      record_names = record_set.values.map(&:record_name).reject { |name| name =~ Magma::Loader::TEMP_ID_MATCH }
 
       unrestricted_identifiers = Magma::Question.new(
         @project_name,

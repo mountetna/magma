@@ -279,7 +279,7 @@ class Magma
       temp_ids[obj] ||= TempId.new(new_temp_id, obj)
     end
 
-    TEMP_ID_MATCH=/^::temp/
+    TEMP_ID_MATCH=/^::/
 
     def identifier_id(model, identifier)
       return nil unless identifier
