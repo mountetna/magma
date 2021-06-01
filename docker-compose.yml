@@ -12,6 +12,7 @@ x-base-etna-service:
     - magma-public-dir:/app/public:rw
     - magma-data-dir:/app/data:rw
     - magma-opt-dir:/usr/opt:rw
+    - magma-node-modules:/app/node_modules
     - ../etna:/etna:delegated
   environment: &base-etna-env
     'MAGMA_ENV': 'development'
@@ -103,6 +104,9 @@ volumes:
     name: "magma-data-dir"
   magma-opt-dir:
     driver: local
+  magma-node-modules:
+    driver: local
+    name: "magma-node-modules"
 
 services:
   <<: *base-etna-services
