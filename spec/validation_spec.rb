@@ -41,6 +41,9 @@ describe Magma::Validation do
       # passes
       errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: 'lion')
       expect(errors).to be_empty
+
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', species: [])
+      expect(errors).to eq(["On species, '[]' is improperly formatted."])
     end
 
     it 'validates a regexp proc' do

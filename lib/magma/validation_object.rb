@@ -79,7 +79,7 @@ class Magma
 
   class RegexpValidationObject < ValidationObject
     def validate(value)
-      @object.match?(value)
+      value.is_a?(String) && @object.match?(value)
     end
 
     def error_message(name, value, hint)

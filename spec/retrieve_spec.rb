@@ -27,6 +27,18 @@ describe RetrieveController do
     expect(last_response.status).to eq(403)
   end
 
+  it 'fails for non-existent models' do
+    retrieve(
+      {
+        model_name: 'laborvvvv',
+        record_names: [],
+        attribute_names: [],
+        project_name: 'labors'
+      },
+    )
+    expect(last_response.status).to eq(404)
+  end
+
   it 'calls the retrieve endpoint and returns a template.' do
     retrieve(
       model_name: 'aspect',
