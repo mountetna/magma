@@ -7,6 +7,7 @@ require_relative 'lib/magma'
 
 Magma.instance.configure(YAML.load(File.read('config.yml')))
 use Etna::CrossOrigin
+use Etna::MetricsExporter
 use Etna::ParseBody
 use Etna::SymbolizeParams
 use Etna::Auth

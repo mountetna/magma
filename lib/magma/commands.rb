@@ -239,6 +239,24 @@ EOT
     end
   end
 
+  class MeasureDataRows < Etna::Command
+    def setup(config)
+      super
+      Magma.instance.load_models
+      Magma.instance.setup_db
+    end
+
+    def execute
+      Magma.instance.magma_projects.keys.each do |project_name|
+        project = Magma.instance.get_project(project_name)
+        project.models.each do |model_name, model|
+          tags = {model_name: model_name.to_s, project_name: project_name.to_s}
+          Yabeda.magma.data_rows.set(tags, model.count)
+        end
+      end
+    end
+  end
+
   class CreateDb < Etna::Command
     usage '<project_name> # Attach an existing project to a magma instance, creating database and schema'
 

@@ -134,6 +134,19 @@ class Magma
     end
   end
 
+  def setup_yabeda
+    Yabeda.configure do
+      group :magma do
+        gauge :data_rows do
+          comment "The number of data rows by project and model for magma."
+          tags [:project_name, :model_name]
+        end
+      end
+    end
+
+    super
+  end
+
   def test?
     ENV["MAGMA_ENV"] == "test"
   end
