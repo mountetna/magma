@@ -99,7 +99,9 @@ class Magma
     verb '::count' do
       child Numeric
       extract do |table,return_identity|
-        table.count do |row|
+        table.uniq do |row|
+          row[identity]
+        end.count do |row|
           row[identity]
         end
       end

@@ -226,6 +226,27 @@ describe QueryController do
       expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
     end
 
+    xit 'supports ::every with ::has' do
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
+      iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+      skin = create(:prize, labor: @lion, name: 'skin')
+
+      # sub-query
+      # SELECT prize FROM prize WHERE worth IS NOT NULL 
+
+      # SELECT labor.id FROM labor,prize WHERE ALL (SELECT prize FROM prize WHERE worth IS NOT NULL GROUP BY labor.id )
+      query(['labor', ['prize', ['::has', 'worth'], '::every'], '::all', '::identifier'])
+      query(['labor', ['prize', ['::has', 'worth'], '::any'], '::all', '::identifier'])
+      
+      # SELECT labor.id
+      # FROM labor,prize
+      # WHERE prize.worth IS NOT NULL
+
+      expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra" ])
+      expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+    end
+
     it 'supports ::any' do
       poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
       poop = create(:prize, name: 'poop', worth: 0, labor: @stables)
@@ -234,6 +255,18 @@ describe QueryController do
 
       expect(json_body[:answer]).to eq(true)
       expect(json_body[:format]).to eq('Boolean')
+    end
+
+    it 'supports ::any with ::has' do
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
+      iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+      skin = create(:prize, labor: @lion, name: 'skin')
+
+      query(['labor', ['prize', ['::has', 'worth'], '::any'], '::all', '::identifier'])
+
+      expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Lernean Hydra" ])
+      expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
     end
 
     it 'supports ::count' do
@@ -251,6 +284,18 @@ describe QueryController do
         [ 'Nemean Lion', 1 ]
       ])
       expect(json_body[:format]).to eq(['labors::labor#name', 'Numeric'])
+    end
+
+    it 'supports ::count and ::any' do 
+      poison = create(:prize, labor: @hydra, name: 'poison', worth: 0)
+      poop = create(:prize, labor: @stables, name: 'poop', worth: 4)
+      iou = create(:prize, labor: @stables, name: 'iou', worth: 3)
+      skin = create(:prize, labor: @lion, name: 'skin', worth: 5)
+
+      query(['labor', ['prize', [ 'worth', '::>', 0 ], '::any'], '::count' ])
+
+      expect(json_body[:answer]).to eq(2)
+      expect(json_body[:format]).to eq('Numeric')
     end
   end
 
