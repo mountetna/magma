@@ -69,6 +69,8 @@ class Magma
     end
 
     def answer
+      require 'pry'
+      binding.pry
       table = to_table(query)
 
       @start_predicate.extract(table, identity)
@@ -206,7 +208,10 @@ class Magma
       bounds_select_parts << Sequel.function(:row_number)
                              .over(order: order_by_aliases)
                              .as(:row)
+      require 'pry'
+      binding.pry
 
+      # @start_predicate.alias_for_attribute(@model.identity)
       count_query.from_self.select(
           *bounds_select_parts
       ).from_self(alias: :main_query).select(
@@ -300,6 +305,8 @@ class Magma
     end
 
     def paged_query(query)
+      require 'pry'
+      binding.pry
       raise QuestionError, 'Page must start at 1' unless @options[:page] > 0
       bounds = to_table(page_bounds_query).map do |row|
         order_by_aliases.map { |c| row[c] }
