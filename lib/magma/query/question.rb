@@ -194,7 +194,7 @@ class Magma
         query = constraint.apply(query)
       end
 
-      query.select(
+      query.distinct.select(
           *order_by_column_names.zip(order_by_aliases).map { |c, a| c.as(a) }
       )
     end
@@ -207,10 +207,7 @@ class Magma
                              .over(order: order_by_aliases)
                              .as(:row)
 
-      # Get bounds based off of distinct counts,
-      #   otherwise count does not reflect unique records
-      #   and pagination results don't make sense.
-      count_query.distinct.from_self.select(
+      count_query.from_self.select(
           *bounds_select_parts
       ).from_self(alias: :main_query).select(
           # only the first row from each page
