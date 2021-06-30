@@ -76,6 +76,14 @@ EOT
       end
     end
 
+    def subquery
+      if @verb && @verb.gives?(:subquery)
+        [ @verb.do(:subquery) ].compact
+      else
+        []
+      end
+    end
+
     def select
       []
     end
@@ -165,10 +173,12 @@ EOT
         verbs[args] = block
       end
 
-      def match_verbs(query_args, predicate)
+      def match_verbs(query_args, predicate, is_conditional = false)
+        # Conditional model verbs like ::any or ::every appear
+        #   last in the set of query args.
         matching_args, matching_block = verbs.find do |verb_args, block|
           verb_args.each.with_index.all? do |verb_arg, i|
-            query_arg = query_args[i]
+            query_arg = is_conditional ? query_args.last : query_args[i]
             case verb_arg
             when nil
               query_arg.nil?

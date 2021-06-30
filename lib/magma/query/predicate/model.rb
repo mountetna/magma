@@ -23,6 +23,7 @@ class Magma
     #      ::first - returns the first item in the list, namely a Model
     #      ::all - returns every item in the list, represented by a Model
     #      ::count - returns the number of items in the list
+    #      ::every - a Boolean that returns true if every item in the list is non-zero
 
     attr_reader :model
 
@@ -40,12 +41,21 @@ class Magma
       super(question)
       @model = model
       @filters = []
+      @subquery = nil
 
       # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
       while query_args.first.is_a?(Array)
-        create_filter(query_args.shift)
+        # If any conditional verbs are present, we need to
+        #   actually create a subquery to SELECT from, instead of
+        #   a SQL WHERE clause.
+        args = query_args.shift
+        if is_subquery_query?(args)
+          create_subquery(args)
+        else
+          create_filter(args)
+        end
       end
 
       add_filters
@@ -88,8 +98,28 @@ class Magma
 
     verb '::any' do
       child TrueClass
+
+      subquery do
+        yield @subquery if has_subquery?
+      end
+
       extract do |table,return_identity|
         table.any? do |row|
+          row[identity]
+        end
+      end
+      format { 'Boolean' }
+    end
+
+    verb '::every' do
+      child TrueClass
+
+      subquery do 
+        yield @subquery if has_subquery?
+      end
+
+      extract do |table,return_identity|
+        table.length > 0 && table.all? do |row|
           row[identity]
         end
       end
@@ -159,6 +189,12 @@ class Magma
       end.inject(&:+) || []
     end
 
+    def subquery
+      return [@subquery] if has_subquery?
+
+      []
+    end
+
     def to_hash
       super.merge(
         model: model,
@@ -187,6 +223,71 @@ class Magma
       end
 
       alias_for_column(attr.column_name)
+    end
+
+    def is_subquery_query?(query_args)
+
+      verb, subquery_model_name, subquery_args = self.class.match_verbs(query_args, self, true)
+
+      verb.gives?(:subquery)
+      #   @verb = verb
+      #   @query_args = [] # This should always be terminal
+      #   @child_predicate = @verb.do(:child)
+      #   return true
+      # end
+    rescue Magma::QuestionError
+      false
+    end
+
+    def create_subquery(args)
+      verb, subquery_model_name, subquery_args = self.class.match_verbs(args, self, true)
+      attribute_name = subquery_model_name.first
+      attribute = @model.attributes[attribute_name.to_sym]
+
+      raise ArgumentError, "Invalid attribute, #{attribute_name}" if attribute.nil?
+
+      child_model = Magma.instance.get_model(@model.project_name, attribute_name)
+      
+      subquery_filters = []
+      while subquery_args.first.is_a?(Array)
+        filter_args = subquery_args.shift
+        subquery_filter = FilterPredicate.new(@question, child_model, child_table_name, *filter_args)
+  
+        unless subquery_filter.reduced_type == TrueClass
+          raise ArgumentError,
+            "Filter #{subquery_filter} does not reduce to Boolean #{subquery_filter.argument} #{subquery_filter.reduced_type}!"
+        end
+        
+        subquery_filters << subquery_filter
+      end
+      
+      parent_attribute = child_model.attributes.values.select do |attr|
+        attr.is_a?(Magma::ParentAttribute)
+      end.first
+
+      @subquery = Magma::Subquery.new(
+        @model,
+        child_model,
+        derived_table_name,
+        alias_name,
+        parent_attribute.column_name,
+        subquery_filters,
+        subquery_args.shift  # the condition, i.e. ::every or ::any
+      )
+    end
+
+    private
+
+    def has_subquery?
+      !@subquery.nil?
+    end
+
+    def derived_table_name
+      "derived_#{alias_name}".to_sym
+    end
+
+    def child_table_name
+      "#{alias_name}_child".to_sym
     end
   end
 end
