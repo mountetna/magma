@@ -235,7 +235,7 @@ describe QueryController do
         skin = create(:prize, labor: @lion, name: 'skin', worth: 1)
 
         query(['labor', ['prize', ['::has', 'worth'], '::every'], '::all', '::identifier'])
-
+        binding.pry
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
       end
@@ -344,9 +344,6 @@ describe QueryController do
         lion_monster = create(:monster, :lion, labor: @lion)
         hydra_monster = create(:monster, :hydra, labor: @hydra)
 
-        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
-        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
-
         query(['labor',
               ['::and',
                 ['prize', ['::or', ['worth', '::>', 6], ['worth', '::<', 3]], '::any'],
@@ -366,7 +363,20 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra"])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
-      
+      end
+
+      it 'supports multiple conditional filters with ::and, across multiple models' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
+        skin = create(:prize, labor: @lion, name: 'skin')
+
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+  
         query(['labor',
               ['::and',
                 ['prize', ['::lacks', 'worth'], '::any'],
@@ -383,7 +393,7 @@ describe QueryController do
                 ['monster', 'victim', ['name', '::matches', 'John'], '::every'],
               ],
               '::all', '::identifier'])
-        binding.pry
+
         expect(json_body[:answer].map(&:last)).to eq([ ])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
@@ -411,18 +421,38 @@ describe QueryController do
         lion_monster = create(:monster, :lion, labor: @lion)
         hydra_monster = create(:monster, :hydra, labor: @hydra)
 
-        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
-        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
-
         query(['labor',
               ['::or',
                 ['prize', ['::or', ['worth', '::>', 6], ['worth', '::<', 3]], '::any'],
                 ['monster', 'name', '::matches', 'Ne']
               ],
               '::all', '::identifier'])
-
+        binding.pry
         expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+  
+        query(['labor',
+              ['::or',
+                ['prize', ['::or', ['worth', '::>', 6], ['worth', '::<', 3]], '::every'],
+                ['monster', 'name', '::matches', 'Ne']
+              ],
+              '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])    
+      end
+
+      it 'supports multiple ::or filters across multiple models' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
+        skin = create(:prize, labor: @lion, name: 'skin')
+
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
       
         query(['labor',
               ['::or',
@@ -456,6 +486,52 @@ describe QueryController do
           '::all', '::identifier'])
 
         expect(last_response.status).to eq(422)
+      end
+
+      it 'supports arbitrary depth' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
+        skin = create(:prize, labor: @lion, name: 'skin')
+
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+      
+        query(['labor',
+              ['::and',
+                ['::or',
+                  ['prize', ['::lacks', 'worth'], '::every'],
+                  ['prize', ['worth', '::<', 6], '::any']
+                ],
+                ['::or',
+                  ['monster', 'victim', ['name', '::matches', 'John'], '::any'],
+                  ['name', '::matches', 'dra']
+                ]
+              ],
+              '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      
+        query(['labor',
+              ['::or',
+                ['::or',
+                  ['prize', ['::lacks', 'worth'], '::every'],
+                  ['prize', ['worth', '::<', 6], '::any']
+                ],
+                ['::or',
+                  ['monster', 'victim', ['name', '::matches', 'John'], '::any'],
+                  ['name', '::matches', 'dra']
+                ]
+              ],
+              '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Lernean Hydra", "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      
       end
 
       it 'works with filters across multiple models' do

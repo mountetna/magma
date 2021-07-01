@@ -36,6 +36,7 @@ class Magma
 
     def initialize(question)
       @question = question
+      @subqueries = []
     end
 
     def reduced_type
@@ -142,6 +143,10 @@ EOT
 
     def alias_name
       @alias_name ||= 10.times.map{ (97+rand(26)).chr }.join.to_sym
+    end
+
+    def add_subquery(subquery)
+      @subqueries << subquery
     end
 
     private
@@ -363,3 +368,4 @@ require_relative 'predicate/terminal'
 require_relative 'predicate/metrics'
 require_relative 'predicate/table'
 require_relative 'predicate/matrix'
+require_relative 'predicate/subquery'

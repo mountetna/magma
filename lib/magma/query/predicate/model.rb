@@ -41,27 +41,31 @@ class Magma
       super(question)
       @model = model
       @filters = []
-      @subquery = nil
+      @subqueries = []
 
+      @subquery_util = Magma::SubqueryPredicateUtils.new(self, question)
+      # First, we extract the subquery Arrays from the
+      #   query_args and create subqueries for them.
+      # These conditional verbs (i.e. ::every, ::any)
+      #   result in a subquery to SELECT from, instead
+      #   of a SQL WHERE clause.
+      subquery_args, filter_args = @subquery_util.partition_args(query_args)
+
+      subquery_args.each do |join_type, args|
+        @subquery_util.create_subquery(join_type, args)
+      end
+
+      # Any remaining elements should be Filters.
       # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
-      binding.pry
-      while query_args.first.is_a?(Array)
-        # If any conditional verbs are present, we need to
-        #   actually create a subquery to SELECT from, instead of
-        #   a SQL WHERE clause.
-        args = query_args.shift
-        if is_subquery_query?(args)
-          create_subquery(args)
-        else
-          create_filter(args)
-        end
+      while filter_args.first.is_a?(Array)
+        create_filter(filter_args.shift)
       end
 
       add_filters
 
-      process_args(query_args)
+      process_args(filter_args)
     end
 
     verb '::first' do
@@ -101,7 +105,7 @@ class Magma
       child TrueClass
 
       subquery do
-        yield @subquery if has_subquery?
+        yield @subqueries
       end
 
       extract do |table,return_identity|
@@ -116,7 +120,7 @@ class Magma
       child TrueClass
 
       subquery do 
-        yield @subquery if has_subquery?
+        yield @subqueries
       end
 
       extract do |table,return_identity|
@@ -147,6 +151,10 @@ class Magma
           "Filter #{filter} does not reduce to Boolean #{filter.argument} #{filter.reduced_type}!"
       end
 
+      add_filter(filter)
+    end
+
+    def add_filter(filter)
       @filters.push(filter)
     end
 
@@ -191,9 +199,7 @@ class Magma
     end
 
     def subquery
-      return [@subquery] if has_subquery?
-
-      []
+      @subqueries
     end
 
     def to_hash
@@ -224,67 +230,6 @@ class Magma
       end
 
       alias_for_column(attr.column_name)
-    end
-
-    def is_subquery_query?(query_args)
-
-      verb, subquery_model_name, subquery_args = self.class.match_verbs(query_args, self, true)
-
-      verb.gives?(:subquery)
-    rescue Magma::QuestionError
-      false
-    end
-
-    def create_subquery(args)
-      verb, subquery_model_name, subquery_args = self.class.match_verbs(args, self, true)
-      attribute_name = subquery_model_name.first
-      attribute = @model.attributes[attribute_name.to_sym]
-
-      raise ArgumentError, "Invalid attribute, #{attribute_name}" if attribute.nil?
-
-      child_model = Magma.instance.get_model(@model.project_name, attribute_name)
-      
-      subquery_filters = []
-      while subquery_args.first.is_a?(Array)
-        filter_args = subquery_args.shift
-        subquery_filter = FilterPredicate.new(@question, child_model, child_table_alias, *filter_args)
-  
-        unless subquery_filter.reduced_type == TrueClass
-          raise ArgumentError,
-            "Filter #{subquery_filter} does not reduce to Boolean #{subquery_filter.argument} #{subquery_filter.reduced_type}!"
-        end
-        
-        subquery_filters << subquery_filter
-      end
-      
-      parent_attribute = child_model.attributes.values.select do |attr|
-        attr.is_a?(Magma::ParentAttribute)
-      end.first
-
-      @subquery = Magma::Subquery.new(
-        @model,
-        child_model,
-        derived_table_alias,
-        alias_name,
-        child_table_alias,
-        parent_attribute.column_name,
-        subquery_filters,
-        subquery_args.shift  # the condition, i.e. ::every or ::any
-      )
-    end
-
-    private
-
-    def has_subquery?
-      !@subquery.nil?
-    end
-
-    def derived_table_alias
-      "derived_#{alias_name}".to_sym
-    end
-
-    def child_table_alias
-      "#{alias_name}_child".to_sym
     end
   end
 end
