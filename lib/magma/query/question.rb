@@ -72,8 +72,6 @@ class Magma
 
     def answer
       table = to_table(query)
-      require 'pry'
-      binding.pry
       @start_predicate.extract(table, identity)
     end
 
@@ -118,6 +116,7 @@ class Magma
     private
 
     def to_table(query)
+      binding.pry
       Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 

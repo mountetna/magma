@@ -1,13 +1,14 @@
 class Magma
   class Subquery
-    attr_reader :main_model, :subquery_model, :derived_table_alias, :main_table_alias, :fk_column_name
+    attr_reader :main_model, :subquery_model, :derived_table_alias, :main_table_alias, :child_table_alias, :fk_column_name
 
-    def initialize(main_model, subquery_model, derived_table_alias, main_table_alias, fk_column_name, filters, condition)
+    def initialize(main_model, subquery_model, derived_table_alias, main_table_alias, child_table_alias, fk_column_name, filters, condition)
       @main_model = main_model
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias
-      @main_table_alias = main_table_alias.to_sym
+      @main_table_alias = main_table_alias
+      @child_table_alias = child_table_alias
       @fk_column_name = fk_column_name.to_sym
 
       @filters = filters
@@ -28,7 +29,7 @@ class Magma
       #   filtered with GROUP BY and HAVING,
       #   COUNT(*) and SUM(), to ensure that
       #   the conditions are met.
-      query.right_join(
+      query.inner_join(
         subquery.as(derived_table_alias),
         Sequel.&(id_mapping)
       )
@@ -50,7 +51,7 @@ class Magma
 
     def subquery
       new_query = subquery_model.from(
-        subquery_model.table_name
+        Sequel.as(subquery_model.table_name, child_table_alias)
       )
 
       @constraints.each { |c| new_query = c.apply(new_query) }

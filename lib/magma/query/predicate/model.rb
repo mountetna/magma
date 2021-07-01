@@ -46,6 +46,7 @@ class Magma
       # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
+      binding.pry
       while query_args.first.is_a?(Array)
         # If any conditional verbs are present, we need to
         #   actually create a subquery to SELECT from, instead of
@@ -230,11 +231,6 @@ class Magma
       verb, subquery_model_name, subquery_args = self.class.match_verbs(query_args, self, true)
 
       verb.gives?(:subquery)
-      #   @verb = verb
-      #   @query_args = [] # This should always be terminal
-      #   @child_predicate = @verb.do(:child)
-      #   return true
-      # end
     rescue Magma::QuestionError
       false
     end
@@ -251,7 +247,7 @@ class Magma
       subquery_filters = []
       while subquery_args.first.is_a?(Array)
         filter_args = subquery_args.shift
-        subquery_filter = FilterPredicate.new(@question, child_model, child_table_name, *filter_args)
+        subquery_filter = FilterPredicate.new(@question, child_model, child_table_alias, *filter_args)
   
         unless subquery_filter.reduced_type == TrueClass
           raise ArgumentError,
@@ -268,8 +264,9 @@ class Magma
       @subquery = Magma::Subquery.new(
         @model,
         child_model,
-        derived_table_name,
+        derived_table_alias,
         alias_name,
+        child_table_alias,
         parent_attribute.column_name,
         subquery_filters,
         subquery_args.shift  # the condition, i.e. ::every or ::any
@@ -282,11 +279,11 @@ class Magma
       !@subquery.nil?
     end
 
-    def derived_table_name
+    def derived_table_alias
       "derived_#{alias_name}".to_sym
     end
 
-    def child_table_name
+    def child_table_alias
       "#{alias_name}_child".to_sym
     end
   end

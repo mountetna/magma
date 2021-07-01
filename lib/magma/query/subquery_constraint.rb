@@ -17,17 +17,14 @@ class Magma
       )
 
       constraints.each do |constraint|
-        # Cannot seem to call methods in the having block.
-        #   So we have to duplicate a bit of that logic, depending on
-        #   the condition.
-        case condition
-        when "::every"
-          query = every(query, constraint)
-        when "::any"
-          query = any(query, constraint)
-        else
-          raise ArgumentError, "Unknown condition, #{@condition}."
-        end
+        # The WHEN clause is a bit too complicated for
+        #   Sequel built-in methods, so we'll construct
+        #   it manually.
+        query = query.having(
+          Sequel.lit(
+            "SUM(CASE WHEN #{literal(constraint)} THEN 1 ELSE 0 END) #{operator} #{value}"
+          )
+        )
       end
 
       query
@@ -47,58 +44,34 @@ class Magma
 
     private
 
-    def condition_column(cond)
-      cond.args.first.column
+    def literal(constraint)
+      Magma.instance.db.literal(constraint.conditions.first)
     end
 
-    def condition_value(cond)
-      cond.args.last
+    def operator
+      case condition
+      when "::every"
+        "="
+      when "::any"
+        ">"
+      else
+        raise ArgumentError, "Unrecognized condition, #{condition}"
+      end
+    end
+
+    def value
+      case condition
+      when "::every"
+        "count(*)"
+      when "::any"
+        "0"
+      else
+        raise ArgumentError, "Unrecognized condition, #{condition}"
+      end
     end
 
     def constraints
       @constraints ||= @filter.flatten.map(&:constraint).inject(&:+)
-    end
-
-    def get_condition(constraint)
-      constraint.conditions.first
-    end
-
-    def condition_parts(constraint)
-      cond = get_condition(constraint)
-      [condition_column(cond), condition_value(cond)]
-    end
-
-    def invert?(constraint)
-      require 'pry'
-      binding.pry
-      get_condition(constraint).op.to_s.include?("NOT")
-    end
-
-    def every(query, constraint)
-      column_name, value = condition_parts(constraint)
-
-      # Because Sequel doesn't support `=` as a comparison operator, we'll
-      #   modify this to invert the CASE and compare to < 1... i.e. == 0.
-      return query.having do
-               ## "Double invert" the 1 and 0 in this case
-               sum(Sequel.case({ { column_name.to_sym => value } => 1 }, 0)) < 1
-             end if invert?(constraint)
-
-      query.having do
-        sum(Sequel.case({ { column_name.to_sym => value } => 0 }, 1)) < 1
-      end
-    end
-
-    def any(query, constraint)
-      column_name, value = condition_parts(constraint)
-
-      return query.having do
-               sum(Sequel.case({ { column_name.to_sym => value } => 0 }, 1)) > 0
-             end if invert?(constraint)
-
-      query.having do
-        sum(Sequel.case({ { column_name.to_sym => value } => 1 }, 0)) > 0
-      end
     end
   end
 end
