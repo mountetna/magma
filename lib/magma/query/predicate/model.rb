@@ -49,6 +49,7 @@ class Magma
       # These conditional verbs (i.e. ::every, ::any)
       #   result in a subquery to SELECT from, instead
       #   of a SQL WHERE clause.
+      binding.pry
       subquery_args, filter_args = @subquery_util.partition_args(query_args)
 
       subquery_args.each do |join_type, args|
@@ -104,9 +105,9 @@ class Magma
     verb '::any' do
       child TrueClass
 
-      subquery do
-        yield @subqueries
-      end
+      # subquery do
+      #   yield @subqueries
+      # end
 
       extract do |table,return_identity|
         table.any? do |row|
@@ -119,9 +120,9 @@ class Magma
     verb '::every' do
       child TrueClass
 
-      subquery do 
-        yield @subqueries
-      end
+      # subquery do 
+      #   yield @subqueries
+      # end
 
       extract do |table,return_identity|
         table.length > 0 && table.all? do |row|

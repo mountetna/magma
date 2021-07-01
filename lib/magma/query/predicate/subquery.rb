@@ -62,7 +62,7 @@ class Magma
 
     def is_subquery_query?(query_args)
       # Super hacky, too...
-      ['::any', '::every'].include(query_args.last)
+      ["::any", "::every"].include?(query_args.last)
       # verb, subquery_model_name, subquery_args = model_predicate.class.match_verbs(query_args, model_predicate, true)
 
       # verb.gives?(:subquery)
