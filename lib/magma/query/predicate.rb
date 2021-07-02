@@ -168,6 +168,10 @@ EOT
       end.inject(&:+) || []
     end
 
+    def inject_subqueries
+      @subqueries.map(&:subquery) || []
+    end
+
     # Code relating to defining and looking up predicate verbs
     class << self
       def verbs
@@ -369,6 +373,7 @@ require_relative 'predicate/metrics'
 require_relative 'predicate/table'
 require_relative 'predicate/matrix'
 require_relative 'predicate/subquery'
+require_relative 'predicate/subquery_utils'
 require_relative 'subquery_inner'
 require_relative 'subquery_outer'
 require_relative 'subquery_constraint'

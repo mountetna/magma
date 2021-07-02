@@ -2,58 +2,42 @@ require "digest"
 require "json"
 
 class Magma
-  class SubqueryPredicate < Magma::ModelPredicate
-    # Subquery predicate utils - this helps manage the creation
-    #     of subqueries for ModelPredicates, when
-    #     any of the following list operators are used:
-    #
-    #      ::any - a Boolean that returns true if the list is non-zero
-    #      ::every - a Boolean that returns true if every item in the list is non-zero
+  class SubqueryPredicate < Magma::Predicate
+    # SubqueryPredicate should be a simple
+    #   wrapper around SubqueryInner and SubqueryOuter
+    attr_reader :predicate, :subquery
 
-    attr_reader :model_predicate
+    def initialize(predicate, question, model_alias_name, join_type, *query_args)
+      super(question)
 
-    def self.verbs
-      Magma::ModelPredicate.verbs
+      @predicate = predicate
+      @model_alias_name = model_alias_name
+      @join_type = join_type
+
+      process_args(query_args)
     end
 
-    def initialize(model_predicate, question)
-      @question = question
-      @model_predicate = model_predicate
-    end
+    # def reduced_type
+    #   TrueClass
+    # end
 
-    def partition_args(query_args, preceding_predicate = "::and")
-      subquery_args = []
-      filter_args = []
-
-      if query_args.is_a?(Array) && is_subquery_query?(query_args)
-        arry = []
-
-        # BLAH, what is better than this?
-        if preceding_predicate == "::or"
-          arry << "full_outer"
-        elsif preceding_predicate == "::and"
-          # Inner join automatically applies an "AND"
-          #   effect with subsequent filters.
-          arry << "inner"
-        end
-
-        arry << query_args
-
-        subquery_args << arry
-        filter_args << query_args.last
-      else
-        filter_args = query_args
+    verb do
+      subquery do
+        # How to access @subquery?
+        binding.pry
+        puts "blah"
       end
 
-      [subquery_args, filter_args]
+      child do
+
+        # Nested subqueries would go here?
+        binding.pry
+        SubqueryPredicate.new(predicate, @question, alias_name, @join_type, *@query_args)
+      end
     end
 
-    def is_subquery_query?(query_args)
-      verb, subquery_model_name, subquery_args = self.class.match_verbs(query_args, model_predicate, true)
-
-      verb.gives?(:subquery)
-    rescue Magma::QuestionError
-      false
+    def process_args(query_args)
+      @subquery = create_subquery(@join_type, query_args, predicate.model, @model_alias_name)
     end
 
     def parent_column_name(model)
@@ -62,8 +46,8 @@ class Magma
       end.column_name
     end
 
-    def model(name)
-      Magma.instance.get_model(model_predicate.model.project_name, name)
+    def model(project_name, name)
+      Magma.instance.get_model(project_name, name)
     end
 
     def create_boolean_subquery(subquery_model_name, subquery_args, subquery_model)
@@ -71,16 +55,16 @@ class Magma
       # Same table, join is on the parent_column_name.
       internal_table_alias = subquery_internal_alias_name
 
-      model_predicate.add_subquery(Magma::SubqueryInner.new(
+      Magma::SubqueryInner.new(
         subquery_model: subquery_model,
         derived_table_alias: derived_table_alias_name(subquery_args),
-        main_table_alias: model_predicate.alias_name,
+        main_table_alias: predicate.alias_name,
         main_table_join_column_name: parent_column_name(subquery_model),
         internal_table_alias: internal_table_alias,
         fk_column_name: parent_column_name(subquery_model),
         filters: subquery_filters(subquery_args, internal_table_alias, subquery_model),
         condition: subquery_args.last,  # the condition, i.e. ::every or ::any
-      ))
+      )
     end
 
     def subquery_filters(subquery_args, internal_table_alias, subquery_model)
@@ -100,9 +84,10 @@ class Magma
       subquery_filters
     end
 
-    def create_subquery(join_type, args, parent_model = model_predicate.model, join_table_alias = nil)
-      verb, subquery_model_name, subquery_args = self.class.match_verbs(args, model_predicate, true)
+    def create_subquery(join_type, args, parent_model = predicate.model, join_table_alias = nil)
+      verb, subquery_model_name, subquery_args = predicate.class.match_verbs(args, predicate, true)
 
+      binding.pry
       if subquery_model_name.first.is_a?(Array)
         # This is a boolean subquery. Returns directly true / false.
         # Will never have a child / nested subquery.
@@ -114,7 +99,7 @@ class Magma
 
         raise ArgumentError, "Invalid attribute, #{attribute_name}" if attribute.nil?
 
-        child_model = model(attribute_name)
+        child_model = model(parent_model.project_name, attribute_name)
 
         original_subquery_args = subquery_args.dup
 
@@ -123,10 +108,10 @@ class Magma
           Magma::SubqueryInner :
           Magma::SubqueryOuter
 
-        model_predicate.add_subquery(subquery_class.new(
+        predicate.add_subquery(subquery_class.new(
           subquery_model: child_model,
           derived_table_alias: derived_table_alias_name(args),
-          main_table_alias: join_table_alias || model_predicate.alias_name,
+          main_table_alias: join_table_alias || predicate.alias_name,
           main_table_join_column_name: "id",
           internal_table_alias: internal_table_alias,
           fk_column_name: parent_column_name(child_model),

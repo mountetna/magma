@@ -48,34 +48,29 @@ class Magma
       end
     end
 
-    # verb '::any' do
-    #   child :create_subqueries
+    verb '::any' do
+      subquery do
+        yield @subqueries
+      end
+    end
 
-    #   subquery do
-    #     yield @subqueries
-    #   end
-
-    #   format { 'Boolean' }
-    # end
-
-    # verb '::every' do
-    #   child :create_subqueries
-
-    #   subquery do 
-    #     yield @subqueries
-    #   end
-
-    #   extract do |table,return_identity|
-    #     table.length > 0 && table.all? do |row|
-    #       row[identity]
-    #     end
-    #   end
-    #   format { 'Boolean' }
-    # end
+    verb '::every' do
+      subquery do 
+        yield @subqueries
+      end
+    end
 
     verb do
       child do
-        RecordPredicate.new(@question, @model, @alias_name, *@query_args)
+        binding.pry
+        # Check for and create subqueries here, instead of
+        #   RecordPredicates
+        if Magma::SubqueryUtils.is_subquery_query?(self, @query_args)
+          # Figure out how to deal with ::and and ::or later
+          SubqueryPredicate.new(@question, @model, @alias_name, 'inner', *@query_args)
+        else
+          RecordPredicate.new(@question, @model, @alias_name, *@query_args)
+        end
       end
     end
   end

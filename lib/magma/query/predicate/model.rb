@@ -41,26 +41,14 @@ class Magma
       super(question)
       @model = model
       @filters = []
-      @subqueries = []
 
-      binding.pry
-      @subquery_util = Magma::SubqueryPredicate.new(self, question)
-      # First, we extract the subquery Arrays from the
-      #   query_args and create subqueries for them.
-      # These conditional verbs (i.e. ::every, ::any)
-      #   result in a subquery to SELECT from, instead
-      #   of a SQL WHERE clause.
-
-      # As a StartPredicate or non-nested Filter, query_args will come in
-      #   [model, [filter], ::any]
-      # But within a filter, query_args comes through as
-      #   [[filter], ::any]
       # We'll also need the preceding filter "verb" to correctly
       #   determine the subquery type????
-      subquery_args, filter_args = @subquery_util.partition_args(query_args)
+      binding.pry
+      subquery_args, filter_args = Magma::SubqueryUtils.partition_args(self, query_args)
 
       subquery_args.each do |join_type, args|
-        @subquery_util.create_subquery(join_type, args)
+        create_subquery(join_type, args)
       end
 
       # Any remaining elements should be Filters.
@@ -159,11 +147,13 @@ class Magma
           "Filter #{filter} does not reduce to Boolean #{filter.argument} #{filter.reduced_type}!"
       end
 
-      add_filter(filter)
+      @filters.push(filter)
     end
 
-    def add_filter(filter)
-      @filters.push(filter)
+    def create_subquery(join_type, args)
+      subquery = SubqueryPredicate.new(self, @question, alias_name, join_type, *args)
+
+      @subqueries.push(subquery)
     end
 
     def add_filters
@@ -207,7 +197,7 @@ class Magma
     end
 
     def subquery
-      @subqueries
+      inject_subqueries
     end
 
     def to_hash
