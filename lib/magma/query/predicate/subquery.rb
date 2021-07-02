@@ -17,9 +17,9 @@ class Magma
       process_args(query_args)
     end
 
-    # def reduced_type
-    #   TrueClass
-    # end
+    def reduced_type
+      TrueClass
+    end
 
     verb do
       subquery do
@@ -87,7 +87,6 @@ class Magma
     def create_subquery(join_type, args, parent_model = predicate.model, join_table_alias = nil)
       verb, subquery_model_name, subquery_args = predicate.class.match_verbs(args, predicate, true)
 
-      binding.pry
       if subquery_model_name.first.is_a?(Array)
         # This is a boolean subquery. Returns directly true / false.
         # Will never have a child / nested subquery.
@@ -108,7 +107,7 @@ class Magma
           Magma::SubqueryInner :
           Magma::SubqueryOuter
 
-        predicate.add_subquery(subquery_class.new(
+        subquery_class.new(
           subquery_model: child_model,
           derived_table_alias: derived_table_alias_name(args),
           main_table_alias: join_table_alias || predicate.alias_name,
@@ -117,16 +116,15 @@ class Magma
           fk_column_name: parent_column_name(child_model),
           filters: subquery_filters(subquery_args, internal_table_alias, child_model),
           condition: subquery_args.last,  # the condition, i.e. ::every or ::any))
-        ))
-
-        if is_subquery_query?(original_subquery_args) &&
-           !original_subquery_args.first.is_a?(Array) &&
-           original_subquery_args.first != subquery_model_name.first
-          # This must be another model subquery that we have to join in
-          # Do this after adding the parent subquery so that
-          #   its derived tables is already declared.
-          create_subquery(join_type, original_subquery_args, child_model, derived_table_alias)
-        end
+        )
+        # if Magma::SubqueryUtils.is_subquery_query?(predicate, original_subquery_args) &&
+        #    !original_subquery_args.first.is_a?(Array) &&
+        #    original_subquery_args.first != subquery_model_name.first
+        #   # This must be another model subquery that we have to join in
+        #   # Do this after adding the parent subquery so that
+        #   #   its derived tables is already declared.
+        #   create_subquery(join_type, original_subquery_args, child_model, derived_table_alias)
+        # end
       end
     end
 

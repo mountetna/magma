@@ -44,7 +44,6 @@ class Magma
 
       # We'll also need the preceding filter "verb" to correctly
       #   determine the subquery type????
-      binding.pry
       subquery_args, filter_args = Magma::SubqueryUtils.partition_args(self, query_args)
 
       subquery_args.each do |join_type, args|
@@ -172,7 +171,13 @@ class Magma
     end
 
     def join
-      join_filters
+      join_filters.concat(join_subqueries).concat(join_filter_subqueries)
+    end
+
+    def join_filter_subqueries
+      @filters.map do |filter|
+        filter.join_subqueries
+      end.flatten
     end
 
     def select
@@ -194,10 +199,6 @@ class Magma
       @filters.map do |filter|
         filter.flatten.map(&:constraint).inject(&:+) || []
       end.inject(&:+) || []
-    end
-
-    def subquery
-      inject_subqueries
     end
 
     def to_hash

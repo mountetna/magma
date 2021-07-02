@@ -145,8 +145,8 @@ EOT
       @alias_name ||= 10.times.map{ (97+rand(26)).chr }.join.to_sym
     end
 
-    def add_subquery(subquery)
-      @subqueries << subquery
+    def join_subqueries
+      @subqueries.map(&:subquery) || []
     end
 
     private
@@ -166,10 +166,6 @@ EOT
       @filters.map do |filter|
         filter.flatten.map(&:join).inject(&:+) || []
       end.inject(&:+) || []
-    end
-
-    def inject_subqueries
-      @subqueries.map(&:subquery) || []
     end
 
     # Code relating to defining and looking up predicate verbs

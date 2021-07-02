@@ -1,5 +1,7 @@
 class Magma
   class FilterPredicate < Magma::Predicate
+    attr_reader :model
+
     def initialize question, model, alias_name, *query_args
       super(question)
 
@@ -62,12 +64,15 @@ class Magma
 
     verb do
       child do
-        binding.pry
         # Check for and create subqueries here, instead of
         #   RecordPredicates
         if Magma::SubqueryUtils.is_subquery_query?(self, @query_args)
           # Figure out how to deal with ::and and ::or later
-          SubqueryPredicate.new(@question, @model, @alias_name, 'inner', *@query_args)
+          subquery = SubqueryPredicate.new(self, @question, @alias_name, 'inner', *@query_args)
+
+          @subqueries << subquery
+
+          subquery
         else
           RecordPredicate.new(@question, @model, @alias_name, *@query_args)
         end
