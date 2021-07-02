@@ -168,14 +168,10 @@ EOT
       end.inject(&:+) || []
     end
 
-    def join_filters_and_subqueries
-      join_filters.concat(join_subqueries).concat(join_filter_subqueries)
-    end
-
     def join_filter_subqueries
-      @filters.map do |filter|
-        filter.join_subqueries
-      end.flatten
+      @filters ? @filters.map do |filter|
+        filter.subquery
+      end.flatten : []
     end
 
     # Code relating to defining and looking up predicate verbs

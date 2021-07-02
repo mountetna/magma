@@ -427,7 +427,7 @@ describe QueryController do
                 ['monster', 'name', '::matches', 'Ne']
               ],
               '::all', '::identifier'])
-        binding.pry
+
         expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
   

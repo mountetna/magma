@@ -1,21 +1,22 @@
 class Magma
   class SubqueryUtils
-    def self.partition_args(predicate, query_args, preceding_predicate = "::and")
+    def self.subquery_type(verb)
+      case verb
+      when '::or'
+        'full_outer'
+      else
+        'inner'
+      end
+    end
+
+    def self.partition_args(predicate, query_args, preceding_predicate = nil)
       subquery_args = []
       filter_args = []
 
       if query_args.is_a?(Array) && Magma::SubqueryUtils.is_subquery_query?(predicate, query_args)
         arry = []
 
-        # BLAH, what is better than this?
-        if preceding_predicate == "::or"
-          arry << "full_outer"
-        elsif preceding_predicate == "::and"
-          # Inner join automatically applies an "AND"
-          #   effect with subsequent filters.
-          arry << "inner"
-        end
-
+        arry << self.subquery_type(preceding_predicate)
         arry << query_args
 
         subquery_args << arry

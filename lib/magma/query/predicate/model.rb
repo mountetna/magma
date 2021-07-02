@@ -139,7 +139,11 @@ class Magma
     end
 
     def create_filter(args)
-      filter = FilterPredicate.new(@question, @model, alias_name, *args)
+      filter = FilterPredicate.new(
+        question: @question,
+        model: @model,
+        alias_name: alias_name,
+        query_args: args)
 
       unless filter.reduced_type == TrueClass
         raise ArgumentError,
@@ -171,7 +175,11 @@ class Magma
     end
 
     def join
-      join_filters_and_subqueries
+      join_filters
+    end
+
+    def subquery
+      join_subqueries.concat(join_filter_subqueries)
     end
 
     def select

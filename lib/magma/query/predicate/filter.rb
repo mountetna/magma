@@ -1,12 +1,13 @@
 class Magma
   class FilterPredicate < Magma::Predicate
-    attr_reader :model
+    attr_reader :model, :arguments
 
-    def initialize question, model, alias_name, *query_args
+    def initialize question:, model:, alias_name:, query_args:, parent_filter: nil
       super(question)
 
       @model = model
       @alias_name = alias_name
+      @parent_filter = parent_filter
       process_args(query_args)
     end
 
@@ -14,7 +15,12 @@ class Magma
       invalid_argument!(@query_args.join(', ')) unless @query_args.all?{|q| q.is_a?(Array)}
 
       @filters = @query_args.map do |args|
-        FilterPredicate.new(@question, @model, @alias_name, *args)
+        FilterPredicate.new(
+          question: @question,
+          model: @model,
+          alias_name: @alias_name, 
+          parent_filter: self,
+          query_args: args)
       end
 
       @query_args = []
@@ -25,7 +31,7 @@ class Magma
     verb '::or' do
       child :create_filters
 
-      join :join_filters_and_subqueries
+      join :join_filters
 
       constraint do
         or_constraint( 
@@ -39,7 +45,7 @@ class Magma
     verb '::and' do
       child :create_filters
 
-      join :join_filters_and_subqueries
+      join :join_filters
 
       constraint do
         and_constraint( 
@@ -68,7 +74,14 @@ class Magma
         #   RecordPredicates
         if Magma::SubqueryUtils.is_subquery_query?(self, @query_args)
           # Figure out how to deal with ::and and ::or later
-          subquery = SubqueryPredicate.new(self, @question, @alias_name, 'inner', *@query_args)
+
+          subquery = SubqueryPredicate.new(
+            self,
+            @question,
+            @alias_name,
+            Magma::SubqueryUtils.subquery_type(
+              @parent_filter&.arguments&.first),
+            *@query_args)
 
           @subqueries << subquery
 
@@ -79,8 +92,8 @@ class Magma
       end
     end
 
-    def has_arguments?
-      @arguments.length > 0
+    def subquery
+      join_subqueries.concat(join_filter_subqueries)
     end
 
     private

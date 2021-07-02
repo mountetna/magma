@@ -71,7 +71,11 @@ class Magma
       subquery_filters = []
       while subquery_args.first.is_a?(Array)
         filter_args = subquery_args.shift
-        subquery_filter = FilterPredicate.new(@question, subquery_model, internal_table_alias, *filter_args)
+        subquery_filter = FilterPredicate.new(
+          question: @question,
+          model: subquery_model,
+          alias_name: internal_table_alias,
+          query_args: filter_args)
 
         unless subquery_filter.reduced_type == TrueClass
           raise ArgumentError,
