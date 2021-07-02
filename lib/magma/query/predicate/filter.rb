@@ -25,28 +25,28 @@ class Magma
     verb '::or' do
       child :create_filters
 
-      join :join_filters
+      join :join_filters_and_subqueries
 
       constraint do
         or_constraint( 
           @filters.map do |filter|
             filter.flatten.map(&:constraint)
           end.flatten
-        )
+        ) if  has_constraints?
       end
     end
 
     verb '::and' do
       child :create_filters
 
-      join :join_filters
+      join :join_filters_and_subqueries
 
       constraint do
         and_constraint( 
           @filters.map do |filter|
             filter.flatten.map(&:constraint)
           end.flatten
-        )
+        ) if has_constraints?
       end
     end
 
@@ -77,6 +77,18 @@ class Magma
           RecordPredicate.new(@question, @model, @alias_name, *@query_args)
         end
       end
+    end
+
+    def has_arguments?
+      @arguments.length > 0
+    end
+
+    private
+
+    def has_constraints?
+      @filters.map do |filter|
+        filter.flatten.map(&:constraint)
+      end.flatten.length > 0
     end
   end
 end

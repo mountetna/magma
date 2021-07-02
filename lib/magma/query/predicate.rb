@@ -146,7 +146,7 @@ EOT
     end
 
     def join_subqueries
-      @subqueries.map(&:subquery) || []
+      @subqueries.map(&:subqueries).flatten || []
     end
 
     private
@@ -166,6 +166,16 @@ EOT
       @filters.map do |filter|
         filter.flatten.map(&:join).inject(&:+) || []
       end.inject(&:+) || []
+    end
+
+    def join_filters_and_subqueries
+      join_filters.concat(join_subqueries).concat(join_filter_subqueries)
+    end
+
+    def join_filter_subqueries
+      @filters.map do |filter|
+        filter.join_subqueries
+      end.flatten
     end
 
     # Code relating to defining and looking up predicate verbs

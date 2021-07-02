@@ -171,13 +171,7 @@ class Magma
     end
 
     def join
-      join_filters.concat(join_subqueries).concat(join_filter_subqueries)
-    end
-
-    def join_filter_subqueries
-      @filters.map do |filter|
-        filter.join_subqueries
-      end.flatten
+      join_filters_and_subqueries
     end
 
     def select

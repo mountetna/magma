@@ -114,7 +114,6 @@ class Magma
     private
 
     def to_table(query)
-      binding.pry
       Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 

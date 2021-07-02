@@ -24,7 +24,7 @@ class Magma
         filter_args = query_args
       end
 
-      [subquery_args, filter_args]
+      [self.remove_empty(subquery_args), self.remove_empty(filter_args)]
     end
 
     def self.is_subquery_query?(predicate, query_args)
@@ -33,6 +33,22 @@ class Magma
       verb.gives?(:subquery)
     rescue Magma::QuestionError
       false
+    end
+
+    private
+
+    def self.remove_empty(args)
+      arry = []
+
+      args.each do |arg|
+        arry << arg unless is_empty?(arg)
+      end
+
+      arry
+    end
+
+    def self.is_empty?(args)
+      args.is_a?(Array) && args.length == 1 && ['::and', '::or', '::any', '::every'].include?(args.first)
     end
   end
 end
