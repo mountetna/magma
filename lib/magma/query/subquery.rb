@@ -1,13 +1,13 @@
 class Magma
   class Subquery
-    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :child_table_alias, :fk_column_name
+    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :fk_column_name
 
-    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, child_table_alias:, fk_column_name:, filters:, condition:)
+    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, fk_column_name:, filters:, condition:)
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias.to_sym
       @main_table_alias = main_table_alias.to_sym
-      @child_table_alias = child_table_alias.to_sym
+      @internal_table_alias = internal_table_alias.to_sym
       @main_table_join_column_name = main_table_join_column_name.to_sym
       @fk_column_name = fk_column_name.to_sym
 
@@ -30,7 +30,7 @@ class Magma
 
     def subquery
       new_query = subquery_model.from(
-        Sequel.as(subquery_model.table_name, child_table_alias)
+        Sequel.as(subquery_model.table_name, internal_table_alias)
       )
 
       @constraints.each { |c| new_query = c.apply(new_query) }
