@@ -2,8 +2,6 @@ require_relative 'predicate'
 require_relative 'join'
 require_relative 'constraint'
 require_relative 'query_executor'
-require_relative 'subquery'
-require_relative 'subquery_constraint'
 
 # A query for a piece of data. Each question is a path through the data
 # hierarchy/schema/graph or whatever you want to call it. The basic idea is
@@ -116,6 +114,7 @@ class Magma
     private
 
     def to_table(query)
+      binding.pry
       Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 
@@ -163,6 +162,7 @@ class Magma
 
       joins = predicate_collect(:join).uniq
       constraints = predicate_collect(:constraint).uniq
+      binding.pry
       subqueries = predicate_collect(:subquery).uniq
 
       joins.each do |join|

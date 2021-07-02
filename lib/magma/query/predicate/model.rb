@@ -43,13 +43,20 @@ class Magma
       @filters = []
       @subqueries = []
 
-      @subquery_util = Magma::SubqueryPredicateUtils.new(self, question)
+      binding.pry
+      @subquery_util = Magma::SubqueryPredicate.new(self, question)
       # First, we extract the subquery Arrays from the
       #   query_args and create subqueries for them.
       # These conditional verbs (i.e. ::every, ::any)
       #   result in a subquery to SELECT from, instead
       #   of a SQL WHERE clause.
-      binding.pry
+
+      # As a StartPredicate or non-nested Filter, query_args will come in
+      #   [model, [filter], ::any]
+      # But within a filter, query_args comes through as
+      #   [[filter], ::any]
+      # We'll also need the preceding filter "verb" to correctly
+      #   determine the subquery type????
       subquery_args, filter_args = @subquery_util.partition_args(query_args)
 
       subquery_args.each do |join_type, args|
@@ -105,9 +112,9 @@ class Magma
     verb '::any' do
       child TrueClass
 
-      # subquery do
-      #   yield @subqueries
-      # end
+      subquery do
+        yield @subqueries
+      end
 
       extract do |table,return_identity|
         table.any? do |row|
@@ -120,9 +127,9 @@ class Magma
     verb '::every' do
       child TrueClass
 
-      # subquery do 
-      #   yield @subqueries
-      # end
+      subquery do 
+        yield @subqueries
+      end
 
       extract do |table,return_identity|
         table.length > 0 && table.all? do |row|
