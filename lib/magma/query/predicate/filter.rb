@@ -73,7 +73,7 @@ class Magma
     verb do
       child do
         # Check for and create subqueries here
-        if Magma::SubqueryUtils.is_subquery_query?(self, @query_args)
+        if Magma::SubqueryUtils.is_subquery?(self, @query_args)
           subquery = SubqueryFilter.new(
             predicate: self,
             question: @question,
