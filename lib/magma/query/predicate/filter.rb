@@ -36,12 +36,7 @@ class Magma
       subquery_class Magma::SubqueryOuter
 
       constraint do
-        or_constraint( 
-          @filters.map do |filter|
-            filter.flatten.map(&:constraint).concat(
-              filter.flatten.map(&:subquery_constraints)).flatten
-          end.concat(subquery_constraints).flatten.compact
-        )
+        or_constraint(all_filter_constraints)
       end
     end
 
@@ -53,12 +48,7 @@ class Magma
       subquery_class Magma::SubqueryInner
 
       constraint do
-        and_constraint( 
-          @filters.map do |filter|
-            filter.flatten.map(&:constraint).concat(
-              filter.flatten.map(&:subquery_constraints)).flatten
-          end.concat(subquery_constraints).flatten.compact
-        )
+        and_constraint(all_filter_constraints)
       end
     end
 
@@ -99,6 +89,13 @@ class Magma
 
     def subquery_class
       @verb.do(:subquery_class)
+    end
+
+    def all_filter_constraints
+      @filters.map do |filter|
+        filter.flatten.map(&:constraint).concat(
+          filter.flatten.map(&:subquery_constraints)).flatten
+      end.concat(subquery_constraints).flatten.compact
     end
   end
 end
