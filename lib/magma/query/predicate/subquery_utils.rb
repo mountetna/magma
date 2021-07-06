@@ -2,10 +2,10 @@ class Magma
   class SubqueryUtils
     def self.subquery_type(verb)
       case verb
-      when '::or'
-        'full_outer'
+      when "::or"
+        "full_outer"
       else
-        'inner'
+        "inner"
       end
     end
 
@@ -14,18 +14,13 @@ class Magma
       filter_args = []
 
       if query_args.is_a?(Array) && Magma::SubqueryUtils.is_subquery_query?(predicate, query_args)
-        arry = []
-
-        arry << self.subquery_type(preceding_predicate)
-        arry << query_args
-
-        subquery_args << arry
+        subquery_args << [self.subquery_type(preceding_predicate), query_args]
         filter_args << query_args.last
       else
         filter_args = query_args
       end
 
-      [self.remove_empty(subquery_args), self.remove_empty(filter_args)]
+      [subquery_args, filter_args]
     end
 
     def self.is_subquery_query?(predicate, query_args)
@@ -34,22 +29,6 @@ class Magma
       verb.gives?(:subquery)
     rescue Magma::QuestionError
       false
-    end
-
-    private
-
-    def self.remove_empty(args)
-      arry = []
-
-      args.each do |arg|
-        arry << arg unless is_empty?(arg)
-      end
-
-      arry
-    end
-
-    def self.is_empty?(args)
-      args.is_a?(Array) && args.length == 1 && ['::and', '::or', '::any', '::every'].include?(args.first)
     end
   end
 end
