@@ -1,13 +1,13 @@
 class Magma
   class SubqueryPredicateBase < Magma::Predicate
-    attr_reader :predicate, :subqueries, :join_class
+    attr_reader :predicate, :subqueries, :subquery_class
 
-    def initialize(predicate:, question:, model_alias_name:, join_class: Magma::SubqueryInner, query_args:)
+    def initialize(predicate:, question:, model_alias_name:, subquery_class: Magma::SubqueryInner, query_args:)
       super(question)
 
       @predicate = predicate
       @model_alias_name = model_alias_name
-      @join_class = join_class
+      @subquery_class = subquery_class
 
       create_subqueries(query_args)
     end

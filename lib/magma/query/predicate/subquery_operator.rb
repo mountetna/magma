@@ -7,7 +7,7 @@ class Magma
       # Same table, join is on the parent_column_name.
       internal_table_alias = random_alias_name
 
-      join_class.new(
+      subquery_class.new(
         subquery_model: predicate.model,
         derived_table_alias: random_alias_name,
         main_table_alias: predicate.alias_name,

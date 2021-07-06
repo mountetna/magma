@@ -24,7 +24,7 @@ class Magma
 
         has_nested_subquery = has_nested_subquery?(original_subquery_args, subquery_model_name)
 
-        @subqueries << join_class.new(
+        @subqueries << subquery_class.new(
           subquery_model: subquery_model,
           derived_table_alias: derived_table_alias,
           main_table_alias: join_table_alias,

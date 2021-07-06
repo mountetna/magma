@@ -78,7 +78,7 @@ class Magma
             predicate: self,
             question: @question,
             model_alias_name: @alias_name,
-            join_class: @parent_filter ? @parent_filter.subquery_class : Magma::SubqueryInner,
+            subquery_class: @parent_filter ? @parent_filter.subquery_class : Magma::SubqueryInner,
             query_args: @query_args)
 
           @subqueries << subquery
