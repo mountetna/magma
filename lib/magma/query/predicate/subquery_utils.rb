@@ -1,20 +1,11 @@
 class Magma
   class SubqueryUtils
-    def self.subquery_type(verb)
-      case verb
-      when "::or"
-        "full_outer"
-      else
-        "inner"
-      end
-    end
-
-    def self.partition_args(predicate, query_args, preceding_predicate = nil)
+    def self.partition_args(predicate, query_args)
       subquery_args = []
       filter_args = []
 
       if query_args.is_a?(Array) && Magma::SubqueryUtils.is_subquery_query?(predicate, query_args)
-        subquery_args << [self.subquery_type(preceding_predicate), query_args]
+        subquery_args << ["inner", query_args]
         filter_args << query_args.last
       else
         filter_args = query_args

@@ -85,6 +85,14 @@ EOT
       end
     end
 
+    def subquery_type
+      if @verb && @verb.gives?(:subquery_type)
+        @verb.do(:subquery_type)
+      else
+        'inner'
+      end
+    end
+
     def select
       []
     end

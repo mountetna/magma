@@ -101,6 +101,10 @@ class Magma
 
       subquery :join_subqueries
 
+      subquery_type do
+        "inner"
+      end
+
       extract do |table,return_identity|
         table.any? do |row|
           row[identity]
@@ -113,6 +117,10 @@ class Magma
       child TrueClass
 
       subquery :join_subqueries
+
+      subquery_type do
+        "inner"
+      end
 
       extract do |table,return_identity|
         table.length > 0 && table.all? do |row|

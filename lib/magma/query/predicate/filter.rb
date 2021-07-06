@@ -33,6 +33,10 @@ class Magma
 
       join :join_filters
 
+      subquery_type do
+        "full_outer"
+      end
+
       constraint do
         or_constraint( 
           @filters.map do |filter|
@@ -47,6 +51,10 @@ class Magma
       child :create_filters
 
       join :join_filters
+
+      subquery_type do
+        "inner"
+      end
 
       constraint do
         and_constraint( 
@@ -74,8 +82,7 @@ class Magma
             self,
             @question,
             @alias_name,
-            Magma::SubqueryUtils.subquery_type(
-              @parent_filter&.arguments&.first),
+            @parent_filter ? @parent_filter.subquery_type : 'inner',
             *@query_args)
 
           @subqueries << subquery
@@ -89,6 +96,10 @@ class Magma
 
     def subquery
       join_subqueries.concat(join_filter_subqueries)
+    end
+
+    def subquery_type
+      @verb.do(:subquery_type)
     end
   end
 end
