@@ -1,12 +1,12 @@
 class Magma
   class SubqueryConstraint
-    attr_reader :subquery_model, :filter, :parent_attribute, :condition
+    attr_reader :subquery_model, :filter, :parent_attribute, :verb_name
 
-    def initialize(subquery_model, filter, parent_attribute, condition)
+    def initialize(subquery_model, filter, parent_attribute, verb_name)
       @subquery_model = subquery_model
       @filter = filter
       @parent_attribute = parent_attribute
-      @condition = condition
+      @verb_name = verb_name
     end
 
     def apply(query)
@@ -31,15 +31,15 @@ class Magma
     end
 
     def to_s
-      @conditions.to_s
+      @verb_name.to_s
     end
 
     def hash
-      @conditions.hash
+      @verb_name.hash
     end
 
     def eql?(other)
-      @conditions == other.conditions
+      @verb_name == other.verb_name
     end
 
     private
@@ -49,24 +49,24 @@ class Magma
     end
 
     def operator
-      case condition
+      case verb_name
       when "::every"
         "="
       when "::any"
         ">"
       else
-        raise ArgumentError, "Unrecognized condition, #{condition}"
+        raise ArgumentError, "Unrecognized verb_name, #{verb_name}"
       end
     end
 
     def value
-      case condition
+      case verb_name
       when "::every"
         "count(*)"
       when "::any"
         "0"
       else
-        raise ArgumentError, "Unrecognized condition, #{condition}"
+        raise ArgumentError, "Unrecognized verb_name, #{verb_name}"
       end
     end
 

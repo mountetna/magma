@@ -59,23 +59,18 @@ class Magma
     end
 
     verb '::any' do
-      subquery do
-        yield @subqueries
-      end
+      subquery :join_subqueries
     end
 
     verb '::every' do
-      subquery do 
-        yield @subqueries
-      end
+      subquery :join_subqueries
     end
 
     verb do
       child do
-        # Check for and create subqueries here, instead of
-        #   RecordPredicates
+        # Check for and create subqueries here
         if Magma::SubqueryUtils.is_subquery_query?(self, @query_args)
-          subquery = SubqueryPredicate.new(
+          subquery = SubqueryFilter.new(
             self,
             @question,
             @alias_name,

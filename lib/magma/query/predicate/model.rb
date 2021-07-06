@@ -99,9 +99,7 @@ class Magma
     verb '::any' do
       child TrueClass
 
-      subquery do
-        yield @subqueries
-      end
+      subquery :join_subqueries
 
       extract do |table,return_identity|
         table.any? do |row|
@@ -114,9 +112,7 @@ class Magma
     verb '::every' do
       child TrueClass
 
-      subquery do 
-        yield @subqueries
-      end
+      subquery :join_subqueries
 
       extract do |table,return_identity|
         table.length > 0 && table.all? do |row|
