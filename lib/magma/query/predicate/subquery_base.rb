@@ -31,10 +31,6 @@ class Magma
       end.column_name
     end
 
-    def model(project_name, name)
-      Magma.instance.get_model(project_name, name)
-    end
-
     def subquery_filters(subquery_args, internal_table_alias, subquery_model)
       subquery_filters = []
       while subquery_args.first.is_a?(Array)
@@ -68,7 +64,7 @@ class Magma
       Digest::SHA256.hexdigest(JSON.generate(query_args))
     end
 
-    def create_subquery
+    def create_subquery(join_type, args, parent_model = predicate.model, join_table_alias = nil)
       raise Exception, "Must implement this method in subclasses."
     end
   end

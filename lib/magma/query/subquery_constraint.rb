@@ -1,9 +1,8 @@
 class Magma
   class SubqueryConstraint
-    attr_reader :subquery_model, :filter, :parent_attribute, :verb_name
+    attr_reader :filter, :parent_attribute, :verb_name
 
-    def initialize(subquery_model, filter, parent_attribute, verb_name)
-      @subquery_model = subquery_model
+    def initialize(filter, parent_attribute, verb_name)
       @filter = filter
       @parent_attribute = parent_attribute
       @verb_name = verb_name

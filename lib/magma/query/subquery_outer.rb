@@ -1,7 +1,7 @@
-require_relative "subquery"
+require_relative "subquery_base"
 
 class Magma
-  class SubqueryOuter < Magma::Subquery
+  class SubqueryOuter < Magma::SubqueryBase
     def apply(query)
       # Create a derived table
       #   as the right-table
@@ -21,7 +21,7 @@ class Magma
       Magma::Constraint.new(derived_table_alias,
                             {
         subquery_table_column => subquery_table_column,
-      }) if add_constraint
+      }) if include_constraint
     end
   end
 end

@@ -20,9 +20,9 @@ class Magma
     end
 
     def create_subquery(join_type, args, parent_model = predicate.model, join_table_alias = nil)
-      verb, subquery_model_name, subquery_args = predicate.class.match_verbs(args, predicate, true)
+      verb, subquery_model_name_array, subquery_args = predicate.class.match_verbs(args, predicate, true)
 
-      raise Exception, "This does not appear to be a valid subquery predicate, #{args}." unless subquery_model_name.first.is_a?(Array)
+      raise Exception, "This does not appear to be a valid subquery predicate, #{args}." unless subquery_model_name_array.first.is_a?(Array)
 
       # This is a boolean subquery. Returns directly true / false.
       # Will never have a child / nested subquery.

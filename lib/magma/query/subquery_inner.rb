@@ -1,7 +1,7 @@
-require_relative "subquery"
+require_relative "subquery_base"
 
 class Magma
-  class SubqueryInner < Magma::Subquery
+  class SubqueryInner < Magma::SubqueryBase
     def apply(query)
       # Create a derived table
       #   as the right-table
