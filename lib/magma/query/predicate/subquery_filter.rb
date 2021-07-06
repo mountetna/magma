@@ -15,7 +15,7 @@ class Magma
         subquery_model_name = subquery_model_name_args.first
         validate_attribute(parent_model, subquery_model_name)
 
-        subquery_model = model(parent_model.project_name, subquery_model_name)
+        subquery_model = model(subquery_model_name)
 
         original_subquery_args = subquery_args.dup
 
@@ -59,13 +59,13 @@ class Magma
       #   ["labors", "monster", "prize", ["worth", "::>", 4], "::every"]
       #
       # as elements get shifted from the Array.
-      Magma::SubqueryUtils.is_subquery_query?(predicate, args) &&
+      Magma::SubqueryUtils.is_subquery?(predicate, args) &&
         !args.first.is_a?(Array) &&
         args.first != model_name
     end
 
-    def model(project_name, name)
-      Magma.instance.get_model(project_name, name)
+    def model(name)
+      Magma.instance.get_model(predicate.model.project_name, name)
     end
   end
 end
