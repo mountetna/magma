@@ -1,15 +1,15 @@
 class Magma
   class SubqueryBase
-    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :fk_column_name, :include_constraint
+    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :subquery_fk_column_name, :include_constraint
 
-    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, fk_column_name:, filters:, verb_name:, include_constraint: true)
+    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_fk_column_name:, filters:, verb_name:, include_constraint: true)
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias.to_sym
       @main_table_alias = main_table_alias.to_sym
       @internal_table_alias = internal_table_alias.to_sym
       @main_table_join_column_name = main_table_join_column_name.to_sym
-      @fk_column_name = fk_column_name.to_sym
+      @subquery_fk_column_name = subquery_fk_column_name.to_sym
 
       @filters = filters
       @include_constraint = include_constraint
@@ -17,7 +17,7 @@ class Magma
       @constraints = @filters.map do |filter|
         Magma::SubqueryConstraint.new(
           filter,
-          @fk_column_name,
+          @subquery_fk_column_name,
           verb_name
         )
       end
@@ -48,7 +48,7 @@ class Magma
     end
 
     def subquery_table_column
-      Sequel.qualify(derived_table_alias, fk_column_name)
+      Sequel.qualify(derived_table_alias, subquery_fk_column_name)
     end
 
     def constraint

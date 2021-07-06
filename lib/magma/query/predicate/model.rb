@@ -46,8 +46,8 @@ class Magma
       #   determine the subquery type????
       subquery_args, filter_args = Magma::SubqueryUtils.partition_args(self, query_args)
 
-      subquery_args.each do |join_type, args|
-        create_subquery(join_type, args)
+      subquery_args.each do |args|
+        create_subquery(args)
       end
 
       # Any remaining elements should be Filters.
@@ -101,9 +101,7 @@ class Magma
 
       subquery :join_subqueries
 
-      subquery_type do
-        "inner"
-      end
+      subquery_class Magma::SubqueryInner
 
       extract do |table,return_identity|
         table.any? do |row|
@@ -118,9 +116,7 @@ class Magma
 
       subquery :join_subqueries
 
-      subquery_type do
-        "inner"
-      end
+      subquery_class Magma::SubqueryInner
 
       extract do |table,return_identity|
         table.length > 0 && table.all? do |row|
@@ -157,8 +153,12 @@ class Magma
       @filters.push(filter)
     end
 
-    def create_subquery(join_type, args)
-      subquery = SubqueryPredicate.new(self, @question, alias_name, join_type, *args)
+    def create_subquery(args)
+      subquery = SubqueryOperator.new(
+        predicate: self,
+        question: @question,
+        model_alias_name: alias_name,
+        query_args: args)
 
       @subqueries.push(subquery)
     end

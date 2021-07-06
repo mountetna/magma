@@ -85,9 +85,9 @@ EOT
       end
     end
 
-    def subquery_type
-      if @verb && @verb.gives?(:subquery_type)
-        @verb.do(:subquery_type)
+    def subquery_class
+      if @verb && @verb.gives?(:subquery_class)
+        @verb.do(:subquery_class)
       else
         'inner'
       end
@@ -387,7 +387,7 @@ require_relative 'predicate/metrics'
 require_relative 'predicate/table'
 require_relative 'predicate/matrix'
 require_relative 'predicate/subquery_filter'
-require_relative 'predicate/subquery_predicate'
+require_relative 'predicate/subquery_operator'
 require_relative 'predicate/subquery_utils'
 require_relative 'subquery_inner'
 require_relative 'subquery_outer'

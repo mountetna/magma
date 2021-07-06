@@ -5,7 +5,7 @@ class Magma
       filter_args = []
 
       if query_args.is_a?(Array) && Magma::SubqueryUtils.is_subquery_query?(predicate, query_args)
-        subquery_args << ["inner", query_args]
+        subquery_args << query_args
         filter_args << query_args.last
       else
         filter_args = query_args

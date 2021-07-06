@@ -2,46 +2,45 @@ require_relative "subquery_base"
 
 class Magma
   class SubqueryFilter < Magma::SubqueryPredicateBase
-    def create_subquery(join_type, args, parent_model = predicate.model, join_table_alias = nil)
-      verb, subquery_model_name_array, subquery_args = predicate.class.match_verbs(args, predicate, true)
+    def create_subqueries(query_args)
+      parent_model = predicate.model
+      join_table_alias = predicate.alias_name
+      args = query_args
 
-      raise Exception, "This does not appear to be a valid subquery filter, #{args}." if subquery_model_name_array.first.is_a?(Array)
+      loop do
+        verb, subquery_model_name_args, subquery_args = predicate.class.match_verbs(args, predicate, true)
 
-      subquery_model_name = subquery_model_name_array.first
-      validate_attribute(parent_model, subquery_model_name)
+        raise Exception, "This does not appear to be a valid subquery filter, #{args}." if subquery_model_name_args.first.is_a?(Array)
 
-      subquery_model = model(parent_model.project_name, subquery_model_name)
+        subquery_model_name = subquery_model_name_args.first
+        validate_attribute(parent_model, subquery_model_name)
 
-      original_subquery_args = subquery_args.dup
+        subquery_model = model(parent_model.project_name, subquery_model_name)
 
-      internal_table_alias = subquery_internal_alias_name
+        original_subquery_args = subquery_args.dup
 
-      subquery_class = join_type == "inner" ?
-        Magma::SubqueryInner :
-        Magma::SubqueryOuter
+        internal_table_alias = random_alias_name
+        derived_table_alias = random_alias_name
 
-      @subqueries << subquery_class.new(
-        subquery_model: subquery_model,
-        derived_table_alias: derived_table_alias_name(args),
-        main_table_alias: join_table_alias || predicate.alias_name,
-        main_table_join_column_name: "id",
-        internal_table_alias: internal_table_alias,
-        fk_column_name: parent_column_name(subquery_model),
-        filters: subquery_filters(subquery_args, internal_table_alias, subquery_model),
-        verb_name: subquery_args.last,
-        include_constraint: !has_nested_subquery?(predicate, original_subquery_args, subquery_model_name),
-      )
+        has_nested_subquery = has_nested_subquery?(original_subquery_args, subquery_model_name)
 
-      if has_nested_subquery?(predicate, original_subquery_args, subquery_model_name)
-        # This must be another model subquery that we have to join in
-        # Do this after adding the parent subquery so that
-        #   the parent model's derived table is already declared.
-        create_subquery(
-          join_type,
-          original_subquery_args,
-          subquery_model,
-          derived_table_alias_name(args)
+        @subqueries << join_class.new(
+          subquery_model: subquery_model,
+          derived_table_alias: derived_table_alias,
+          main_table_alias: join_table_alias,
+          main_table_join_column_name: "id",
+          internal_table_alias: internal_table_alias,
+          subquery_fk_column_name: parent_column_name(subquery_model),
+          filters: subquery_filters(subquery_args, internal_table_alias, subquery_model),
+          verb_name: subquery_args.last,
+          include_constraint: !has_nested_subquery,
         )
+
+        break unless has_nested_subquery
+
+        parent_model = subquery_model
+        join_table_alias = derived_table_alias.dup
+        args = original_subquery_args
       end
     end
 
@@ -53,7 +52,13 @@ class Magma
       raise ArgumentError, "Invalid attribute, #{attribute_name}" if attribute.nil?
     end
 
-    def has_nested_subquery?(predicate, args, model_name)
+    def has_nested_subquery?(args, model_name)
+      # Should catch situations where a filter has a deep path
+      #   to a model + filter subquery, like:
+      #
+      #   ["labors", "monster", "prize", ["worth", "::>", 4], "::every"]
+      #
+      # as elements get shifted from the Array.
       Magma::SubqueryUtils.is_subquery_query?(predicate, args) &&
         !args.first.is_a?(Array) &&
         args.first != model_name

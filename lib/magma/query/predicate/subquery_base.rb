@@ -1,18 +1,15 @@
-require "digest"
-require "json"
-
 class Magma
   class SubqueryPredicateBase < Magma::Predicate
-    attr_reader :predicate, :subqueries
+    attr_reader :predicate, :subqueries, :join_class
 
-    def initialize(predicate, question, model_alias_name, join_type, *query_args)
+    def initialize(predicate:, question:, model_alias_name:, join_class: Magma::SubqueryInner, query_args:)
       super(question)
 
       @predicate = predicate
       @model_alias_name = model_alias_name
-      @join_type = join_type
+      @join_class = join_class
 
-      process_args(query_args)
+      create_subqueries(query_args)
     end
 
     def reduced_type
@@ -20,10 +17,6 @@ class Magma
     end
 
     private
-
-    def process_args(query_args)
-      create_subquery(@join_type, query_args, predicate.model, @model_alias_name)
-    end
 
     def parent_column_name(model)
       parent_attribute = model.attributes.values.find do |attr|
@@ -53,18 +46,13 @@ class Magma
       subquery_filters
     end
 
-    def subquery_internal_alias_name
+    def random_alias_name
       # Don't memoize this because we need different values
       #   for any nested sub-queries.
       10.times.map { (97 + rand(26)).chr }.join.to_sym
     end
 
-    def derived_table_alias_name(query_args)
-      # Must be calculatable from a given set of query_args
-      Digest::SHA256.hexdigest(JSON.generate(query_args))
-    end
-
-    def create_subquery(join_type, args, parent_model = predicate.model, join_table_alias = nil)
+    def create_subqueries(args)
       raise Exception, "Must implement this method in subclasses."
     end
   end
