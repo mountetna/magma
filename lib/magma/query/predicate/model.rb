@@ -42,15 +42,12 @@ class Magma
       @model = model
       @filters = []
 
-      # We'll also need the preceding filter "verb" to correctly
-      #   determine the subquery type????
       subquery_args, filter_args = Magma::SubqueryUtils.partition_args(self, query_args)
 
       subquery_args.each do |args|
         create_subquery(args)
       end
 
-      # Any remaining elements should be Filters.
       # Since we are shifting off the the first elements on the query_args array
       # we look to see if the first element is an array itself. If it is then we
       # add it to the filters.
@@ -202,9 +199,9 @@ class Magma
     end
 
     def constraint
-      (@filters.map do |filter|
+      @filters.map do |filter|
         filter.flatten.map(&:constraint).inject(&:+) || []
-      end.inject(&:+) || [])
+      end.inject(&:+) || []
     end
 
     def to_hash

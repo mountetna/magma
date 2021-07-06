@@ -3,8 +3,8 @@ require_relative "subquery_base"
 class Magma
   class SubqueryOperator < Magma::SubqueryPredicateBase
     def create_boolean_subquery(subquery_args)
-      # These are always inner join subqueries since on a single model.
-      # Same table, join is on the parent_column_name.
+      # These are always inner join subqueries on a single model.
+      # Since just one table, join is on the parent_column_name.
       internal_table_alias = random_alias_name
 
       subquery_class.new(

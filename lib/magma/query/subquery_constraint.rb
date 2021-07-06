@@ -16,7 +16,7 @@ class Magma
       )
 
       constraints.each do |constraint|
-        # The WHEN clause is a bit too complicated for
+        # The CASE WHEN clause is a bit too complicated for
         #   Sequel built-in methods, so we'll construct
         #   it manually.
         query = query.having(

@@ -70,6 +70,7 @@ class Magma
 
     def answer
       table = to_table(query)
+
       @start_predicate.extract(table, identity)
     end
 
