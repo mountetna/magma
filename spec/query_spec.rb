@@ -235,7 +235,7 @@ describe QueryController do
         skin = create(:prize, labor: @lion, name: 'skin', worth: 1)
 
         query(['labor', ['prize', ['::has', 'worth'], '::every'], '::all', '::identifier'])
-        binding.pry
+
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
       end
@@ -489,7 +489,7 @@ describe QueryController do
       end
 
       it 'supports arbitrary depth' do
-        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poison = create(:prize, name: 'poison', worth: 7, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
         skin = create(:prize, labor: @lion, name: 'skin')
@@ -556,7 +556,7 @@ describe QueryController do
       
         query(['labor',
           ['prize', ['::lacks', 'worth'], '::any'],
-          ['monster', 'victim', ['country', '::equals', 'Italy'], '::any'],
+          ['monster', 'victim', ['name', '::matches', 'John'], '::any'],
           '::all', '::identifier'])
 
         expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
@@ -564,7 +564,7 @@ describe QueryController do
         
         query(['labor',
           ['prize', ['::lacks', 'worth'], '::any'],
-          ['monster', 'victim', ['country', '::equals', 'Italy'], '::every'],
+          ['monster', 'victim', ['name', '::matches', 'John'], '::every'],
           '::all', '::identifier'])
 
         expect(json_body[:answer].map(&:last)).to eq([ ])

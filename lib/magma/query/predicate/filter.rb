@@ -36,9 +36,10 @@ class Magma
       constraint do
         or_constraint( 
           @filters.map do |filter|
-            filter.flatten.map(&:constraint)
-          end.flatten
-        ) if  has_constraints?
+            filter.flatten.map(&:constraint).concat(
+              filter.flatten.map(&:subquery_constraints)).flatten
+          end.concat(@subqueries.map(&:constraint)).flatten.compact
+        )
       end
     end
 
@@ -50,9 +51,10 @@ class Magma
       constraint do
         and_constraint( 
           @filters.map do |filter|
-            filter.flatten.map(&:constraint)
-          end.flatten
-        ) if has_constraints?
+            filter.flatten.map(&:constraint).concat(
+              filter.flatten.map(&:subquery_constraints)).flatten
+          end.concat(@subqueries.map(&:constraint)).flatten.compact
+        )
       end
     end
 
@@ -73,8 +75,6 @@ class Magma
         # Check for and create subqueries here, instead of
         #   RecordPredicates
         if Magma::SubqueryUtils.is_subquery_query?(self, @query_args)
-          # Figure out how to deal with ::and and ::or later
-
           subquery = SubqueryPredicate.new(
             self,
             @question,
@@ -94,14 +94,6 @@ class Magma
 
     def subquery
       join_subqueries.concat(join_filter_subqueries)
-    end
-
-    private
-
-    def has_constraints?
-      @filters.map do |filter|
-        filter.flatten.map(&:constraint)
-      end.flatten.length > 0
     end
   end
 end

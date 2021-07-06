@@ -13,5 +13,15 @@ class Magma
         Sequel.&(id_mapping)
       )
     end
+
+    def constraint
+      # The inner join accomplishes what we need,
+      #   but we'll inject a useless constraint
+      #   to satisfy any wrapping ::and filters.
+      Magma::Constraint.new(derived_table_alias,
+                            {
+        1 => 1,
+      })
+    end
   end
 end

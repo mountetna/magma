@@ -75,7 +75,8 @@ class Magma
           question: @question,
           model: subquery_model,
           alias_name: internal_table_alias,
-          query_args: filter_args)
+          query_args: filter_args,
+        )
 
         unless subquery_filter.reduced_type == TrueClass
           raise ArgumentError,
@@ -103,10 +104,10 @@ class Magma
         @subqueries << create_boolean_subquery(parent_model.model_name.to_s, args, parent_model)
       else
         # This is part of a Filter and should include the model name
-        attribute_name = subquery_model_name.first
-        validate_attribute(parent_model, attribute_name)
+        subquery_attribute_name = subquery_model_name.first
+        validate_attribute(parent_model, subquery_attribute_name)
 
-        child_model = model(parent_model.project_name, attribute_name)
+        child_model = model(parent_model.project_name, subquery_attribute_name)
 
         original_subquery_args = subquery_args.dup
 
@@ -124,11 +125,10 @@ class Magma
           fk_column_name: parent_column_name(child_model),
           filters: subquery_filters(subquery_args, internal_table_alias, child_model),
           condition: subquery_args.last,  # the condition, i.e. ::every or ::any))
+          add_constraint: !has_nested_subquery?(predicate, original_subquery_args, subquery_attribute_name),
         )
 
-        if Magma::SubqueryUtils.is_subquery_query?(predicate, original_subquery_args) &&
-           !original_subquery_args.first.is_a?(Array) &&
-           original_subquery_args.first != subquery_model_name.first
+        if has_nested_subquery?(predicate, original_subquery_args, subquery_attribute_name)
           # This must be another model subquery that we have to join in
           # Do this after adding the parent subquery so that
           #   its derived tables is already declared.
@@ -136,9 +136,16 @@ class Magma
             join_type,
             original_subquery_args,
             child_model,
-            derived_table_alias_name(args))
+            derived_table_alias_name(args)
+          )
         end
       end
+    end
+
+    def has_nested_subquery?(predicate, args, model_name)
+      Magma::SubqueryUtils.is_subquery_query?(predicate, args) &&
+        !args.first.is_a?(Array) &&
+        args.first != model_name
     end
 
     def derived_table_alias_name(query_args)

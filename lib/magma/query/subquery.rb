@@ -1,8 +1,8 @@
 class Magma
   class Subquery
-    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :fk_column_name
+    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :fk_column_name, :add_constraint
 
-    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, fk_column_name:, filters:, condition:)
+    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, fk_column_name:, filters:, condition:, add_constraint: true)
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias.to_sym
@@ -12,6 +12,7 @@ class Magma
       @fk_column_name = fk_column_name.to_sym
 
       @filters = filters
+      @add_constraint = add_constraint
 
       @constraints = @filters.map do |filter|
         Magma::SubqueryConstraint.new(
@@ -24,8 +25,7 @@ class Magma
     end
 
     def apply(query)
-      # Override this in subclasses
-      query
+      raise Exception, "Subclasses should implement this method"
     end
 
     def subquery
@@ -50,6 +50,10 @@ class Magma
 
     def subquery_table_column
       Sequel.qualify(derived_table_alias, fk_column_name)
+    end
+
+    def constraint
+      raise Exception, "Subclasses should implement this method"
     end
   end
 end

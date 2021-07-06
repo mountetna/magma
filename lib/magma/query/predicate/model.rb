@@ -198,9 +198,9 @@ class Magma
     end
 
     def constraint
-      @filters.map do |filter|
+      (@filters.map do |filter|
         filter.flatten.map(&:constraint).inject(&:+) || []
-      end.inject(&:+) || []
+      end.inject(&:+) || [])
     end
 
     def to_hash

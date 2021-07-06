@@ -149,6 +149,10 @@ EOT
       @subqueries.map(&:subqueries).flatten || []
     end
 
+    def subquery_constraints
+      @subqueries.map(&:constraint).compact
+    end
+
     private
 
     # This function takes the argument list and matches it to one of the
@@ -170,7 +174,7 @@ EOT
 
     def join_filter_subqueries
       @filters ? @filters.map do |filter|
-        filter.subquery
+        filter.flatten.map(&:subquery)
       end.flatten : []
     end
 
