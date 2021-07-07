@@ -24,7 +24,7 @@ class Magma
 
         has_nested_subquery = has_nested_subquery?(original_subquery_args, subquery_model_name)
 
-        @subqueries << subquery_class.new(
+        @subqueries << subquery_config.magma_class.new(
           subquery_model: subquery_model,
           derived_table_alias: derived_table_alias,
           main_table_alias: join_table_alias,
@@ -32,7 +32,7 @@ class Magma
           internal_table_alias: internal_table_alias,
           subquery_fk_column_name: parent_column_name(subquery_model),
           filters: subquery_filters(subquery_args, internal_table_alias, subquery_model),
-          verb_name: subquery_args.last,
+          condition: verb.do(:subquery_config).condition,
           include_constraint: !has_nested_subquery,
         )
 

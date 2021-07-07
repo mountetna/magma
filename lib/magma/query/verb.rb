@@ -110,12 +110,12 @@ class Magma
       @predicate.instance_exec(*args, &@subquery)
     end
 
-    def subquery_class(*args, &block)
-      @subquery_class = block_given? ? block : args.first
+    def subquery_config(*args, &block)
+      @subquery_config = block_given? ? block : args.first
     end
 
-    def get_subquery_class(*args)
-      @subquery_class
+    def get_subquery_config(*args)
+      @subquery_config
     end
   end
 end

@@ -314,7 +314,7 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
-      it 'supports ::and filters on single model' do
+      it 'supports ::and and ::any filters on single model' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
@@ -335,7 +335,7 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
-      it 'supports ::and filters across multiple models' do
+      it 'supports ::and and ::any filters across multiple models' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
@@ -398,7 +398,7 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
-      it 'supports ::or filters on single model' do
+      it 'supports ::or and ::any filters on single model' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
@@ -412,7 +412,7 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
-      it 'supports ::or filters across multiple models' do
+      it 'supports ::or and ::any filters across multiple models' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
@@ -442,7 +442,7 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])    
       end
 
-      it 'supports multiple ::or filters across multiple models' do
+      it 'supports multiple ::any filters within an ::or filter across multiple models' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)

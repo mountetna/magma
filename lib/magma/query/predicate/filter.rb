@@ -33,7 +33,7 @@ class Magma
 
       join :join_filters
 
-      subquery_class Magma::SubqueryOuter
+      subquery_config Magma::SubqueryConfig.new(magma_class: Magma::SubqueryOuter)
 
       constraint do
         or_constraint(all_filter_constraints)
@@ -45,7 +45,7 @@ class Magma
 
       join :join_filters
 
-      subquery_class Magma::SubqueryInner
+      subquery_config Magma::SubqueryConfig.new(magma_class: Magma::SubqueryInner)
 
       constraint do
         and_constraint(all_filter_constraints)
@@ -54,10 +54,14 @@ class Magma
 
     verb '::any' do
       subquery :join_subqueries
+
+      subquery_config Magma::SubqueryConfig.new(condition: "> 0")
     end
 
     verb '::every' do
       subquery :join_subqueries
+      
+      subquery_config Magma::SubqueryConfig.new(condition: "= count(*)")
     end
 
     verb do
@@ -70,7 +74,10 @@ class Magma
             query_args: @query_args
           }
 
-          params[:subquery_class] = @parent_filter.subquery_class if @parent_filter
+          params[:subquery_config] = 
+            Magma::SubqueryConfig.new(
+              magma_class: @parent_filter.subquery_config.magma_class
+            ) if @parent_filter
           
           subquery = SubqueryFilter.new(**params)
 

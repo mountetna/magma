@@ -98,7 +98,7 @@ class Magma
 
       subquery :join_subqueries
 
-      subquery_class Magma::SubqueryInner
+      subquery_config Magma::SubqueryConfig.new(magma_class: Magma::SubqueryInner, condition: "> 0")
 
       extract do |table,return_identity|
         table.any? do |row|
@@ -113,7 +113,7 @@ class Magma
 
       subquery :join_subqueries
 
-      subquery_class Magma::SubqueryInner
+      subquery_config Magma::SubqueryConfig.new(magma_class: Magma::SubqueryInner, condition: "= count(*)")
 
       extract do |table,return_identity|
         table.length > 0 && table.all? do |row|
@@ -151,11 +151,14 @@ class Magma
     end
 
     def create_subquery(args)
+      verb = self.class.match_verbs(args, self, true).first
       subquery = SubqueryOperator.new(
         predicate: self,
         question: @question,
         model_alias_name: alias_name,
-        query_args: args)
+        query_args: args,
+        subquery_config: verb.do(:subquery_config)
+      )
 
       @subqueries.push(subquery)
     end

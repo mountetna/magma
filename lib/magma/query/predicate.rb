@@ -85,11 +85,13 @@ EOT
       end
     end
 
-    def subquery_class
-      if @verb && @verb.gives?(:subquery_class)
-        @verb.do(:subquery_class)
+    def subquery_config
+      if @verb && @verb.gives?(:subquery_config)
+        @verb.do(:subquery_config)
       else
-        'inner'
+        {
+          class: 'inner'
+        }
       end
     end
 
@@ -386,6 +388,7 @@ require_relative 'predicate/terminal'
 require_relative 'predicate/metrics'
 require_relative 'predicate/table'
 require_relative 'predicate/matrix'
+require_relative 'predicate/subquery_config'
 require_relative 'predicate/subquery_filter'
 require_relative 'predicate/subquery_operator'
 require_relative 'predicate/subquery_utils'

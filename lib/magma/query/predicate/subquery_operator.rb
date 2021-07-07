@@ -7,7 +7,7 @@ class Magma
       # Since just one table, join is on the parent_column_name.
       internal_table_alias = random_alias_name
 
-      subquery_class.new(
+      subquery_config.magma_class.new(
         subquery_model: predicate.model,
         derived_table_alias: random_alias_name,
         main_table_alias: predicate.alias_name,
@@ -15,7 +15,7 @@ class Magma
         internal_table_alias: internal_table_alias,
         subquery_fk_column_name: parent_column_name(predicate.model),
         filters: subquery_filters(subquery_args, internal_table_alias, predicate.model),
-        verb_name: subquery_args.last,
+        condition: subquery_config.condition,
       )
     end
 

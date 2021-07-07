@@ -2,7 +2,7 @@ class Magma
   class SubqueryBase
     attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :subquery_fk_column_name, :include_constraint
 
-    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_fk_column_name:, filters:, verb_name:, include_constraint: true)
+    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_fk_column_name:, filters:, condition:, include_constraint: true)
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias.to_sym
@@ -18,7 +18,7 @@ class Magma
         Magma::SubqueryConstraint.new(
           filter,
           @subquery_fk_column_name,
-          verb_name
+          condition
         )
       end
     end
