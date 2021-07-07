@@ -10,7 +10,7 @@ class Magma
       loop do
         verb, subquery_model_name_args, subquery_args = predicate.class.match_verbs(args, predicate, true)
 
-        raise Exception, "This does not appear to be a valid subquery filter, #{args}." if subquery_model_name_args.first.is_a?(Array)
+        raise Magma::QuestionError, "This does not appear to be a valid subquery filter, #{args}." if subquery_model_name_args.first.is_a?(Array)
 
         subquery_model_name = subquery_model_name_args.first
         validate_attribute(parent_model, subquery_model_name)

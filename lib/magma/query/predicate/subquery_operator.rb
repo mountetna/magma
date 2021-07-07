@@ -22,7 +22,7 @@ class Magma
     def create_subqueries(args)
       verb, subquery_model_name_args, subquery_args = predicate.class.match_verbs(args, predicate, true)
 
-      raise Exception, "This does not appear to be a valid subquery operator, #{args}." unless subquery_model_name_args.first.is_a?(Array)
+      raise Magma::QuestionError, "This does not appear to be a valid subquery operator, #{args}." unless subquery_model_name_args.first.is_a?(Array)
 
       # This is a boolean subquery. Returns directly true / false.
       # Will never have a child / nested subquery.
