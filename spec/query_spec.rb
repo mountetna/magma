@@ -600,6 +600,18 @@ describe QueryController do
       expect(json_body[:answer]).to eq(2)
       expect(json_body[:format]).to eq('Numeric')
     end
+
+    it 'supports ::count and ::every' do 
+      poison = create(:prize, labor: @hydra, name: 'poison', worth: 0)
+      poop = create(:prize, labor: @stables, name: 'poop', worth: 4)
+      iou = create(:prize, labor: @stables, name: 'iou', worth: 3)
+      skin = create(:prize, labor: @lion, name: 'skin', worth: 5)
+
+      query(['labor', ['prize', [ 'worth', '::>', 3 ], '::every'], '::count' ])
+
+      expect(json_body[:answer]).to eq(1)
+      expect(json_body[:format]).to eq('Numeric')
+    end
   end
 
   context Magma::RecordPredicate do
