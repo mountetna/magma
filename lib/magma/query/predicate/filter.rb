@@ -74,10 +74,7 @@ class Magma
             query_args: @query_args
           }
 
-          params[:subquery_config] = 
-            Magma::SubqueryConfig.new(
-              magma_class: @parent_filter.subquery_config.magma_class
-            ) if @parent_filter
+          params[:subquery_class] = @parent_filter.subquery_config.magma_class if @parent_filter
           
           subquery = SubqueryFilter.new(**params)
 

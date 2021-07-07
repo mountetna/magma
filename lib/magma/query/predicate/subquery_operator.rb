@@ -2,12 +2,12 @@ require_relative "subquery_base"
 
 class Magma
   class SubqueryOperator < Magma::SubqueryPredicateBase
-    def create_boolean_subquery(subquery_args)
+    def create_boolean_subquery(subquery_args, condition)
       # These are always inner join subqueries on a single model.
       # Since just one table, join is on the parent_column_name.
       internal_table_alias = random_alias_name
 
-      subquery_config.magma_class.new(
+      subquery_class.new(
         subquery_model: predicate.model,
         derived_table_alias: random_alias_name,
         main_table_alias: predicate.alias_name,
@@ -15,7 +15,7 @@ class Magma
         internal_table_alias: internal_table_alias,
         subquery_fk_column_name: parent_column_name(predicate.model),
         filters: subquery_filters(subquery_args, internal_table_alias, predicate.model),
-        condition: subquery_config.condition,
+        condition: condition,
       )
     end
 
@@ -26,7 +26,7 @@ class Magma
 
       # This is a boolean subquery. Returns directly true / false.
       # Will never have a child / nested subquery.
-      @subqueries << create_boolean_subquery(args)
+      @subqueries << create_boolean_subquery(args, verb.do(:subquery_config).condition)
     end
   end
 end

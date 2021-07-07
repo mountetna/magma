@@ -157,7 +157,7 @@ class Magma
         question: @question,
         model_alias_name: alias_name,
         query_args: args,
-        subquery_config: verb.do(:subquery_config)
+        subquery_class: verb.do(:subquery_config).magma_class
       )
 
       @subqueries.push(subquery)
