@@ -238,6 +238,11 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
+
+        query(['prize', ['labor', ['::has', 'name'], '::every'], '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Lernean Hydra", "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
       end
 
       it 'supports ::every with attribute value as filter' do
