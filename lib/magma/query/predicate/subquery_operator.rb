@@ -13,7 +13,7 @@ class Magma
         main_table_alias: predicate.alias_name,
         main_table_join_column_name: parent_column_name(predicate.model),
         internal_table_alias: internal_table_alias,
-        subquery_fk_column_name: parent_column_name(predicate.model),
+        subquery_pivot_column_name: parent_column_name(predicate.model),
         filters: subquery_filters(subquery_args, internal_table_alias, predicate.model),
         condition: condition,
       )

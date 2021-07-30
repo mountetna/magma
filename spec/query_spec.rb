@@ -238,11 +238,18 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
+      end
+
+      it 'supports ::every with ::has as filter when doing up the graph' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+        skin = create(:prize, labor: @lion, name: 'skin', worth: 1)
 
         query(['prize', ['labor', ['::has', 'name'], '::every'], '::all', '::identifier'])
 
-        expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Lernean Hydra", "Nemean Lion" ])
-        expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
+        expect(json_body[:answer].map(&:last)).to eq([ poison.id, poop.id, iou.id, skin.id ])
+        expect(json_body[:format]).to eq([ "labors::prize#id", "labors::prize#id" ])
       end
 
       it 'supports ::every with attribute value as filter' do
@@ -255,6 +262,18 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra" ])
         expect(json_body[:format]).to eq([ "labors::labor#name", "labors::labor#name" ])
+      end
+
+      it 'supports ::every with attribute value as filter going up the graph' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+        skin = create(:prize, labor: @lion, name: 'skin', worth: 1)
+
+        query(['prize', ['labor', ['name', '::matches', 'bles'], '::every'], '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ poop.id, iou.id ])
+        expect(json_body[:format]).to eq([ "labors::prize#id", "labors::prize#id" ])
       end
 
       it 'supports ::every as boolean' do
@@ -292,6 +311,18 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
+      it 'supports ::any with ::has as filter going up the graph' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+        skin = create(:prize, labor: @lion, name: 'skin')
+
+        query(['prize', ['labor', ['::has', 'name'], '::any'], '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ poison.id, poop.id, iou.id, skin.id ])
+        expect(json_body[:format]).to eq([ "labors::prize#id", "labors::prize#id" ])
+      end
+
       it 'supports ::any with attribute value as filter' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables)
@@ -302,6 +333,18 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra" ])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      end
+
+      it 'supports ::any with attribute value as filter going up the graph' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 2)
+        skin = create(:prize, labor: @lion, name: 'skin')
+
+        query(['prize', ['labor', ['name', '::matches', 'bles'], '::any'], '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ poop.id, iou.id ])
+        expect(json_body[:format]).to eq([ "labors::prize#id", "labors::prize#id" ])
       end
 
       it 'supports combinations of ::any and ::every' do
@@ -536,7 +579,6 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ "Augean Stables", "Lernean Hydra", "Nemean Lion" ])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
-      
       end
 
       it 'works with filters across multiple models' do
@@ -574,6 +616,43 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ ])
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      end
+
+      it 'works with filters across multiple models up and down the graph' do
+        poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+        poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
+        iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
+        skin = create(:prize, labor: @lion, name: 'skin')
+
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+
+        query(['victim',
+          ['monster', 'labor', 'prize', ['::or', ['worth', '::>', 6], ['worth', '::<', 3]], '::any'],
+          ['monster', 'name', '::matches', 'Ne'],
+          '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ ])
+        expect(json_body[:format]).to eq([ 'labors::victim#name', 'labors::victim#name' ])
+      
+        query(['victim',
+          ['monster', 'labor', 'prize', ['::lacks', 'worth'], '::any'],
+          ['monster', 'name', '::matches', 'Ne'],
+          '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to match_array([ "John Doe", "Jane Doe" ])
+        expect(json_body[:format]).to eq([ 'labors::victim#name', 'labors::victim#name' ])
+        
+        query(['victim',
+          ['monster', 'labor', 'prize', ['::lacks', 'worth'], '::any'],
+          ['monster', ['name', '::matches', 'Ne'], '::every'],
+          '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to match_array([ "John Doe", "Jane Doe" ])
+        expect(json_body[:format]).to eq([ 'labors::victim#name', 'labors::victim#name' ])
       end
     end
 

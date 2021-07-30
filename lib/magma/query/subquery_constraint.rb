@@ -1,18 +1,18 @@
 class Magma
   class SubqueryConstraint
-    attr_reader :filter, :subquery_fk_column_name, :condition
+    attr_reader :filter, :subquery_pivot_column_name, :condition
 
-    def initialize(filter, subquery_fk_column_name, condition)
+    def initialize(filter, subquery_pivot_column_name, condition)
       @filter = filter
-      @subquery_fk_column_name = subquery_fk_column_name
+      @subquery_pivot_column_name = subquery_pivot_column_name
       @condition = condition
     end
 
     def apply(query)
       query = query.select(
-        subquery_fk_column_name
+        subquery_pivot_column_name
       ).group_by(
-        subquery_fk_column_name
+        subquery_pivot_column_name
       )
 
       constraints.each do |constraint|
