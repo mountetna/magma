@@ -1629,7 +1629,7 @@ describe QueryController do
       expect(json_body[:errors]).to eq(["Page 3 not found"])
     end
 
-    it 'can paginate with one-to-many relationships' do 
+    it 'can paginate with ::any filter' do 
       lion = create(:labor, project: @project, name: 'Nemean Lion')
       hydra = create(:labor, project: @project, name: 'Lernean Hydra')
       stables = create(:labor, project: @project, name: 'Augean Stables')
@@ -1648,7 +1648,31 @@ describe QueryController do
         ['Augean Stables', 'Lernean Hydra'])
     end
 
-    it 'can paginate and order with one-to-many relationships' do 
+    it 'can paginate with ::any filter when some records do not have filter results' do 
+      lion = create(:labor, project: @project, name: 'Nemean Lion')
+      hydra = create(:labor, project: @project, name: 'Lernean Hydra')
+      stables = create(:labor, project: @project, name: 'Augean Stables')
+      hind = create(:labor, project: @project, name: 'Ceryneian Hind')
+      boar = create(:labor, project: @project, name: 'Erymanthian Boar')
+      birds = create(:labor, project: @project, name: 'Stymphalian Birds')
+      
+      [lion, hydra, stables, hind, boar, birds].each do |labor|
+        (0..10).each do |prize_number|
+          create(:prize, name: "#{labor.name} prize #{prize_number}", labor: labor)
+        end
+      end
+
+      query_opts(
+        ['labor', ['prize', [ 'name', '::matches', 'ian' ], '::any'], '::all', 'name' ],
+        page: 2,
+        page_size: 2
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq(
+        ['Stymphalian Birds'])
+    end
+
+    it 'can paginate and order with ::any filter' do 
       now = DateTime.now
       
       Timecop.freeze(now - 1000)
