@@ -1,8 +1,9 @@
 PATH
   remote: /etna
   specs:
-    etna (0.1.40)
+    etna (0.1.41)
       concurrent-ruby
+      curb
       jwt
       multipart-post
       net-sftp (>= 3.0.0)
