@@ -9,6 +9,5 @@ require 'yaml'
 config = YAML.load(File.read(File.expand_path("../../config.yml",__FILE__)))
 
 require 'yabeda'
-Magma.instance.enable_job_metrics!
 Magma.instance.setup_yabeda
 Magma.instance.run_command(config, *ARGV)
