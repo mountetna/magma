@@ -1,8 +1,8 @@
 class Magma
   class SubqueryBase
-    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :subquery_pivot_column_name, :include_constraint
+    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :subquery_pivot_column_name, :condition, :include_constraint, :subqueries
 
-    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_pivot_column_name:, filters:, condition:, include_constraint: true)
+    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_pivot_column_name:, filters:, condition:, subqueries:, include_constraint: true)
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias.to_sym
@@ -12,12 +12,19 @@ class Magma
       @subquery_pivot_column_name = subquery_pivot_column_name.to_sym
 
       @filters = filters
+      @subqueries = subqueries
       @include_constraint = include_constraint
+      @condition = condition
 
-      @constraints = @filters.map do |filter|
+      @constraints = filter_constraints
+    end
+
+    def filter_constraints
+      @filters.map do |filter|
         Magma::SubqueryConstraint.new(
-          filter,
-          @subquery_pivot_column_name,
+          filter.flatten.map(&:constraint).inject(&:+),
+          subquery_pivot_column_name,
+          derived_table_alias,
           condition
         )
       end
@@ -27,12 +34,22 @@ class Magma
       raise Exception, "Subclasses should implement this method"
     end
 
+    def subquery_column_alias
+      "#{derived_table_alias}_#{subquery_pivot_column_name}"
+    end
+
     def subquery
-      new_query = subquery_model.from(
+      new_query = subquery_model.select(
+        Sequel.as(
+          Sequel.qualify(internal_table_alias, subquery_pivot_column_name),
+          subquery_column_alias
+        )
+      ).from(
         Sequel.as(subquery_model.table_name, internal_table_alias)
       )
 
       @constraints.each { |c| new_query = c.apply(new_query) }
+      @subqueries.each { |s| new_query = s.apply(new_query, condition ? self : nil) }
 
       new_query
     end
@@ -48,7 +65,7 @@ class Magma
     end
 
     def subquery_table_column
-      Sequel.qualify(derived_table_alias, subquery_pivot_column_name)
+      subquery_column_alias.to_sym
     end
 
     def constraint

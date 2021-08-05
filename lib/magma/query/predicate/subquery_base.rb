@@ -26,7 +26,7 @@ class Magma
 
     def subquery_filters(subquery_args, internal_table_alias, subquery_model)
       subquery_filters = []
-      while subquery_args.first.is_a?(Array)
+      while subquery_args.first.is_a?(Array) && !Magma::SubqueryUtils.is_subquery?(predicate, subquery_args.first)
         filter_args = subquery_args.shift
         subquery_filter = FilterPredicate.new(
           question: @question,

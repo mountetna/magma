@@ -1,16 +1,24 @@
 class Magma
   class SubqueryConstraint
-    attr_reader :filter, :subquery_pivot_column_name, :condition
+    attr_reader :constraints, :subquery_pivot_column_name, :derived_table_alias, :condition
 
-    def initialize(filter, subquery_pivot_column_name, condition)
-      @filter = filter
+    def initialize(constraints, subquery_pivot_column_name, derived_table_alias, condition)
+      @constraints = constraints
       @subquery_pivot_column_name = subquery_pivot_column_name
+      @derived_table_alias = derived_table_alias
       @condition = condition
+    end
+
+    def constraint_column_alias
+      "#{derived_table_alias}_#{subquery_pivot_column_name}"
     end
 
     def apply(query)
       query = query.select(
-        subquery_pivot_column_name
+        Sequel.as(
+          subquery_pivot_column_name,
+          constraint_column_alias
+        )
       ).group_by(
         subquery_pivot_column_name
       )
@@ -45,10 +53,6 @@ class Magma
 
     def literal(constraint)
       Magma.instance.db.literal(constraint.conditions.first)
-    end
-
-    def constraints
-      @constraints ||= @filter.flatten.map(&:constraint).inject(&:+)
     end
   end
 end

@@ -285,6 +285,10 @@ FactoryBot.define do
     to_create(&:save)
     sequence(:name) { |n| "characteristic#{n}" }
   end
+
+  factory :wound, class: Labors::Wound do
+    to_create(&:save)
+  end
 end
 
 def fixture(name)

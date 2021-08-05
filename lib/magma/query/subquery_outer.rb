@@ -2,7 +2,7 @@ require_relative "subquery_base"
 
 class Magma
   class SubqueryOuter < Magma::SubqueryBase
-    def apply(query)
+    def apply(query, parent_query = nil)
       # Create a derived table
       #   as the right-table
       #   filtered with GROUP BY and HAVING,

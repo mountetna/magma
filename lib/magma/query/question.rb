@@ -1,7 +1,7 @@
-require_relative 'predicate'
-require_relative 'join'
-require_relative 'constraint'
-require_relative 'query_executor'
+require_relative "predicate"
+require_relative "join"
+require_relative "constraint"
+require_relative "query_executor"
 
 # A query for a piece of data. Each question is a path through the data
 # hierarchy/schema/graph or whatever you want to call it. The basic idea is
@@ -48,6 +48,7 @@ class Magma
 
   class Question
     attr_reader :user
+
     def initialize(project_name, query_args, options = {})
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @options = options
@@ -56,7 +57,7 @@ class Magma
     end
 
     # allow us to re-use the same question for a different page
-    def set_page page
+    def set_page(page)
       @options[:page] = page
     end
 
@@ -77,7 +78,7 @@ class Magma
     def each_page_answer
       all_bounds.each do |bound|
         query = base_query.select(
-            *(predicate_collect(:select)).uniq
+          *(predicate_collect(:select)).uniq
         )
         query = apply_bounds(query, bound[:lower], bound[:upper])
         table = to_table(query)
@@ -115,6 +116,7 @@ class Magma
     private
 
     def to_table(query)
+      binding.pry
       Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 
@@ -127,7 +129,7 @@ class Magma
       end
 
       query = query.select(
-          *(predicate_collect(:select)).uniq
+        *(predicate_collect(:select)).uniq
       )
 
       query
@@ -135,12 +137,12 @@ class Magma
 
     def order_by_attributes
       @order_by_attributes ||= begin
-        order_columns = []
-        if @options[:order]
-          order_columns << @options[:order]
+          order_columns = []
+          if @options[:order]
+            order_columns << @options[:order]
+          end
+          order_columns << @start_predicate.identity
         end
-        order_columns << @start_predicate.identity
-      end
     end
 
     def order_by_aliases
@@ -155,7 +157,7 @@ class Magma
     # question, but does not select any columns
     def base_query
       query = @model.from(
-          Sequel.as(@model.table_name, @start_predicate.alias_name)
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
       )
 
       query = query.order(*order_by_column_names)
@@ -185,7 +187,7 @@ class Magma
       # values, only for filters on the start_predicate.
 
       query = @model.from(
-          Sequel.as(@model.table_name, @start_predicate.alias_name)
+        Sequel.as(@model.table_name, @start_predicate.alias_name)
       ).order(@start_predicate.identity)
 
       joins = @start_predicate.join.uniq
@@ -205,28 +207,29 @@ class Magma
       end
 
       query.distinct.select(
-          *order_by_column_names.zip(order_by_aliases).map { |c, a| c.as(a) }
+        *order_by_column_names.zip(order_by_aliases).map { |c, a| c.as(a) }
       )
     end
 
     # get page bounds for this question using @options[:page] and @options[:page_size]
     def bounds_query
-      raise QuestionError, 'Page size must be greater than 1' unless @options[:page_size] > 1
+      raise QuestionError, "Page size must be greater than 1" unless @options[:page_size] > 1
       bounds_select_parts = order_by_aliases.dup
       bounds_select_parts << Sequel.function(:row_number)
-                             .over(order: order_by_aliases)
-                             .as(:row)
+        .over(order: order_by_aliases)
+        .as(:row)
 
       count_query.from_self.select(
-          *bounds_select_parts
+        *bounds_select_parts
       ).from_self(alias: :main_query).select(
-          # only the first row from each page
-          *order_by_aliases).where(
-          Sequel.lit(
-              '? % ? = 1',
-              Sequel[:main_query][:row],
-              @options[:page_size]
-          )
+      # only the first row from each page
+        *order_by_aliases
+      ).where(
+        Sequel.lit(
+          "? % ? = 1",
+          Sequel[:main_query][:row],
+          @options[:page_size]
+        )
       )
     end
 
@@ -238,11 +241,10 @@ class Magma
     def all_bounds
       bounds = to_table(bounds_query)
       bounds.map.with_index do |row, index|
-        bound = {:lower => order_by_aliases.map { |c| row[c] }, :upper => nil}
-
+        bound = { :lower => order_by_aliases.map { |c| row[c] }, :upper => nil }
 
         if bounds[index + 1]
-          bound[:upper] = order_by_aliases.map{ |c| bounds[index + 1][c] }
+          bound[:upper] = order_by_aliases.map { |c| bounds[index + 1][c] }
         end
 
         bound
@@ -251,9 +253,9 @@ class Magma
 
     def apply_multi_stage_ordering_bounds(query, upper: nil, lower: nil)
       bounds = upper || lower
-      prev = upper ? Sequel.lit('TRUE') : Sequel.lit('FALSE')
-      start = lower ? Sequel.lit('TRUE') : Sequel.lit('FALSE')
-      operator = upper ? '<' : '>='
+      prev = upper ? Sequel.lit("TRUE") : Sequel.lit("FALSE")
+      start = lower ? Sequel.lit("TRUE") : Sequel.lit("FALSE")
+      operator = upper ? "<" : ">="
 
       # upper (a < 1 & true) | (b < 2 & (a == 1 & true))
       # lower (a >= 1 | false) & (b >= 2 | (a != 1 | false)) & (c >= 5 | (b != 2 | (a != 1 | false)))
@@ -261,22 +263,22 @@ class Magma
         column, value = n
 
         if value.nil? && upper
-          step = Sequel.lit('FALSE')
+          step = Sequel.lit("FALSE")
         elsif value.nil? && lower
-          step = Sequel.lit('TRUE')
+          step = Sequel.lit("TRUE")
         else
           step = Sequel.lit(
-              "? #{operator} ?",
-              column,
-              value
+            "? #{operator} ?",
+            column,
+            value
           )
         end
 
         next_cond = nil
         if upper
-          next_cond = Sequel.lit('(? AND ?)', step, prev)
+          next_cond = Sequel.lit("(? AND ?)", step, prev)
         elsif lower
-          next_cond = Sequel.lit('(? OR ?)', step, prev)
+          next_cond = Sequel.lit("(? OR ?)", step, prev)
         end
 
         if upper
@@ -286,7 +288,7 @@ class Magma
             prev = Sequel.lit("(? = ? AND ?)", column, value, prev)
           end
 
-          Sequel.lit('(? OR ?)', cond, next_cond)
+          Sequel.lit("(? OR ?)", cond, next_cond)
         elsif lower
           if value.nil?
             prev = Sequel.lit("(? IS NOT NULL OR ?)", column, prev)
@@ -294,7 +296,7 @@ class Magma
             prev = Sequel.lit("(? != ? OR ?)", column, value, prev)
           end
 
-          Sequel.lit('(? AND ?)', cond, next_cond)
+          Sequel.lit("(? AND ?)", cond, next_cond)
         end
       end)
     end
@@ -310,7 +312,7 @@ class Magma
     end
 
     def paged_query(query)
-      raise QuestionError, 'Page must start at 1' unless @options[:page] > 0
+      raise QuestionError, "Page must start at 1" unless @options[:page] > 0
       bounds = to_table(page_bounds_query).map do |row|
         order_by_aliases.map { |c| row[c] }
       end
@@ -319,7 +321,7 @@ class Magma
       apply_bounds(query, bounds[0], bounds[1])
     end
 
-    def predicate_collect type
+    def predicate_collect(type)
       predicates.map(&type).inject(&:+) || []
     end
   end
