@@ -23,7 +23,7 @@ class Magma
         Magma::SubqueryConstraint.new(
           filter.flatten.map(&:constraint).inject(&:+),
           subquery_pivot_column_name,
-          derived_table_alias,
+          subquery_column_alias,
           condition
         )
       end
