@@ -33,7 +33,9 @@ class Magma
         nested_subqueries << create_nested_subquery(nested_args, subquery_model, internal_table_alias)
       end if has_nested_subquery
 
-      subquery_class.new(
+      # subquery_class is always SubqueryInner if it is a nested subquery...
+      clazz = is_nested_subquery?(main_model) ? subquery_class : Magma::SubqueryInner
+      clazz.new(
         subquery_model: subquery_model,
         derived_table_alias: derived_table_alias,
         main_table_alias: join_table_alias,
@@ -43,8 +45,12 @@ class Magma
         filters: subquery_filters(subquery_args, internal_table_alias, subquery_model),
         subqueries: nested_subqueries,
         condition: verb_applies ? verb.do(:subquery_config).condition : nil,
-        include_constraint: !has_nested_subquery,
+        include_constraint: true,
       )
+    end
+
+    def is_nested_subquery?(model)
+      model.model_name == predicate.model.model_name
     end
 
     def going_down_graph?(start_model, end_model)

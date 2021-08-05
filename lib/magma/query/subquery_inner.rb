@@ -4,7 +4,6 @@ class Magma
   class SubqueryInner < Magma::SubqueryBase
     def apply(query, parent_query = nil)
       if parent_query
-        binding.pry
         # There is a subquery that we have a constraint on,
         #   so we'll do a full_outer_join and then
         #   group by / sum to enforce the constraint.
