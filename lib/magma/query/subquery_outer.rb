@@ -21,7 +21,7 @@ class Magma
       Magma::Constraint.new(derived_table_alias,
                             {
         subquery_table_column => subquery_table_column,
-      }) if include_constraint
+      })
     end
   end
 end

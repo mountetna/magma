@@ -1,8 +1,8 @@
 class Magma
   class SubqueryBase
-    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :subquery_pivot_column_name, :condition, :include_constraint, :subqueries
+    attr_reader :subquery_model, :derived_table_alias, :main_table_alias, :main_table_join_column_name, :internal_table_alias, :subquery_pivot_column_name, :condition, :subqueries
 
-    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_pivot_column_name:, filters:, condition:, subqueries:, include_constraint: true)
+    def initialize(subquery_model:, derived_table_alias:, main_table_alias:, main_table_join_column_name:, internal_table_alias:, subquery_pivot_column_name:, filters:, condition:, subqueries:)
       @subquery_model = subquery_model
 
       @derived_table_alias = derived_table_alias.to_sym
@@ -13,7 +13,6 @@ class Magma
 
       @filters = filters
       @subqueries = subqueries
-      @include_constraint = include_constraint
       @condition = condition
 
       @constraints = filter_constraints

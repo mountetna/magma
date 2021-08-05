@@ -33,7 +33,7 @@ class Magma
         nested_subqueries << create_nested_subquery(nested_args, subquery_model, internal_table_alias)
       end if has_nested_subquery
 
-      # subquery_class is always SubqueryInner if it is a nested subquery...
+      # Always use SubqueryInner if it is a nested subquery...
       clazz = is_nested_subquery?(main_model) ? subquery_class : Magma::SubqueryInner
       clazz.new(
         subquery_model: subquery_model,
@@ -45,7 +45,6 @@ class Magma
         filters: subquery_filters(subquery_args, internal_table_alias, subquery_model),
         subqueries: nested_subqueries,
         condition: verb_applies ? verb.do(:subquery_config).condition : nil,
-        include_constraint: true,
       )
     end
 
