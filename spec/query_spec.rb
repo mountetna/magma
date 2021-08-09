@@ -552,6 +552,69 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
+      it 'supports ::and / ::or inside of an ::any filter' do
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, weapon: 'sword')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, weapon: 'spear')
+
+        susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, weapon: 'bow and arrow')
+        shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, weapon: 'spear')
+
+        query(['labor',
+              ['monster', 'victim',
+                ['::and', ['name', '::matches', 'J'], ['weapon', '::equals', 'spear']],
+                '::any'
+              ],
+              '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+
+        query(['labor',
+              ['monster', 'victim',
+                ['::or', ['name', '::matches', 'J'], ['weapon', '::equals', 'spear']],
+                '::any'
+          ],
+          '::all', '::identifier'])
+
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra", "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      end
+
+      it 'supports ::and / ::or inside of an ::every filter' do
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, weapon: 'sword')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, weapon: 'spear')
+
+        susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, weapon: 'bow and arrow')
+        shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, weapon: 'spear')
+
+        query(['labor',
+              ['monster', 'victim',
+                ['::and', ['name', '::matches', 'J'], ['weapon', '::equals', 'spear']],
+                '::every'
+              ],
+              '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+
+        query(['labor',
+              ['monster', 'victim',
+                ['::or', ['name', '::matches', 'J'], ['weapon', '::equals', 'spear']],
+                '::every'
+          ],
+          '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      end
+
       it 'supports multiple conditional filters with ::and, across multiple models' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)

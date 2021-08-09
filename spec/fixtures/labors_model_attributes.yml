@@ -123,6 +123,8 @@ victim:
     type: boolean
   wound:
     type: table
+  weapon:
+    type: string
 wound:
   victim:
     type: parent
