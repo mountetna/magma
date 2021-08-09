@@ -6,6 +6,7 @@ PATH
       curb
       jwt
       multipart-post
+      net-ssh
       nokogiri
       rack
       rollbar
@@ -53,6 +54,7 @@ GEM
     multipart-post (2.1.1)
     net-http-persistent (4.0.1)
       connection_pool (~> 2.2)
+    net-ssh (6.1.0)
     nio4r (2.5.7)
     nokogiri (1.11.7-x86_64-linux)
       racc (~> 1.4)
@@ -150,4 +152,4 @@ RUBY VERSION
    ruby 2.5.7p206
 
 BUNDLED WITH
-   2.2.24
+   2.2.25
