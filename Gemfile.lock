@@ -1,7 +1,7 @@
 PATH
   remote: /etna
   specs:
-    etna (0.1.41)
+    etna (0.1.42)
       concurrent-ruby
       curb
       jwt
@@ -56,7 +56,7 @@ GEM
       connection_pool (~> 2.2)
     net-ssh (6.1.0)
     nio4r (2.5.7)
-    nokogiri (1.11.7-x86_64-linux)
+    nokogiri (1.12.2-x86_64-linux)
       racc (~> 1.4)
     pg (1.2.3)
     prometheus-client (2.1.0)
