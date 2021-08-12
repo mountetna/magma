@@ -42,10 +42,6 @@ x-base-etna-services:
   'magma_webpack':
     &base-etna-webpack # The ruby webpack server watching for changes
     <<: *base-etna-service
-    environment:
-      <<: *base-etna-env
-      RUN_NPM_INSTALL: 'true'
-      SKIP_RUBY_SETUP: 'true'
     command: npm run webpack
 
   'magma_db':
@@ -65,15 +61,11 @@ x-base-etna-services:
     image: etna-apache
     volumes:
       - magma-public-dir:/app/public:ro
-      - magma-opt-dir:/usr/opt:ro
-      - ../docker/etna-base-dev/entrypoints:/entrypoints:ro
     depends_on:
       - 'magma_app'
-    entrypoint: /entrypoints/development.sh
     command: ['httpd', '-DFOREGROUND']
+    entrypoint: /entrypoints/development_app_fe.sh
     environment:
-      SKIP_BUILD: '1'
-      WAIT_FOR_APP: '1'
       APP_NAME: 'magma'
 
 networks:

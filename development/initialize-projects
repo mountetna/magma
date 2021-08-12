@@ -8,16 +8,15 @@ function findEnvConfig() {
   ~/yq r /app/config.yml ":${MAGMA_ENV:development}"
 }
 
-if [ -z "$SKIP_RUBY_SETUP" ]; then
-  if [ -z "$SKIP_DB_WAIT" ]; then
-    bin/magma global_migrate
-    
-    for project in $(findEnvConfig | grep ':project_path:' | sed -e 's/.*:project_path:\s*//g'); do
-      echo "Initializing $project..."
-      bin/magma create_schema "$(basename $project)" || true
-      bin/magma create_db "$(basename $project)" || true
-    done
+# TODO: Replace this with project model scripts.
+if [ -n "$UPDATE_STATE" ]; then
+  bin/magma global_migrate
 
-    bin/magma migrate || true
-  fi
+  for project in $(findEnvConfig | grep ':project_path:' | sed -e 's/.*:project_path:\s*//g'); do
+    echo "Initializing $project..."
+    bin/magma create_schema "$(basename $project)" || true
+    bin/magma create_db "$(basename $project)" || true
+  done
+
+  bin/magma migrate || true
 fi
