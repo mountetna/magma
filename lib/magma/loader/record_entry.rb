@@ -84,6 +84,11 @@ class Magma
         end.compact.to_h
       )
 
+      # With multi-insert, the timestamp Sequel plugin doesn't automatically
+      #   add these values.
+      entry[:created_at] = Time.now
+      entry[:updated_at] = Time.now
+
       entry
     end
 
