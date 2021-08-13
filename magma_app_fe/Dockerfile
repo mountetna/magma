@@ -1,4 +1,4 @@
 FROM etna-apache
 ARG APP_NAME
-COPY . /app/build
+COPY src /app/build
 RUN /entrypoints/build_app_fe.sh
