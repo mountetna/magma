@@ -1,8 +1,0 @@
-#!/usr/bin/env sh
-
-set -e
-set -x
-
-for include in /app/build/*.include; do
-  cp "$include" /usr/opt/httpd.conf.d/
-done
