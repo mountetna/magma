@@ -40,6 +40,7 @@ class MetisMetadata
           value: @requested_file_paths.to_a,
           type: "file",
         }],
+        hide_paths: true,
         signatory: Magma.instance,
       )
 
