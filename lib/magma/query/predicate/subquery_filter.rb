@@ -76,7 +76,7 @@ class Magma
     def validate_attribute(model, attribute_name)
       attribute = model.attributes[attribute_name.to_sym]
 
-      raise ArgumentError, "Invalid attribute, #{attribute_name}" if attribute.nil?
+      raise Magma::QuestionError, "Invalid attribute, #{attribute_name}" if attribute.nil?
     end
 
     def has_nested_subquery?(args, model_name)
