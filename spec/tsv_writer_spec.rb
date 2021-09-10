@@ -175,6 +175,7 @@ describe 'TSVWriter' do
     header = lines[0]
 
     expect(header.split("\t").sort).to eql(['labor', 'name', 'worth'])
+    expect(lines[1].count("\t")).to eq(2)
   end
 
   it 'should contain only matrix attribute name even with output_predicate if not expand_matrices' do
