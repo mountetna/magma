@@ -154,6 +154,29 @@ describe 'TSVWriter' do
     expect(lines[1].count("\t")).to eq(1)
   end
 
+  it 'should not contain the identifier for table models' do
+    project = create(:project, name: 'The Twelve Labors of Hercules')
+    labor = create(:labor, project: project)
+    prizes = create_list(:prize, 3, labor: labor)
+
+    payload = Magma::Payload.new
+    model = Magma.instance.get_model('labors', 'prize')
+    retrieval = Magma::Retrieval.new(
+      model,
+      nil,
+      'all',
+      filter: nil,
+      page: 1,
+    )
+
+    file = StringIO.new
+    Magma::TSVWriter.new(model, retrieval, payload).write_tsv{ |lines| file.write lines }
+    lines = file.string.split("\n")
+    header = lines[0]
+
+    expect(header.split("\t").sort).to eql(['labor', 'name', 'worth'])
+  end
+
   it 'should contain only matrix attribute name even with output_predicate if not expand_matrices' do
     project = create(:project, name: 'The Twelve Labors of Hercules')
     labors = create_list(:labor, 4, project: project)

@@ -162,8 +162,13 @@ class Magma
 
       def tsv_attributes
         @tsv_attributes ||= @attribute_names.select do |att_name|
-          att_name == :id || (attribute(att_name).shown? && !attribute(att_name).is_a?(Magma::TableAttribute))
+          (!is_self_table? && att_name == :id) || (attribute(att_name).shown? && !attribute(att_name).is_a?(Magma::TableAttribute))
         end
+      end
+
+      def is_self_table?
+        return false unless (parent_model = @model.parent_model)
+        !!parent_model.attributes.values.find { |a| a.is_a?(Magma::TableAttribute) && a.link_model == @model }
       end
 
       def attribute(att_name)
