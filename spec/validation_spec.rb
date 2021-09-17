@@ -26,6 +26,26 @@ describe Magma::Validation do
     end
   end
 
+  context 'model record validations' do
+    after(:each) do
+      remove_validation_stubs
+    end
+    
+    it 'validates its own record name' do
+      stub_validation(Labors::Monster, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
+
+      # fails
+      errors = validate(Labors::Monster, 'nemean lion', labor: 'Nemean Lion')
+      expect(errors).to eq(["On name, 'nemean lion' is improperly formatted."])
+
+      # passes
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', labor: 'Nemean Lion')
+      expect(errors).to be_empty
+    end
+  end
+
   context 'attribute validations' do
     after(:each) do
       remove_validation_stubs
