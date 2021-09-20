@@ -33,9 +33,9 @@ class Magma
     def complaints
       return @complaints if @complaints
       check_document_validity
-      check_record_name_validity if valid_new_entry?
+      check_record_name_validity unless record_exists?
 
-      return @complaints
+      return @complaints.uniq
     end
 
     def valid_new_entry?
