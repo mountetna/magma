@@ -2099,7 +2099,7 @@ describe UpdateController do
       remove_validation_stubs
     end
 
-    it 'fails on validation checks' do
+    it 'fails on validation checks for attributes' do
       # The actual validation is defined in spec/fixtures/labors_model_attributes.yml
       lion = create(:monster, name: 'Nemean Lion', species: 'lion')
       update(
