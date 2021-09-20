@@ -390,6 +390,8 @@ class Magma
         # Run the record updates.
         multi_update(model, update_records)
       end
+    rescue Exception => e
+      raise Magma::LoadFailed.new([e.message])
     end
 
     def multi_insert(model, insert_records)
