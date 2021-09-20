@@ -12,32 +12,18 @@ describe Magma::Validation do
     @validation_stubs ||= {}
   end
 
-  def stub_validation(model, att_name, new_validation)
-    validation_stubs[model] ||= {}
-    validation_stubs[model][att_name] = model.attributes[att_name].validation
-    model.attributes[att_name].validation = new_validation
-  end
-
-  def remove_validation_stubs
-    validation_stubs.each do |model,atts|
-      atts.each do |att_name, old_validation|
-        model.attributes[att_name].validation = old_validation
-      end
-    end
-  end
-
   context 'model record validations' do
     after(:each) do
       remove_validation_stubs
     end
     
-    it 'validates its own record name' do
+    it 'validates its own record name for update' do
       stub_validation(Labors::Monster, :name, {
         type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
       })
 
       # fails
-      errors = validate(Labors::Monster, 'nemean lion', labor: 'Nemean Lion')
+      errors = validate(Labors::Monster, 'Nemean Lion', name: 'nemean lion', labor: 'Nemean Lion')
       expect(errors).to eq(["On name, 'nemean lion' is improperly formatted."])
 
       # passes

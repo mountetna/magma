@@ -2115,6 +2115,18 @@ describe UpdateController do
       expect(lion.species).to eq('lion')
     end
 
+    it 'fails on validation checks for the record name, on create' do
+      update(
+        monster: {
+          'nemean lion': {
+            species: 'lion'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+    end
+
     it 'allows you to rename an invalid record' do
       lion = create(:monster, name: 'nemean lion')
       update(
