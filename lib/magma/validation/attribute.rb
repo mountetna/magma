@@ -23,20 +23,9 @@ class Magma
             yield error
           end
         end
-        # Also validate the record name separately, if it
-        #   is not included in the document.
-        attribute_validations(identifier_attribute_name).validate(record_name) do |error|
-          yield error
-        end unless document.key?(identifier_attribute_name)
       end
 
       private
-
-      def identifier_attribute_name
-        @model.attributes.values.select do |attribute|
-          attribute.is_a?(Magma::IdentifierAttribute)
-        end.first.name.to_sym
-      end
 
       def attribute_validations(att_name)
         @attribute_validations[att_name] ||= validation(@model.attributes[att_name]).new(

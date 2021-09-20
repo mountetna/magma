@@ -2130,7 +2130,7 @@ describe UpdateController do
       expect(lion.name).to eq('Nemean Lion')
     end
 
-    it 'cannot update an invalid record' do
+    it 'can update other attributes for an invalid record' do
       lion = create(:monster, name: 'nemean lion')
       expect(lion.species).to eq(nil)
       update(
@@ -2142,7 +2142,8 @@ describe UpdateController do
       )
 
       lion.refresh
-      expect(last_response.status).to eq(422)
+      expect(last_response.status).to eq(200)
+      expect(lion.species).to eq('lion')
     end
   end
 
