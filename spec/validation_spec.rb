@@ -43,6 +43,9 @@ describe Magma::Validation do
       # passes
       errors = validate(Labors::Monster, 'Nemean Lion', name: 'Nemean Lion', labor: 'Nemean Lion')
       expect(errors).to be_empty
+
+      errors = validate(Labors::Monster, 'nemean lion',  name: 'Nemean Lion', labor: 'Nemean Lion')
+      expect(errors).to be_empty
     end
   end
 

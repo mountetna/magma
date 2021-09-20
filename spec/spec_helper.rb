@@ -342,3 +342,17 @@ def setup_metis_bucket_stubs(project_name)
   stub_request(:post, /https:\/\/metis.test\/#{project_name}\/bucket\/create/).
     to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
 end
+
+def stub_validation(model, att_name, new_validation)
+  validation_stubs[model] ||= {}
+  validation_stubs[model][att_name] = model.attributes[att_name].validation
+  model.attributes[att_name].validation = new_validation
+end
+
+def remove_validation_stubs
+  validation_stubs.each do |model,atts|
+    atts.each do |att_name, old_validation|
+      model.attributes[att_name].validation = old_validation
+    end
+  end
+end

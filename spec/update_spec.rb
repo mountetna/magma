@@ -2084,20 +2084,66 @@ describe UpdateController do
     expect(labor.contributions).to be_nil
   end
 
-  it 'fails on validation checks' do
-    # The actual validation is defined in spec/labors/models/monster.rb,
-    lion = create(:monster, name: 'Nemean Lion', species: 'lion')
-    update(
-      monster: {
-        'Nemean Lion': {
-          species: 'Lion'
-        }
-      }
-    )
+  context 'validation' do
+    def validation_stubs
+      @validation_stubs ||= {}
+    end
 
-    lion.refresh
-    expect(last_response.status).to eq(422)
-    expect(lion.species).to eq('lion')
+    before(:each) do
+      stub_validation(Labors::Monster, :name, {
+        type: "Regexp", value: /^[A-Z][a-z]+ [A-Z][a-z]+$/
+      })
+    end
+
+    after(:each) do
+      remove_validation_stubs
+    end
+
+    it 'fails on validation checks' do
+      # The actual validation is defined in spec/fixtures/labors_model_attributes.yml
+      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+      update(
+        monster: {
+          'Nemean Lion': {
+            species: 'Lion'
+          }
+        }
+      )
+
+      lion.refresh
+      expect(last_response.status).to eq(422)
+      expect(lion.species).to eq('lion')
+    end
+
+    it 'allows you to rename an invalid record' do
+      lion = create(:monster, name: 'nemean lion')
+      update(
+        monster: {
+          'nemean lion': {
+            name: 'Nemean Lion'
+          }
+        }
+      )
+
+      lion.refresh
+      expect(last_response.status).to eq(200)
+      expect(lion.name).to eq('Nemean Lion')
+    end
+
+    it 'cannot update an invalid record' do
+      lion = create(:monster, name: 'nemean lion')
+      expect(lion.species).to eq(nil)
+      update(
+        monster: {
+          'nemean lion': {
+            species: 'lion'
+          }
+        }
+      )
+
+      lion.refresh
+      expect(last_response.status).to eq(422)
+    end
   end
 
   context 'projects' do
