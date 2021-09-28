@@ -18,7 +18,6 @@ class Magma
 
       subquery_model = model(subquery_model_name)
 
-      is_one_to_many = one_to_many_relationship?(main_model, subquery_model)
       verb_applies = verb_applies_to_model?(subquery_args)
 
       original_subquery_args = subquery_args.dup
@@ -70,13 +69,6 @@ class Magma
 
     def is_nested_subquery?(model)
       model.model_name == predicate.model.model_name
-    end
-
-    def one_to_many_relationship?(start_model, end_model)
-      # Returns boolean if start_model -> end_model is a collection,
-      #   so one to many, which will require setting the
-      #   subquery column to the right name.
-      start_model.attributes[end_model.model_name].is_a?(Magma::CollectionAttribute)
     end
 
     def verb_applies_to_model?(subquery_args)
