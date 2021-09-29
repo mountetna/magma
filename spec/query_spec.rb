@@ -365,14 +365,14 @@ describe QueryController do
         susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, country: 'Italy')
         shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, country: 'Greece')
 
-        create(:wound, victim: john_doe, location: 'Arm', severity: 5)
-        create(:wound, victim: john_doe, location: 'Leg', severity: 1)
-        create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
-        create(:wound, victim: jane_doe, location: 'Leg', severity: 4)
-        create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
-        create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
-        create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
-        create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
+        john_arm = create(:wound, victim: john_doe, location: 'Arm', severity: 5)
+        john_leg = create(:wound, victim: john_doe, location: 'Leg', severity: 1)
+        jane_arm = create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
+        jane_leg = create(:wound, victim: jane_doe, location: 'Leg', severity: 4)
+        susan_arm = create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
+        susan_leg = create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
+        shawn_arm = create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
+        shawn_leg = create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
 
         query(['habitat',
           ['monster',['victim', ['wound', ['severity', '::>', 4], '::any'], '::any'], '::any'],
@@ -389,6 +389,14 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ savannah.name, underground.name ])
         expect(json_body[:format]).to eq([ 'labors::habitat#name', 'labors::habitat#name' ])
+
+        query(['wound',
+          ['victim',['monster', ['habitat', ['name', '::matches', 'ou'], '::any'], '::any'], '::any'],
+          '::all',
+          '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ susan_arm.id, susan_leg.id, shawn_arm.id, shawn_leg.id ])
+        expect(json_body[:format]).to eq([ 'labors::wound#id', 'labors::wound#id' ])
       end
 
       it 'supports nested ::every filters' do
@@ -445,14 +453,14 @@ describe QueryController do
         susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, country: 'Italy')
         shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, country: 'Greece')
 
-        create(:wound, victim: john_doe, location: 'Arm', severity: 5)
-        create(:wound, victim: john_doe, location: 'Leg', severity: 1)
-        create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
-        create(:wound, victim: jane_doe, location: 'Leg', severity: 4)
-        create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
-        create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
-        create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
-        create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
+        john_arm = create(:wound, victim: john_doe, location: 'Arm', severity: 5)
+        john_leg = create(:wound, victim: john_doe, location: 'Leg', severity: 1)
+        jane_arm = create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
+        jane_leg = create(:wound, victim: jane_doe, location: 'Leg', severity: 4)
+        susan_arm = create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
+        susan_leg = create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
+        shawn_arm = create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
+        shawn_leg = create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
 
         query(['habitat',
           ['monster',['victim', ['wound', ['severity', '::>', 4], '::every'], '::every'], '::every'],
@@ -469,6 +477,14 @@ describe QueryController do
 
         expect(json_body[:answer].map(&:last)).to eq([ underground.name ])
         expect(json_body[:format]).to eq([ 'labors::habitat#name', 'labors::habitat#name' ])
+
+        query(['wound',
+          ['victim',['monster', ['habitat', ['name', '::matches', 'n'], '::every'], '::every'], '::every'],
+          '::all',
+          '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ john_arm.id, john_leg.id, jane_arm.id, jane_leg.id, susan_arm.id, susan_leg.id, shawn_arm.id, shawn_leg.id ])
+        expect(json_body[:format]).to eq([ 'labors::wound#id', 'labors::wound#id' ])
       end
 
       it 'supports nested ::any and ::every filters' do

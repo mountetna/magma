@@ -56,7 +56,7 @@ class Magma
       if model_is_parent(main_model, subquery_model)
         "id"
       else
-        parent_column_name(main_model)
+        main_model.attributes[subquery_model.model_name].column_name
       end
     end
 
