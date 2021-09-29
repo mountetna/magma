@@ -47,10 +47,13 @@ class Magma
       )
     end
 
+    def model_is_parent(main_model, subquery_model)
+      subquery_model.attributes[main_model.model_name].is_a?(Magma::ParentAttribute) ||
+      subquery_model.attributes[main_model.model_name].is_a?(Magma::LinkAttribute)
+    end
+
     def main_table_join_column_name(main_model, subquery_model)
-      if subquery_model.attributes[main_model.model_name].is_a?(Magma::ParentAttribute)
-        "id"
-      elsif subquery_model.attributes[main_model.model_name].is_a?(Magma::LinkAttribute)
+      if model_is_parent(main_model, subquery_model)
         "id"
       else
         parent_column_name(main_model)
@@ -58,9 +61,7 @@ class Magma
     end
 
     def subquery_pivot_column_name(main_model, subquery_model)
-      if subquery_model.attributes[main_model.model_name].is_a?(Magma::ParentAttribute)
-        parent_column_name(subquery_model)
-      elsif subquery_model.attributes[main_model.model_name].is_a?(Magma::LinkAttribute)
+      if model_is_parent(main_model, subquery_model)
         subquery_model.attributes[main_model.model_name].column_name
       else
         "id"
