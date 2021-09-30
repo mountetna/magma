@@ -1091,6 +1091,15 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
 
+    it 'supports ::notin for arrays' do
+      query(
+        [ 'labor', [ 'name', '::notin', [ 'Nemean Lion', 'Lernean Hydra' ] ], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].first.last).to eq('Augean Stables')
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
+
     it 'supports ::> for numeric strings' do
       query(
         [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5.1"], '::all', '::identifier' ]

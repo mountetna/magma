@@ -36,7 +36,7 @@ class Magma
       end
     end
 
-    verb '::not', Array do
+    verb [ '::not', '::notin' ] , Array do
       child TrueClass
 
       constraint do
