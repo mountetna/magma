@@ -19,7 +19,7 @@ class Magma
       end
     end
 
-    verb '::not', Array do
+    verb ['::not', '::notin'], Array do
       child TrueClass
       constraint do
         not_constraint(@column_name, @arguments[1])

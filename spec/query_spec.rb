@@ -1224,6 +1224,15 @@ describe QueryController do
       expect(json_body[:answer].first.last).to eq('Augean Stables')
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
     end
+
+    it 'supports ::notin' do
+      query(
+        [ 'labor', [ 'prize', [ 'worth', '::notin', [ 5, 6 ] ], '::any' ], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].first.last).to eq('Augean Stables')
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
   end
 
   context Magma::DateTimePredicate do
