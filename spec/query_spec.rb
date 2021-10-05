@@ -1261,6 +1261,14 @@ describe QueryController do
       expect(json_body[:answer].map(&:last)).to match_array(Labors::Labor.select_map(:year).map(&:iso8601))
       expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#year'])
     end
+
+    it 'throws exception if invalid format' do
+      query(
+        [ 'labor', [ 'year', '::>', 'last year' ], '::all', '::identifier' ]
+      )
+
+      expect(last_response.status).to eq(422)
+    end
   end
 
   context Magma::FilePredicate do
