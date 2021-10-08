@@ -32,4 +32,13 @@ class UpdateController < Magma::Controller
     @errors.concat(m.complaints)
     return nil
   end
+
+  def redact_keys
+    route_redact_keys = super
+    route_redact_keys ? route_redact_keys.concat(dateshift_redact_keys).uniq : dateshift_redact_keys
+  end
+
+  def dateshift_redact_keys
+    []
+  end
 end
