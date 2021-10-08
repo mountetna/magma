@@ -34,11 +34,11 @@ class UpdateController < Magma::Controller
   end
 
   def redact_keys
-    route_redact_keys = super
-    route_redact_keys ? route_redact_keys.concat(dateshift_redact_keys).uniq : dateshift_redact_keys
+    dateshift_redact_keys.concat(@route_log_redact_keys || []).uniq
   end
 
   def dateshift_redact_keys
+    # Make sure the keys are symbols?
     []
   end
 end
