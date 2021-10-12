@@ -2,6 +2,8 @@ require_relative 'controller'
 
 class UpdateController < Magma::Controller
   def action
+    add_redact_keys(dateshift_redact_keys)
+
     @loader = Magma::Loader.new(@user,@project_name)
     @revisions = @params[:revisions]
 
@@ -31,10 +33,6 @@ class UpdateController < Magma::Controller
     log(m.complaints)
     @errors.concat(m.complaints)
     return nil
-  end
-
-  def redact_keys
-    dateshift_redact_keys.concat(@route_log_redact_keys || []).uniq
   end
 
   def dateshift_redact_keys
