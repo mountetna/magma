@@ -124,6 +124,14 @@ describe Magma::SetDateShiftRootAction do
         }).perform
       end
 
+      after do
+        # Remove test model and link relationships from memory
+        project = Magma.instance.get_project(:labors)
+        project.models.delete(:new_child_model)
+        Labors.send(:remove_const, :NewChildModel)
+        Labors::Labor.attributes.delete(:new_child_model)
+      end
+
       it "returns false and adds an error" do
         expect(action.validate).to eq(false)
         expect(action.errors.first[:message]).to eq("date_shift_root exists for project")
