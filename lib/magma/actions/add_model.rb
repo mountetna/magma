@@ -29,7 +29,7 @@ class Magma
       }
 
       params[:dictionary] = @action_params[:dictionary] if @action_params[:dictionary]
-      params[:date_shift_root] = @action_params[:date_shift_root] ? @action_params[:date_shift_root] : false
+      params[:date_shift_root] = @action_params[:date_shift_root].nil? ? false : @action_params[:date_shift_root]
 
       # Here dictionary needs to be a JSON string, otherwise
       #   Sequel will try to find a column for each dictionary key.
