@@ -114,10 +114,10 @@ class Magma
       db = Magma.instance.db
 
       if version
-        puts "Migrating to version #{version}"
+        puts "Migrating to version #{version}, globally"
         Sequel::Migrator.run(db, File.join("db", "migrations"), target: version.to_i)
       else
-        puts 'Migrating to latest'
+        puts 'Migrating to latest, globally'
         Sequel::Migrator.run(db, File.join("db", "migrations"))
       end
     end
