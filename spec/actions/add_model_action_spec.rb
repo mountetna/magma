@@ -42,6 +42,8 @@ describe Magma::AddModelAction do
         parent_link = Labors::Labor.attributes[:new_child_model]
         expect(parent_link).to be_a(Magma::ChildAttribute)
         expect(parent_link).not_to be_new
+
+        expect(Labors::NewChildModel.is_date_shift_root?).to eq(false)
       end
     end
 
@@ -209,6 +211,81 @@ describe Magma::AddModelAction do
           expect(action.errors.first[:message]).to eq("model_name must be snake_case and not contain numbers")
         end
       end
+    end
+
+    context "when a date_shift_root model already exists" do
+      after do
+        # Remove test model and link relationships from memory
+        project = Magma.instance.get_project(:labors)
+        project.models.delete(:new_child_model)
+        Labors.send(:remove_const, :NewChildModel)
+        Labors::Labor.attributes.delete(:new_child_model)
+      end
+
+      let(:action_params) do
+        {
+          action_name: "add_model",
+          model_name: "new_child_model",
+          identifier: "name",
+          parent_model_name: "labor",
+          parent_link_type: "child",
+          date_shift_root: true
+        }
+      end
+
+      let(:error_action_params) do
+        {
+          action_name: "add_model",
+          model_name: "newer_child_model",
+          identifier: "name",
+          parent_model_name: "labor",
+          parent_link_type: "child",
+          date_shift_root: true
+        }
+      end
+
+      let(:error_action) { Magma::AddModelAction.new("labors", error_action_params) }
+
+      it "returns false and adds an error" do
+        expect(action.perform).to eq(true)
+
+        expect(error_action.validate).to eq(false)
+        expect(error_action.errors.first[:message]).to eq("date_shift_root exists for project")
+      end
+    end
+  end
+
+  context "with date_shift_root param" do
+    let(:action_params) do
+      {
+        action_name: "add_model",
+        model_name: "new_child_model",
+        identifier: "name",
+        parent_model_name: "labor",
+        parent_link_type: "child",
+        date_shift_root: true
+      }
+    end
+
+    after do
+      # Remove test model and link relationships from memory
+      project = Magma.instance.get_project(:labors)
+      project.models.delete(:new_child_model)
+      Labors.send(:remove_const, :NewChildModel)
+      Labors::Labor.attributes.delete(:new_child_model)
+    end
+
+    it "adds the model and sets date_shift_root to true" do
+      expect(action.perform).to eq(true)
+
+      expect(
+        Magma.instance.db[:models].
+          where(project_name: "labors", model_name: "new_child_model")
+      ).not_to be_nil
+
+      expect { Labors::NewChildModel }.not_to raise_error(NameError)
+
+      expect(Labors::NewChildModel.is_date_shift_root?).to eq(true)
     end
   end
 end

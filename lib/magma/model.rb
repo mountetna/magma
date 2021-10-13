@@ -170,13 +170,30 @@ class Magma
         set_dataset(Sequel[project_name][table_name])
       end
 
+      def model_record
+        @model_record ||= Magma.instance.db[:models].where(project_name: project_name.to_s, model_name: model_name.to_s).first
+      end
+
       def version
-        m = Magma.instance.db[:models].where(project_name: project_name.to_s, model_name: model_name.to_s).first
-        if m.nil?
+        if model_record.nil?
           0
         else
-          m[:version]
+          model_record[:version]
         end
+      end
+
+      def is_date_shift_root?
+        if model_record.nil?
+          false
+        else
+          model_record[:date_shift_root]
+        end
+      end
+
+      def date_shift_root_model
+        # Recursively search parent models until find one that has
+        #   date_shift_root: true.
+
       end
     end
 
