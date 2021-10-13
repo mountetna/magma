@@ -75,16 +75,19 @@ describe Magma::Model do
       action.perform
 
       expect(@lion_monster.date_shift_root_record).to eq(@lion_monster)
+      expect(@hydra_monster.date_shift_root_record).to eq(@hydra_monster)
     end
 
     it 'returns right record if an ancestor model is date_shift_root' do
       action.perform
 
       expect(@john_arm.date_shift_root_record).to eq(@lion_monster)
+      expect(@susan_arm.date_shift_root_record).to eq(@hydra_monster)
     end
     
     it 'returns nil if no ancestor model is date_shift_root' do
       expect(@john_arm.date_shift_root_record).to eq(nil)
+      expect(@susan_arm.date_shift_root_record).to eq(nil)
     end
   end
 end
