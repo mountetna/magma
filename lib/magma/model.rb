@@ -171,22 +171,24 @@ class Magma
       end
 
       def model_record
-        @model_record ||= Magma.instance.db[:models].where(project_name: project_name.to_s, model_name: model_name.to_s).first
+        Magma.instance.db[:models].where(project_name: project_name.to_s, model_name: model_name.to_s).first
       end
 
       def version
-        if model_record.nil?
+        record = model_record
+        if record.nil?
           0
         else
-          model_record[:version]
+          record[:version]
         end
       end
 
       def is_date_shift_root?
-        if model_record.nil?
+        record = model_record
+        if record.nil?
           false
         else
-          model_record[:date_shift_root]
+          record[:date_shift_root]
         end
       end
 

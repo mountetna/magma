@@ -6,6 +6,7 @@ require_relative 'add_model'
 require_relative 'rename_attribute'
 require_relative 'add_project'
 require_relative 'add_dictionary'
+require_relative 'set_date_shift_root'
 require 'rollbar'
 
 class Magma
