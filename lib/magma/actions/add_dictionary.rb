@@ -1,5 +1,9 @@
+require_relative "./with_update_model_module"
+
 class Magma
   class AddDictionaryAction < BaseAction
+    include WithUpdateModel
+
     # Action to add a dictionary definition to an existing model.
     # NOTE: This will only work for DB-defined models, not legacy models.
     def perform
@@ -28,25 +32,6 @@ class Magma
         :validate_dictionary_model,
         :validate_dictionary_attribute_names,
       ]
-    end
-
-    def validate_model
-      return if model
-
-      @errors << Magma::ActionError.new(
-        message: 'Model does not exist.',
-        source: @action_params.slice(:action_name, :model_name)
-      )
-    end
-
-    def validate_db_model
-      @errors << Magma::ActionError.new(
-        message: 'Model is defined in code, not in the database.',
-        source: @action_params.slice(:action_name, :model_name)
-      ) unless Magma.instance.db[:models].where(
-        project_name: @project_name,
-        model_name: @action_params[:model_name]
-      ).first
     end
 
     def validate_dictionary_model
@@ -86,16 +71,6 @@ class Magma
           message: "attribute_name \"#{dictionary_key}\" does not exist on dictionary \"#{dictionary_model.name}\".",
           source: @action_params.slice(:project_name, :model_name, :dictionary)
         ) if !dictionary_model&.has_attribute?(dictionary_key)
-      end
-    end
-
-    def model
-      return @model if defined? @model
-
-      @model = begin
-        Magma.instance.get_model(@project_name, @action_params[:model_name])
-      rescue
-        nil
       end
     end
 

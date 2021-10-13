@@ -1,5 +1,9 @@
+require_relative "./with_date_shift_module"
+
 class Magma
   class AddModelAction < BaseAction
+    include WithDateShift
+
     def perform
       @model = create_model
 
@@ -124,10 +128,12 @@ class Magma
       # If trying to set a date_shift_root = true flag on a model,
       #   we must verify that no other model in the project
       #   is already set as the date_shift_root.
+      current_root = Magma.instance.db[:models].where(project_name: @project_name, date_shift_root: true).first
+
       @errors << Magma::ActionError.new(
-        message: "date_shift_root exists for project",
-        source: @action_params.slice(:model_name)
-      ) if Magma.instance.db[:models].where(project_name: @project_name, date_shift_root: true).count > 0
+        message: "date_shift_root exists for project: #{current_root[:model_name]}",
+        source: @action_params.slice(:model_name),
+      ) if current_root
     end
 
     def table_parent_link?

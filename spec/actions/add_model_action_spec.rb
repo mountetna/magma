@@ -250,7 +250,7 @@ describe Magma::AddModelAction do
         expect(action.perform).to eq(true)
 
         expect(error_action.validate).to eq(false)
-        expect(error_action.errors.first[:message]).to eq("date_shift_root exists for project")
+        expect(error_action.errors.first[:message]).to eq("date_shift_root exists for project: new_child_model")
       end
     end
   end

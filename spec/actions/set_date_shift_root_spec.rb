@@ -134,7 +134,7 @@ describe Magma::SetDateShiftRootAction do
 
       it "returns false and adds an error" do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("date_shift_root exists for project")
+        expect(action.errors.first[:message]).to eq("date_shift_root exists for project: new_child_model")
       end
     end
   end
