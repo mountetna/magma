@@ -168,7 +168,8 @@ class Magma
       "Magma::FloatAttribute",
       "Magma::IdentifierAttribute",
       "Magma::IntegerAttribute",
-      "Magma::StringAttribute"
+      "Magma::StringAttribute",
+      "Magma::ShiftedDateTimeAttribute"
     ]
 
     FOREIGN_KEY_ATTRIBUTES = [
@@ -250,4 +251,5 @@ require_relative 'attributes/float_attribute'
 require_relative 'attributes/identifier_attribute'
 require_relative 'attributes/parent_attribute'
 require_relative 'attributes/link_attribute'
+require_relative 'attributes/shifted_date_time_attribute'
 
