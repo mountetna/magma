@@ -2363,7 +2363,7 @@ describe UpdateController do
   context 'shifted_date_time attributes' do
     before(:each) do
       stub_date_shift_data(@project)
-      Magma.instance.configure({:test => { :dateshift_salt => '123' } })
+      # Magma.instance.configure({:test => { :dateshift_salt => '123' } })
     end
 
     it 'fails the update when no salt in config' do
@@ -2386,217 +2386,48 @@ describe UpdateController do
       expect(@john_doe.birthday).to eq(nil)
     end
 
-    it 'marks a file as blank' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
+    context 'with tables' do
+      it 'shifts date on update to existing row' do
+        expect(true).to eq(false)
+      end
 
-      update(
-        monster: {
-          'Nemean Lion' => {
-            stats: {
-              path: '::blank'
-            }
-          }
-        }
-      )
+      it 'shifts date on create of a new row, parent exists' do
+        expect(true).to eq(false)
+      end
 
-      # the field is updated
-      lion.refresh
-      expect(lion.stats.to_json).to eq({
-        location: "::blank",
-        filename: "::blank",
-        original_filename: "::blank"
-      }.to_json)
+      it 'shifts date when parent record created in same update' do
+        expect(true).to eq(false)
+      end
 
-      expect(last_response.status).to eq(200)
+      it 'throws exception if included in create of disconnected row' do
+        expect(true).to eq(false)
+      end
 
-      # and we do not get an upload url for Metis
-      expect(json_document(:monster, 'Nemean Lion')[:stats][:path]).to eq('::blank')
-      expect(json_document(:monster, 'Nemean Lion')[:stats][:url]).to be_nil
-
-      # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-      with(query: hash_including({
-        "X-Etna-Headers": "revisions"
-      }))
+      it 'throws exception if included in create of connected row, but no date-shift root' do
+        expect(true).to eq(false)
+      end
     end
 
-    it 'removes a file reference' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: '{"filename": "monster-Nemean Lion-lion-stats.txt", "original_filename": ""}')
+    context 'with non-table models' do
+      it 'shifts date on update to existing record' do
+        expect(true).to eq(false)
+      end
 
-      update(
-        monster: {
-          'Nemean Lion' => {
-            stats: {
-              path: nil
-            }
-          }
-        }
-      )
+      it 'shifts date on create of a new record, parent exists' do
+        expect(true).to eq(false)
+      end
 
-      # the field is updated
-      lion.refresh
-      expect(lion.stats.to_json).to eq({
-        location: nil,
-        filename: nil,
-        original_filename: nil
-      }.to_json)
+      it 'shifts date when parent record created in same update' do
+        expect(true).to eq(false)
+      end
 
-      expect(last_response.status).to eq(200)
+      it 'throws exception if included in create of disconnected record' do
+        expect(true).to eq(false)
+      end
 
-      # and we do not get an upload url for Metis
-      expect(json_document(:monster, 'Nemean Lion')[:stats]).to be_nil
-
-      # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-      with(query: hash_including({
-        "X-Etna-Headers": "revisions"
-      }))
-    end
-
-    it 'removes a file reference using ::blank' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion', stats: '{"filename": "monster-Nemean Lion-lion-stats.txt", "original_filename": ""}')
-
-      update(
-        monster: {
-          'Nemean Lion' => {
-            stats: {
-              path: '::blank'
-            }
-          }
-        }
-      )
-
-      # the field is updated
-      lion.refresh
-      expect(lion.stats.to_json).to eq({
-        location: "::blank",
-        filename: "::blank",
-        original_filename: "::blank"
-      }.to_json)
-
-      expect(last_response.status).to eq(200)
-
-      # and we do not get an upload url for Metis
-      expect(json_document(:monster, 'Nemean Lion')[:stats]).to eq({
-        path: '::blank'
-      })
-
-      # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-      with(query: hash_including({
-        "X-Etna-Headers": "revisions"
-      }))
-    end
-
-    it 'returns a temporary Metis path when using ::temp' do
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
-
-      update(
-        monster: {
-          'Nemean Lion' => {
-            stats: {
-              path: '::temp'
-            }
-          }
-        }
-      )
-
-      # the field is updated
-      lion.refresh
-      expect(lion.stats).to eq(nil)
-
-      expect(last_response.status).to eq(200)
-
-      # but we do get an upload url for Metis
-      upload_url = json_document(:monster, 'Nemean Lion')[:stats][:path]
-      expect(upload_url.
-        start_with?('https://metis.test/labors/upload/magma/tmp-')).to eq(true)
-      expect(upload_url.
-        include?('X-Etna-Signature=')).to eq(true)
-
-      # Make sure the Metis copy endpoint was not called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-      with(query: hash_including({
-        "X-Etna-Headers": "revisions"
-      }))
-    end
-
-    it 'links a file from metis' do
-      Timecop.freeze(DateTime.new(500))
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
-      update(
-        monster: {
-          'Nemean Lion' => {
-            stats: {
-              path: 'metis://labors/files/lion-stats.txt',
-              original_filename: 'original-file.txt'
-            }
-          }
-        }
-      )
-
-      expect(last_response.status).to eq(200)
-
-      lion.refresh
-      expect(lion.stats.to_json).to eq({
-        location: "metis://labors/files/lion-stats.txt",
-        filename: "monster-Nemean Lion-stats.txt",
-        original_filename: "original-file.txt"
-      }.to_json)
-
-      # but we do get an download url for Metis
-      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
-      params = Rack::Utils.parse_nested_query(uri.query)
-      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
-      expect(uri.path).to eq('/labors/download/magma/monster-Nemean%20Lion-stats.txt')
-      expect(params['X-Etna-Id']).to eq('magma')
-      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
-
-      expect(json_document(:monster, 'Nemean Lion')[:stats].key?(:path)).to eq (true)
-      expect(json_document(:monster, 'Nemean Lion')[:stats].key?(:original_filename)).to eq (true)
-
-      # Make sure the Metis copy endpoint was called
-      expect(WebMock).to have_requested(:post, "https://metis.test/labors/files/copy").
-        with(query: hash_including({
-          "X-Etna-Headers": "revisions"
-        }), body: hash_including({
-          "revisions": [{
-            "source": "metis://labors/files/lion-stats.txt",
-            "dest": "metis://labors/magma/monster-Nemean Lion-stats.txt"
-          }]
-        }))
-
-      Timecop.return
-    end
-
-    it 'does not link a file from metis for an invalid update' do
-      Timecop.freeze(DateTime.new(500))
-      lion = create(:monster, name: 'Nemean Lion', species: 'lion')
-      update(
-        monster: {
-          'Nemean Lion' => {
-            species: 'Lion',
-            stats: {
-              path: 'metis://labors/files/lion-stats.txt',
-              original_filename: 'original-file.txt'
-            }
-          }
-        }
-      )
-
-      # the record is unchanged
-      lion.refresh
-      expect(lion.stats).to be_nil
-      expect(lion.species).to eq('lion')
-      expect(last_response.status).to eq(422)
-
-      # The metis endpoint was NOT called
-      expect(WebMock).not_to have_requested(:post, "https://metis.test/labors/files/copy").
-        with(query: hash_including({
-          "X-Etna-Headers": "revisions"
-        }))
-
-      Timecop.return
+      it 'throws exception if included in create of connected record, but no date-shift root' do
+        expect(true).to eq(false)
+      end
     end
   end
 end

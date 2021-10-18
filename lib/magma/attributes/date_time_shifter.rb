@@ -5,13 +5,16 @@ class Magma
   class DateTimeShifter
     def initialize(salt:, record_name:, magma_model:)
       raise DateTimeShiftError, ":salt is required" if salt.nil? || salt.empty?
-
+      require 'pry'
+      binding.pry
       @salt = salt
       @record_name = record_name
       @magma_model = magma_model
     end
 
     def offset_id
+      return @record_name if @magma_model.is_date_shift_root?
+
       @date_shift_root_record = date_shift_root_record
 
       raise DateTimeShiftError, "No date shift root record found." unless @date_shift_root_record
@@ -49,7 +52,7 @@ class Magma
       binding.pry
       search_model = @magma_model
       record = Magma.instance.db[@magma_model.table_name].where(
-        @magma_model.identifier => @record_name
+        @magma_model.attributes.values.select { |a| a.is_a?(Magma::IdentifierAttribute)} => @record_name
       ).first
 
       raise DateTimeShiftError, "No record \"#{@record_name}\" found" unless record

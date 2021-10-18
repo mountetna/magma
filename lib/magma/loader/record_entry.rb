@@ -54,6 +54,20 @@ class Magma
       complaints.empty?
     end
 
+    def requires_date_shifting
+      attribute_key.any? do |attr|
+        shifted_date_time_attribute_names.include?(attr)
+      end
+    end
+
+    def shifted_date_time_attribute_names
+      @shifted_date_time_attribute_names ||= @model.attributes.values.select do |attribute|
+      attribute.is_a?(Magma::ShiftedDateTimeAttribute)
+      end.map do |attribute|
+        attribute.attribute_name
+      end
+    end
+
     def needs_temp?
       @needs_temp ||= @record.any? do |att_name, value|
         attribute = @model.attributes[att_name]

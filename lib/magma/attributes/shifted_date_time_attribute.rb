@@ -19,5 +19,14 @@ class Magma
       # Do we need this?
       [name, new_value]
     end
+
+    class Validation < Magma::Validation::Attribute::BaseAttributeValidation
+      def validate_shift(record_name, document, value, &block)
+        return if value.nil? || value.empty?
+        link_validate(value, &block)
+      end
+
+      private
+    end
   end
 end

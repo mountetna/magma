@@ -324,9 +324,28 @@ class Magma
         complaints.concat(record_set.values.map(&:complaints))
       end
 
+      record_set_validations.each do |record_set_validation|
+        complaints.concat(self.send(record_set_validation))
+      end
+
       complaints.flatten!
 
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
+    end
+
+    def record_set_validations
+      # Some validations require access to the entire record set, like
+      #   when validating date-shifting -- have to validate that the
+      #   record with shifted_date_time attribute has a parent that is
+      #   in the date-shift-root model. This parent may exist beforehand
+      #   or may be included in the @records.
+      [
+        :validate_date_shift_root_record
+      ]
+    end
+
+    def validate_date_shift_root_record
+
     end
 
     def censor_revisions!
