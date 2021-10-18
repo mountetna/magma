@@ -324,7 +324,9 @@ class Magma
         complaints.concat(record_set.values.map(&:complaints))
       end
 
-      record_set_validations.each do |record_set_validation|
+      require 'pry'
+      binding.pry
+      records_validations.each do |record_set_validation|
         complaints.concat(self.send(record_set_validation))
       end
 
@@ -333,8 +335,8 @@ class Magma
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
     end
 
-    def record_set_validations
-      # Some validations require access to the entire record set, like
+    def records_validations
+      # Some validations require access to the entire set of records, like
       #   when validating date-shifting -- have to validate that the
       #   record with shifted_date_time attribute has a parent that is
       #   in the date-shift-root model. This parent may exist beforehand
@@ -345,7 +347,46 @@ class Magma
     end
 
     def validate_date_shift_root_record
+      [].tap do |complaints|
+        @records.each do |model, record_set|
+          # Skip if the record_set for this model is empty.
+          next if record_set.empty?
+  
+          require 'pry'
+          binding.pry
+          date_shift_records = record_set.values.select(&:requires_date_shifting)
+  
+          # skip if no records require date shifting
+          next if date_shift_records.empty?
+  
+          date_shift_records.each do |date_shift_record|
+            complaints.concat(validate_root_exists_or_created(date_shift_record))
+          end
+        end
+      end
+    end
+    
+    def validate_root_exists_or_created(record_entry)
+      # Check that either date-shift-root exists
+      #   or it will be created in this upsert.
+      complaints = []
 
+      complaints.concat(validate_date_shift_root_exists(record_entry))
+
+      # if has no complaints, date-shift-root exists so we don't need
+      #   to check further
+      complaints.concat(validate_date_shift_root_created(record_entry)) unless complaints.empty?
+      
+      comlaints
+    end
+
+    def validate_date_shift_root_exists(record_entry)
+      require 'pry'
+      binding.pry
+    end
+
+    def validate_date_shift_root_created(record_entry)
+      
     end
 
     def censor_revisions!

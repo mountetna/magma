@@ -25,8 +25,6 @@ class Magma
       end
 
       def validate(record_name, document, &block)
-        require 'pry'
-        binding.pry
         validations.each do |validation|
           validation.validate(record_name, document, &block)
         end

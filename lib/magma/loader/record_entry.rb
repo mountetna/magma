@@ -64,7 +64,7 @@ class Magma
       @shifted_date_time_attribute_names ||= @model.attributes.values.select do |attribute|
       attribute.is_a?(Magma::ShiftedDateTimeAttribute)
       end.map do |attribute|
-        attribute.attribute_name
+        attribute.attribute_name.to_sym
       end
     end
 
