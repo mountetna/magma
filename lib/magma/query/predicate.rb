@@ -335,7 +335,7 @@ EOT
     def is_numeric_constraint column_name      
       Magma::Constraint.new(
         alias_name,
-        Sequel.qualify(alias_name, column_name) => Regexp.new(/^\d*(\.\d+)?$/)
+        Sequel.qualify(alias_name, column_name) => Regexp.new(/^\d+(\.\d+)?$/)
       )
     end
 
