@@ -1041,9 +1041,9 @@ describe QueryController do
       @hydra_difficulty = create(:characteristic, labor: hydra, name: "difficulty", value: "2" )
       @stables_difficulty = create(:characteristic, labor: stables, name: "difficulty", value: "5.1" )
 
-      lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling" )
-      hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking" )
-      stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling" )
+      lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling2.0" )
+      hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking1.5" )
+      stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling:00123" )
     end
 
     it 'supports ::matches' do
