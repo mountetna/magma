@@ -1041,9 +1041,9 @@ describe QueryController do
       @hydra_difficulty = create(:characteristic, labor: hydra, name: "difficulty", value: "2" )
       @stables_difficulty = create(:characteristic, labor: stables, name: "difficulty", value: "5.1" )
 
-      lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling" )
-      hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking" )
-      stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling" )
+      lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling2.0" )
+      hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking1.5" )
+      stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling:00123" )
     end
 
     it 'supports ::matches' do
@@ -1114,9 +1114,16 @@ describe QueryController do
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>", "5.0e0"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::> for non-numeric strings' do
+    it 'ignores ::> for non-numeric string values' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::>", "5"], '::all', '::identifier' ]
       )
@@ -1132,9 +1139,16 @@ describe QueryController do
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::>=", "0.51e1"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@lion_difficulty.id, @stables_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::>= for non-numeric strings' do
+    it 'ignores ::>= for non-numeric string values' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::>=", "5"], '::all', '::identifier' ]
       )
@@ -1157,9 +1171,16 @@ describe QueryController do
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<", "5.2e0"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::< for non-numeric strings' do
+    it 'ignores ::< for non-numeric string values' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::<", "5"], '::all', '::identifier' ]
       )
@@ -1175,9 +1196,16 @@ describe QueryController do
 
       expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
       expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
+
+      query(
+        [ 'characteristic', [ "name", "::matches", "difficulty" ], ["value", "::<=", "0.51e1"], '::all', '::identifier' ]
+      )
+
+      expect(json_body[:answer].map { |a| a.last }).to eq([@hydra_difficulty.id, @stables_difficulty.id])
+      expect(json_body[:format]).to eq(['labors::characteristic#id', 'labors::characteristic#id'])
     end
 
-    it 'ignores ::<= for non-numeric strings' do
+    it 'ignores ::<= for non-numeric string values' do
       query(
         [ 'characteristic', [ "name", "::matches", "stance" ], ["value", "::<=", "5"], '::all', '::identifier' ]
       )
