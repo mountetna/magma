@@ -2659,4 +2659,46 @@ describe UpdateController do
       end
     end
   end
+
+  context 'dateshift logging' do
+    before(:each) do
+      @log_file = Tempfile.new
+      Timecop.freeze('2000-01-01')
+      # fixes the request_id, which otherwise is random
+      Etna::Logger.define_method(:rand) do
+        0.23456
+      end
+
+      Magma.instance.configure({:test => { log_file: @log_file.path } })
+      Magma.instance.setup_logger
+
+      stub_date_shift_data(@project)
+      set_date_shift_root('monster', true)
+    end
+    after(:each) do
+      ::File.unlink(@log_file)
+      Timecop.return
+      Etna::Logger.remove_method(:rand)
+      set_date_shift_root('monster', false)
+    end
+
+    it 'censors date shift attribute updates' do
+      update(
+        victim: {
+          @john_doe.name => {
+            birthday: '2000-01-01'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(200)
+
+      output = <<EOT
+# Logfile created on 2000-01-01 00:00:00 +0000 by logger.rb/61378
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 User eurystheus@twelve-labors.org calling update#action with params {:project_name=>"labors", :revisions=>{:victim=>{:"John Doe"=>{:birthday=>"*"}}}}
+EOT
+
+      expect(File.read(@log_file)).to eq(output)
+    end
+  end
 end

@@ -314,14 +314,11 @@ class Magma
       @records[model]
     end
     
+    # TODO: move all of this except record_entry_from_records
+    #   into record_entry.rb.
     def is_connected_to_date_shift_root?(model, record_entry)
       # There is some path to the date-shift-root model, across @records and
       #   the database.
-      # NOTE: currently this all assumes the most straightforward type of
-      #   updates, where parent linkages are created from the child.
-      #   Not sure how to handle cases where parent linkage created from
-      #     the parent, but there is also an update to the child. Seems
-      #     unlikely with our current tools, though theoretically possible with the API.
       queue = model.path_to_date_shift_root
       has_path = !queue.empty?
 
@@ -339,14 +336,14 @@ class Magma
         begin
           has_path = false
           next
-        end if record_entry_explicitly_disconnects?(model_to_check, current_record_name) && !model_to_check.is_date_shift_root?
+        end if record_entry_explicitly_disconnected?(model_to_check, current_record_name) && !model_to_check.is_date_shift_root?
 
         # Check if parent exists in the @records
         parent_record_name = parent_record_name_from_records(model_to_check, current_record_name)
 
         # If parent not found in @records AND there is not an explicit "disconnect" action, 
         #   check the database for the EXISTING record and find its parent.
-        # If no existing record (current_record_name is a new record_entry), this should return nil
+        # If no existing record (current_record_name is a new record_entry), this should return nil and there is no path
         parent_record_name = parent_record_name_from_db(model_to_check, current_record_name) if parent_record_name.nil?
         
         begin
@@ -363,7 +360,7 @@ class Magma
 
     private
 
-    def record_entry_explicitly_disconnects?(model, record_name)
+    def record_entry_explicitly_disconnected?(model, record_name)
       entry = record_entry_from_records(model, record_name)
 
       return false if entry.nil?
@@ -378,9 +375,12 @@ class Magma
     end
 
     def parent_record_name_from_records(model, record_name)
-      # Should also check if parent can be found via a parent-update? top-down method
+      # Should also check if parent can be found via a parent-update? top-down method.
+      # Required usually for tables ...
+
       
-      # Assume right now parent exists in the @records from the child perspective, only
+      # Check if parent exists in the @records, from the child perspective.
+      #   Most non-table models will probably be updated in this fashion.
       record_entry_from_records(model, record_name)&.parent_record_name
     end
 
