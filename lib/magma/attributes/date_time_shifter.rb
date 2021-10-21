@@ -5,8 +5,7 @@ class Magma
   class DateTimeShifter
     def initialize(salt:, record_name:, magma_model:)
       raise DateTimeShiftError, ":salt is required" if salt.nil? || salt.empty?
-      require 'pry'
-      binding.pry
+
       @salt = salt
       @record_name = record_name
       @magma_model = magma_model

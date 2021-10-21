@@ -30,4 +30,30 @@ describe Magma::Model do
       expect(Labors::Victim.is_date_shift_root?).to eq(false)
     end
   end
+
+  describe 'path_to_date_shift_root model' do
+    after(:each) do
+      set_date_shift_root("monster", false)
+    end
+
+    it 'returns path when model is the date_shift_root model' do
+      set_date_shift_root("monster", true)
+
+      expect(Labors::Monster.path_to_date_shift_root).to eq([Labors::Monster])
+      expect(Labors::Labor.path_to_date_shift_root).to eq([])
+    end
+
+    it 'returns correct path when date_shift_root model is ancestor' do
+      set_date_shift_root("monster", true)
+
+      expect(Labors::Victim.path_to_date_shift_root).to eq([Labors::Victim, Labors::Monster])
+      expect(Labors::Wound.path_to_date_shift_root).to eq([Labors::Wound, Labors::Victim, Labors::Monster])
+      expect(Labors::Prize.path_to_date_shift_root).to eq([])
+    end
+
+    it 'returns empty list when no path found' do
+      expect(Labors::Monster.path_to_date_shift_root).to eq([])
+      expect(Labors::Victim.path_to_date_shift_root).to eq([])
+    end
+  end
 end

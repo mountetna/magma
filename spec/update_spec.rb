@@ -2363,7 +2363,12 @@ describe UpdateController do
   context 'shifted_date_time attributes' do
     before(:each) do
       stub_date_shift_data(@project)
+      set_date_shift_root('monster', true)
       # Magma.instance.configure({:test => { :dateshift_salt => '123' } })
+    end
+
+    after(:each) do
+      set_date_shift_root('monster', false)
     end
 
     it 'fails the update when no salt in config' do
@@ -2399,6 +2404,10 @@ describe UpdateController do
         expect(true).to eq(false)
       end
 
+      it 'shifts dates when update contains shifted and not-shifted data' do
+
+      end
+
       it 'throws exception if included in create of disconnected row' do
         expect(true).to eq(false)
       end
@@ -2409,24 +2418,197 @@ describe UpdateController do
     end
 
     context 'with non-table models' do
-      it 'shifts date on update to existing record' do
-        expect(true).to eq(false)
+      it 'shifts date on create of a new record, date-shift-root model' do
+        set_date_shift_root('monster', false)
+        set_date_shift_root('victim', true)
+
+        update(
+          victim: {
+            "Unicorn" => {
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+
+        set_date_shift_root('victim', false)
       end
 
-      it 'shifts date on create of a new record, parent exists' do
-        expect(true).to eq(false)
+      it 'shifts date on create of a new record, parent exists, not date-shift-root model' do
+        update(
+          victim: {
+            "Unicorn" => {
+              monster: @lion_monster.name,
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+      end
+
+      it 'shifts date on update of an existing record, parent exists, not date-shift-root model' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
       end
 
       it 'shifts date when parent record created in same update' do
-        expect(true).to eq(false)
+        update(
+          victim: {
+            "Unicorn" => {
+              monster: "Vampire",
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            "Vampire" => {}
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
       end
 
-      it 'throws exception if included in create of disconnected record' do
-        expect(true).to eq(false)
+      it 'shifts dates when update contains shifted and not-shifted data' do
+        expect(@john_doe[:birthday]).to eq(nil)
+        expect(@susan_doe[:weapon]).to eq(nil)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            },
+            @susan_doe.name => {
+              weapon: "Bow and arrow"
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
+
+        @susan_doe.refresh
+        expect(@susan_doe[:weapon]).to eq("Bow and arrow")
       end
 
-      it 'throws exception if included in create of connected record, but no date-shift root' do
-        expect(true).to eq(false)
+      it 'shifts date for disconnected record if is date_shift_root model' do
+        set_date_shift_root('monster', false)
+        set_date_shift_root('victim', true)
+
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              monster: nil,
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
+
+        set_date_shift_root('victim', false)
+      end
+
+      it 'throws exception if disconnecting from date_shift_root during the update' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              monster: nil,
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'throws exception if disconnected from date_shift_root' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        @john_doe.update(monster: nil)
+        @john_doe.save
+
+        update(
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'throws exception if creating disconnected record' do
+        expect(Labors::Victim.count).to eq(4)
+
+        update(
+          victim: {
+            "Unicorn" => {
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+        expect(Labors::Victim.count).to eq(4)
+      end
+
+      it 'throws exception if creating connected record, but no date-shift root' do
+        set_date_shift_root('monster', false)
+        expect(Labors::Victim.count).to eq(4)
+
+        update(
+          victim: {
+            "Unicorn" => {
+              monster: @lion_monster.name,
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+        expect(Labors::Victim.count).to eq(4)
       end
     end
   end

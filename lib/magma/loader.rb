@@ -313,8 +313,84 @@ class Magma
 
       @records[model]
     end
+    
+    def is_connected_to_date_shift_root?(model, record_entry)
+      # There is some path to the date-shift-root model, across @records and
+      #   the database.
+      # NOTE: currently this all assumes the most straightforward type of
+      #   updates, where parent linkages are created from the child.
+      #   Not sure how to handle cases where parent linkage created from
+      #     the parent, but there is also an update to the child. Seems
+      #     unlikely with our current tools, though theoretically possible with the API.
+      queue = model.path_to_date_shift_root
+      has_path = !queue.empty?
+
+      # First model off the queue matches the record_entry.
+      current_record_name = record_entry.record_name
+
+      until queue.empty? || !has_path
+        model_to_check = queue.shift
+
+        # If the model is the date-shift-root and we have a record-name for it,
+        #   then a path must exist or will be created.
+        next if model_to_check.is_date_shift_root? && !current_record_name.nil?
+
+        # If the user disconnects the record, then they've broken the path.
+        begin
+          has_path = false
+          next
+        end if record_entry_explicitly_disconnects?(model_to_check, current_record_name) && !model_to_check.is_date_shift_root?
+
+        # Check if parent exists in the @records
+        parent_record_name = parent_record_name_from_records(model_to_check, current_record_name)
+
+        # If parent not found in @records AND there is not an explicit "disconnect" action, 
+        #   check the database for the EXISTING record and find its parent.
+        # If no existing record (current_record_name is a new record_entry), this should return nil
+        parent_record_name = parent_record_name_from_db(model_to_check, current_record_name) if parent_record_name.nil?
+        
+        begin
+          current_record_name = parent_record_name
+          next
+        end unless parent_record_name.nil?
+
+        # If no parents have been found, the path doesn't exist
+        has_path = false
+      end
+
+      has_path
+    end
 
     private
+
+    def record_entry_explicitly_disconnects?(model, record_name)
+      entry = record_entry_from_records(model, record_name)
+
+      return false if entry.nil?
+
+      entry.includes_parent_record? && entry.parent_record_name.nil?
+    end
+
+    def record_entry_from_records(model, record_name)
+      return @records[model][record_name] if @records[model][record_name]
+      
+      nil
+    end
+
+    def parent_record_name_from_records(model, record_name)
+      # Should also check if parent can be found via a parent-update? top-down method
+      
+      # Assume right now parent exists in the @records from the child perspective, only
+      record_entry_from_records(model, record_name)&.parent_record_name
+    end
+
+    def parent_record_name_from_db(model, record_name)
+      db_record = model.where(
+        model.identity.column_name.to_sym => record_name
+      ).first
+
+      db_record&.send(model.parent_model_name)&.identifier
+    end
 
     def validate!
       complaints = []
@@ -324,69 +400,9 @@ class Magma
         complaints.concat(record_set.values.map(&:complaints))
       end
 
-      require 'pry'
-      binding.pry
-      records_validations.each do |record_set_validation|
-        complaints.concat(self.send(record_set_validation))
-      end
-
       complaints.flatten!
 
       raise Magma::LoadFailed.new(complaints) unless complaints.empty?
-    end
-
-    def records_validations
-      # Some validations require access to the entire set of records, like
-      #   when validating date-shifting -- have to validate that the
-      #   record with shifted_date_time attribute has a parent that is
-      #   in the date-shift-root model. This parent may exist beforehand
-      #   or may be included in the @records.
-      [
-        :validate_date_shift_root_record
-      ]
-    end
-
-    def validate_date_shift_root_record
-      [].tap do |complaints|
-        @records.each do |model, record_set|
-          # Skip if the record_set for this model is empty.
-          next if record_set.empty?
-  
-          require 'pry'
-          binding.pry
-          date_shift_records = record_set.values.select(&:requires_date_shifting)
-  
-          # skip if no records require date shifting
-          next if date_shift_records.empty?
-  
-          date_shift_records.each do |date_shift_record|
-            complaints.concat(validate_root_exists_or_created(date_shift_record))
-          end
-        end
-      end
-    end
-    
-    def validate_root_exists_or_created(record_entry)
-      # Check that either date-shift-root exists
-      #   or it will be created in this upsert.
-      complaints = []
-
-      complaints.concat(validate_date_shift_root_exists(record_entry))
-
-      # if has no complaints, date-shift-root exists so we don't need
-      #   to check further
-      complaints.concat(validate_date_shift_root_created(record_entry)) unless complaints.empty?
-      
-      comlaints
-    end
-
-    def validate_date_shift_root_exists(record_entry)
-      require 'pry'
-      binding.pry
-    end
-
-    def validate_date_shift_root_created(record_entry)
-      
     end
 
     def censor_revisions!

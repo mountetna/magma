@@ -375,15 +375,15 @@ def stub_date_shift_data(project)
   @john_doe = create(:victim, name: 'John Doe', monster: @lion_monster, country: 'Italy')
   jane_doe = create(:victim, name: 'Jane Doe', monster: @lion_monster, country: 'Greece')
 
-  susan_doe = create(:victim, name: 'Susan Doe', monster: @hydra_monster, country: 'Italy')
+  @susan_doe = create(:victim, name: 'Susan Doe', monster: @hydra_monster, country: 'Italy')
   shawn_doe = create(:victim, name: 'Shawn Doe', monster: @hydra_monster, country: 'Greece')
 
   @john_arm = create(:wound, victim: @john_doe, location: 'Arm', severity: 5)
   create(:wound, victim: @john_doe, location: 'Leg', severity: 1)
   create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
   create(:wound, victim: jane_doe, location: 'Leg', severity: 4)
-  @susan_arm = create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
-  create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
+  @susan_arm = create(:wound, victim: @susan_doe, location: 'Arm', severity: 3)
+  create(:wound, victim: @susan_doe, location: 'Leg', severity: 3)
   create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
   create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
 end

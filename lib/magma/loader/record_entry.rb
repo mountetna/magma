@@ -34,6 +34,7 @@ class Magma
       return @complaints if @complaints
       check_document_validity
       check_record_name_validity unless record_exists?
+      check_date_shift_validity if requires_date_shifting
 
       return @complaints.uniq
     end
@@ -62,7 +63,7 @@ class Magma
 
     def shifted_date_time_attribute_names
       @shifted_date_time_attribute_names ||= @model.attributes.values.select do |attribute|
-      attribute.is_a?(Magma::ShiftedDateTimeAttribute)
+        attribute.is_a?(Magma::ShiftedDateTimeAttribute)
       end.map do |attribute|
         attribute.attribute_name.to_sym
       end
@@ -134,6 +135,16 @@ class Magma
       @record.keys
     end
 
+    def includes_parent_record?
+      attribute_key.include?(parent_attribute_name)
+    end
+
+    def parent_record_name
+      return nil unless includes_parent_record?
+
+      self[parent_attribute_name]
+    end
+
     private
 
     def set_temp_id
@@ -169,9 +180,23 @@ class Magma
       end
     end
 
+    def check_date_shift_validity
+      # If the loader says there is some other path to
+      #   the date_shift_root model, then we're also okay.
+      return if @loader.is_connected_to_date_shift_root?(@model, self)
+
+      complaints << "Cannot execute action on #{record_name}, because it is not connected to the date_shift_root model, but requires date-shifting."
+    end
+
     def identifier_attribute_name
       @model.attributes.values.select do |attribute|
         attribute.is_a?(Magma::IdentifierAttribute)
+      end.first.name.to_sym
+    end
+
+    def parent_attribute_name
+      @model.attributes.values.select do |attribute|
+        attribute.is_a?(Magma::ParentAttribute)
       end.first.name.to_sym
     end
   end
