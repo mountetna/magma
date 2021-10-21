@@ -2369,6 +2369,7 @@ describe UpdateController do
 
     after(:each) do
       set_date_shift_root('monster', false)
+      set_date_shift_root('victim', false)
     end
 
     it 'fails the update when no salt in config' do
@@ -2418,7 +2419,7 @@ describe UpdateController do
     end
 
     context 'with non-table models' do
-      it 'shifts date on create of a new record, date-shift-root model' do
+      it 'shifts date on create of a new record in the date-shift-root model' do
         set_date_shift_root('monster', false)
         set_date_shift_root('victim', true)
 
@@ -2432,8 +2433,29 @@ describe UpdateController do
   
         expect(last_response.status).to eq(200)
         expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+      end
 
-        set_date_shift_root('victim', false)
+      it 'shifts date on update of an existing record in the date-shift-root model' do
+        set_date_shift_root('monster', false)
+        set_date_shift_root('victim', true)
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
       end
 
       it 'shifts date on create of a new record, parent exists, not date-shift-root model' do
@@ -2488,6 +2510,31 @@ describe UpdateController do
         expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
       end
 
+      it 'shifts date with combination of created parents + existing parents' do
+        set_date_shift_root("monster", false)
+        set_date_shift_root("labor", true)
+
+        update(
+          victim: {
+            Unicorn: {
+              monster: "Vampire",
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            Vampire: {
+              name: "Vampire",
+              labor: @hind.name
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+
+        set_date_shift_root("labor", false) 
+      end
+
       it 'shifts dates when update contains shifted and not-shifted data' do
         expect(@john_doe[:birthday]).to eq(nil)
         expect(@susan_doe[:weapon]).to eq(nil)
@@ -2516,7 +2563,7 @@ describe UpdateController do
         expect(@susan_doe[:weapon]).to eq("Bow and arrow")
       end
 
-      it 'shifts date for disconnected record if is date_shift_root model' do
+      it 'shifts date for disconnected record if is in date_shift_root model' do
         set_date_shift_root('monster', false)
         set_date_shift_root('victim', true)
 
@@ -2559,7 +2606,7 @@ describe UpdateController do
         expect(@john_doe[:birthday]).to eq(nil)
       end
 
-      it 'throws exception if disconnected from date_shift_root' do
+      it 'throws exception on update if disconnected from date_shift_root in database' do
         expect(@john_doe[:birthday]).to eq(nil)
 
         @john_doe.update(monster: nil)
@@ -2579,7 +2626,7 @@ describe UpdateController do
         expect(@john_doe[:birthday]).to eq(nil)
       end
 
-      it 'throws exception if creating disconnected record' do
+      it 'throws exception if creating disconnected record that requires date-shifting' do
         expect(Labors::Victim.count).to eq(4)
 
         update(
@@ -2594,7 +2641,7 @@ describe UpdateController do
         expect(Labors::Victim.count).to eq(4)
       end
 
-      it 'throws exception if creating connected record, but no date-shift root' do
+      it 'throws exception if creating connected record, but no date-shift root model set' do
         set_date_shift_root('monster', false)
         expect(Labors::Victim.count).to eq(4)
 

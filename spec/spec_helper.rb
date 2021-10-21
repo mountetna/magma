@@ -368,6 +368,7 @@ end
 def stub_date_shift_data(project)
   hydra = create(:labor, :hydra, project: project)
   lion = create(:labor, :lion, project: project)
+  @hind = create(:labor, :hind, project: project)
   
   @lion_monster = create(:monster, :lion, labor: lion)
   @hydra_monster = create(:monster, :hydra, labor: hydra)

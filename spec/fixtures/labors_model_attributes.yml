@@ -135,3 +135,5 @@ wound:
     type: string
   severity:
     type: integer
+  received_date:
+    type: shifted_date_time
