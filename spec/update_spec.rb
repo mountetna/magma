@@ -2694,7 +2694,6 @@ describe UpdateController do
       expect(last_response.status).to eq(200)
 
       output = <<EOT
-# Logfile created on 2000-01-01 00:00:00 +0000 by logger.rb/61378
 WARN:2000-01-01T00:00:00+00:00 8fzmq8 User eurystheus@twelve-labors.org calling update#action with params {:project_name=>"labors", :revisions=>{:victim=>{:"John Doe"=>{:birthday=>"*"}}}}
 EOT
 
