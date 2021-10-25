@@ -48,4 +48,4 @@
     :host: metis.test
     :download_expiration: 1440
     :upload_expiration: 720
-  :dateshift_salt: 1234567890
+  :dateshift_salt: abc1234567890

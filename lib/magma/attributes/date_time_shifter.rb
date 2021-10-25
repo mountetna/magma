@@ -3,22 +3,16 @@ class Magma
   end
 
   class DateTimeShifter
-    def initialize(salt:, record_name:, magma_model:)
+    def initialize(salt:, date_shift_root_record_name:)
       raise DateTimeShiftError, ":salt is required" if salt.nil? || salt.empty?
+      raise DateTimeShiftError, "date_shift_root_record_name is required" if date_shift_root_record_name.nil? || date_shift_root_record_name.empty?
 
       @salt = salt
-      @record_name = record_name
-      @magma_model = magma_model
+      @date_shift_root_record_name = date_shift_root_record_name
     end
 
     def offset_id
-      return @record_name if @magma_model.is_date_shift_root?
-
-      @date_shift_root_record = date_shift_root_record
-
-      raise DateTimeShiftError, "No date shift root record found." unless @date_shift_root_record
-
-      @date_shift_root_record.identifier
+      @date_shift_root_record_name
     end
 
     def offset_days
@@ -39,32 +33,12 @@ class Magma
     end
 
     def shifted_value(value)
+      raise DateTimeShiftError, "Invalid value to shift: #{value}" unless value.is_a?(DateTime)
       begin
-        return (DateTime.parse(value) - offset_days).iso8601[0..9]
+        return value - offset_days
       rescue ArgumentError
         return nil
       end
-    end
-
-    def date_shift_root_record
-      require 'pry'
-      binding.pry
-      search_model = @magma_model
-      record = Magma.instance.db[@magma_model.table_name].where(
-        @magma_model.attributes.values.select { |a| a.is_a?(Magma::IdentifierAttribute)} => @record_name
-      ).first
-
-      raise DateTimeShiftError, "No record \"#{@record_name}\" found" unless record
-
-      loop do
-        break unless search_model # nothing found, is nil
-        break if search_model.is_date_shift_root?
-        
-        search_model = search_model.parent_model
-        record = search_model ? record.send(search_model.model_name) : nil
-      end
-
-      record
     end
   end
 end

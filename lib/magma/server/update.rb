@@ -33,6 +33,10 @@ class UpdateController < Magma::Controller
     log(m.complaints)
     @errors.concat(m.complaints)
     return nil
+  rescue Magma::DateTimeShiftError => e
+    Magma.instance.logger.log_error(e)
+    @errors.concat([e.message])
+    return nil
   end
 
   def dateshift_redact_keys

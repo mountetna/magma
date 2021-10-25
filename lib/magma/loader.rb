@@ -313,20 +313,21 @@ class Magma
 
       @records[model]
     end
-    
-    # TODO: move all of this except record_entry_from_records
-    #   into record_entry.rb.
-    def is_connected_to_date_shift_root?(model, record_entry)
+
+    def path_to_date_shift_root(model, record_name)
       # There is some path to the date-shift-root model, across @records and
       #   the database.
       queue = model.path_to_date_shift_root
       has_path = !queue.empty?
 
       # First model off the queue matches the record_entry.
-      current_record_name = record_entry.record_name
+      current_record_name = record_name
+      path_to_root = []
 
       until queue.empty? || !has_path
         model_to_check = queue.shift
+
+        path_to_root << current_record_name
 
         # If the model is the date-shift-root and we have a record-name for it,
         #   then a path must exist or will be created.
@@ -355,7 +356,13 @@ class Magma
         has_path = false
       end
 
-      has_path
+      has_path ? path_to_root : []
+    end
+    
+    # TODO: move all of this except record_entry_from_records
+    #   into record_entry.rb.
+    def is_connected_to_date_shift_root?(model, record_name)
+      !path_to_date_shift_root(model, record_name).empty?
     end
 
     private
@@ -427,6 +434,10 @@ class Magma
           record_set.each do |record_name, record|
             next unless record.has_key?(att_name)
             error = attribute.load_hook(self, record_name, record[att_name], bulk_load_attribute)
+
+            raise Magma::LoadFailed.new([error]) if error
+
+            error = attribute.patch_load_hook(self, record_name, record)
 
             raise Magma::LoadFailed.new([error]) if error
           end

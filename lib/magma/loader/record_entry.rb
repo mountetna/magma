@@ -26,6 +26,13 @@ class Magma
       @record[att_name]
     end
 
+    def []=(att_name, value)
+      raise ArgumentError, "#{att_name} cannot be re-assigned." unless shifted_date_time_attribute_names.include?(att_name)
+      raise ArgumentError, "Can only re-assign a DateTime to #{att_name}." unless value.is_a?(DateTime)
+
+      @record[att_name] = value
+    end
+
     def has_key?(att_name)
       @record.has_key?(att_name)
     end
@@ -183,7 +190,7 @@ class Magma
     def check_date_shift_validity
       # If the loader says there is some other path to
       #   the date_shift_root model, then we're also okay.
-      return if @loader.is_connected_to_date_shift_root?(@model, self)
+      return if @loader.is_connected_to_date_shift_root?(@model, self.record_name)
 
       complaints << "Cannot execute action on #{record_name}, because it is not connected to the date_shift_root model, but requires date-shifting."
     end

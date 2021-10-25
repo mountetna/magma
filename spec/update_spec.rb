@@ -2385,8 +2385,6 @@ describe UpdateController do
         }
       )
 
-      require 'pry'
-      binding.pry
       expect(last_response.status).to eq(422)
       @john_doe.refresh
       expect(@john_doe.birthday).to eq(nil)
@@ -2430,7 +2428,7 @@ describe UpdateController do
             }
           }
         )
-  
+
         expect(last_response.status).to eq(200)
         expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
       end

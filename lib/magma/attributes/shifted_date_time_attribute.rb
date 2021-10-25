@@ -3,36 +3,22 @@ require_relative "./date_time_shifter"
 
 class Magma
   class ShiftedDateTimeAttribute < Magma::DateTimeAttribute
-    # def revision_to_loader(record_name, new_value)
-    #   # record = @magma_model. #find by record_name??
-    #   require "pry"
-    #   binding.pry
-    #   date_time_shifter = Magma::DateTimeShifter.new(
-    #     salt: Magma.instance.config(:dateshift_salt),
-    #     record: record,
-    #   )
+    def patch_load_hook(loader, record_name, record)
+      path_to_root = loader.path_to_date_shift_root(@magma_model, record_name)
 
-    #   [name, new_value ? date_time_shifter.shifted_value(new_value) : nil]
-    # end
+      raise Magma::DateTimeShiftError, "#{record_name} is not connected to the date-shift root" if path_to_root.empty?
 
-    # def revision_to_payload(record_name, new_value, loader)
-    #   # Do we need this?
-    #   [name, new_value]
-    # end
+      date_time_shifter = Magma::DateTimeShifter.new(
+        salt: Magma.instance.config(:dateshift_salt)&.to_s,
+        date_shift_root_record_name: path_to_root.last
+      )
 
-    # class Validation < Magma::Validation::Attribute::BaseAttributeValidation
-    #   def validate_shift(record_name, document, value, &block)
-    #     return if value.nil? || value.empty?
-    #     # For insert records, ensure that a parent is provided.
-    #     #   If a parent is not included in the revision, reject.
-    #     #   If a parent is provided, but no date-shift-root-record found, reject.    
-    #     # For update records, if no date-shift-root-record found, reject.
-    #     validate_date_shift_root_record(record_name, document, &block)
-    #     validate_
-    #     validate_shifted_date_time_insert(record_name, document, &block)
-    #   end
+      record[self.name] = date_time_shifter.shifted_value(record[self.name])
 
-    #   private
-    # end
+      nil
+    rescue ArgumentError => e
+      Magma.instance.logger.log_error(e)
+      return e.message
+    end
   end
 end

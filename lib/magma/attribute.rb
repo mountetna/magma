@@ -147,6 +147,9 @@ class Magma
     def load_hook(loader, record_name, value, bulk_load)
     end
 
+    def patch_load_hook(loader, record_name, record)
+    end
+
     def bulk_load_hook(loader, bulk_load)
     end
 
