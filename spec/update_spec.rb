@@ -2430,7 +2430,9 @@ describe UpdateController do
         )
 
         expect(last_response.status).to eq(200)
-        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
       end
 
       it 'shifts date on update of an existing record in the date-shift-root model' do
@@ -2453,7 +2455,7 @@ describe UpdateController do
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
+        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
       end
 
       it 'shifts date on create of a new record, parent exists, not date-shift-root model' do
@@ -2467,7 +2469,9 @@ describe UpdateController do
         )
   
         expect(last_response.status).to eq(200)
-        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
       end
 
       it 'shifts date on update of an existing record, parent exists, not date-shift-root model' do
@@ -2488,7 +2492,7 @@ describe UpdateController do
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
+        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
       end
 
       it 'shifts date when parent record created in same update' do
@@ -2505,10 +2509,12 @@ describe UpdateController do
         )
   
         expect(last_response.status).to eq(200)
-        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
       end
 
-      it 'shifts date with combination of created parents + existing parents' do
+      it 'shifts date with combination of new parents + existing parents' do
         set_date_shift_root("monster", false)
         set_date_shift_root("labor", true)
 
@@ -2528,7 +2534,9 @@ describe UpdateController do
         )
   
         expect(last_response.status).to eq(200)
-        expect(json_body[:models][:victim][:documents][:Unicorn][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
 
         set_date_shift_root("labor", false) 
       end
@@ -2555,7 +2563,7 @@ describe UpdateController do
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
+        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
 
         @susan_doe.refresh
         expect(@susan_doe[:weapon]).to eq("Bow and arrow")
@@ -2577,11 +2585,13 @@ describe UpdateController do
         )
   
         expect(last_response.status).to eq(200)
-        expect(json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
 
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday]).not_to eq("2000-01-01")
+        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
 
         set_date_shift_root('victim', false)
       end
