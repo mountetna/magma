@@ -335,7 +335,8 @@ class Magma
         #   then a path must exist or will be created.
         next if model_to_check.is_date_shift_root? && !current_record_name.nil?
 
-        # If the user disconnects the record, then they've broken the path.
+        # If the user disconnects the record before we've found the date-shift-root
+        #   model, then they've broken the path.
         begin
           has_path = false
           next

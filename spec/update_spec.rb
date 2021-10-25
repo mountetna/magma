@@ -2370,14 +2370,14 @@ describe UpdateController do
     after(:each) do
       set_date_shift_root('monster', false)
       set_date_shift_root('victim', false)
-      Magma.instance.configure(
-        :test => @orig_config
-      )
+      Magma.instance.configure({
+        test: @orig_config
+      })
     end
 
     it 'fails the update when no salt in config' do
       Magma.instance.configure(
-        :test => @orig_config.update(dateshift_salt: '')
+        :test => @orig_config.dup.update(dateshift_salt: '')
       )
       
       expect(@john_doe.birthday).to eq(nil)
@@ -2414,7 +2414,7 @@ describe UpdateController do
         
         @john_arm.refresh
         expect(@john_arm[:received_date]).not_to eq(nil)
-        expect(@john_arm[:received_date].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
+        expect(@john_arm[:received_date].iso8601).not_to eq(iso_date_str('2000-01-01'))
       end
 
       it 'shifts date on create of a new row, parent exists' do
@@ -2599,7 +2599,7 @@ describe UpdateController do
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
       end
 
       it 'shifts date on create of a new record, parent exists, not date-shift-root model' do
@@ -2636,7 +2636,7 @@ describe UpdateController do
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
       end
 
       it 'shifts date when parent record created in same update' do
@@ -2707,7 +2707,7 @@ describe UpdateController do
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
 
         @susan_doe.refresh
         expect(@susan_doe[:weapon]).to eq("Bow and arrow")
@@ -2735,7 +2735,7 @@ describe UpdateController do
 
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
-        expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
 
         set_date_shift_root('victim', false)
       end
@@ -2824,7 +2824,7 @@ describe UpdateController do
       @orig_config = Magma.instance.env_config(:test)
 
       Magma.instance.configure(
-        :test => @orig_config.update(log_file: @log_file.path, log_level: 'warn')
+        :test => @orig_config.dup.update(log_file: @log_file.path, log_level: 'warn')
       )
 
       Magma.instance.setup_logger
@@ -2837,9 +2837,9 @@ describe UpdateController do
       Timecop.return
       Etna::Logger.remove_method(:rand)
       set_date_shift_root('monster', false)
-      Magma.instance.configure(
-        :test =>  @orig_config
-      )
+      Magma.instance.configure({
+        test: @orig_config
+      })
     end
 
     it 'censors date shift attribute updates' do
@@ -2863,7 +2863,7 @@ EOT
 
       @john_doe.refresh
       expect(@john_doe[:birthday]).not_to eq(nil)
-      expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
+      expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
     end
   end
 end
