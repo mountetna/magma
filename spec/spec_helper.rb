@@ -388,3 +388,7 @@ def stub_date_shift_data(project)
   create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
   create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
 end
+
+def iso_date_str(value)
+  DateTime.parse(value).iso8601
+end

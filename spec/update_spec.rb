@@ -2397,27 +2397,166 @@ describe UpdateController do
 
     context 'with tables' do
       it 'shifts date on update to existing row' do
-        expect(true).to eq(false)
+        expect(@john_arm[:received_date]).to eq(nil)
+
+        update(
+          wound: {
+            @john_arm.id => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents][@john_arm.id.to_s.to_sym][:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+        
+        @john_arm.refresh
+        expect(@john_arm[:received_date]).not_to eq(nil)
+        expect(@john_arm[:received_date].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
       end
 
       it 'shifts date on create of a new row, parent exists' do
-        expect(true).to eq(false)
+        expect(Labors::Wound.count).to eq(8)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents].values.first[:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        # Update on a table clears the two existing wounds for @john_doe and
+        #   adds one new one.
+        expect(Labors::Wound.count).to eq(7)
+        last_wound = Labors::Wound.last
+        expect(
+          last_wound[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-01-01'))
+        expect(last_wound.victim.name).to eq(@john_doe.name)
       end
 
       it 'shifts date when parent record created in same update' do
-        expect(true).to eq(false)
+        expect(Labors::Wound.count).to eq(8)
+
+        update(
+          victim: {
+            Unicorn: {
+              wound: ["::temp-1"],
+              monster: "Vampire"
+            }
+          },
+          monster: {
+            Vampire: {
+              name: "Vampire"
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents].values.first[:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        expect(Labors::Wound.count).to eq(9)
+        last_wound = Labors::Wound.last
+        expect(
+          last_wound[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-01-01'))
+        expect(last_wound.victim.name).to eq("Unicorn")
       end
 
       it 'shifts dates when update contains shifted and not-shifted data' do
+        expect(Labors::Wound.count).to eq(8)
 
+        update(
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1", "::temp-2"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            },
+            "::temp-2" => {
+              severity: 9,
+              location: "finger"
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        new_wound_ids = json_body[:models][:victim][:documents][@john_doe.name.to_sym][:wound]
+
+        expect(Labors::Wound.count).to eq(8)
+        wounds = Labors::Wound.where(id: new_wound_ids).all
+        wound_1 = wounds.first
+        wound_2 = wounds.last
+
+        expect(wound_1[:received_date]).not_to eq(nil)
+        expect(
+          wound_1[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-01-01'))
+        expect(wound_2[:severity]).to eq(9)
       end
 
       it 'throws exception if included in create of disconnected row' do
-        expect(true).to eq(false)
+        expect(Labors::Wound.count).to eq(8)
+
+        update(
+          victim: {
+            Unicorn: {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(422)
+        expect(Labors::Wound.count).to eq(8)
       end
 
       it 'throws exception if included in create of connected row, but no date-shift root' do
-        expect(true).to eq(false)
+        set_date_shift_root('monster', false)
+        expect(Labors::Wound.count).to eq(8)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(422)
+        expect(Labors::Wound.count).to eq(8)
       end
     end
 
@@ -2437,7 +2576,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][:Unicorn][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
       end
 
       it 'shifts date on update of an existing record in the date-shift-root model' do
@@ -2456,7 +2595,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
@@ -2476,7 +2615,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][:Unicorn][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
       end
 
       it 'shifts date on update of an existing record, parent exists, not date-shift-root model' do
@@ -2493,7 +2632,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
@@ -2516,7 +2655,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][:Unicorn][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
       end
 
       it 'shifts date with combination of new parents + existing parents' do
@@ -2541,7 +2680,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][:Unicorn][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
 
         set_date_shift_root("labor", false) 
       end
@@ -2564,7 +2703,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
         
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)
@@ -2592,7 +2731,7 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         expect(
           json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
-        ).not_to eq(DateTime.parse('2000-01-01').iso8601)
+        ).not_to eq(iso_date_str('2000-01-01'))
 
         @john_doe.refresh
         expect(@john_doe[:birthday]).not_to eq(nil)

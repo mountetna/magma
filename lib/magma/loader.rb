@@ -314,6 +314,8 @@ class Magma
       @records[model]
     end
 
+    # This is implemented in the loader instead of RecordEntry because it is 
+    #   also used inside of ShiftedDateTimeAttribute.
     def path_to_date_shift_root(model, record_name)
       # There is some path to the date-shift-root model, across @records and
       #   the database.
@@ -359,8 +361,6 @@ class Magma
       has_path ? path_to_root : []
     end
     
-    # TODO: move all of this except record_entry_from_records
-    #   into record_entry.rb.
     def is_connected_to_date_shift_root?(model, record_name)
       !path_to_date_shift_root(model, record_name).empty?
     end
@@ -382,12 +382,7 @@ class Magma
     end
 
     def parent_record_name_from_records(model, record_name)
-      # Should also check if parent can be found via a parent-update? top-down method.
-      # Required usually for tables ...
-
-      
       # Check if parent exists in the @records, from the child perspective.
-      #   Most non-table models will probably be updated in this fashion.
       record_entry_from_records(model, record_name)&.parent_record_name
     end
 
