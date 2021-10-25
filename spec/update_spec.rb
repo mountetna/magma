@@ -2364,16 +2364,21 @@ describe UpdateController do
     before(:each) do
       stub_date_shift_data(@project)
       set_date_shift_root('monster', true)
-      # Magma.instance.configure({:test => { :dateshift_salt => '123' } })
+      @orig_config = Magma.instance.env_config(:test)
     end
 
     after(:each) do
       set_date_shift_root('monster', false)
       set_date_shift_root('victim', false)
+      Magma.instance.configure(
+        :test => @orig_config
+      )
     end
 
     it 'fails the update when no salt in config' do
-      Magma.instance.configure({:test => { :dateshift_salt => '' } })
+      Magma.instance.configure(
+        :test => @orig_config.update(dateshift_salt: '')
+      )
       
       expect(@john_doe.birthday).to eq(nil)
 
@@ -2677,7 +2682,12 @@ describe UpdateController do
         0.23456
       end
 
-      Magma.instance.configure({:test => { log_file: @log_file.path } })
+      @orig_config = Magma.instance.env_config(:test)
+
+      Magma.instance.configure(
+        :test => @orig_config.update(log_file: @log_file.path, log_level: 'warn')
+      )
+
       Magma.instance.setup_logger
 
       stub_date_shift_data(@project)
@@ -2688,9 +2698,14 @@ describe UpdateController do
       Timecop.return
       Etna::Logger.remove_method(:rand)
       set_date_shift_root('monster', false)
+      Magma.instance.configure(
+        :test =>  @orig_config
+      )
     end
 
     it 'censors date shift attribute updates' do
+      expect(@john_doe[:birthday]).to eq(nil)
+
       update(
         victim: {
           @john_doe.name => {
@@ -2706,6 +2721,10 @@ WARN:2000-01-01T00:00:00+00:00 8fzmq8 User eurystheus@twelve-labors.org calling 
 EOT
 
       expect(File.read(@log_file)).to eq(output)
+
+      @john_doe.refresh
+      expect(@john_doe[:birthday]).not_to eq(nil)
+      expect(@john_doe[:birthday].iso8601).not_to eq(DateTime.parse("2000-01-01").iso8601)
     end
   end
 end
