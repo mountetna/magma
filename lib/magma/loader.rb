@@ -322,7 +322,7 @@ class Magma
       queue = model.path_to_date_shift_root
       has_path = !queue.empty?
 
-      # First model off the queue matches the record_entry.
+      # First model off the queue matches the record_name.
       current_record_name = record_name
       path_to_root = []
 
@@ -433,7 +433,7 @@ class Magma
 
             raise Magma::LoadFailed.new([error]) if error
 
-            error = attribute.patch_load_hook(self, record_name, record)
+            error = attribute.patch_record_load_hook(self, record_name, record)
 
             raise Magma::LoadFailed.new([error]) if error
           end

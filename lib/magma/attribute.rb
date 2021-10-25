@@ -147,7 +147,7 @@ class Magma
     def load_hook(loader, record_name, value, bulk_load)
     end
 
-    def patch_load_hook(loader, record_name, record)
+    def patch_record_load_hook(loader, record_name, record)
       # This hook is for updating the actual loaded revisions ... should only
       #   be used for date-shifting
     end

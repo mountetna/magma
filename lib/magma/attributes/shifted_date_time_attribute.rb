@@ -3,7 +3,7 @@ require_relative "./date_time_shifter"
 
 class Magma
   class ShiftedDateTimeAttribute < Magma::DateTimeAttribute
-    def patch_load_hook(loader, record_name, record)
+    def patch_record_load_hook(loader, record_name, record)
       path_to_root = loader.path_to_date_shift_root(@magma_model, record_name)
 
       raise Magma::DateTimeShiftError, "#{record_name} is not connected to the date-shift root" if path_to_root.empty?
