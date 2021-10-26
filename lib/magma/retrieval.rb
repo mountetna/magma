@@ -208,7 +208,7 @@ class Magma
           return [ att_name, '::identifier', string_op(operator), array_or_value(operator, value) ]
         when Magma::IntegerAttribute, Magma::FloatAttribute
           return [ att_name, numeric_op(operator), value.to_f ]
-        when Magma::DateTimeAttribute
+        when Magma::DateTimeAttribute, Magma::ShiftedDateTimeAttribute
           return [ att_name, numeric_op(operator), value ]
         when Magma::StringAttribute
           return [ att_name, string_op(operator), array_or_value(operator, value) ]
