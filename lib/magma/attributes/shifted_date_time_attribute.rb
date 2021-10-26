@@ -10,7 +10,7 @@ class Magma
 
       date_time_shifter = Magma::DateTimeShifter.new(
         salt: Magma.instance.config(:dateshift_salt)&.to_s,
-        date_shift_root_record_name: path_to_root.last
+        date_shift_root_record_name: path_to_root.last,
       )
 
       record[self.name] = date_time_shifter.shifted_value(record[self.name])
