@@ -69,9 +69,7 @@ class Magma
     end
 
     def shifted_date_time_attribute_names
-      @shifted_date_time_attribute_names ||= @model.date_shift_attributes.map do |attribute|
-        attribute.name.to_sym
-      end
+      @shifted_date_time_attribute_names ||= @model.date_shift_attributes.map(&:name)
     end
 
     def needs_temp?
