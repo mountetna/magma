@@ -60,6 +60,8 @@ class Magma
     end
 
     def validate_not_table_model
+      return if !model
+
       return unless model.parent_model.attributes[model.model_name].is_a?(Magma::TableAttribute)
 
       @errors << Magma::ActionError.new(

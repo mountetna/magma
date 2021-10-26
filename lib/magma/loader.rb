@@ -314,10 +314,10 @@ class Magma
       @records[model]
     end
 
-    # This is implemented in the loader instead of RecordEntry because it is 
-    #   also used inside of ShiftedDateTimeAttribute.
+    # This is implemented in the loader because it 
+    #   requires access to both the set of @records as well as the database.
     def path_to_date_shift_root(model, record_name)
-      # There is some path to the date-shift-root model, across @records and
+      # Check if there is some path to the date-shift-root model, across @records and
       #   the database.
       queue = model.path_to_date_shift_root
       has_path = !queue.empty?
@@ -342,7 +342,7 @@ class Magma
           next
         end if record_entry_explicitly_disconnected?(model_to_check, current_record_name) && !model_to_check.is_date_shift_root?
 
-        # Check if parent exists in the @records
+        # Check if parent exists in the @records to be created / updated
         parent_record_name = parent_record_name_from_records(model_to_check, current_record_name)
 
         # If parent not found in @records AND there is not an explicit "disconnect" action, 
@@ -355,7 +355,7 @@ class Magma
           next
         end unless parent_record_name.nil?
 
-        # If no parents have been found, the path doesn't exist
+        # If no parents have been found, the path doesn't exist or is broken
         has_path = false
       end
 
@@ -373,13 +373,23 @@ class Magma
 
       return false if entry.nil?
 
-      entry.includes_parent_record? && entry.parent_record_name.nil?
+      (entry.includes_parent_record? && entry.parent_record_name.nil?) ||
+      (!entry.includes_parent_record? && record_entry_explicitly_disconnected_from_parent(model, record_name))
     end
 
     def record_entry_from_records(model, record_name)
       return @records[model][record_name] if @records[model][record_name]
       
       nil
+    end
+
+    def record_entry_explicitly_disconnected_from_parent(model, record_name)
+      parent_record_name = parent_record_name_from_db(model, record_name)
+      parent_entry = record_entry_from_records(model.parent_model, parent_record_name)
+
+      return false unless parent_entry
+
+      !parent_entry[model.model_name]&.include?(record_name)
     end
 
     def parent_record_name_from_records(model, record_name)

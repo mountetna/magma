@@ -2599,6 +2599,29 @@ describe UpdateController do
         expect(last_response.status).to eq(422)
         expect(Labors::Wound.count).to eq(8)
       end
+
+      it 'throws exception if disconnected from the parent direction' do
+        expect(@john_arm[:received_date]).to eq(nil)
+
+        update({
+          wound: {
+            @john_arm.id => {
+              received_date: '2000-01-01'
+            }
+          },
+          victim: {
+            @john_doe.name => {
+              wound: []
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+        
+        @john_arm.refresh
+        expect(@john_arm[:received_date]).to eq(nil)
+      end
     end
 
     context 'with non-table models' do
@@ -2825,6 +2848,29 @@ describe UpdateController do
             @john_doe.name => {
               monster: nil,
               birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'throws exception if disconnecting from the parent direction, during the update' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            @lion_monster.name => {
+              victim: []
             }
           }},
           :privileged_editor
