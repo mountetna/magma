@@ -40,7 +40,7 @@ class UpdateController < Magma::Controller
   end
 
   def dateshift_redact_keys
-    # Make sure the keys are symbols?
+    # Make sure the keys are symbols
     [].tap do |redact_keys|
       Magma.instance.get_project(@project_name).models.each do |model_name, model|
         model.date_shift_attributes.each do |attr|
