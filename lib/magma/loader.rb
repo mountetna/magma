@@ -342,7 +342,7 @@ class Magma
           next
         end if record_entry_explicitly_disconnected?(model_to_check, current_record_name) && !model_to_check.is_date_shift_root?
 
-        # Check if parent exists in the @records to be created / updated
+        # If parent exists in the @records, and will be created
         parent_record_name = parent_record_name_from_records(model_to_check, current_record_name)
 
         # If parent not found in @records AND there is not an explicit "disconnect" action, 
@@ -395,7 +395,6 @@ class Magma
     end
 
     def parent_record_name_from_records(model, record_name)
-      # Check if parent exists in the @records, from the child perspective.
       record_entry_from_records(model, record_name)&.parent_record_name
     end
 
