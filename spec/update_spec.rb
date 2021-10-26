@@ -2685,6 +2685,27 @@ describe UpdateController do
         ).not_to eq(iso_date_str('2000-01-01'))
       end
 
+      it 'shifts date on create of a new record, from parent-side, not date-shift-root model' do
+        update({
+          victim: {
+            "Unicorn" => {
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            @lion_monster.name => {
+              victim: [ "Unicorn" ]
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+      end
+
       it 'shifts date on update of an existing record, parent exists, not date-shift-root model' do
         expect(@john_doe[:birthday]).to eq(nil)
 
