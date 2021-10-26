@@ -44,8 +44,12 @@ class Magma
         end
       end
 
-      restricted_attributes = model.attributes.values
-        .select(&:restricted).map(&:name) + [:restricted]
+      restricted_attributes = (model.attributes.values
+        .select(&:restricted).map(&:name) +
+        [:restricted] +
+        model.date_shift_attributes.map do |attr|
+          attr.name.to_sym
+        end).uniq
 
       record_set.each do |record_name, revision|
         (restricted_attributes & revision.attribute_key).each do |attribute_name|

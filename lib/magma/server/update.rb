@@ -43,9 +43,7 @@ class UpdateController < Magma::Controller
     # Make sure the keys are symbols?
     [].tap do |redact_keys|
       Magma.instance.get_project(@project_name).models.each do |model_name, model|
-        model.attributes.values.select do |attr|
-          attr.is_a?(Magma::ShiftedDateTimeAttribute)
-        end.each do |attr|
+        model.date_shift_attributes.each do |attr|
           redact_keys << attr.name.to_sym
         end
       end

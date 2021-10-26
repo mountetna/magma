@@ -214,6 +214,12 @@ class Magma
 
         path
       end
+
+      def date_shift_attributes
+        attributes.values.select do |attr|
+          attr.is_a?(Magma::ShiftedDateTimeAttribute)
+        end
+      end
     end
 
     # record methods
