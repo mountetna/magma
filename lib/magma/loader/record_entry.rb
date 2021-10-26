@@ -148,6 +148,10 @@ class Magma
       self[parent_attribute_name]
     end
 
+    def explicitly_disconnected_from_parent?
+      includes_parent_record? && parent_record_name.nil?
+    end
+
     private
 
     def set_temp_id

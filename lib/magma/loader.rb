@@ -373,8 +373,8 @@ class Magma
 
       return false if entry.nil?
 
-      (entry.includes_parent_record? && entry.parent_record_name.nil?) ||
-      (!entry.includes_parent_record? && record_entry_explicitly_disconnected_from_parent(model, record_name))
+      (entry.explicitly_disconnected_from_parent?) ||
+      (record_entry_explicitly_disconnected_by_parent(entry, model, record_name))
     end
 
     def record_entry_from_records(model, record_name)
@@ -383,7 +383,9 @@ class Magma
       nil
     end
 
-    def record_entry_explicitly_disconnected_from_parent(model, record_name)
+    def record_entry_explicitly_disconnected_by_parent(record_entry, model, record_name)
+      return false unless !record_entry.includes_parent_record?
+
       parent_record_name = parent_record_name_from_db(model, record_name)
       parent_entry = record_entry_from_records(model.parent_model, parent_record_name)
 
