@@ -31,6 +31,13 @@ describe Magma::DateTimeShifter do
     expect {
       shifter = Magma::DateTimeShifter.new(
         salt: "123",
+        date_shift_root_record_name: nil,
+      )
+    }.to raise_error(Magma::DateTimeShiftError, "date_shift_root_record_name is required")
+
+    expect {
+      shifter = Magma::DateTimeShifter.new(
+        salt: "123",
         date_shift_root_record_name: "",
       )
     }.to raise_error(Magma::DateTimeShiftError, "date_shift_root_record_name is required")
