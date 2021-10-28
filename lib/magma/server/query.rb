@@ -21,11 +21,13 @@ class QueryController < Magma::Controller
       )
       return_data = {answer: question.answer, type: question.type, format: question.format}
       return success(return_data.to_json, 'application/json')
-    rescue Magma::QuestionError, ArgumentError, Sequel::Error => e
+    rescue Magma::QuestionError, ArgumentError => e
       return failure(422, errors: [ e.message ])
     rescue Sequel::DatabaseError => e
       Magma.instance.logger.log_error(e)
       return failure(501, errors: ['Database error.'])
+    rescue Sequel::Error => e
+      return failure(422, errors: [ e.message ])
     end
   end
 end

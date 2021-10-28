@@ -49,6 +49,11 @@ class Magma
 
       @constraints.each { |c| new_query = c.apply(new_query) }
       @subqueries.each { |s| new_query = s.apply(new_query, condition ? self : nil) }
+      @filters.each do |f|
+        f.subquery.each do |filter_subquery|
+          new_query = filter_subquery.apply(new_query, condition ? self : nil)
+        end
+      end
 
       new_query
     end
