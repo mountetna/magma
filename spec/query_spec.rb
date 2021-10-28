@@ -1265,7 +1265,7 @@ describe QueryController do
 
   context Magma::DateTimePredicate do
     before(:each) do
-      lion = create(:labor, name: 'Nemean Lion', number: 1, year: '02-01-0001', completed: true, project: @project)
+      @lion = create(:labor, name: 'Nemean Lion', number: 1, year: '02-01-0001', completed: true, project: @project)
       hydra = create(:labor, name: 'Lernean Hydra', number: 2, year: '03-15-0002', completed: false, project: @project)
       stables = create(:labor, name: 'Augean Stables', number: 5, year: '06-07-0005', completed: false, project: @project)
     end
@@ -1296,6 +1296,21 @@ describe QueryController do
       )
 
       expect(last_response.status).to eq(422)
+    end
+
+    it 'supports comparisons across shifted_date_time attributes' do
+      lion_monster = create(:monster, name: 'Nemean Lion', labor: @lion)
+      create(:victim, name: "John Doe", monster: lion_monster, birthday: "2000-01-01")
+      create(:victim, name: "Jane Doe", monster: lion_monster, birthday: "1980-01-01")
+
+      query(
+        [ 'victim', [ 'birthday', '::>', '03-01-1990' ], '::all', '::identifier' ]
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(json_body[:answer].map(&:last).sort).to eq([ 'John Doe' ])
+      expect(json_body[:format]).to eq(['labors::victim#name', 'labors::victim#name'])
     end
   end
 

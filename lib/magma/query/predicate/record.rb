@@ -156,7 +156,7 @@ class Magma
         return Magma::StringPredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::IntegerAttribute, Magma::FloatAttribute
         return Magma::NumberPredicate.new(@question, @model, alias_name, attribute, *@query_args)
-      when Magma::DateTimeAttribute
+      when Magma::DateTimeAttribute, Magma::ShiftedDateTimeAttribute
         return Magma::DateTimePredicate.new(@question, @model, alias_name, attribute, *@query_args)
       when Magma::BooleanAttribute
         return Magma::BooleanPredicate.new(@question, @model, alias_name, attribute, *@query_args)

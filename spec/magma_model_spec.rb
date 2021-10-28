@@ -18,76 +18,42 @@ describe Magma::Model do
     end
   end
 
-  describe 'date_shift_root' do
-    let(:action) { Magma::SetDateShiftRootAction.new("labors", action_params) }
-    let(:unset_action) { Magma::SetDateShiftRootAction.new("labors", unset_action_params) }
-
-    let(:action_params) do
-      {
-        action_name: "set_date_shift_root",
-        model_name: "monster",
-        date_shift_root: true,
-      }
-    end
-
-    let(:unset_action_params) do
-      {
-        action_name: "set_date_shift_root",
-        model_name: "monster",
-        date_shift_root: false,
-      }
-    end
-
-    def stub_data
-      project = create(:project, name: 'The Twelve Labors of Hercules')
-      
-      hydra = create(:labor, :hydra, project: project)
-      lion = create(:labor, :lion, project: project)
-      
-      @lion_monster = create(:monster, :lion, labor: lion)
-      @hydra_monster = create(:monster, :hydra, labor: hydra)
-
-      john_doe = create(:victim, name: 'John Doe', monster: @lion_monster, country: 'Italy')
-      jane_doe = create(:victim, name: 'Jane Doe', monster: @lion_monster, country: 'Greece')
-
-      susan_doe = create(:victim, name: 'Susan Doe', monster: @hydra_monster, country: 'Italy')
-      shawn_doe = create(:victim, name: 'Shawn Doe', monster: @hydra_monster, country: 'Greece')
-
-      @john_arm = create(:wound, victim: john_doe, location: 'Arm', severity: 5)
-      create(:wound, victim: john_doe, location: 'Leg', severity: 1)
-      create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
-      create(:wound, victim: jane_doe, location: 'Leg', severity: 4)
-      @susan_arm = create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
-      create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
-      create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
-      create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
-    end
-
-    before(:each) do
-      stub_data
-    end
-
+  describe 'is_date_shift_root?' do
     after(:each) do
-      unset_action.perform
+      set_date_shift_root("monster", false)
     end
 
-    it 'returns self if model is the date_shift_root' do
-      action.perform
+    it 'returns true if model is the date_shift_root' do
+      set_date_shift_root("monster", true)
 
-      expect(@lion_monster.date_shift_root_record).to eq(@lion_monster)
-      expect(@hydra_monster.date_shift_root_record).to eq(@hydra_monster)
+      expect(Labors::Monster.is_date_shift_root?).to eq(true)
+      expect(Labors::Victim.is_date_shift_root?).to eq(false)
+    end
+  end
+
+  describe 'path_to_date_shift_root model' do
+    after(:each) do
+      set_date_shift_root("monster", false)
     end
 
-    it 'returns right record if an ancestor model is date_shift_root' do
-      action.perform
+    it 'returns path when model is the date_shift_root model' do
+      set_date_shift_root("monster", true)
 
-      expect(@john_arm.date_shift_root_record).to eq(@lion_monster)
-      expect(@susan_arm.date_shift_root_record).to eq(@hydra_monster)
+      expect(Labors::Monster.path_to_date_shift_root).to eq([Labors::Monster])
+      expect(Labors::Labor.path_to_date_shift_root).to eq([])
     end
-    
-    it 'returns nil if no ancestor model is date_shift_root' do
-      expect(@john_arm.date_shift_root_record).to eq(nil)
-      expect(@susan_arm.date_shift_root_record).to eq(nil)
+
+    it 'returns correct path when date_shift_root model is ancestor' do
+      set_date_shift_root("monster", true)
+
+      expect(Labors::Victim.path_to_date_shift_root).to eq([Labors::Victim, Labors::Monster])
+      expect(Labors::Wound.path_to_date_shift_root).to eq([Labors::Wound, Labors::Victim, Labors::Monster])
+      expect(Labors::Prize.path_to_date_shift_root).to eq([])
+    end
+
+    it 'returns empty list when no path found' do
+      expect(Labors::Monster.path_to_date_shift_root).to eq([])
+      expect(Labors::Victim.path_to_date_shift_root).to eq([])
     end
   end
 end

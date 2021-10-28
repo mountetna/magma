@@ -147,6 +147,11 @@ class Magma
     def load_hook(loader, record_name, value, bulk_load)
     end
 
+    def patch_record_load_hook(loader, record_name, record)
+      # This hook is for updating the actual loaded revisions ... should only
+      #   be used for date-shifting
+    end
+
     def bulk_load_hook(loader, bulk_load)
     end
 
@@ -168,7 +173,8 @@ class Magma
       "Magma::FloatAttribute",
       "Magma::IdentifierAttribute",
       "Magma::IntegerAttribute",
-      "Magma::StringAttribute"
+      "Magma::StringAttribute",
+      "Magma::ShiftedDateTimeAttribute"
     ]
 
     FOREIGN_KEY_ATTRIBUTES = [
@@ -250,4 +256,5 @@ require_relative 'attributes/float_attribute'
 require_relative 'attributes/identifier_attribute'
 require_relative 'attributes/parent_attribute'
 require_relative 'attributes/link_attribute'
+require_relative 'attributes/shifted_date_time_attribute'
 

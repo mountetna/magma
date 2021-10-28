@@ -48,6 +48,7 @@ class Magma
         :validate_db_model,
         :validate_date_shift_root,
         :validate_date_shift_root_existence,
+        :validate_not_table_model,
       ]
     end
 
@@ -56,6 +57,17 @@ class Magma
         message: "Must include :date_shift_root parameter",
         source: @action_params.slice(:action_name, :model_name),
       ) unless @action_params.key?(:date_shift_root)
+    end
+
+    def validate_not_table_model
+      return if !model
+
+      return unless model.parent_model.attributes[model.model_name].is_a?(Magma::TableAttribute)
+
+      @errors << Magma::ActionError.new(
+        message: "Cannot set :date_shift_root on a Table.",
+        source: @action_params.slice(:action_name, :model_name),
+      )
     end
   end
 end

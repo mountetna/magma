@@ -2359,4 +2359,684 @@ describe UpdateController do
       expect { victim.refresh }.to change { victim.restricted }.to(false)
     end
   end
+
+  context 'shifted_date_time attributes' do
+    before(:each) do
+      stub_date_shift_data(@project)
+      set_date_shift_root('monster', true)
+      @orig_config = Magma.instance.env_config(:test)
+    end
+
+    after(:each) do
+      set_date_shift_root('monster', false)
+      set_date_shift_root('victim', false)
+      Magma.instance.configure({
+        test: @orig_config
+      })
+    end
+
+    it 'fails the update when no salt in config' do
+      Magma.instance.configure(
+        :test => @orig_config.dup.update(dateshift_salt: '')
+      )
+      
+      expect(@john_doe.birthday).to eq(nil)
+
+      update(
+        victim: {
+          @john_doe.name => {
+            birthday: '2000-01-01'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+      @john_doe.refresh
+      expect(@john_doe.birthday).to eq(nil)
+    end
+
+    context 'with tables' do
+      it 'shifts date on update to existing row' do
+        expect(@john_arm[:received_date]).to eq(nil)
+
+        update({
+          wound: {
+            @john_arm.id => {
+              received_date: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents][@john_arm.id.to_s.to_sym][:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+        
+        @john_arm.refresh
+        expect(@john_arm[:received_date]).not_to eq(nil)
+        expect(@john_arm[:received_date].iso8601).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date on create of a new row, parent exists' do
+        expect(Labors::Wound.count).to eq(8)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents].values.first[:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        # Update on a table clears the two existing wounds for @john_doe and
+        #   adds one new one.
+        expect(Labors::Wound.count).to eq(7)
+        last_wound = Labors::Wound.last
+        expect(
+          last_wound[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-01-01'))
+        expect(last_wound.victim.name).to eq(@john_doe.name)
+      end
+
+      it 'shifts date when parent record created in same update' do
+        expect(Labors::Wound.count).to eq(8)
+
+        update({
+          victim: {
+            Unicorn: {
+              wound: ["::temp-1"],
+              monster: "Vampire"
+            }
+          },
+          monster: {
+            Vampire: {
+              name: "Vampire"
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents].values.first[:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        expect(Labors::Wound.count).to eq(9)
+        last_wound = Labors::Wound.last
+        expect(
+          last_wound[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-01-01'))
+        expect(last_wound.victim.name).to eq("Unicorn")
+      end
+
+      it 'shifts dates when update contains shifted and not-shifted data' do
+        expect(Labors::Wound.count).to eq(8)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1", "::temp-2"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            },
+            "::temp-2" => {
+              severity: 9,
+              location: "finger"
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(200)
+        new_wound_ids = json_body[:models][:victim][:documents][@john_doe.name.to_sym][:wound]
+
+        expect(Labors::Wound.count).to eq(8)
+        wounds = Labors::Wound.where(id: new_wound_ids).all
+        wound_1 = wounds.first
+        wound_2 = wounds.last
+
+        expect(wound_1[:received_date]).not_to eq(nil)
+        expect(
+          wound_1[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-01-01'))
+        expect(wound_2[:severity]).to eq(9)
+      end
+
+      it 'cannot be updated by a non-privileged user' do
+        expect(@john_arm[:received_date]).to eq(nil)
+
+        update(
+          wound: {
+            @john_arm.id => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+        expect(@john_arm[:received_date]).to eq(nil)
+      end
+
+      it 'cannot be created by a non-privileged user' do
+        expect(Labors::Wound.count).to eq(8)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(422)
+        expect(Labors::Wound.count).to eq(8)
+      end
+
+      it 'throws exception if included in create of disconnected row' do
+        expect(Labors::Wound.count).to eq(8)
+
+        update({
+          victim: {
+            Unicorn: {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(422)
+        expect(Labors::Wound.count).to eq(8)
+      end
+
+      it 'throws exception if included in create of connected row, but no date-shift root' do
+        set_date_shift_root('monster', false)
+        expect(Labors::Wound.count).to eq(8)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(422)
+        expect(Labors::Wound.count).to eq(8)
+      end
+
+      it 'throws exception if disconnected from the parent direction' do
+        expect(@john_arm[:received_date]).to eq(nil)
+
+        update({
+          wound: {
+            @john_arm.id => {
+              received_date: '2000-01-01'
+            }
+          },
+          victim: {
+            @john_doe.name => {
+              wound: []
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+        
+        @john_arm.refresh
+        expect(@john_arm[:received_date]).to eq(nil)
+      end
+    end
+
+    context 'with non-table models' do
+      it 'shifts date on create of a new record in the date-shift-root model' do
+        set_date_shift_root('monster', false)
+        set_date_shift_root('victim', true)
+
+        update({
+          victim: {
+            "Unicorn" => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date on update of an existing record in the date-shift-root model' do
+        set_date_shift_root('monster', false)
+        set_date_shift_root('victim', true)
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date on create of a new record, parent exists, not date-shift-root model' do
+        update({
+          victim: {
+            "Unicorn" => {
+              monster: @lion_monster.name,
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date on create of a new record, from parent-side, not date-shift-root model' do
+        update({
+          victim: {
+            "Unicorn" => {
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            @lion_monster.name => {
+              victim: [ "Unicorn" ]
+            }
+          }},
+          :privileged_editor
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date on update of an existing record, parent exists, not date-shift-root model' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date when parent record created in same update' do
+        update({
+          victim: {
+            "Unicorn" => {
+              monster: "Vampire",
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            "Vampire" => {}
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+      end
+
+      it 'shifts date with combination of new parents + existing parents' do
+        set_date_shift_root("monster", false)
+        set_date_shift_root("labor", true)
+
+        update({
+          victim: {
+            Unicorn: {
+              monster: "Vampire",
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            Vampire: {
+              name: "Vampire",
+              labor: @hind.name
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][:Unicorn][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        set_date_shift_root("labor", false) 
+      end
+
+      it 'shifts dates when update contains shifted and not-shifted data' do
+        expect(@john_doe[:birthday]).to eq(nil)
+        expect(@susan_doe[:weapon]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            },
+            @susan_doe.name => {
+              weapon: "Bow and arrow"
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
+
+        @susan_doe.refresh
+        expect(@susan_doe[:weapon]).to eq("Bow and arrow")
+      end
+
+      it 'shifts date for disconnected record if is in date_shift_root model' do
+        set_date_shift_root('monster', false)
+        set_date_shift_root('victim', true)
+
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              monster: nil,
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).not_to eq(nil)
+        expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
+
+        set_date_shift_root('victim', false)
+      end
+
+      it 'cannot be updated by a non-privileged user' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update(
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'cannot be created by a non-privileged user' do
+        update(
+          victim: {
+            "Unicorn" => {
+              monster: @lion_monster.name,
+              birthday: '2000-01-01'
+            }
+          }
+        )
+  
+        expect(last_response.status).to eq(422)
+      end
+
+      it 'throws exception if disconnecting from date_shift_root during the update' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              monster: nil,
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'throws exception if disconnecting from the parent direction, during the update' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          },
+          monster: {
+            @lion_monster.name => {
+              victim: []
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'throws exception on update if disconnected from date_shift_root in database' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        @john_doe.update(monster: nil)
+        @john_doe.save
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'throws exception if creating disconnected record that requires date-shifting' do
+        expect(Labors::Victim.count).to eq(4)
+
+        update({
+          victim: {
+            "Unicorn" => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+        expect(Labors::Victim.count).to eq(4)
+      end
+
+      it 'throws exception if creating connected record, but no date-shift root model set' do
+        set_date_shift_root('monster', false)
+        expect(Labors::Victim.count).to eq(4)
+
+        update({
+          victim: {
+            "Unicorn" => {
+              monster: @lion_monster.name,
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor
+        )
+  
+        expect(last_response.status).to eq(422)
+        expect(Labors::Victim.count).to eq(4)
+      end
+    end
+  end
+
+  context 'dateshift logging' do
+    before(:each) do
+      @log_file = Tempfile.new
+      Timecop.freeze('2000-01-01')
+      # fixes the request_id, which otherwise is random
+      Etna::Logger.define_method(:rand) do
+        0.23456
+      end
+
+      @orig_config = Magma.instance.env_config(:test)
+
+      Magma.instance.configure(
+        :test => @orig_config.dup.update(log_file: @log_file.path, log_level: 'warn')
+      )
+
+      Magma.instance.setup_logger
+
+      stub_date_shift_data(@project)
+      set_date_shift_root('monster', true)
+    end
+    after(:each) do
+      ::File.unlink(@log_file)
+      Timecop.return
+      Etna::Logger.remove_method(:rand)
+      set_date_shift_root('monster', false)
+      Magma.instance.configure({
+        test: @orig_config
+      })
+    end
+
+    it 'censors date shift attribute updates, privileged user' do
+      expect(@john_doe[:birthday]).to eq(nil)
+
+      update({
+        victim: {
+          @john_doe.name => {
+            birthday: '2000-01-01'
+          }
+        }},
+        :privileged_editor
+      )
+
+      expect(last_response.status).to eq(200)
+
+      output = <<EOT
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 User copreus@twelve-labors.org calling update#action with params {:project_name=>"labors", :revisions=>{:victim=>{:"John Doe"=>{:birthday=>"*"}}}}
+EOT
+
+      expect(File.read(@log_file)).to eq(output)
+
+      @john_doe.refresh
+      expect(@john_doe[:birthday]).not_to eq(nil)
+      expect(@john_doe[:birthday].iso8601).not_to eq(iso_date_str('2000-01-01'))
+    end
+
+    it 'censors date shift attribute updates, un-privileged user' do
+      expect(@john_doe[:birthday]).to eq(nil)
+
+      update(
+        victim: {
+          @john_doe.name => {
+            birthday: '2000-01-01'
+          }
+        }
+      )
+
+      expect(last_response.status).to eq(422)
+
+      output = <<EOT
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 ["Cannot revise restricted attribute :birthday on victim 'John Doe'"]
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 User eurystheus@twelve-labors.org calling update#action with params {:project_name=>"labors", :revisions=>{:victim=>{:"John Doe"=>{:birthday=>"*"}}}}
+EOT
+
+      expect(File.read(@log_file)).to eq(output)
+
+      @john_doe.refresh
+      expect(@john_doe[:birthday]).to eq(nil)
+    end
+  end
 end

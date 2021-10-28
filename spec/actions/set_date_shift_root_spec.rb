@@ -104,6 +104,21 @@ describe Magma::SetDateShiftRootAction do
       end
     end
 
+    context "when the model is a table" do
+      let(:action_params) do
+        {
+          action_name: "set_date_shift_root",
+          model_name: "wound",
+          date_shift_root: true,
+        }
+      end
+
+      it "returns false and adds an error" do
+        action.send("validate_not_table_model")
+        expect(action.errors.first[:message]).to eq("Cannot set :date_shift_root on a Table.")
+      end
+    end
+
     context "when another model is already set as the date_shift_root" do
       let(:action_params) do
         {

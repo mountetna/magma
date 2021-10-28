@@ -125,6 +125,8 @@ victim:
     type: table
   weapon:
     type: string
+  birthday:
+    type: shifted_date_time
 wound:
   victim:
     type: parent
@@ -133,3 +135,5 @@ wound:
     type: string
   severity:
     type: integer
+  received_date:
+    type: shifted_date_time

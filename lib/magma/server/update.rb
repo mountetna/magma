@@ -33,10 +33,20 @@ class UpdateController < Magma::Controller
     log(m.complaints)
     @errors.concat(m.complaints)
     return nil
+  rescue Magma::DateTimeShiftError => e
+    Magma.instance.logger.log_error(e)
+    @errors.concat([e.message])
+    return nil
   end
 
   def dateshift_redact_keys
-    # Make sure the keys are symbols?
-    []
+    # Make sure the keys are symbols
+    [].tap do |redact_keys|
+      Magma.instance.get_project(@project_name).models.each do |model_name, model|
+        model.date_shift_attributes.each do |attr|
+          redact_keys << attr.name.to_sym
+        end
+      end
+    end
   end
 end

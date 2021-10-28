@@ -191,6 +191,35 @@ class Magma
           record[:date_shift_root]
         end
       end
+
+      def path_to_date_shift_root
+        search_model = self
+        path = [search_model]
+        path_exists = false
+
+        loop do
+          begin
+            path_exists = true
+            break
+          end if search_model.is_date_shift_root?
+          
+          search_model = search_model.parent_model
+
+          break unless search_model # nothing found, is nil and have reached the end of the graph
+
+          path << search_model
+        end
+
+        return [] unless path_exists
+
+        path
+      end
+
+      def date_shift_attributes
+        attributes.values.select do |attr|
+          attr.is_a?(Magma::ShiftedDateTimeAttribute)
+        end
+      end
     end
 
     # record methods
@@ -221,21 +250,6 @@ class Magma
           # always ensure some sort of identifier
           model.identity => identifier
       )
-    end
-
-    def date_shift_root_record
-      search_model = model
-      record = self
-
-      loop do
-        break unless search_model # nothing found, is nil
-        break if search_model.is_date_shift_root?
-        
-        search_model = search_model.parent_model
-        record = search_model ? record.send(search_model.model_name) : nil
-      end
-
-      record
     end
   end
 end

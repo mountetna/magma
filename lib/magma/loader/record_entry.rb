@@ -26,6 +26,13 @@ class Magma
       @record[att_name]
     end
 
+    def []=(att_name, value)
+      raise ArgumentError, "#{att_name} cannot be re-assigned." unless shifted_date_time_attribute_names.include?(att_name)
+      raise ArgumentError, "Can only re-assign a DateTime to #{att_name}." unless value.is_a?(DateTime)
+
+      @record[att_name] = value
+    end
+
     def has_key?(att_name)
       @record.has_key?(att_name)
     end
@@ -34,6 +41,7 @@ class Magma
       return @complaints if @complaints
       check_document_validity
       check_record_name_validity unless record_exists?
+      check_date_shift_validity if requires_date_shifting
 
       return @complaints.uniq
     end
@@ -52,6 +60,16 @@ class Magma
 
     def valid?
       complaints.empty?
+    end
+
+    def requires_date_shifting
+      attribute_key.any? do |attr|
+        shifted_date_time_attribute_names.include?(attr)
+      end
+    end
+
+    def shifted_date_time_attribute_names
+      @shifted_date_time_attribute_names ||= @model.date_shift_attributes.map(&:name)
     end
 
     def needs_temp?
@@ -120,6 +138,20 @@ class Magma
       @record.keys
     end
 
+    def includes_parent_record?
+      attribute_key.include?(parent_attribute_name)
+    end
+
+    def parent_record_name
+      return nil unless includes_parent_record?
+
+      self[parent_attribute_name]
+    end
+
+    def explicitly_disconnected_from_parent?
+      includes_parent_record? && parent_record_name.nil?
+    end
+
     private
 
     def set_temp_id
@@ -155,9 +187,23 @@ class Magma
       end
     end
 
+    def check_date_shift_validity
+      # If the loader says there is some other path to
+      #   the date_shift_root model, then we're also okay.
+      return if @loader.is_connected_to_date_shift_root?(@model, self.record_name)
+
+      complaints << "Cannot execute action on #{record_name}, because it is not connected to the date_shift_root model, but requires date-shifting."
+    end
+
     def identifier_attribute_name
       @model.attributes.values.select do |attribute|
         attribute.is_a?(Magma::IdentifierAttribute)
+      end.first.name.to_sym
+    end
+
+    def parent_attribute_name
+      @model.attributes.values.select do |attribute|
+        attribute.is_a?(Magma::ParentAttribute)
       end.first.name.to_sym
     end
   end

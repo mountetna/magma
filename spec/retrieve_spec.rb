@@ -905,6 +905,27 @@ describe RetrieveController do
       expect(labor_names).to match_array(new_labors.map(&:name))
     end
 
+    it 'can filter on shifted dates' do
+      lion = create(:labor, :lion, project: @project)
+      monster = create(:monster, name: "Nemean Lion", labor: lion)
+      create(:victim, name: "John Doe", monster: monster, birthday: "2000-01-01")
+      create(:victim, name: "Jane Doe", monster: monster, birthday: "1980-01-01")
+
+      retrieve(
+        project_name: 'labors',
+        model_name: 'victim',
+        record_names: 'all',
+        attribute_names: 'all',
+        filter: 'birthday>1999-01-01'
+      )
+
+      expect(last_response.status).to eq(200)
+
+      expect(
+        json_body[:models][:victim][:documents].values.map{|d| d[:name]}
+      ).to match_array(["John Doe"])
+    end
+
     it 'can filter on dates with "lacks"' do
       old_labors = create_list(:labor, 3, year: DateTime.new(500), project: @project)
       new_labors = create_list(:labor, 3, year: nil, project: @project)
