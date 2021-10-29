@@ -21,7 +21,7 @@ class Magma
     def filter_constraints
       @filters.map do |filter|
         Magma::SubqueryConstraint.new(
-          filter,
+          filter.flatten.map(&:constraint).inject(&:+),
           subquery_pivot_column_name,
           subquery_column_alias,
           condition
