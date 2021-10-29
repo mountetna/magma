@@ -760,6 +760,20 @@ describe QueryController do
           ['monster', 'victim',
             ['::and',
               ['name', '::matches', 'Doe'],
+              ['wound', ['severity', '::<=', 4], '::every'],
+              ['wound', ['severity', '::>', 1], '::every']
+            ],
+            '::any'
+          ],
+          '::all', '::identifier'])
+
+        expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
+        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+      
+        query(['labor',
+          ['monster', 'victim',
+            ['::and',
+              ['name', '::matches', 'Doe'],
               ['wound', ['severity', '::<', 3], '::every']
             ],
             '::every'
