@@ -724,64 +724,72 @@ describe QueryController do
         expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
       end
 
-      it 'supports nested ::every\'s inside ::and\'s' do
-        lion_monster = create(:monster, :lion, labor: @lion)
-        hydra_monster = create(:monster, :hydra, labor: @hydra)
+      context 'nested' do
+        before(:each) do
+          lion_monster = create(:monster, :lion, labor: @lion)
+          hydra_monster = create(:monster, :hydra, labor: @hydra)
+  
+          john_doe = create(:victim, name: 'John Doe', monster: lion_monster, weapon: 'sword')
+          jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, weapon: 'spear')
+  
+          susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, weapon: 'bow and arrow')
+          shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, weapon: 'spear')
+  
+          create(:wound, victim: john_doe, location: 'Arm', severity: 5)
+          create(:wound, victim: john_doe, location: 'Leg', severity: 1)
+          create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
+          create(:wound, victim: jane_doe, location: 'Head', severity: 4)
+          create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
+          create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
+          create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
+          create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
+        end
 
-        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, weapon: 'sword')
-        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, weapon: 'spear')
-
-        susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, weapon: 'bow and arrow')
-        shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, weapon: 'spear')
-
-        create(:wound, victim: john_doe, location: 'Arm', severity: 5)
-        create(:wound, victim: john_doe, location: 'Leg', severity: 1)
-        create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
-        create(:wound, victim: jane_doe, location: 'Head', severity: 4)
-        create(:wound, victim: susan_doe, location: 'Arm', severity: 3)
-        create(:wound, victim: susan_doe, location: 'Leg', severity: 3)
-        create(:wound, victim: shawn_doe, location: 'Arm', severity: 1)
-        create(:wound, victim: shawn_doe, location: 'Leg', severity: 1)
-
-        query(['labor',
-              ['monster', 'victim',
-                ['::and',
-                  ['name', '::matches', 'Doe'],
-                  ['wound', ['severity', '::<', 4], '::every']
+        it '::every inside ::and and ::any' do
+          query(['labor',
+                ['monster', 'victim',
+                  ['::and',
+                    ['name', '::matches', 'Doe'],
+                    ['wound', ['severity', '::<', 4], '::every']
+                  ],
+                  '::any'
                 ],
-                '::any'
+                '::all', '::identifier'])
+  
+          expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra" ])
+          expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+        end
+
+        it '::every and ::any inside ::and and ::any' do
+          query(['labor',
+            ['monster', 'victim',
+              ['::and',
+                ['name', '::matches', 'Doe'],
+                ['wound', ['severity', '::<', 4], '::every'],
+                ['wound', ['location', '::equals', 'Head'], '::any']
               ],
-              '::all', '::identifier'])
-
-        expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra" ])
-        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
-
-        query(['labor',
-          ['monster', 'victim',
-            ['::and',
-              ['name', '::matches', 'Doe'],
-              ['wound', ['severity', '::<=', 4], '::every'],
-              ['wound', ['severity', '::>', 1], '::every']
+              '::any'
             ],
-            '::any'
-          ],
-          '::all', '::identifier'])
+            '::all', '::identifier'])
+  
+          expect(json_body[:answer].map(&:last)).to eq([ ])
+          expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+        end
 
-        expect(json_body[:answer].map(&:last)).to eq([ "Nemean Lion" ])
-        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
-      
-        query(['labor',
-          ['monster', 'victim',
-            ['::and',
-              ['name', '::matches', 'Doe'],
-              ['wound', ['severity', '::<', 3], '::every']
+        it '::every inside ::and and ::every' do
+          query(['labor',
+            ['monster', 'victim',
+              ['::and',
+                ['name', '::matches', 'Doe'],
+                ['wound', ['severity', '::<', 3], '::every']
+              ],
+              '::every'
             ],
-            '::every'
-          ],
-          '::all', '::identifier'])
-
-        expect(json_body[:answer].map(&:last)).to eq([ ])
-        expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+            '::all', '::identifier'])
+  
+          expect(json_body[:answer].map(&:last)).to eq([ ])
+          expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
+        end
       end
 
       it 'supports nested ::any\'s inside ::or\'s' do

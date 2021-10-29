@@ -21,7 +21,7 @@ class Magma
     def filter_constraints
       @filters.map do |filter|
         Magma::SubqueryConstraint.new(
-          filter.flatten.map(&:constraint).inject(&:+),
+          filter,
           subquery_pivot_column_name,
           subquery_column_alias,
           condition
@@ -49,11 +49,6 @@ class Magma
 
       @constraints.each { |c| new_query = c.apply(new_query) }
       @subqueries.each { |s| new_query = s.apply(new_query, condition ? self : nil) }
-      @filters.each do |f|
-        f.subquery.each do |filter_subquery|
-          new_query = filter_subquery.apply(new_query, condition ? self : nil)
-        end
-      end
 
       new_query
     end
@@ -74,6 +69,30 @@ class Magma
 
     def constraint
       raise Exception, "Subclasses should implement this method"
+    end
+
+    def constraint_subselects
+      # If this subquery contains a filter with yet another subquery at this point,
+      #   i.e.
+      #     ::any (self)
+      #         ::and (@filters)
+      #             constraint 1
+      #             ::any (constraint 2 --> filter_constraints)
+      #
+      # We need to return a subselect for each new sub-constraint.
+      filter_constraints.map do |filter_constraint|
+        subselect = subquery_model.from(Sequel.as(subquery_model.table_name, internal_table_alias))
+        subselect = filter_constraints.first.apply(subselect)
+
+        # This subselect returns the list of IDs that are valid,
+        #    according to the constraints.
+        # We then need to return an ":id in <list>" constraint
+        #    to satisfy the overall subquery.
+        Magma::Constraint.new(
+          derived_table_alias,
+          Sequel.qualify(main_table_alias, main_table_join_column_name) => subselect,
+        )
+      end
     end
   end
 end

@@ -15,6 +15,8 @@ class Magma
     end
 
     def constraint
+      return constraint_subselects unless filter_constraints.empty?
+
       # Full Outer join requires an additional
       #   clause to correctly mimic "OR"
       #   behavior at the top level.
