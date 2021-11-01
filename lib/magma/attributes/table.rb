@@ -30,6 +30,8 @@ class Magma
     end
 
     def load_hook(loader, record_name, new_ids, clean_records)
+      return nil if loader.dry_run
+
       clean_records[record_name] = true
       return nil
     end
