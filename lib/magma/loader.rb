@@ -299,6 +299,8 @@ class Magma
     end
 
     def real_id(model, identifier)
+      return identifier if @dry_run
+
       id = identifier_id(model, identifier)
       id.is_a?(TempId) ? id.real_id : id
     end

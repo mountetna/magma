@@ -2547,6 +2547,10 @@ describe UpdateController do
           json_body[:models][:wound][:documents].values.first[:received_date]
         ).not_to eq(iso_date_str('2000-01-01'))
 
+        expect(
+          json_body[:models][:victim][:documents].values.first[:wound]
+        ).to eq([ "::temp-1" ])
+
         expect(Labors::Wound.count).to eq(8)
         expect(Labors::Wound.last.victim.name).not_to eq(@john_doe.name)
       end
