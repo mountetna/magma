@@ -127,7 +127,7 @@ describe Magma::Loader do
     expect(lion.prize.first.name).to eq('hide')
   end
 
-  it 'date-shifts during a dry-run' do
+  it 'date-shifts payload only, during a dry-run' do
     set_date_shift_root('monster', true)
     lion = create(:labor, name: 'Nemean Lion', number: 1, completed: false)
     lion_monster = create(:monster, name: 'Nemean Lion', labor: lion)

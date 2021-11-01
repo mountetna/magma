@@ -2522,7 +2522,7 @@ describe UpdateController do
         expect(wound_2[:severity]).to eq(9)
       end
 
-      it 'shifts payload when using dry_run flag' do
+      it 'shifts payload only (no database changes), when using dry_run flag' do
         expect(Labors::Wound.count).to eq(8)
 
         update({
@@ -2862,7 +2862,7 @@ describe UpdateController do
         set_date_shift_root('victim', false)
       end
 
-      it 'shifts payload when using dry_run flag' do
+      it 'shifts payload only (no database changes) ,when using dry_run flag' do
         expect(@john_doe[:birthday]).to eq(nil)
 
         update({
