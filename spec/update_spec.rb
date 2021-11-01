@@ -22,9 +22,9 @@ describe UpdateController do
     @project = create(:project, name: 'The Twelve Labors of Hercules')
   end
 
-  def update(revisions, user_type=:editor)
+  def update(revisions, user_type=:editor, params: {})
     auth_header(user_type)
-    json_post(:update, {project_name: 'labors', revisions: revisions})
+    json_post(:update, {project_name: 'labors', revisions: revisions}.update(params))
   end
 
   it 'fails for non-editors' do
@@ -2522,6 +2522,35 @@ describe UpdateController do
         expect(wound_2[:severity]).to eq(9)
       end
 
+      it 'shifts payload when using dry_run flag' do
+        expect(Labors::Wound.count).to eq(8)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              wound: ["::temp-1"]
+            }
+          },
+          wound: {
+            "::temp-1" => {
+              received_date: '2000-01-01'
+            }
+          }},
+          :privileged_editor,
+          params: {
+            dry_run: true
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:wound][:documents].values.first[:received_date]
+        ).not_to eq(iso_date_str('2000-01-01'))
+
+        expect(Labors::Wound.count).to eq(8)
+        expect(Labors::Wound.last.victim.name).not_to eq(@john_doe.name)
+      end
+
       it 'cannot be updated by a non-privileged user' do
         expect(@john_arm[:received_date]).to eq(nil)
 
@@ -2833,6 +2862,30 @@ describe UpdateController do
         set_date_shift_root('victim', false)
       end
 
+      it 'shifts payload when using dry_run flag' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor,
+          params: {
+            dry_run: true
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+        expect(
+          json_body[:models][:victim][:documents][@john_doe.name.to_sym][:birthday]
+        ).not_to eq(iso_date_str('2000-01-01'))
+        
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
       it 'cannot be updated by a non-privileged user' do
         expect(@john_doe[:birthday]).to eq(nil)
 
@@ -3037,6 +3090,63 @@ EOT
 
       @john_doe.refresh
       expect(@john_doe[:birthday]).to eq(nil)
+    end
+
+    context 'using dry-run flag' do
+      it 'censors date shift attribute updates, privileged user' do
+        expect(@john_doe[:birthday]).to eq(nil)
+  
+        update({
+          victim: {
+            @john_doe.name => {
+              birthday: '2000-01-01'
+            }
+          }},
+          :privileged_editor,
+          params: {
+            dry_run: true
+          }
+        )
+  
+        expect(last_response.status).to eq(200)
+  
+        output = <<EOT
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 User copreus@twelve-labors.org calling update#action with params {:project_name=>"labors", :revisions=>{:victim=>{:"John Doe"=>{:birthday=>"*"}}}, :dry_run=>"true"}
+EOT
+  
+        expect(File.read(@log_file)).to eq(output)
+  
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
+
+      it 'censors date shift attribute updates, un-privileged user' do
+        expect(@john_doe[:birthday]).to eq(nil)
+
+        update({
+            victim: {
+              @john_doe.name => {
+                birthday: '2000-01-01'
+              }
+            }
+          },
+          params: {
+            dry_run: true
+          }
+        )
+
+        expect(last_response.status).to eq(422)
+
+        output = <<EOT
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 ["Cannot revise restricted attribute :birthday on victim 'John Doe'"]
+WARN:2000-01-01T00:00:00+00:00 8fzmq8 User eurystheus@twelve-labors.org calling update#action with params {:project_name=>"labors", :revisions=>{:victim=>{:"John Doe"=>{:birthday=>"*"}}}, :dry_run=>"true"}
+EOT
+
+        expect(File.read(@log_file)).to eq(output)
+
+        @john_doe.refresh
+        expect(@john_doe[:birthday]).to eq(nil)
+      end
     end
   end
 end

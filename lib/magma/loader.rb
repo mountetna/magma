@@ -35,9 +35,9 @@ class Magma
       end
     end
 
-    attr_reader :validator, :user
+    attr_reader :validator, :user, :dry_run
 
-    def initialize(user, project_name)
+    def initialize(user, project_name, dry_run: false)
       @user = user
       @project_name = project_name
       @validator = Magma::Validation.new
@@ -47,6 +47,7 @@ class Magma
       @attribute_entries = {}
       @identifiers = {}
       @now = Time.now.iso8601
+      @dry_run = dry_run
     end
 
     def push_record(model, record_name, revision)
@@ -252,9 +253,11 @@ class Magma
 
       run_attribute_hooks!
 
-      upsert
+      begin
+        upsert
 
-      update_temp_ids
+        update_temp_ids
+      end unless @dry_run
 
       payload = to_payload
 

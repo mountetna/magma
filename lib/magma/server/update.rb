@@ -4,7 +4,7 @@ class UpdateController < Magma::Controller
   def action
     add_redact_keys(dateshift_redact_keys)
 
-    @loader = Magma::Loader.new(@user,@project_name)
+    @loader = Magma::Loader.new(@user, @project_name, dry_run: !!@params[:dry_run])
     @revisions = @params[:revisions]
 
     payload = load_revisions

@@ -35,6 +35,8 @@ class Magma
     end
 
     def bulk_load_hook(loader, clean_records)
+      return nil if loader.dry_run
+
       link_model.where(
         self_id => clean_records.keys.map do |id|
           loader.real_id(@magma_model, id)
