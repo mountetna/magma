@@ -34,7 +34,10 @@ class Magma
     end
 
     def constraint
-      # The inner join accomplishes what we need,
+      return constraint_subselects unless filter_constraints.empty?
+
+      # If there are no filter_constraints, then
+      #   the inner join accomplishes what we need,
       #   but we'll inject a superfluous constraint
       #   to satisfy any wrapping ::and filters.
       Magma::Constraint.new(derived_table_alias,
