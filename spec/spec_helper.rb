@@ -183,7 +183,7 @@ RSpec.configure do |config|
     FactoryBot.find_definitions
     DatabaseCleaner[:sequel].db = Magma.instance.db
     DatabaseCleaner.strategy = :transaction
-    DatabaseCleaner.clean_with(:truncation, except: ["models", "attributes"])
+    DatabaseCleaner.clean_with(:truncation, except: ["models", "attributes", "schema_info"])
   end
 
   config.around(:each) do |example|
