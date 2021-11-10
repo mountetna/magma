@@ -66,7 +66,7 @@ x-base-etna-services:
     command: ['httpd', '-DFOREGROUND']
     entrypoint: /entrypoints/development_app_fe.sh
     environment:
-      APP_NAME: 'magma'
+      APP_NAME: 'magma_app_fe'
 
 networks:
   edge_net:
