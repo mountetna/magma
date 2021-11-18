@@ -12,6 +12,7 @@ if [ "${MAGMA_ENV}" == "test" ]; then
 PGPASSWORD=password psql -h magma_db -U developer -d magma_development -c "DROP DATABASE magma_test;"
 PGPASSWORD=password psql -h magma_db -U developer -d magma_development -c "CREATE DATABASE magma_test;"
 PGPASSWORD=password psql -h magma_db -U developer -d magma_development -c "GRANT ALL PRIVILEGES ON DATABASE magma_test TO developer;"
+PGPASSWORD=password psql -h magma_db -U developer -d magma_test -c "CREATE SCHEMA labors;"
 else
 MAGMA_ENV=test $0
 fi
