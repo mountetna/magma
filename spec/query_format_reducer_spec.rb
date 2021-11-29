@@ -128,6 +128,7 @@ describe Magma::QueryFormatReducer do
 
       expect(result).to eq([
         "labors::project#name",
+        "labors::labor#name",
         "labors::labor#contributions",
       ])
 
@@ -135,6 +136,7 @@ describe Magma::QueryFormatReducer do
 
       expect(result).to eq([
         "labors::project#name",
+        "labors::labor#name",
         "labors::labor#contributions.Athens",
         "labors::labor#contributions.Sparta",
       ])
