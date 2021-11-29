@@ -30,6 +30,25 @@ describe Magma::QueryFormatReducer do
       ])
     end
 
+    it "works for formats with many branches" do
+      branched_format = [
+        "labors::monster#name",
+        ["labors::labor#number",
+         "labors::victim#name",
+         ["labors::victim#name",
+          ["labors::wound#id", "labors::wound#location"]]],
+      ]
+
+      result = @reducer.reduce_leaves(data_source: branched_format)
+
+      expect(result).to eq([
+        "labors::monster#name",
+        "labors::labor#number",
+        "labors::victim#name",
+        "labors::wound#location",
+      ])
+    end
+
     # it "works for nested question answers" do
     #   nested_answer = [
     #     [

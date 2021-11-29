@@ -69,6 +69,10 @@ class Magma
       @options[:show_disconnected]
     end
 
+    def expand_matrices?
+      !!@options[:expand_matrices]
+    end
+
     def answer
       table = to_table(query)
 
@@ -114,9 +118,12 @@ class Magma
     end
 
     def columns
-      format_parser = Magma::QueryFormatReducer.new(@project_name)
+      format_reducer = Magma::QueryFormatReducer.new(@project_name)
 
-      format_parser.reduce_leaves(data_source: format)
+      format_reducer.reduce_leaves(
+        data_source: format,
+        expand_matrices: expand_matrices?
+      )
     end
 
     private

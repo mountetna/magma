@@ -5,10 +5,6 @@ class Magma
   class QueryTSVWriter < Magma::TSVWriterBase
     def initialize(question, opts = {})
       @question = question
-
-      @tsv_utils = Magma::QueryTSVUtils.new
-
-      @columns = opts[:columns]
       super(opts)
     end
 
@@ -60,28 +56,6 @@ class Magma
       []
     end
 
-    def reduce_leaves(data_source, reduce_depth = 0, current_depth = 0)
-      # Given the @question.format and @question.answer,
-      #   typically (except for Matrices with ::slice?)
-      #   what the user queried for is in the leaf
-      #   values of a set of nested arrays.
-      # So here we extract only the leaf values.
-      # We also specify a reduce_depth, where we start
-      #   reducing the leaves. Below that depth,
-      #   we'll just return nested arrays of values.
-      [].tap do |result|
-        data_source.each do |element|
-          if (element.is_a?(Array))
-            if (element.last.is_a?(Array) && current_depth < reduce_depth)
-              reduce_leaves(element.last, reduce_depth, current_depth + 1)
-            else
-              result << element.last
-            end
-          end
-        end
-      end
-    end
-
     def matrix_attribute_format(model_name, attribute_name)
       require "pry"
       binding.pry
@@ -90,28 +64,12 @@ class Magma
 
     def model_attr_headers
       # "raw" headers that reference only the model + attribute names
-      @model_attr_headers ||= begin
-          headers = [@question.format.first]
-
-          answer_format = @question.format.last
-
-          if answer_format.is_a?(Array)
-            headers = headers.concat(answer_format.map do |header|
-              header.is_a?(Array) ?
-                header.flatten.last : # probably won't work for matrices?
-                header
-            end)
-          else
-            headers << answer_format
-          end
-
-          headers
-        end
+      @question.columns
     end
 
     def tsv_header
       # Start with the raw, internal headers.
-      # If the user supplies a :columns param, in
+      # If the user supplies a :columns option, in
       #   which case, rename according to the :display_label
       model_attr_headers.map do |model_attr_header|
         model_attr_header
@@ -140,7 +98,9 @@ class Magma
             require "pry"
             binding.pry
             path = path_to_value(@question.format, header)
-            record.dig(*path)
+            value = record.dig(*path)
+
+            value.is_a?(Array) ? value.map(&:to_s).join(",") : value
           end
         end
       end
