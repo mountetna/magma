@@ -43,6 +43,7 @@ class QueryController < Magma::Controller
         question,
         expand_matrices: !!@params[:expand_matrices],
         transpose: !!@params[:transpose],
+        columns: @params[:columns]
       ).write_tsv { |lines| stream << lines }
     end
 

@@ -47,8 +47,9 @@ class Magma
   end
 
   class Question
-    attr_reader :user
+    attr_reader :user, :model
     def initialize(project_name, query_args, options = {})
+      @project_name = project_name
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @options = options
       @user = options[:user]
@@ -112,9 +113,17 @@ class Magma
       count_query.count
     end
 
+    def columns
+      format_parser = Magma::QueryFormatReducer.new(@project_name)
+
+      format_parser.reduce_leaves(data_source: format)
+    end
+
     private
 
     def to_table(query)
+      require 'pry'
+      binding.pry
       Magma::QueryExecutor.new(query, @options[:timeout], Magma.instance.db).execute
     end
 

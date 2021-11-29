@@ -1,12 +1,13 @@
+require_relative './tsv_writer_base'
+
 class Magma
-  class TSVWriter
+  class TSVWriter < Magma::TSVWriterBase
     def initialize(model, retrieval, payload, opts={})
       @model = model
       @retrieval = retrieval
       @payload = payload
 
-      @expand_matrices = opts[:expand_matrices]
-      @transpose = opts[:transpose]
+      super(opts)
     end
 
     def write_tsv(&block)
@@ -44,20 +45,6 @@ class Magma
       end.transpose.each do |row|
         yield array_to_tsv_row(row)
       end
-    end
-
-    private
-
-    def tsv_row_to_array(row)
-      CSV.parse_line(row, col_sep: "\t")
-    end
-
-    def tsv_records_to_array(records)
-      CSV.parse(records, col_sep: "\t")
-    end
-
-    def array_to_tsv_row(array)
-      array.join("\t") + "\n"
     end
   end
 end

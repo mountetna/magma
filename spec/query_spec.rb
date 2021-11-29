@@ -2332,4 +2332,289 @@ describe QueryController do
       expect(json_body[:answer].map(&:last).sort).to all(eq('thrace'))
     end
   end
+
+  context 'tsv format' do
+    it 'can retrieve a TSV of data from the endpoint' do
+      labor_list = create_list(:labor, 12, project: @project)
+      query_opts(
+        ['labor', '::all', ['name', 'completed', 'number']],
+        format: 'tsv'
+      )
+
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(header).to eq(["labors::labor#name", "labors::labor#name", "labors::labor#completed", "labors::labor#number"])
+      expect(table).to match_array(labor_list.map{|l| [ l.name, l.name, l.completed.to_s, l.number.to_s ] })
+    end
+
+    it 'can retrieve a TSV of data from multiple models' do
+      labor_list = create_list(:labor, 12, project: @project)
+      lion = create(:monster, :lion, species: 'mammal', labor: labor_list[0])
+      hydra = create(:monster, :hydra, species: 'reptile', labor: labor_list[1])
+      hind = create(:monster, :hind, species: 'mammal', labor: labor_list[2])
+
+      query_opts(
+        ['labor', '::all', ['name', ['monster', 'species']]],
+        format: 'tsv'
+      )
+
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(header).to eq(["labors::labor#name", "labors::labor#name", "labors::monster#species"])
+      expect(table).to match_array(labor_list.map{|l| [ l.name, l.name, l.monster&.species ] })
+      expect(table.map(&:last).compact.length).to eq(3)
+    end
+
+    it 'can retrieve a TSV of collection attribute' do
+      labors = create_list(:labor, 3, project: @project)
+
+      query_opts(
+        ['project',
+          ['name', '::equals', @project.name],
+          '::all',
+          [
+            ['labor', '::all', 'name'],
+            ['labor', '::all', 'number']
+          ]
+        ],
+        format: 'tsv'
+      )
+
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["labors::project#name", "labors::labor#name", "labors::labor#number"])
+      expect(table).to match_array([ [ "The Twelve Labors of Hercules", labors.sort_by(&:name).map(&:identifier).join(','), labors.sort_by(&:name).map(&:number).join(',') ] ])
+    end
+
+
+    it 'can retrieve a TSV of collection attributes several models away' do
+      labors = create_list(:labor, 3, project: @project)
+      lion = create(:monster, :lion, labor: labors[0])
+      hydra = create(:monster, :hydra, labor: labors[1])
+
+      john_doe = create(:victim, name: 'John Doe', monster: lion, weapon: 'sword')
+      jane_doe = create(:victim, name: 'Jane Doe', monster: lion, weapon: 'sling')
+
+      susan_doe = create(:victim, name: 'Susan Doe', monster: hydra, weapon: 'crossbow')
+      shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra, weapon: 'hands')
+      
+      query_opts(
+        ['project',
+          ['name', '::equals', @project.name],
+          '::all',
+          [
+            ['labor', '::all', 'monster', 'victim', '::all', 'name'],
+            ['labor', '::all', 'monster', 'victim', '::all', 'weapon']
+          ]
+        ],
+        format: 'tsv'
+      )
+      require 'pry'
+      binding.pry
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["labors::project#name", "labors::victim#name", "labors::victim#weapon"])
+      expect(table).to match_array([
+        [ "The Twelve Labors of Hercules",
+          [ jane_doe.name, john_doe.name, shawn_doe.name, susan_doe.name ],
+          [ jane_doe.weapon, john_doe.weapon, shawn_doe.weapon, susan_doe.weapon ]
+        ] ])
+    end
+
+    it 'retrieves a TSV with file attributes as urls' do
+      Timecop.freeze(DateTime.new(500))
+      labor_list = create_list(:labor, 3, project: @project)
+      lion = create(:monster, :lion, stats: '{"filename": "lion.txt", "original_filename": ""}', labor: labor_list[0])
+      hydra = create(:monster, :hydra, stats: '{"filename": "hydra.txt", "original_filename": ""}', labor: labor_list[1])
+      hind = create(:monster, :hind, stats: '{"filename": "hind.txt", "original_filename": ""}', labor: labor_list[2])
+
+      query_opts(
+        [
+          'monster',
+          '::all',
+          'stats',
+          '::url'
+        ],
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      uris = table.map{|l| URI.parse(l.last)}
+      expect(uris.map(&:host)).to all(eq(Magma.instance.config(:storage)[:host]))
+      expect(uris.map(&:path)).to all(match(%r!/labors/download/magma/\w+.txt!))
+
+      Timecop.return
+    end
+
+    it 'retrieves a TSV with file collection attributes as urls' do
+      Timecop.freeze(DateTime.new(500))
+      lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+      hydra_certs = [{
+        filename: 'monster-Lernean Hydra-certificates-0.txt',
+        original_filename: 'ba_diploma_hydra.txt'
+      }, {
+        filename: 'monster-Lernean Hydra-certificates-1.txt',
+        original_filename: 'phd_diploma_hydra.txt'
+      }]
+
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, certificates: lion_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, :hydra, certificates: hydra_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hind, project: @project)
+      hind = create(:monster, :hind, labor: labor)
+
+      query_opts(
+        [
+          'monster',
+          '::all',
+          'certificates',
+          '::url'
+        ],
+        format: 'tsv'
+      )
+      require 'pry'
+      binding.pry
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(table.first.last).to eq(nil)
+      uris = table.slice(1, 2).map{|l| JSON.parse(l.last).map{|u| URI.parse(u)}}.flatten
+      expect(uris.map(&:host)).to all(eq(Magma.instance.config(:storage)[:host]))
+      expect(uris.map(&:path)).to all(match(%r!/labors/download/magma/.+.txt!))
+
+      Timecop.return
+    end
+
+    it 'returns an unmelted slice of matrix data using output_predicate' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # New labors, to avoid caching issues with MatrixAttribute
+      belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
+      cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
+      apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["name", "contributions"])
+      expect(table.length).to eq(3)
+      expect(table.first.first).to eq("Belt of Hippolyta")
+      expect(table.first.length).to eq(2)
+      expect(table.last.first).to eq("Golden Apples of the Hesperides")
+      expect(table.last.length).to eq(2)
+    end
+
+    it 'returns a transposed matrix' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # New labors, to avoid caching issues with MatrixAttribute
+      another_belt = create(:labor, name: 'Belt of Hippolyta 3', number: 29, contributions: matrix[0], project: @project)
+      another_cattle = create(:labor, name: 'Cattle of Geryon 3', number: 30, contributions: matrix[1], project: @project)
+      another_apples = create(:labor, name: 'Golden Apples of the Hesperides 3', number: 31, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv',
+        transpose: 'true'
+      )
+
+      expect(last_response.status).to eq(200)
+      data = CSV.parse(last_response.body, col_sep: "\t")
+
+      header = data.map { |d| d.first }
+      expect(header).to eq(["name", "contributions"])
+      expect(data.length).to eq(2)
+      expect(data.first[1]).to eq("Belt of Hippolyta 3")
+      expect(data.first.length).to eq(4) # 3 labors + 1 header
+      expect(data.first.last).to eq("Golden Apples of the Hesperides 3")
+      expect(data.last).to eq(["contributions", "[10,11]", "[20,21]", "[30,31]"])
+    end
+
+    it 'returns an unmelted slice of matrix data using string false for expand_matrices' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # New labors, to avoid caching issues with MatrixAttribute
+      new_belt = create(:labor, name: 'Belt of Hippolyta 2', number: 19, contributions: matrix[0], project: @project)
+      new_cattle = create(:labor, name: 'Cattle of Geryon 2', number: 20, contributions: matrix[1], project: @project)
+      new_apples = create(:labor, name: 'Golden Apples of the Hesperides 2', number: 21, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv',
+        expand_matrices: 'false'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["name", "contributions"])
+      expect(table.length).to eq(3)
+      expect(table.first.first).to eq("Belt of Hippolyta 2")
+      expect(table.first.length).to eq(2)
+      expect(table.last.first).to eq("Golden Apples of the Hesperides 2")
+      expect(table.last.length).to eq(2)
+    end
+
+    it 'returns a melted slice of matrix data using output_predicate and expand_matrices' do
+      matrix = [
+        [ 10, 11, 12, 13 ],
+        [ 20, 21, 22, 23 ],
+        [ 30, 31, 32, 33 ]
+      ]
+      # New labors, to avoid caching issues with MatrixAttribute
+      belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
+      cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
+      apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
+      
+      retrieve(
+        project_name: 'labors',
+        model_name: 'labor',
+        record_names: 'all',
+        attribute_names: ["name", "contributions"],
+        output_predicate: "contributions[]Athens,Sparta",
+        format: 'tsv',
+        expand_matrices: true
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+      expect(header).to eq(["name", "contributions.Athens", "contributions.Sparta"])
+      expect(table.length).to eq(3)
+      expect(table.first).to eq(["Belt of Hippolyta", "10", "11"])
+      expect(table.last).to eq(["Golden Apples of the Hesperides", "30", "31"])
+    end
+  end
 end
