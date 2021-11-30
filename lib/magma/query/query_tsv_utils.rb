@@ -1,6 +1,6 @@
 class Magma
-  class QueryFormatReducer
-    # Nested arrays of QueryFormatTuples
+  class QuestionFormatReducer
+    # Nested arrays of QuestionFormatTuples
     def initialize(project_name)
       @project_name = project_name
     end
@@ -23,9 +23,9 @@ class Magma
     private
 
     def convert(raw_data, expand_matrices)
-      raise "Not valid format" unless Magma::QueryFormat.is_raw_format_tuple?(raw_data)
+      raise "Not valid format" unless Magma::QuestionFormat.is_raw_format_tuple?(raw_data)
 
-      Magma::QueryFormat.new(
+      Magma::QuestionFormat.new(
         @project_name,
         raw_data,
         expand_matrices
@@ -33,10 +33,10 @@ class Magma
     end
   end
 
-  class QueryFormatPaths
+  class QuestionFormatPaths
     def initialize(project_name, data, expand_matrices)
       @paths = data.map do |datum|
-        Magma::QueryFormatPath.new(project_name, datum, expand_matrices)
+        Magma::QuestionFormatPath.new(project_name, datum, expand_matrices)
       end
     end
 
@@ -45,7 +45,25 @@ class Magma
     end
   end
 
-  class QueryFormatPath
+  class QuestionColumnBase
+    private
+
+    def is_matrix?(model_attr)
+      Magma.instance.get_model(
+        @project_name, model_name(model_attr)
+      ).attributes[attribute_name(model_attr).to_sym].is_a?(Magma::MatrixAttribute)
+    end
+
+    def model_name(model_attr)
+      model_attr.split("::").last.split("#").first
+    end
+
+    def attribute_name(model_attr)
+      model_attr.split("#").last.split(".").first
+    end
+  end
+
+  class QuestionFormatPath < QuestionColumnBase
     def initialize(project_name, data, expand_matrices)
       @project_name = project_name
       @data = data
@@ -69,7 +87,7 @@ class Magma
                 result << first_part
               end
             else
-              result = result.concat(Magma::QueryFormatPath.new(
+              result = result.concat(Magma::QuestionFormatPath.new(
                 @project_name, last_part, @expand_matrices
               ).leaves)
             end
@@ -79,25 +97,9 @@ class Magma
         end
       end
     end
-
-    private
-
-    def model_name(model_attr)
-      model_attr.split("::").last.split("#").first
-    end
-
-    def attribute_name(model_attr)
-      model_attr.split("#").last
-    end
-
-    def is_matrix?(model_attr)
-      Magma.instance.get_model(
-        @project_name, model_name(model_attr)
-      ).attributes[attribute_name(model_attr).to_sym].is_a?(Magma::MatrixAttribute)
-    end
   end
 
-  class QueryFormat
+  class QuestionFormat
     attr_reader :model_attr
 
     def initialize(project_name, tuple, expand_matrices)
@@ -105,7 +107,7 @@ class Magma
       @expand_matrices = expand_matrices
 
       @model_attr = tuple.first
-      @paths = Magma::QueryFormatPaths.new(
+      @paths = Magma::QuestionFormatPaths.new(
         @project_name, tuple.last, @expand_matrices
       )
     end

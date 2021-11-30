@@ -1,4 +1,7 @@
 class Magma
+  class TSVError < StandardError
+  end
+
   class TSVWriterBase
     def initialize(opts = {})
       @expand_matrices = opts[:expand_matrices]

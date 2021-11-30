@@ -1,4 +1,4 @@
-describe Magma::QueryFormatReducer do
+describe Magma::QuestionFormatReducer do
   include Rack::Test::Methods
 
   def app
@@ -6,7 +6,7 @@ describe Magma::QueryFormatReducer do
   end
 
   before(:each) do
-    @reducer = Magma::QueryFormatReducer.new("labors")
+    @reducer = Magma::QuestionFormatReducer.new("labors")
   end
 
   context "reduce_leaves" do
@@ -165,7 +165,7 @@ describe Magma::QueryFormatReducer do
     #     ],
     #   ])
 
-    #   @reducer = Magma::QueryFormatReducer.new(project_name: "labors", expand_matrices: true)
+    #   @reducer = Magma::QuestionFormatReducer.new(project_name: "labors", expand_matrices: true)
     #   result = @reducer.reduce_leaves(matrix_answer, 1)
 
     #   expect(result).to eq([

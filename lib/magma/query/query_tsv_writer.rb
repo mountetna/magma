@@ -5,6 +5,7 @@ class Magma
   class QueryTSVWriter < Magma::TSVWriterBase
     def initialize(question, opts = {})
       @question = question
+      @question.set_expand_matrices(opts[:expand_matrices]) if opts[:expand_matrices]
       super(opts)
     end
 
@@ -56,6 +57,17 @@ class Magma
       []
     end
 
+    def path_to_matrix_value(search_array, matrix_heading)
+      return path_to_value(search_array, matrix_heading) unless @expand_matrices
+
+      attribute_path = path_to_value(search_array, matrix_heading.model_attr_col)
+      matrix_columns_path = attribute_path.slice(0..-2).concat([1])
+
+      matrix_columns = search_array.dig(*matrix_columns_path)
+
+      attribute_path.slice(0..-2).concat([matrix_columns.find_index(matrix_heading.matrix_column_name)])
+    end
+
     def matrix_attribute_format(model_name, attribute_name)
       require "pry"
       binding.pry
@@ -95,15 +107,90 @@ class Magma
       CSV.generate(col_sep: "\t") do |csv|
         records.map do |record|
           csv << model_attr_headers.map do |header|
-            require "pry"
-            binding.pry
-            path = path_to_value(@question.format, header)
-            value = record.dig(*path)
+            tsv_column = TSVHeader.new(@question.model.project_name, header)
 
-            value.is_a?(Array) ? value.map(&:to_s).join(",") : value
+            if tsv_column.matrix_col?
+              path = path_to_matrix_value(@question.format, tsv_column)
+            else
+              path = path_to_value(@question.format, header)
+            end
+
+            raise Magma::TSVError.new("No path to data for #{header}.") if path.empty?
+
+            value = dig_flat(record, path)
+
+            value.map(&:to_s).join(",")
           end
         end
       end
+    end
+
+    def dig_flat(record, path)
+      # ["Lernean Hydra", [3, "Susan Doe", [["Shawn Doe", [[87, "Arm"], [88, "Leg"]]], ["Susan Doe", [[86, "Leg"], [85, "Arm"]]]]]]
+      # with path [1, 2, 1, 1]
+      # should return ["Arm", "Leg", "Leg", "Arm"]
+      # because the entry at [1, 2] is an array of branched values, not a path to
+      #   an inner value or an explicit answer?
+      # Blah, and what do you do about matrices?
+      queue = path.dup
+      flattened_values = []
+      value_under_test = record
+
+      while !queue.empty?
+        index = queue.shift
+        entry = value_under_test[index]
+        if entry.is_a?(Array) && entry.first.is_a?(Array)
+          # branched record, need to reduce the interior entries
+          inner_path = queue.dup
+
+          entry.each do |e|
+            flattened_values = flattened_values.concat(dig_flat(e, inner_path))
+          end
+
+          # We leave the loop because we've had to reduce
+          break
+        elsif entry.is_a?(Magma::MatrixPredicate::MatrixValue) && @expand_matrices
+          # if we expand the matrix, need to unpack the MatrixValue
+          unpacked_matrix = JSON.parse(entry.to_json)
+
+          matrix_index = queue.shift
+
+          flattened_values = [unpacked_matrix[matrix_index]]
+          break
+        end
+
+        value_under_test = entry
+      end
+
+      # no reduction was required, so just use dig
+      if queue.empty? && flattened_values.empty?
+        flattened_values = [record.dig(*path)]
+      end
+
+      flattened_values
+    end
+  end
+
+  class TSVHeader < Magma::QuestionColumnBase
+    attr_reader :header
+
+    def initialize(project_name, header)
+      @header = header
+      @project_name = project_name
+    end
+
+    def matrix_col?
+      is_matrix?(@header)
+    end
+
+    def model_attr_col
+      @header.split(".").first
+    end
+
+    def matrix_column_name
+      raise "Unavailable" unless matrix_col?
+
+      @header.split(".").last
     end
   end
 end
