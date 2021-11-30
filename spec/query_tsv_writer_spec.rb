@@ -238,6 +238,60 @@ describe Magma::QueryTSVWriter do
   end
 
   it "can handle multiple matrix columns, when expanding" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
+    )
+
+    file = StringIO.new
+    Magma::QueryTSVWriter.new(question, expand_matrices: true).write_tsv { |lines| file.write lines }
+
+    lines = file.string.split("\n")
+    header = lines[0]
+
+    expect(header).to eq("labors::labor#name\tlabors::labor#number\tlabors::labor#contributions.Athens\tlabors::labor#contributions.Sparta\tlabors::labor#contributions.Thebes")
+    expect(lines.size).to eq(4)
+
+    expect(lines[1].split("\t")).to eq([
+      belt.name,
+      belt.number.to_s,
+      "10",
+      "11",
+      "13",
+    ])
+
+    expect(lines[2].split("\t")).to eq([
+      cattle.name,
+      cattle.number.to_s,
+      "20",
+      "21",
+      "23",
+    ])
+
+    expect(lines[3].split("\t")).to eq([
+      apples.name,
+      apples.number.to_s,
+      "30",
+      "31",
+      "33",
+    ])
   end
 
   it "should not contain expanded matrix header if not expand_matrices" do
@@ -286,6 +340,60 @@ describe Magma::QueryTSVWriter do
       apples.name,
       apples.number.to_s,
       "30,31",
+    ])
+  end
+
+  it "can handle multiple matrix columns, when not expanding" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
+    )
+
+    file = StringIO.new
+    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
+
+    lines = file.string.split("\n")
+    header = lines[0]
+
+    expect(header).to eq("labors::labor#name\tlabors::labor#number\tlabors::labor#contributions\tlabors::labor#contributions")
+    expect(lines.size).to eq(4)
+
+    expect(lines[1].split("\t")).to eq([
+      belt.name,
+      belt.number.to_s,
+      "10,11",
+      "13",
+    ])
+
+    expect(lines[2].split("\t")).to eq([
+      cattle.name,
+      cattle.number.to_s,
+      "20,21",
+      "23",
+    ])
+
+    expect(lines[3].split("\t")).to eq([
+      apples.name,
+      apples.number.to_s,
+      "30,31",
+      "33",
     ])
   end
 
