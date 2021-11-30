@@ -63,6 +63,70 @@ describe Magma::QueryTSVWriter do
   end
 
   it "can handle multiple table columns, filtered out differently" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+    labors = create_list(:labor, 2, project: project)
+
+    lion_labor = labors.first
+    hydra_labor = labors.last
+
+    lion_monster = create(:monster, :lion, labor: lion_labor)
+    hydra_monster = create(:monster, :hydra, labor: hydra_labor)
+
+    john_doe = create(:victim, name: "John Doe", monster: lion_monster, country: "Italy")
+    jane_doe = create(:victim, name: "Jane Doe", monster: lion_monster, country: "Greece")
+
+    susan_doe = create(:victim, name: "Susan Doe", monster: hydra_monster, country: "Italy")
+    shawn_doe = create(:victim, name: "Shawn Doe", monster: hydra_monster, country: "Greece")
+
+    create(:wound, victim: john_doe, location: "Arm", severity: 5)
+    create(:wound, victim: john_doe, location: "Leg", severity: 1)
+    create(:wound, victim: jane_doe, location: "Arm", severity: 2)
+    create(:wound, victim: jane_doe, location: "Head", severity: 4)
+    create(:wound, victim: susan_doe, location: "Arm", severity: 3)
+    create(:wound, victim: susan_doe, location: "Leg", severity: 3)
+    create(:wound, victim: shawn_doe, location: "Arm", severity: 1)
+    create(:wound, victim: shawn_doe, location: "Leg", severity: 1)
+
+    question = Magma::Question.new(
+      "labors",
+      ["victim", "::all",
+       [
+        ["wound", ["location", "::equals", "Head"], "::all", "severity"],
+        ["wound", ["location", "::equals", "Arm"], "::all", "severity"],
+      ]]
+    )
+
+    file = StringIO.new
+    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
+
+    lines = file.string.split("\n")
+    header = lines[0]
+    expect(header).to eq("labors::victim#name\tlabors::wound#severity\tlabors::wound#severity")
+    expect(lines.size).to eq(5)
+
+    expect(lines[1].split("\t")).to eq([
+      "Jane Doe",
+      "4",
+      "2",
+    ])
+
+    expect(lines[2].split("\t")).to eq([
+      "John Doe",
+      "",
+      "5",
+    ])
+
+    expect(lines[3].split("\t")).to eq([
+      "Shawn Doe",
+      "",
+      "1",
+    ])
+
+    expect(lines[4].split("\t")).to eq([
+      "Susan Doe",
+      "",
+      "3",
+    ])
   end
 
   it "can transpose the resulting data" do
@@ -147,6 +211,7 @@ describe Magma::QueryTSVWriter do
 
     lines = file.string.split("\n")
     header = lines[0]
+
     expect(header).to eq("labors::labor#name\tlabors::labor#number\tlabors::labor#contributions.Athens\tlabors::labor#contributions.Sparta")
     expect(lines.size).to eq(4)
 

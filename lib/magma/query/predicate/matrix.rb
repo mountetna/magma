@@ -59,6 +59,8 @@ class Magma
     end
 
     class MatrixValue
+      attr_reader :column_names
+
       def initialize(predicate, identifier, column_names=nil)
         @predicate = predicate
         @identifier = identifier

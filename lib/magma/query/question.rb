@@ -69,13 +69,13 @@ class Magma
       @options[:show_disconnected]
     end
 
-    def set_expand_matrices(expand_matrices)
-      @options[:expand_matrices] = expand_matrices
-    end
+    # def set_expand_matrices(expand_matrices)
+    #   @options[:expand_matrices] = expand_matrices
+    # end
 
-    def expand_matrices?
-      !!@options[:expand_matrices]
-    end
+    # def expand_matrices?
+    #   !!@options[:expand_matrices]
+    # end
 
     def answer
       table = to_table(query)
@@ -125,8 +125,7 @@ class Magma
       format_reducer = Magma::QuestionFormatReducer.new(@project_name)
 
       format_reducer.reduce_leaves(
-        data_source: format,
-        expand_matrices: expand_matrices?
+        data_source: format
       )
     end
 
