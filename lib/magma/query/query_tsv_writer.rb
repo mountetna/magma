@@ -34,22 +34,26 @@ class Magma
 
     private
 
+    def project_name
+      @question.model.project_name
+    end
+
     def attr_is_matrix(model_name, attribute_name)
       Magma.instance.get_model(
-        @question.model.class.project_name, model_name
+        project_name, model_name
       ).attributes[attribute_name.to_sym].is_a?(Magma::MatrixAttribute)
     end
 
-    def path_to_value(search_array, target_value, current_path = [])
+    def path_to_value(search_array, target_column, current_path = [])
       return [] unless search_array
       search_array = [search_array] unless search_array.is_a?(Array)
 
-      direct_index = search_array.find_index(target_value)
+      direct_index = search_array.find_index(target_column.header)
       return current_path.concat([direct_index]) unless direct_index.nil?
 
       search_array.each.with_index do |element, index|
         if element.is_a?(Array)
-          temp_path = path_to_value(element, target_value, current_path.concat([index]))
+          temp_path = path_to_value(element, target_column, current_path.concat([index]))
           return temp_path unless temp_path.empty?
         end
       end
@@ -58,14 +62,22 @@ class Magma
     end
 
     def path_to_matrix_value(search_array, matrix_heading)
-      return path_to_value(search_array, matrix_heading) unless @expand_matrices
+      attribute_path = path_to_value(search_array, TSVHeader.new(
+        project_name,
+        matrix_heading.model_attr_col
+      ))
 
-      attribute_path = path_to_value(search_array, matrix_heading.model_attr_col)
-      matrix_columns_path = attribute_path.slice(0..-2).concat([1])
+      if @expand_matrices
+        matrix_columns_path = attribute_path.slice(0..-2).concat([1])
 
-      matrix_columns = search_array.dig(*matrix_columns_path)
+        matrix_columns = search_array.dig(*matrix_columns_path)
 
-      attribute_path.slice(0..-2).concat([matrix_columns.find_index(matrix_heading.matrix_column_name)])
+        attribute_path.slice(0..-2).concat([matrix_columns.find_index(matrix_heading.matrix_column_name)])
+      else
+        # We don't need the extra 0 introduced due to the
+        #   nested matrix array
+        attribute_path.slice(0..-2)
+      end
     end
 
     def matrix_attribute_format(model_name, attribute_name)
@@ -107,15 +119,15 @@ class Magma
       CSV.generate(col_sep: "\t") do |csv|
         records.map do |record|
           csv << model_attr_headers.map do |header|
-            tsv_column = TSVHeader.new(@question.model.project_name, header)
+            tsv_column = TSVHeader.new(project_name, header)
 
             if tsv_column.matrix_col?
               path = path_to_matrix_value(@question.format, tsv_column)
             else
-              path = path_to_value(@question.format, header)
+              path = path_to_value(@question.format, tsv_column)
             end
 
-            raise Magma::TSVError.new("No path to data for #{header}.") if path.empty?
+            raise Magma::TSVError.new("No path to data for #{tsv_column.header}.") if path.empty?
 
             value = dig_flat(record, path)
 
@@ -156,6 +168,9 @@ class Magma
           matrix_index = queue.shift
 
           flattened_values = [unpacked_matrix[matrix_index]]
+          break
+        elsif entry.is_a?(Magma::MatrixPredicate::MatrixValue)
+          flattened_values = JSON.parse(entry.to_json)
           break
         end
 

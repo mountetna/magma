@@ -190,32 +190,38 @@ describe Magma::QueryTSVWriter do
 
     question = Magma::Question.new(
       "labors",
-      ["monster", "::all",
+      ["labor", "::all",
        [
-        ["labor", "number"],
-        ["victim", "::first", "name"],
-        ["victim", "::all", "wound", "::all", "location"],
-      ]]
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+      ]],
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, transpose: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
-    header = lines.map { |l| l.split("\t").first }
+    header = lines[0]
+    expect(header).to eq("labors::labor#name\tlabors::labor#number\tlabors::labor#contributions")
+    expect(lines.size).to eq(4)
 
-    expect(lines.length).to eq(4)
+    expect(lines[1].split("\t")).to eq([
+      belt.name,
+      belt.number.to_s,
+      "10,11",
+    ])
 
-    john_doe.refresh
-    jane_doe.refresh
-    shawn_doe.refresh
-    susan_doe.refresh
+    expect(lines[2].split("\t")).to eq([
+      cattle.name,
+      cattle.number.to_s,
+      "20,21",
+    ])
 
-    expect(lines.first.split("\t")[1]).to eq(hydra_monster.name)
-    expect(lines.first.split("\t")[2]).to eq(lion_monster.name)
-
-    expect(lines.last.split("\t")[1].split(",")).to match_array(shawn_doe.wound.map(&:location).concat(susan_doe.wound.map(&:location)))
-    expect(lines.last.split("\t")[2].split(",")).to match_array(john_doe.wound.map(&:location).concat(jane_doe.wound.map(&:location)))
+    expect(lines[3].split("\t")).to eq([
+      apples.name,
+      apples.number.to_s,
+      "30,31",
+    ])
   end
 
   it "can tranpose unexpanded matrix column" do
