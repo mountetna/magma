@@ -177,8 +177,7 @@ describe Magma::QueryTSVWriter do
     shawn_doe.refresh
     susan_doe.refresh
 
-    expect(lines.first.split("\t")[1]).to eq(hydra_monster.name)
-    expect(lines.first.split("\t")[2]).to eq(lion_monster.name)
+    expect(lines.first.split("\t")[1..-1]).to match_array([hydra_monster.name, lion_monster.name])
 
     expect(lines.last.split("\t")[1].split(",")).to match_array(shawn_doe.wound.map(&:location).concat(susan_doe.wound.map(&:location)))
     expect(lines.last.split("\t")[2].split(",")).to match_array(john_doe.wound.map(&:location).concat(jane_doe.wound.map(&:location)))
@@ -399,58 +398,75 @@ describe Magma::QueryTSVWriter do
 
   it "can tranpose unexpanded matrix column" do
     project = create(:project, name: "The Twelve Labors of Hercules")
-    labors = create_list(:labor, 4, project: project)
 
-    payload = Magma::Payload.new
-    model = Magma.instance.get_model("labors", "labor")
-    retrieval = Magma::Retrieval.new(
-      model,
-      nil,
-      [:contributions],
-      filter: nil,
-      page: 1,
-      page_size: 5,
-      output_predicates: [Magma::Retrieval::StringOutputPredicate.new("contributions[]Sidon")],
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(
-      model,
-      retrieval,
-      payload,
-      expand_matrices: true,
-    ).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new(question, transpose: true).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
-    header = lines[0]
-    expect(header.include?("contributions.Sidon")).to eq(true)
-    expect(header.include?("contributions.Athens")).to eq(false)
-    expect(header.include?("contributions\n")).to eq(false)
-    expect(lines[1].count("\t")).to eq(1)
+    header = lines.map { |l| l.split("\t").first }
+
+    expect(lines.length).to eq(4)
+
+    expect(lines.first.split("\t")[1..-1]).to match_array([belt.name, cattle.name, apples.name])
+    expect(lines[2].split("\t")[1..-1]).to match_array(["10,11", "20,21", "30,31"])
+    expect(lines.last.split("\t")[1..-1]).to match_array(["13", "23", "33"])
   end
 
   it "can transpose expanded matrix columns" do
     project = create(:project, name: "The Twelve Labors of Hercules")
-    labor = create(:labor, project: project)
-    prizes = create_list(:prize, 3, labor: labor)
 
-    payload = Magma::Payload.new
-    model = Magma.instance.get_model("labors", "prize")
-    retrieval = Magma::Retrieval.new(
-      model,
-      nil,
-      "all",
-      filter: nil,
-      page: 1,
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(model, retrieval, payload).write_tsv { |lines| file.write lines }
-    lines = file.string.split("\n")
-    header = lines[0]
+    Magma::QueryTSVWriter.new(question, transpose: true, expand_matrices: true).write_tsv { |lines| file.write lines }
 
-    expect(header.split("\t").sort).to eql(["labor", "name", "worth"])
-    expect(lines[1].count("\t")).to eq(2)
+    lines = file.string.split("\n")
+    header = lines.map { |l| l.split("\t").first }
+
+    expect(lines.length).to eq(5)
+
+    expect(lines.first.split("\t")[1..-1]).to match_array([belt.name, cattle.name, apples.name])
+    expect(lines[2].split("\t")[1..-1]).to match_array(["10", "20", "30"])
+    expect(lines[3].split("\t")[1..-1]).to match_array(["11", "21", "31"])
+    expect(lines.last.split("\t")[1..-1]).to match_array(["13", "23", "33"])
   end
 
   it "can provide display labels to rename columns" do
