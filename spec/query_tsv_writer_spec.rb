@@ -236,6 +236,58 @@ describe Magma::QueryTSVWriter do
     ])
   end
 
+  it "correctly handles records without matrix data" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta 4", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon 4", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides 4", number: 11, project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+      ]],
+    )
+
+    file = StringIO.new
+    Magma::QueryTSVWriter.new(question, expand_matrices: true).write_tsv { |lines| file.write lines }
+
+    tsv = CSV.parse(file.string, col_sep: "\t")
+    header = tsv.first
+
+    expect(header).to eq(["labors::labor#name", "labors::labor#number", "labors::labor#contributions.Athens", "labors::labor#contributions.Sparta"])
+    expect(tsv.size).to eq(4)
+
+    expect(tsv[1]).to eq([
+      belt.name,
+      belt.number.to_s,
+      "10",
+      "11",
+    ])
+
+    expect(tsv[2]).to eq([
+      cattle.name,
+      cattle.number.to_s,
+      "20",
+      "21",
+    ])
+
+    expect(tsv[3]).to eq([
+      apples.name,
+      apples.number.to_s,
+      nil,
+      nil,
+    ])
+  end
+
   it "can handle multiple matrix columns, when expanding" do
     project = create(:project, name: "The Twelve Labors of Hercules")
 

@@ -95,17 +95,19 @@ class Magma
       header.header
     end
 
-    def expand(header, index)
+    def matrix_columns(header, index)
       path_to_matrix_format = path_to_value(
         @question.format[1],
         header,
         starting_index: index - 1,
       )
 
-      matrix_columns = @question.format[1].dig(*(path_to_matrix_format.slice(0..-2).concat([1])))
+      @question.format[1].dig(*(path_to_matrix_format.slice(0..-2).concat([1])))
+    end
 
+    def expand(header, index)
       renamed_header = rename(header, index)
-      matrix_columns.map do |col|
+      matrix_columns(header, index).map do |col|
         "#{renamed_header}.#{col}"
       end
     end
@@ -147,14 +149,20 @@ class Magma
 
               raise Magma::TSVError.new("No path to data for #{tsv_column.header}.") if path.empty?
 
-              value = dig_flat(record.last, path)
+              begin
+                value = dig_flat(record.last, path)
+              rescue => e
+                Magma.instance.logger.error(record.first)
+                Magma.instance.logger.log_error(e)
+                value = nil
+              end
 
               if @expand_matrices && tsv_column.matrix?
-                row = row.concat(value)
-              else
-                row << (value.nil? ?
-                  nil :
+                row = row.concat(value.nil? ?
+                  Array.new(matrix_columns(tsv_column, index - 1).length) { nil } :
                   value)
+              else
+                row << value
               end
             end
           end
