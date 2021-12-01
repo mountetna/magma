@@ -2347,19 +2347,6 @@ describe QueryController do
       expect(table).to match_array(labor_list.map{|l| [ l.name, l.name, l.completed.to_s, l.number.to_s ] })
     end
 
-    it 'can send the query as a JSON string' do
-      labor_list = create_list(:labor, 12, project: @project)
-      query_opts(
-        ['labor', '::all', ['name', 'completed', 'number']].to_json,
-        format: 'tsv'
-      )
-
-      header, *table = CSV.parse(last_response.body, col_sep: "\t")
-
-      expect(header).to eq(["labors::labor#name", "labors::labor#name", "labors::labor#completed", "labors::labor#number"])
-      expect(table).to match_array(labor_list.map{|l| [ l.name, l.name, l.completed.to_s, l.number.to_s ] })
-    end
-
     it 'can rename columns in the tsv' do
       labor_list = create_list(:labor, 12, project: @project)
       query_opts(
