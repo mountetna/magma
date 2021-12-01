@@ -1,5 +1,5 @@
 require_relative "../tsv_writer_base"
-require_relative "./query_tsv_utils"
+require_relative "./question_format"
 
 class Magma
   class QueryTSVWriter < Magma::TSVWriterBase
