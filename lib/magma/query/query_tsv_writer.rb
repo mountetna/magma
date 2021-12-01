@@ -3,7 +3,8 @@ require_relative "./question_format"
 
 class Magma
   class QueryTSVWriter < Magma::TSVWriterBase
-    def initialize(question, opts = {})
+    def initialize(project_name, question, opts = {})
+      @project_name = project_name
       @question = question
 
       validate_columns(opts[:user_columns]) if opts[:user_columns]
@@ -42,13 +43,9 @@ class Magma
       raise TSVError.new("Columns array must be #{model_attr_headers.length} elements long") unless model_attr_headers.length == user_columns.length
     end
 
-    def project_name
-      @question.model.project_name
-    end
-
     def attr_is_matrix(model_name, attribute_name)
       Magma.instance.get_model(
-        project_name, model_name
+        @project_name, model_name
       ).attributes[attribute_name.to_sym].is_a?(Magma::MatrixAttribute)
     end
 
@@ -84,7 +81,7 @@ class Magma
     def model_attr_headers
       # "raw" headers that reference only the model + attribute names
       @model_attr_headers ||= @question.columns.map do |col|
-        TSVHeader.new(project_name, col)
+        TSVHeader.new(@project_name, col)
       end
     end
 

@@ -47,7 +47,7 @@ class Magma
   end
 
   class Question
-    attr_reader :user, :model
+    attr_reader :user
     def initialize(project_name, query_args, options = {})
       @project_name = project_name
       @model = Magma.instance.get_model(project_name, query_args.shift)

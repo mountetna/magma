@@ -11,7 +11,7 @@ class QueryController < Magma::Controller
         return success(Magma::Predicate.to_json, "application/json")
       end
       question = Magma::Question.new(
-        @project_name, query_array,
+        @project_name, @params[:query],
         show_disconnected: @params[:show_disconnected],
         restrict: !@user.can_see_restricted?(@project_name),
         user: @user,
@@ -22,7 +22,7 @@ class QueryController < Magma::Controller
       )
 
       case format
-      when 'tsv'
+      when "tsv"
         return tsv_payload(question)
       else
         return json_payload(question)
@@ -39,13 +39,6 @@ class QueryController < Magma::Controller
 
   private
 
-  def query_array
-    # forms (to download a TSV, for example), do not handle
-    #   nested arrays elegantly. So we also accept a JSON-stringified
-    #   version of a query
-    @params[:query].is_a?(Array) ? @params[:query] : JSON.parse(@params[:query])
-  end
-
   def format
     @params[:format]
   end
@@ -58,24 +51,16 @@ class QueryController < Magma::Controller
   def tsv_payload(question)
     stream = Enumerator.new do |stream|
       Magma::QueryTSVWriter.new(
+        @project_name,
         question,
         expand_matrices: !!@params[:expand_matrices],
         transpose: !!@params[:transpose],
-        user_columns: user_columns_array,
+        user_columns: @params[:user_columns],
       ).write_tsv { |lines| stream << lines }
     end
 
     filename = "#{@project_name}_query_results_#{DateTime.now.strftime("%Y_%m_%d_%H_%M_%S")}.tsv"
 
     [200, { "Content-Type" => "text/tsv", "Content-Disposition" => "inline; filename=\"#{filename}\"" }, stream]
-  end
-
-  def user_columns_array
-    # forms (to download a TSV, for example), do not handle
-    #   nested arrays elegantly. So we also accept a JSON-stringified
-    #   version of the user_columns
-    return nil unless @params[:user_columns]
-
-    @params[:user_columns].is_a?(Array) ? @params[:user_columns] : JSON.parse(@params[:user_columns])
   end
 end

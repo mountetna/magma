@@ -37,7 +37,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question).write_tsv { |lines| file.write lines }
 
     tsv = CSV.parse(file.string, col_sep: "\t")
     header = tsv[0]
@@ -97,7 +97,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
@@ -165,7 +165,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, transpose: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question, transpose: true).write_tsv { |lines| file.write lines }
 
     tsv = CSV.parse(file.string, col_sep: "\t")
     header = tsv.map { |l| l.first }
@@ -206,7 +206,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, expand_matrices: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question, expand_matrices: true).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
@@ -258,7 +258,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, expand_matrices: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question, expand_matrices: true).write_tsv { |lines| file.write lines }
 
     tsv = CSV.parse(file.string, col_sep: "\t")
     header = tsv.first
@@ -312,7 +312,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, expand_matrices: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question, expand_matrices: true).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
@@ -368,7 +368,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
@@ -418,7 +418,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines[0]
@@ -472,7 +472,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, transpose: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question, transpose: true).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines.map { |l| l.split("\t").first }
@@ -508,7 +508,7 @@ describe Magma::QueryTSVWriter do
     )
 
     file = StringIO.new
-    Magma::QueryTSVWriter.new(question, transpose: true, expand_matrices: true).write_tsv { |lines| file.write lines }
+    Magma::QueryTSVWriter.new("labors", question, transpose: true, expand_matrices: true).write_tsv { |lines| file.write lines }
 
     lines = file.string.split("\n")
     header = lines.map { |l| l.split("\t").first }
@@ -546,7 +546,7 @@ describe Magma::QueryTSVWriter do
 
     file = StringIO.new
     expect {
-      Magma::QueryTSVWriter.new(question, user_columns: ["whoami"], expand_matrices: true).write_tsv { |lines| file.write lines }
+      Magma::QueryTSVWriter.new("labors", question, user_columns: ["whoami"], expand_matrices: true).write_tsv { |lines| file.write lines }
     }.to raise_error(Magma::TSVError)
   end
 
@@ -575,6 +575,7 @@ describe Magma::QueryTSVWriter do
 
     file = StringIO.new
     Magma::QueryTSVWriter.new(
+      "labors",
       question,
       user_columns: ["labor", "number", "first_contribution", "second_contribution"],
       expand_matrices: true,
@@ -636,6 +637,7 @@ describe Magma::QueryTSVWriter do
 
     file = StringIO.new
     Magma::QueryTSVWriter.new(
+      "labors",
       question,
       user_columns: ["labor", "number", "first_contribution", "second_contribution"],
     ).write_tsv { |lines| file.write lines }
