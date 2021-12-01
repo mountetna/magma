@@ -5,6 +5,11 @@ class Magma
   class QueryTSVWriter < Magma::TSVWriterBase
     def initialize(question, opts = {})
       @question = question
+
+      validate_columns(opts[:user_columns]) if opts[:user_columns]
+
+      @user_columns = opts[:user_columns]
+
       super(opts)
     end
 
@@ -32,6 +37,10 @@ class Magma
     end
 
     private
+
+    def validate_columns(user_columns)
+      raise TSVError.new("Columns array must be #{model_attr_headers.length} elements long") unless model_attr_headers.length == user_columns.length
+    end
 
     def project_name
       @question.model.project_name
@@ -74,13 +83,15 @@ class Magma
 
     def model_attr_headers
       # "raw" headers that reference only the model + attribute names
-      @question.columns.map do |col|
+      @model_attr_headers ||= @question.columns.map do |col|
         TSVHeader.new(project_name, col)
       end
     end
 
-    def rename(header)
+    def rename(header, index)
       # Stub for if user supplies column naming
+      return @user_columns[index] if @user_columns
+
       header.header
     end
 
@@ -93,20 +104,21 @@ class Magma
 
       matrix_columns = @question.format[1].dig(*(path_to_matrix_format.slice(0..-2).concat([1])))
 
+      renamed_header = rename(header, index)
       matrix_columns.map do |col|
-        "#{rename(header)}.#{col}"
+        "#{renamed_header}.#{col}"
       end
     end
 
     def tsv_header
       # Start with the raw, internal headers.
-      # If the user supplies a :columns option, in
+      # If the user supplies a :user_columns option, in
       #   which case, rename according to the :display_label
       # Expand matrix headers if necessary
       model_attr_headers.map.with_index do |model_attr_header, index|
-        @expand_matrices && model_attr_header.matrix_col? ?
+        @expand_matrices && model_attr_header.matrix? ?
           expand(model_attr_header, index) :
-          rename(model_attr_header)
+          rename(model_attr_header, index)
       end.flatten.join("\t") + "\n"
     end
 
@@ -154,8 +166,9 @@ class Magma
       queue = path.dup
       flattened_values = []
       value_under_test = record
+      processing_complete = false
 
-      while !queue.empty?
+      while !queue.empty? && !processing_complete
         index = queue.shift
 
         # Sometimes the record won't have data for this attribute
@@ -167,15 +180,15 @@ class Magma
           # branched record, need to reduce the interior entries
           inner_path = queue.dup
 
-          entry.each do |e|
-            flattened_values = flattened_values.concat(dig_flat(e, inner_path))
-          end
+          flattened_values = entry.map do |e|
+            dig_flat(e, inner_path)
+          end.flatten
 
           # We leave the loop because we've had to reduce
-          break
+          processing_complete = true
         elsif entry.is_a?(Magma::MatrixPredicate::MatrixValue)
           flattened_values = JSON.parse(entry.to_json)
-          break
+          processing_complete = true
         end
 
         value_under_test = entry
@@ -198,7 +211,7 @@ class Magma
       @project_name = project_name
     end
 
-    def matrix_col?
+    def matrix?
       is_matrix?(@header)
     end
 
@@ -207,7 +220,7 @@ class Magma
     end
 
     def matrix_column_name
-      raise "Unavailable" unless matrix_col?
+      raise "Unavailable" unless matrix?
 
       @header.split(".").last
     end

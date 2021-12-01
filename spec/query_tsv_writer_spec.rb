@@ -469,6 +469,150 @@ describe Magma::QueryTSVWriter do
     expect(lines.last.split("\t")[1..-1]).to match_array(["13", "23", "33"])
   end
 
-  it "can provide display labels to rename columns" do
+  it "throws exception if user_columns is wrong size" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
+    )
+
+    file = StringIO.new
+    expect {
+      Magma::QueryTSVWriter.new(question, user_columns: ["whoami"], expand_matrices: true).write_tsv { |lines| file.write lines }
+    }.to raise_error(Magma::TSVError)
+  end
+
+  it "can provide display labels to rename columns, expanded matrix" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
+    )
+
+    file = StringIO.new
+    Magma::QueryTSVWriter.new(
+      question,
+      user_columns: ["labor", "number", "first_contribution", "second_contribution"],
+      expand_matrices: true,
+    ).write_tsv { |lines| file.write lines }
+
+    lines = file.string.split("\n")
+    header = lines[0]
+
+    expect(header).to eq("labor\tnumber\tfirst_contribution.Athens\tfirst_contribution.Sparta\tsecond_contribution.Thebes")
+    expect(lines.size).to eq(4)
+
+    expect(lines[1].split("\t")).to eq([
+      belt.name,
+      belt.number.to_s,
+      "10",
+      "11",
+      "13",
+    ])
+
+    expect(lines[2].split("\t")).to eq([
+      cattle.name,
+      cattle.number.to_s,
+      "20",
+      "21",
+      "23",
+    ])
+
+    expect(lines[3].split("\t")).to eq([
+      apples.name,
+      apples.number.to_s,
+      "30",
+      "31",
+      "33",
+    ])
+  end
+
+  it "can provide display labels to rename columns, unexpanded matrix" do
+    project = create(:project, name: "The Twelve Labors of Hercules")
+
+    matrix = [
+      [10, 11, 12, 13],
+      [20, 21, 22, 23],
+      [30, 31, 32, 33],
+    ]
+
+    belt = create(:labor, name: "Belt of Hippolyta", number: 9, contributions: matrix[0], project: project)
+    cattle = create(:labor, name: "Cattle of Geryon", number: 10, contributions: matrix[1], project: project)
+    apples = create(:labor, name: "Golden Apples of the Hesperides", number: 11, contributions: matrix[2], project: project)
+
+    question = Magma::Question.new(
+      "labors",
+      ["labor", "::all",
+       [
+        "number",
+        ["contributions", "::slice", ["Athens", "Sparta"]],
+        ["contributions", "::slice", ["Thebes"]],
+      ]],
+    )
+
+    file = StringIO.new
+    Magma::QueryTSVWriter.new(
+      question,
+      user_columns: ["labor", "number", "first_contribution", "second_contribution"],
+    ).write_tsv { |lines| file.write lines }
+
+    lines = file.string.split("\n")
+    header = lines[0]
+
+    expect(header).to eq("labor\tnumber\tfirst_contribution\tsecond_contribution")
+    expect(lines.size).to eq(4)
+
+    expect(lines[1].split("\t")).to eq([
+      belt.name,
+      belt.number.to_s,
+      "10,11",
+      "13",
+    ])
+
+    expect(lines[2].split("\t")).to eq([
+      cattle.name,
+      cattle.number.to_s,
+      "20,21",
+      "23",
+    ])
+
+    expect(lines[3].split("\t")).to eq([
+      apples.name,
+      apples.number.to_s,
+      "30,31",
+      "33",
+    ])
   end
 end
