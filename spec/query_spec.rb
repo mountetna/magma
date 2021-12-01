@@ -2347,6 +2347,20 @@ describe QueryController do
       expect(table).to match_array(labor_list.map{|l| [ l.name, l.name, l.completed.to_s, l.number.to_s ] })
     end
 
+    it 'can rename columns in the tsv' do
+      labor_list = create_list(:labor, 12, project: @project)
+      query_opts(
+        ['labor', '::all', ['name', 'completed', 'number']],
+        format: 'tsv',
+        user_columns: ['name', 'name', 'completed', 'number']
+      )
+
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(header).to eq(["name", "name", "completed", "number"])
+      expect(table).to match_array(labor_list.map{|l| [ l.name, l.name, l.completed.to_s, l.number.to_s ] })
+    end
+
     it 'can retrieve a TSV of data from multiple models' do
       labor_list = create_list(:labor, 12, project: @project)
       lion = create(:monster, :lion, species: 'mammal', labor: labor_list[0])
@@ -2382,7 +2396,13 @@ describe QueryController do
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
       expect(header).to eq(["labors::project#name", "labors::labor#name", "labors::labor#number"])
-      expect(table).to match_array([ [ "The Twelve Labors of Hercules", labors.sort_by(&:name).map(&:identifier).join(','), labors.sort_by(&:name).map(&:number).join(',') ] ])
+
+      expect(table.length).to eq(1)
+      data = table.first
+
+      expect(data.first).to eq("The Twelve Labors of Hercules")
+      expect(JSON.parse(data[1])).to match_array(labors.sort_by(&:name).map(&:identifier))
+      expect(JSON.parse(data.last)).to match_array(labors.sort_by(&:name).map(&:number))
     end
 
 
@@ -2408,15 +2428,15 @@ describe QueryController do
         ],
         format: 'tsv'
       )
-      require 'pry'
-      binding.pry
+
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
       expect(header).to eq(["labors::project#name", "labors::victim#name", "labors::victim#weapon"])
-      expect(table).to match_array([
-        [ "The Twelve Labors of Hercules",
-          [ jane_doe.name, john_doe.name, shawn_doe.name, susan_doe.name ],
-          [ jane_doe.weapon, john_doe.weapon, shawn_doe.weapon, susan_doe.weapon ]
-        ] ])
+      
+      data = table.first
+
+      expect(data.first).to eq("The Twelve Labors of Hercules")
+      expect(JSON.parse(data[1])).to match_array([ jane_doe.name, john_doe.name, shawn_doe.name, susan_doe.name ])
+      expect(JSON.parse(data.last)).to match_array([ jane_doe.weapon, john_doe.weapon, shawn_doe.weapon, susan_doe.weapon ])
     end
 
     it 'retrieves a TSV with file attributes as urls' do
@@ -2481,8 +2501,7 @@ describe QueryController do
         ],
         format: 'tsv'
       )
-      require 'pry'
-      binding.pry
+
       expect(last_response.status).to eq(200)
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
@@ -2494,7 +2513,7 @@ describe QueryController do
       Timecop.return
     end
 
-    it 'returns an unmelted slice of matrix data using output_predicate' do
+    it 'returns an unmelted slice of matrix data' do
       matrix = [
         [ 10, 11, 12, 13 ],
         [ 20, 21, 22, 23 ],
@@ -2505,18 +2524,18 @@ describe QueryController do
       cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
       apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
       
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: ["name", "contributions"],
-        output_predicate: "contributions[]Athens,Sparta",
+      query_opts(
+        [
+          'labor',
+          '::all',
+          [["contributions", "::slice", ["Athens", "Sparta"]]]
+        ],
         format: 'tsv'
       )
 
       expect(last_response.status).to eq(200)
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(header).to eq(["name", "contributions"])
+      expect(header).to eq(["labors::labor#name", "labors::labor#contributions"])
       expect(table.length).to eq(3)
       expect(table.first.first).to eq("Belt of Hippolyta")
       expect(table.first.length).to eq(2)
@@ -2535,60 +2554,29 @@ describe QueryController do
       another_cattle = create(:labor, name: 'Cattle of Geryon 3', number: 30, contributions: matrix[1], project: @project)
       another_apples = create(:labor, name: 'Golden Apples of the Hesperides 3', number: 31, contributions: matrix[2], project: @project)
       
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: ["name", "contributions"],
-        output_predicate: "contributions[]Athens,Sparta",
+      query_opts(
+        [
+          'labor',
+          '::all',
+          [["contributions", "::slice", ["Athens", "Sparta"]]]
+        ],
         format: 'tsv',
-        transpose: 'true'
+        transpose: true
       )
 
       expect(last_response.status).to eq(200)
       data = CSV.parse(last_response.body, col_sep: "\t")
 
       header = data.map { |d| d.first }
-      expect(header).to eq(["name", "contributions"])
+      expect(header).to eq(["labors::labor#name", "labors::labor#contributions"])
       expect(data.length).to eq(2)
       expect(data.first[1]).to eq("Belt of Hippolyta 3")
       expect(data.first.length).to eq(4) # 3 labors + 1 header
       expect(data.first.last).to eq("Golden Apples of the Hesperides 3")
-      expect(data.last).to eq(["contributions", "[10,11]", "[20,21]", "[30,31]"])
+      expect(data.last).to eq(["labors::labor#contributions", "[10, 11]", "[20, 21]", "[30, 31]"])
     end
 
-    it 'returns an unmelted slice of matrix data using string false for expand_matrices' do
-      matrix = [
-        [ 10, 11, 12, 13 ],
-        [ 20, 21, 22, 23 ],
-        [ 30, 31, 32, 33 ]
-      ]
-      # New labors, to avoid caching issues with MatrixAttribute
-      new_belt = create(:labor, name: 'Belt of Hippolyta 2', number: 19, contributions: matrix[0], project: @project)
-      new_cattle = create(:labor, name: 'Cattle of Geryon 2', number: 20, contributions: matrix[1], project: @project)
-      new_apples = create(:labor, name: 'Golden Apples of the Hesperides 2', number: 21, contributions: matrix[2], project: @project)
-      
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: ["name", "contributions"],
-        output_predicate: "contributions[]Athens,Sparta",
-        format: 'tsv',
-        expand_matrices: 'false'
-      )
-
-      expect(last_response.status).to eq(200)
-      header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(header).to eq(["name", "contributions"])
-      expect(table.length).to eq(3)
-      expect(table.first.first).to eq("Belt of Hippolyta 2")
-      expect(table.first.length).to eq(2)
-      expect(table.last.first).to eq("Golden Apples of the Hesperides 2")
-      expect(table.last.length).to eq(2)
-    end
-
-    it 'returns a melted slice of matrix data using output_predicate and expand_matrices' do
+    it 'returns a melted slice of matrix data with expand_matrices' do
       matrix = [
         [ 10, 11, 12, 13 ],
         [ 20, 21, 22, 23 ],
@@ -2599,19 +2587,19 @@ describe QueryController do
       cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
       apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
       
-      retrieve(
-        project_name: 'labors',
-        model_name: 'labor',
-        record_names: 'all',
-        attribute_names: ["name", "contributions"],
-        output_predicate: "contributions[]Athens,Sparta",
+      query_opts(
+        [
+          'labor',
+          '::all',
+          [["contributions", "::slice", ["Athens", "Sparta"]]]
+        ],
         format: 'tsv',
         expand_matrices: true
       )
 
       expect(last_response.status).to eq(200)
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
-      expect(header).to eq(["name", "contributions.Athens", "contributions.Sparta"])
+      expect(header).to eq(["labors::labor#name", "labors::labor#contributions.Athens", "labors::labor#contributions.Sparta"])
       expect(table.length).to eq(3)
       expect(table.first).to eq(["Belt of Hippolyta", "10", "11"])
       expect(table.last).to eq(["Golden Apples of the Hesperides", "30", "31"])

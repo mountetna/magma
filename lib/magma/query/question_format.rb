@@ -1,42 +1,10 @@
 class Magma
-  class QuestionFormatReducer
-    # Nested arrays of QuestionFormatTuples
-    def initialize(project_name)
-      @project_name = project_name
-    end
-
-    def reduce_leaves(data_source:, expand_matrices: false)
-      # Given the @question.format,
-      #   what the user queried for is in the leaf
-      #   values of a set of nested arrays.
-      # So here we extract only the leaf values.
-      query_format = convert(data_source, expand_matrices)
-
-      # We may be able to re-use this in the path-finding for
-      #   extracting answer values, but not clear yet.
-      [].tap do |result|
-        result << query_format.model_attr
-        result = result.concat(query_format.leaves)
-      end
-    end
-
-    private
-
-    def convert(raw_data, expand_matrices)
-      raise "Not valid format" unless Magma::QuestionFormat.is_raw_format_tuple?(raw_data)
-
-      Magma::QuestionFormat.new(
-        @project_name,
-        raw_data,
-        expand_matrices
-      )
-    end
-  end
-
   class QuestionFormatPaths
-    def initialize(project_name, data, expand_matrices)
+    def initialize(project_name, data)
+      data = [data] unless data.is_a?(Array)
+
       @paths = data.map do |datum|
-        Magma::QuestionFormatPath.new(project_name, datum, expand_matrices)
+        Magma::QuestionFormatPath.new(project_name, datum)
       end
     end
 
@@ -64,10 +32,9 @@ class Magma
   end
 
   class QuestionFormatPath < QuestionColumnBase
-    def initialize(project_name, data, expand_matrices)
+    def initialize(project_name, data)
       @project_name = project_name
       @data = data
-      @expand_matrices = expand_matrices
     end
 
     def leaves
@@ -79,16 +46,10 @@ class Magma
             result << last_part
           elsif last_part.is_a?(Array)
             if is_matrix?(first_part)
-              if @expand_matrices
-                result = result.concat(last_part.map do |matrix_column|
-                  "#{first_part}.#{matrix_column}"
-                end)
-              else
-                result << first_part
-              end
+              result << first_part
             else
               result = result.concat(Magma::QuestionFormatPath.new(
-                @project_name, last_part, @expand_matrices
+                @project_name, last_part
               ).leaves)
             end
           end
@@ -102,26 +63,31 @@ class Magma
   class QuestionFormat
     attr_reader :model_attr
 
-    def initialize(project_name, tuple, expand_matrices)
+    def initialize(project_name, format_array)
       @project_name = project_name
-      @expand_matrices = expand_matrices
 
-      @model_attr = tuple.first
+      raise "Invalid format" unless Magma::QuestionFormat.is_raw_format_array?(format_array)
+
+      @model_attr = format_array.first
       @paths = Magma::QuestionFormatPaths.new(
-        @project_name, tuple.last, @expand_matrices
+        @project_name, format_array.last
       )
     end
 
     def leaves
-      @paths.leaves
+      [].tap do |result|
+        result << model_attr
+        result = result.concat(@paths.leaves)
+      end
     end
 
-    def self.is_raw_format_tuple?(element)
+    def self.is_raw_format_array?(element)
       # In query format, we expect to have
-      #   a tuple in the form of [string, array]
+      #   an array in the form of [string, array] or
+      #   [string, string]
       element.is_a?(Array) &&
       element.length == 2 &&
-      element.last.is_a?(Array) &&
+      (element.last.is_a?(Array) || element.last.is_a?(String)) &&
       element.first.is_a?(String)
     end
   end

@@ -134,6 +134,9 @@ class Magma
                 #   the data part of the answer tuple.
                 row << record.first
                 next
+              elsif non_nested_single_model_query
+                row << record.last
+                next
               else
                 path = path_to_value(
                   @question.format[1],
@@ -146,15 +149,22 @@ class Magma
 
               value = dig_flat(record.last, path)
 
-              if @expand_matrices
+              if @expand_matrices && tsv_column.matrix?
                 row = row.concat(value)
               else
-                row << (value.empty? ? nil : value.map(&:to_s).join(","))
+                row << (value.nil? ?
+                  nil :
+                  value)
               end
             end
           end
         end
       end
+    end
+
+    def non_nested_single_model_query
+      @question.format.length == 2 &&
+      @question.format.last.is_a?(String)
     end
 
     def dig_flat(record, path)
@@ -163,12 +173,12 @@ class Magma
       # should return ["Arm", "Leg", "Leg", "Arm"]
       # because the entry at [1, 2] is an array of branched values, not a path to
       #   an inner value or an explicit answer?
-      queue = path.dup
-      flattened_values = []
-      value_under_test = record
-      processing_complete = false
+      return nil unless record && path
 
-      while !queue.empty? && !processing_complete
+      queue = path.dup
+      value_under_test = record
+
+      while !queue.empty?
         index = queue.shift
 
         # Sometimes the record won't have data for this attribute
@@ -180,26 +190,18 @@ class Magma
           # branched record, need to reduce the interior entries
           inner_path = queue.dup
 
-          flattened_values = entry.map do |e|
-            dig_flat(e, inner_path)
-          end.flatten
-
-          # We leave the loop because we've had to reduce
-          processing_complete = true
+          return entry.map do |e|
+                   dig_flat(e, inner_path)
+                 end.flatten.compact
         elsif entry.is_a?(Magma::MatrixPredicate::MatrixValue)
-          flattened_values = JSON.parse(entry.to_json)
-          processing_complete = true
+          return JSON.parse(entry.to_json)
         end
 
         value_under_test = entry
       end
 
       # no reduction was required, so just use dig
-      if queue.empty? && flattened_values.empty?
-        flattened_values = [record.dig(*path)]
-      end
-
-      flattened_values.compact
+      record.dig(*path)
     end
   end
 

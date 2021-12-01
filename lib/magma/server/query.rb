@@ -21,10 +21,12 @@ class QueryController < Magma::Controller
         page_size: @params[:page_size],
       )
 
-      return tsv_stream(question) if @params[:format] == "tsv"
-
-      return_data = { answer: question.answer, type: question.type, format: question.format }
-      return success(return_data.to_json, "application/json")
+      case format
+      when 'tsv'
+        return tsv_payload(question)
+      else
+        return json_payload(question)
+      end
     rescue Magma::QuestionError, ArgumentError => e
       return failure(422, errors: [e.message])
     rescue Sequel::DatabaseError => e
@@ -37,13 +39,22 @@ class QueryController < Magma::Controller
 
   private
 
-  def tsv_stream(question)
+  def format
+    @params[:format]
+  end
+
+  def json_payload(question)
+    return_data = { answer: question.answer, type: question.type, format: question.format }
+    return success(return_data.to_json, "application/json")
+  end
+
+  def tsv_payload(question)
     stream = Enumerator.new do |stream|
       Magma::QueryTSVWriter.new(
         question,
         expand_matrices: !!@params[:expand_matrices],
         transpose: !!@params[:transpose],
-        columns: @params[:columns]
+        user_columns: @params[:user_columns],
       ).write_tsv { |lines| stream << lines }
     end
 
