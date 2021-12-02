@@ -43,12 +43,6 @@ class Magma
       raise TSVError.new("user_columns array must be #{model_attr_headers.length} elements long") unless model_attr_headers.length == user_columns.length
     end
 
-    def attr_is_matrix(model_name, attribute_name)
-      Magma.instance.get_model(
-        @project_name, model_name
-      ).attributes[attribute_name.to_sym].is_a?(Magma::MatrixAttribute)
-    end
-
     def path_to_value(search_array, target_column, current_path: [], starting_index: nil)
       return [] unless search_array
       search_array = [search_array] unless search_array.is_a?(Array)
@@ -86,20 +80,19 @@ class Magma
     end
 
     def rename(header, index)
-      # Stub for if user supplies column naming
       return @user_columns[index] if @user_columns
 
       header.header
     end
 
     def matrix_columns(header, index)
-      path_to_matrix_format = path_to_value(
+      path_to_matrix_attribute = path_to_value(
         @question.format[1],
         header,
         starting_index: index - 1,
       )
 
-      @question.format[1].dig(*(path_to_matrix_format.slice(0..-2).concat([1])))
+      @question.format[1].dig(*(path_to_matrix_attribute.slice(0..-2).concat([1])))
     end
 
     def expand(header, index)
@@ -134,6 +127,8 @@ class Magma
                 row << record.first
                 next
               elsif non_nested_single_model_query
+                # In this simple use case, we just grab the entire
+                #   answer portion
                 row << record.last
                 next
               else
@@ -168,6 +163,8 @@ class Magma
     end
 
     def non_nested_single_model_query
+      # Simple edge case when query is something like
+      #   [model, ::all, attribute]
       @question.format.length == 2 &&
       @question.format.last.is_a?(String)
     end
@@ -177,7 +174,7 @@ class Magma
       # with path [1, 2, 1, 1]
       # should return ["Arm", "Leg", "Leg", "Arm"]
       # because the entry at [1, 2] is an array of branched values, not a path to
-      #   an inner value or an explicit answer?
+      #   an inner value or an explicit answer.
       return nil unless record && path
 
       queue = path.dup
@@ -192,7 +189,8 @@ class Magma
         entry = value_under_test[index]
 
         if entry.is_a?(Array) && entry.first.is_a?(Array)
-          # branched record, need to reduce the interior entries
+          # Nested data, need to reduce the interior entries to grab
+          #   only the requested attribute values.
           inner_path = queue.dup
 
           return entry.map do |e|
