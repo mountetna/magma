@@ -2513,6 +2513,52 @@ describe QueryController do
       Timecop.return
     end
 
+    it 'retrieves a TSV with aggregated file collection attributes' do
+      Timecop.freeze(DateTime.new(500))
+      lion_certs = [{
+        filename: 'monster-Nemean Lion-certificates-0.txt',
+        original_filename: 'sb_diploma_lion.txt'
+      }, {
+        filename: 'monster-Nemean Lion-certificates-1.txt',
+        original_filename: 'sm_diploma_lion.txt'
+      }]
+      hydra_certs = [{
+        filename: 'monster-Lernean Hydra-certificates-0.txt',
+        original_filename: 'ba_diploma_hydra.txt'
+      }, {
+        filename: 'monster-Lernean Hydra-certificates-1.txt',
+        original_filename: 'phd_diploma_hydra.txt'
+      }]
+
+      labor = create(:labor, :lion, project: @project)
+      lion = create(:monster, :lion, certificates: lion_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hydra, project: @project)
+      hydra = create(:monster, :hydra, certificates: hydra_certs.to_json, labor: labor)
+
+      labor = create(:labor, :hind, project: @project)
+      hind = create(:monster, :hind, labor: labor)
+
+      query_opts(
+        [
+          'project',
+          '::all',
+          [['labor', '::all', 'monster', 'certificates','::url']]
+        ],
+        format: 'tsv'
+      )
+
+      expect(last_response.status).to eq(200)
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      uris = JSON.parse(table.first.last)
+      expect(uris.length).to eq(4)
+      expect(uris).to all(match(Magma.instance.config(:storage)[:host]))
+      expect(uris).to all(match(%r!/labors/download/magma/.+.txt!))
+
+      Timecop.return
+    end
+
     it 'returns an unmelted slice of matrix data' do
       matrix = [
         [ 10, 11, 12, 13 ],
