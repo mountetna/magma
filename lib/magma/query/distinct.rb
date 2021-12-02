@@ -1,13 +1,11 @@
 class Magma
   class Distinct
-    attr_reader :table_alias
-
-    def initialize(table_alias)
-      @table_alias = table_alias
+    def initialize(column_name)
+      @column_name = column_name
     end
 
     def apply(query)
-      query.distinct.unordered
+      query.distinct.order(@column_name)
     end
   end
 end

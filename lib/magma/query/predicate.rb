@@ -359,8 +359,8 @@ EOT
       )
     end
 
-    def distinct_constraint
-      Magma::Distinct.new(alias_name)
+    def distinct_constraint column_name
+      Magma::Distinct.new(Sequel.qualify(alias_name, column_name))
     end
 
     def invalid_argument! argument

@@ -31,6 +31,10 @@ class Magma
       @arguments.empty? ? [ Sequel[alias_name][@column_name].as(column_name) ] : []
     end
 
+    def attribute_column_name
+      @column_name
+    end
+
     protected
 
     def column_name

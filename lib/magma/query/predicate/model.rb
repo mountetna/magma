@@ -140,7 +140,7 @@ class Magma
       child :record_child
 
       constraint do
-        distinct_constraint
+        distinct_constraint(record_child.child_predicate.attribute_column_name)
       end
 
       select_columns do
@@ -148,7 +148,7 @@ class Magma
       end
 
       extract do |table|
-        table.map do |row| row.values end.flatten.uniq.sort
+        table.map do |row| row.values end.flatten.uniq.compact
       end
       format { [ child_format ] }
     end
