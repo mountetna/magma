@@ -142,7 +142,7 @@ class Magma
 
               begin
                 value = dig_flat(record.last, path)
-              rescue => e
+              rescue Magma::MatrixJsonError => e
                 Magma.instance.logger.error(record.first)
                 Magma.instance.logger.log_error(e)
                 value = nil
