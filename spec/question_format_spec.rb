@@ -5,7 +5,7 @@ describe Magma::QuestionFormat do
     OUTER_APP
   end
 
-  context "reduce_leaves" do
+  context "leaves" do
     it "works for question formats" do
       simple_format = [
         "labors::project#name",
