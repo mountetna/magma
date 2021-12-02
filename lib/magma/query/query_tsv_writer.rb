@@ -40,7 +40,7 @@ class Magma
     private
 
     def validate_columns(user_columns)
-      raise TSVError.new("Columns array must be #{model_attr_headers.length} elements long") unless model_attr_headers.length == user_columns.length
+      raise TSVError.new("user_columns array must be #{model_attr_headers.length} elements long") unless model_attr_headers.length == user_columns.length
     end
 
     def attr_is_matrix(model_name, attribute_name)
