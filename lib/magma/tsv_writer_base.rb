@@ -12,14 +12,6 @@ class Magma
       raise "Subclasses should implement this."
     end
 
-    def standard_records
-      raise "Subclasses should implement this."
-    end
-
-    def transpose_records
-      raise "Subclasses should implement this."
-    end
-
     private
 
     def tsv_row_to_array(row)

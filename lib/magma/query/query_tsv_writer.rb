@@ -44,6 +44,11 @@ class Magma
     end
 
     def path_to_value(search_array, target_column, current_path: [], starting_index: nil)
+      # Given search_array as a nested set of arrays,
+      #   finds the index-path to get to a specific value, starting with
+      #   the starting_index if provided.
+      # i.e. search_array is [labors::labor#name, [labors::labor#number, labors::monster#name]]
+      #   the path to labors::monster#name is [1, 1]
       return [] unless search_array
       search_array = [search_array] unless search_array.is_a?(Array)
 
@@ -52,11 +57,7 @@ class Magma
       direct_index = search_array.find_index(target_column.header)
       return current_path.concat([direct_index]) unless direct_index.nil?
 
-      if !starting_index.nil?
-        refined_search_array = [search_array[starting_index]]
-      else
-        refined_search_array = search_array
-      end
+      refined_search_array = starting_index.nil? ? search_array : [search_array[starting_index]]
 
       refined_search_array.each.with_index do |element, index|
         if element.is_a?(Array)
@@ -80,9 +81,7 @@ class Magma
     end
 
     def rename(header, index)
-      return @user_columns[index] if @user_columns
-
-      header.header
+      @user_columns ? @user_columns[index] : header.header
     end
 
     def matrix_columns(header, index)
@@ -218,16 +217,6 @@ class Magma
 
     def matrix?
       is_matrix?(@header)
-    end
-
-    def model_attr_col
-      @header.split(".").first
-    end
-
-    def matrix_column_name
-      raise "Unavailable" unless matrix?
-
-      @header.split(".").last
     end
   end
 end
