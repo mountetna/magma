@@ -24,6 +24,7 @@ class Magma
     #      ::all - returns every item in the list, represented by a Model
     #      ::count - returns the number of items in the list
     #      ::every - a Boolean that returns true if every item in the list is non-zero
+    #      ::distinct - returns distinct values of items in the list
 
     attr_reader :model
 
@@ -135,6 +136,23 @@ class Magma
       format { 'Numeric' }
     end
 
+    verb '::distinct' do
+      child :record_child
+
+      constraint do
+        distinct_constraint
+      end
+
+      select_columns do
+        []
+      end
+
+      extract do |table|
+        table.map do |row| row.values end.flatten.uniq.sort
+      end
+      format { [ child_format ] }
+    end
+
     def create_filter(args)
       filter = FilterPredicate.new(
         question: @question,
@@ -187,7 +205,11 @@ class Magma
     end
 
     def select
-      [ column_name.as(identity) ]
+      if @verb && @verb.gives?(:select_columns)
+        @verb.do(:select_columns)
+      else
+        [ column_name.as(identity) ]
+      end
     end
 
     def column_name(attribute = @model.identity)
@@ -202,9 +224,21 @@ class Magma
     end
 
     def constraint
+      filter_constraints.concat(verb_constraints)
+    end
+
+    def filter_constraints
       @filters.map do |filter|
         filter.flatten.map(&:constraint).inject(&:+) || []
       end.inject(&:+) || []
+    end
+
+    def verb_constraints
+      if @verb && @verb.gives?(:constraint)
+        [ @verb.do(:constraint) ].compact
+      else
+        []
+      end
     end
 
     def to_hash

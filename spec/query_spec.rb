@@ -1198,6 +1198,60 @@ describe QueryController do
       expect(json_body[:answer]).to eq(1)
       expect(json_body[:format]).to eq('Numeric')
     end
+
+    it 'supports ::distinct without filters' do
+      create(:characteristic, labor: @lion, name: "difficulty", value: "10" )
+      create(:characteristic, labor: @hydra, name: "difficulty", value: "2" )
+      create(:characteristic, labor: @stables, name: "difficulty", value: "5.1" )
+
+      create(:characteristic, labor: @lion, name: "stance", value: "wrestling2.0" )
+      create(:characteristic, labor: @hydra, name: "stance", value: "hacking1.5" )
+      create(:characteristic, labor: @stables, name: "stance", value: "shoveling:00123" )
+
+      create(:characteristic, labor: @lion, name: "weather", value: "sunny" )
+      create(:characteristic, labor: @hydra, name: "weather", value: "overcast" )
+
+      query(
+        [ 'characteristic', '::distinct', 'name' ]
+      )
+
+      expect(json_body[:answer]).to match_array([ 'difficulty', 'stance', 'weather' ])
+      expect(json_body[:format]).to eq(['labors::characteristic#name'])
+
+      query(
+        [ 'characteristic', '::distinct', 'value' ]
+      )
+
+      expect(json_body[:answer]).to match_array(Labors::Characteristic.all.map { |c| c[:value] }.compact.uniq)
+      expect(json_body[:format]).to eq(['labors::characteristic#value'])
+    end
+
+    it 'supports ::distinct with filters' do
+      create(:characteristic, labor: @lion, name: "difficulty", value: "10" )
+      create(:characteristic, labor: @hydra, name: "difficulty", value: "2" )
+      create(:characteristic, labor: @stables, name: "difficulty", value: "5.1" )
+
+      create(:characteristic, labor: @lion, name: "stance", value: "wrestling2.0" )
+      create(:characteristic, labor: @hydra, name: "stance", value: "hacking1.5" )
+      create(:characteristic, labor: @stables, name: "stance", value: "shoveling:00123" )
+
+      create(:characteristic, labor: @lion, name: "weather", value: "sunny" )
+      create(:characteristic, labor: @hydra, name: "weather", value: "overcast" )
+
+      query(
+        [ 'characteristic', ['labor', 'name', '::equals', @stables.name ], '::distinct', 'name' ]
+      )
+
+      expect(json_body[:answer]).to match_array([ 'difficulty', 'stance' ])
+      expect(json_body[:format]).to eq(['labors::characteristic#name'])
+
+      query(
+        [ 'characteristic', ['labor', 'name', '::equals', @stables.name ], '::distinct', 'value' ]
+      )
+
+      expect(json_body[:answer]).to match_array(Labors::Characteristic.where(labor_id: @stables.id).all.map { |c| c[:value] }.compact.uniq)
+      expect(json_body[:format]).to eq(['labors::characteristic#value'])
+    end
   end
 
   context Magma::RecordPredicate do
@@ -1250,6 +1304,9 @@ describe QueryController do
       lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling2.0" )
       hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking1.5" )
       stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling:00123" )
+
+      create(:characteristic, labor: lion, name: "weather", value: "sunny" )
+      create(:characteristic, labor: hydra, name: "weather", value: "overcast" )
     end
 
     it 'supports ::matches' do

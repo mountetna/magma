@@ -359,6 +359,10 @@ EOT
       )
     end
 
+    def distinct_constraint
+      Magma::Distinct.new(alias_name)
+    end
+
     def invalid_argument! argument
       raise QuestionError, "Expected an argument to #{self.class.name}" if argument.nil?
       raise QuestionError, "#{argument} is not a valid argument to #{self.class.name}"

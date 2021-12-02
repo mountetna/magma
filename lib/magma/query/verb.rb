@@ -117,5 +117,20 @@ class Magma
     def get_subquery_config(*args)
       @subquery_config
     end
+
+    def select_columns(*args, &block)
+      @select_columns = block_given? ? block : args
+    end
+
+    def get_select_columns
+      case @select_columns
+      when Symbol
+        @predicate.send @select_columns
+      when Proc
+        @predicate.instance_exec(&@select_columns)
+      else
+        raise "Cannot determine select_columns for #{@predicate}"
+      end
+    end
   end
 end

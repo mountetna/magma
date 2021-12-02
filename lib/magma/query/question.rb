@@ -1,6 +1,7 @@
 require_relative 'predicate'
 require_relative 'join'
 require_relative 'constraint'
+require_relative 'distinct'
 require_relative 'query_executor'
 
 # A query for a piece of data. Each question is a path through the data
