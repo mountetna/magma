@@ -17,7 +17,6 @@ x-base-etna-service:
   environment: &base-etna-env
     'MAGMA_ENV': 'development'
     APP_NAME: 'magma'
-    UPDATE_STATE: '1'
   entrypoint: /entrypoints/development.sh
 
   networks:
