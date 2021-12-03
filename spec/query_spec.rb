@@ -1320,9 +1320,6 @@ describe QueryController do
       lion_stance = create(:characteristic, labor: lion, name: "stance", value: "wrestling2.0" )
       hydra_stance = create(:characteristic, labor: hydra, name: "stance", value: "hacking1.5" )
       stables_stance = create(:characteristic, labor: stables, name: "stance", value: "shoveling:00123" )
-
-      create(:characteristic, labor: lion, name: "weather", value: "sunny" )
-      create(:characteristic, labor: hydra, name: "weather", value: "overcast" )
     end
 
     it 'supports ::matches' do
