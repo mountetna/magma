@@ -11,7 +11,7 @@ class QueryController < Magma::Controller
         return success(Magma::Predicate.to_json, "application/json")
       end
       question = Magma::Question.new(
-        @project_name, @params[:query].dup,
+        @project_name, JSON.parse(JSON.generate(@params[:query])),
         show_disconnected: @params[:show_disconnected],
         restrict: !@user.can_see_restricted?(@project_name),
         user: @user,
