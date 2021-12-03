@@ -141,7 +141,7 @@ class Magma
               raise Magma::TSVError.new("No path to data for #{tsv_column.header}.") if path.empty?
 
               begin
-                value = dig_flat(record.last, path)
+                value = dig_reduce(record.last, path)
               rescue Magma::MatrixJsonError => e
                 Magma.instance.logger.error(record.first)
                 Magma.instance.logger.log_error(e)
@@ -168,7 +168,7 @@ class Magma
       @question.format.last.is_a?(String)
     end
 
-    def dig_flat(record, path)
+    def dig_reduce(record, path)
       # ["Lernean Hydra", [3, "Susan Doe", [["Shawn Doe", [[87, "Arm"], [88, "Leg"]]], ["Susan Doe", [[86, "Leg"], [85, "Arm"]]]]]]
       # with path [1, 2, 1, 1]
       # should return ["Arm", "Leg", "Leg", "Arm"]
@@ -193,7 +193,7 @@ class Magma
           inner_path = queue.dup
 
           return entry.map do |e|
-                   dig_flat(e, inner_path)
+                   dig_reduce(e, inner_path)
                  end.flatten.compact
         elsif entry.is_a?(Magma::MatrixPredicate::MatrixValue)
           return JSON.parse(entry.to_json)
