@@ -24,7 +24,7 @@ class Magma
     #      ::all - returns every item in the list, represented by a Model
     #      ::count - returns the number of items in the list
     #      ::every - a Boolean that returns true if every item in the list is non-zero
-    #      ::distinct - returns distinct values of items in the list
+    #      ::distinct - returns distinct values of items in the list. Only works with model -> attribute
 
     attr_reader :model
 
