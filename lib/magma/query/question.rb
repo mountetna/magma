@@ -50,6 +50,7 @@ class Magma
   class Question
     attr_reader :user
     def initialize(project_name, query_args, options = {})
+      @project_name = project_name
       @model = Magma.instance.get_model(project_name, query_args.shift)
       @options = options
       @user = options[:user]
@@ -111,6 +112,15 @@ class Magma
 
     def count
       count_query.count
+    end
+
+    def columns
+      format_helper = Magma::QuestionFormat.new(
+        @project_name,
+        format
+      )
+
+      format_helper.leaves
     end
 
     private
