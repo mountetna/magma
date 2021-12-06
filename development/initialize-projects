@@ -17,7 +17,7 @@ MAGMA_ENV=test $0
 fi
 
 # TODO: Replace this with project model scripts.
-if [ -n "$UPDATE_STATE" ]; then
+if [ -n "$UPDATE_STATE" ] || [ "${MAGMA_ENV}" == "test" ]; then
   bin/magma global_migrate
 
   for project in $(findEnvConfig | grep ':project_path:' | sed -e 's/.*:project_path:\s*//g'); do
