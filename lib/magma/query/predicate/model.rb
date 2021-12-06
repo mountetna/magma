@@ -140,6 +140,8 @@ class Magma
       child :record_child
 
       constraint do
+        validate_distinct
+
         distinct_constraint(record_child.child_predicate.attribute_column_name)
       end
 
@@ -269,6 +271,12 @@ class Magma
       end
 
       alias_for_column(attr.column_name)
+    end
+
+    private
+
+    def validate_distinct
+      raise ArgumentError.new("Can only use ::distinct on string attributes.") unless record_child.child_predicate.is_a?(Magma::StringPredicate)
     end
   end
 end

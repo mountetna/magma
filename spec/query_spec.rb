@@ -1222,8 +1222,8 @@ describe QueryController do
         query(
           [ 'characteristic', '::distinct', 'value' ]
         )
-  
-        expect(json_body[:answer]).to match_array(Labors::Characteristic.all.map { |c| c[:value] }.compact.uniq)
+
+        expect(json_body[:answer]).to match_array(Labors::Characteristic.all.map { |c| c.value }.compact.uniq)
         expect(json_body[:format]).to eq(['labors::characteristic#value'])
       end
   
@@ -1250,11 +1250,27 @@ describe QueryController do
           [ 'characteristic', ['labor', 'name', '::equals', @stables.name ], '::distinct', 'value' ]
         )
   
-        expect(json_body[:answer]).to match_array(Labors::Characteristic.where(labor_id: @stables.id).all.map { |c| c[:value] }.compact.uniq)
+        expect(json_body[:answer]).to match_array(Labors::Characteristic.where(labor_id: @stables.id).all.map { |c| c.value }.compact.uniq)
         expect(json_body[:format]).to eq(['labors::characteristic#value'])
       end
   
       it 'with null data' do
+        create(:characteristic, labor: @lion, name: "difficulty", value: "10" )
+        create(:characteristic, labor: @hydra, name: "difficulty" )
+        create(:characteristic, labor: @stables, name: "difficulty", value: "5.1" )
+  
+        create(:characteristic, labor: @lion, name: "weather" )
+        create(:characteristic, labor: @hydra, name: "weather" )
+  
+        query(
+          [ 'characteristic', '::distinct', 'value' ]
+        )
+
+        expect(json_body[:answer]).to match_array([ "10", "5.1" ])
+        expect(json_body[:format]).to eq(['labors::characteristic#value'])
+      end
+
+      it 'cannot be used with non-string attributes' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
@@ -1264,8 +1280,7 @@ describe QueryController do
           [ 'prize', '::distinct', 'worth' ]
         )
 
-        expect(json_body[:answer]).to match_array([ 4, 5, 8 ])
-        expect(json_body[:format]).to eq(['labors::prize#worth'])
+        expect(last_response.status).to eq(422)
       end
     end
   end
