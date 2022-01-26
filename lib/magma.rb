@@ -50,17 +50,9 @@ class Magma
     setup_sequel
 
     @storage = Magma::Storage.setup
-    load_config_projects
     load_db_projects
 
     validate_models if validate
-  end
-
-  def load_config_projects
-    config(:project_path).split(/\s+/).each do |project_dir|
-      project = Magma::Project.new(project_dir: project_dir)
-      magma_projects[ project.project_name ] = project
-    end
   end
 
   def load_db_projects

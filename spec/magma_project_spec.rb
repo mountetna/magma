@@ -28,7 +28,7 @@ describe Magma::Project do
         description: "What color is it?",
       )
 
-      project = Magma::Project.new(project_dir: "./labors")
+      project = Magma::Project.new(project_name: "labors")
       # Fetch and delete test attributes so they don't affect other tests
       size_attribute = Labors::Monster.attributes.delete(:size)
       color_attribute = Labors::Monster.attributes.delete(:color)
@@ -51,34 +51,11 @@ describe Magma::Project do
         link_model_name: "monster"
       )
 
-      project = Magma::Project.new(project_dir: "./labors")
+      project = Magma::Project.new(project_name: "labors")
       # Fetch and delete test attributes so they don't affect other tests
       attribute = Labors::Monster.attributes.delete(:alter_ego)
 
       expect(attribute.link_model).to eq(Labors::Monster)
-    end
-
-    it "gives database model attributes precedence over those defined in Ruby" do
-      project = Magma::Project.new(project_dir: "./spec/fixtures/movies")
-      original_attribute = Movies::Villain.attributes[:name]
-
-      Magma.instance.db[:attributes].insert(
-        project_name: "movies",
-        model_name: "villain",
-        attribute_name: "name",
-        column_name: "name",
-        type: "string",
-        created_at: Time.now,
-        updated_at: Time.now,
-        description: "Only something I would know"
-      )
-
-      project = Magma::Project.new(project_dir: "./spec/movies")
-      attribute = Movies::Villain.attributes[:name]
-
-      expect(attribute.description).to eq("Only something I would know")
-
-      Movies::Villain.attributes[:name] = original_attribute
     end
 
     it "raises an error when the database has attributes for a model that doesn't exist" do
@@ -93,7 +70,7 @@ describe Magma::Project do
         description: "There isn't a Labors::Ghost model"
       )
 
-      expect { Magma::Project.new(project_dir: "./labors") }.to(
+      expect { Magma::Project.new(project_name: "labors") }.to(
         raise_error(Magma::Project::AttributeLoadError)
       )
     end
@@ -118,7 +95,7 @@ describe Magma::Project do
         model_name: "hero",
         attribute_name: "name",
         column_name: "name",
-        type: "string",
+        type: "identifier",
         created_at: Time.now,
         updated_at: Time.now,
         description: "The hero's name"

@@ -12,13 +12,15 @@ describe Magma::AddLinkAction do
       ]
     }
   end
-  let(:project_name) { 'add_link_test_project' }
+  let(:project_name) { "add_link_test_project" }
   let(:action) { Magma::AddLinkAction.new(project_name, action_params) }
 
   before(:each) do
     setup_metis_bucket_stubs(project_name)
     Magma.instance.magma_projects.delete(project_name.to_sym)
+    Object.class_eval { remove_const(:AddLinkTestProject)  if Object.const_defined?(:AddLinkTestProject) }
     expect(Magma::AddProjectAction.new(project_name, user: user).perform).to be_truthy
+    Etna::Clients::Magma::AddAttributeAction
     ['model_a', 'model_b'].each do |model_name|
       expect(Magma::AddModelAction.new(
         project_name,
@@ -26,7 +28,7 @@ describe Magma::AddLinkAction do
           model_name: model_name,
           identifier: 'name',
           parent_model_name: 'project',
-          parent_link_type: 'child'
+          parent_link_type: 'collection'
         }).perform).to be_truthy
     end
   end

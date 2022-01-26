@@ -17,13 +17,10 @@ class Magma
     attr_reader :project_name
 
     def initialize(options = {})
-      if options[:project_dir]
-        @project_dir = options[:project_dir]
-        @project_name = @project_dir.split('/').last.to_sym
-      elsif options[:project_name]
+      if options[:project_name]
         @project_name = options[:project_name]
       else
-        raise ArgumentError, "one of [:project_dir, :project_name] is required"
+        raise ArgumentError, ":project_name required"
       end
 
       load_project
@@ -68,28 +65,14 @@ class Magma
     private
 
     def project_container
-      @project_container ||= if @project_dir
-        Kernel.const_get(@project_name.to_s.camel_case)
-      else
+      @project_container ||=
+        Kernel.const_defined?(@project_name.to_s.camel_case) ? Kernel.const_get(@project_name.to_s.camel_case) :
         Object.const_set(@project_name.to_s.camel_case, Module.new)
-      end
     end
 
     def load_project
-      load_project_files if @project_dir
       load_models
       load_model_attributes
-    end
-
-    def load_project_files
-      base_file = project_file('requirements.rb')
-      if File.exists?(base_file)
-        require base_file
-      else
-        require_files('models')
-        require_files('loaders')
-        require_files('metrics')
-      end
     end
 
     def load_models
@@ -109,14 +92,6 @@ class Magma
         raise AttributeLoadError.new(@project_name, model_name, attributes) unless model
         model.load_attributes(attributes)
       end
-    end
-
-    def require_files folder
-      Dir.glob(project_file(folder, '**', '*.rb'), &method(:require))
-    end
-
-    def project_file *filenames
-      File.join(File.dirname(__FILE__), '../..', @project_dir, *filenames)
     end
   end
 end

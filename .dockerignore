@@ -1,2 +1,1 @@
-# Add magma specific dockerignore items.  Base is taken from docker/.dockerignore
-projects
+# Add project specific dockerignore items.  Base is taken from docker/.dockerignore

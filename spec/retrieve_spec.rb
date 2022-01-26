@@ -59,7 +59,7 @@ describe RetrieveController do
     expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_type, :display_name, :name, :hidden))
 
     # the identifier is reported
-    expect(json_template[:identifier]).to eq('id')
+    expect(json_template[:identifier]).to eq('aspect_id')
 
     # the name is reported
     expect(json_template[:name]).to eq('aspect')

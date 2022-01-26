@@ -40,7 +40,6 @@ labor:
   contributions:
     type: matrix
     validation: '{"type":"Array", "value":["Athens","Sparta","Sidon","Thebes"]}'
-    column_name: old_contributions
   characteristic:
     type: table
   notes:
@@ -51,7 +50,6 @@ monster:
     column_name: labor_id
   name:
     type: identifier
-    column_name: old_name
   species:
     type: string
     validation: '{"type":"Regexp", "value":"^[a-z\\s]+$"}'
@@ -91,7 +89,6 @@ prize:
     type: string
   worth:
     type: integer
-    column_name: old_worth
 characteristic:
   labor:
     type: parent
@@ -100,7 +97,6 @@ characteristic:
     type: string
   value:
     type: string
-    column_name: old_value
 project:
   name:
     type: identifier

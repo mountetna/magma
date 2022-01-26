@@ -126,7 +126,7 @@ describe Magma::ModelUpdateActions do
             expect do
               actions.perform
             end.to change {
-              Magma.instance.db[:models].where(project_name: 'labors', model_name: ['monster', 'prize']).map { |r| r[:version] }
+              Magma.instance.db[:models].where(project_name: 'labors', model_name: ['monster', 'prize']).sort_by { |r| r[:model_name] }.map { |r| r[:version] }
             }.to([6, 1])
           end
         end

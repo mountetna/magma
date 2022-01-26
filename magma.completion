@@ -17,7 +17,7 @@ arg_flag_completion_names="$arg_flag_completion_names  "
 multi_flags="$multi_flags  "
 while [[ "$#" != "0" ]]; do
 if [[ "$#" == "1" ]];  then
-all_completion_names="console create_db generate_completion_script global_migrate help load load_project measure_data_rows migrate plan unload"
+all_completion_names="console generate_completion_script help load load_project measure_data_rows migrate retrieve_project_template unload"
 all_completion_names="$all_completion_names $all_flag_completion_names"
 if [[ -z "$(echo $all_completion_names | xargs)" ]]; then
 return
@@ -62,97 +62,11 @@ return
 fi
 done
 return
-elif [[ "$1" == "create_db" ]]; then
-shift
-if [[ "$#" == "1" ]];  then
-all_completion_names="__project_name__"
-if [[ -z "$(echo $all_completion_names | xargs)" ]]; then
-return
-fi
-COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
-return
-fi
-shift
-all_flag_completion_names="$all_flag_completion_names  "
-arg_flag_completion_names="$arg_flag_completion_names  "
-multi_flags="$multi_flags  "
-while [[ "$#" != "0" ]]; do
-if [[ "$#" == "1" ]];  then
-all_completion_names=""
-all_completion_names="$all_completion_names $all_flag_completion_names"
-if [[ -z "$(echo $all_completion_names | xargs)" ]]; then
-return
-fi
-COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
-return
-elif [[ -z "$(echo $all_flag_completion_names | xargs)" ]]; then
-return
-elif [[ "$all_flag_completion_names" =~ $1\  ]]; then
-if ! [[ "$multi_flags" =~ $1\  ]]; then
-all_flag_completion_names="${all_flag_completion_names//$1\ /}"
-fi
-a=$1
-shift
-if [[ "$arg_flag_completion_names" =~ $a\  ]]; then
-if [[ "$#" == "1" ]];  then
-a="${a//--/}"
-a="${a//-/_}"
-i="_completions_for_$a"
-all_completion_names="${!i}"
-COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
-return
-fi
-shift
-fi
-else
-return
-fi
-done
-return
 elif [[ "$1" == "generate_completion_script" ]]; then
 shift
 all_flag_completion_names="$all_flag_completion_names  "
 arg_flag_completion_names="$arg_flag_completion_names  "
 multi_flags="$multi_flags  "
-while [[ "$#" != "0" ]]; do
-if [[ "$#" == "1" ]];  then
-all_completion_names=""
-all_completion_names="$all_completion_names $all_flag_completion_names"
-if [[ -z "$(echo $all_completion_names | xargs)" ]]; then
-return
-fi
-COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
-return
-elif [[ -z "$(echo $all_flag_completion_names | xargs)" ]]; then
-return
-elif [[ "$all_flag_completion_names" =~ $1\  ]]; then
-if ! [[ "$multi_flags" =~ $1\  ]]; then
-all_flag_completion_names="${all_flag_completion_names//$1\ /}"
-fi
-a=$1
-shift
-if [[ "$arg_flag_completion_names" =~ $a\  ]]; then
-if [[ "$#" == "1" ]];  then
-a="${a//--/}"
-a="${a//-/_}"
-i="_completions_for_$a"
-all_completion_names="${!i}"
-COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
-return
-fi
-shift
-fi
-else
-return
-fi
-done
-return
-elif [[ "$1" == "global_migrate" ]]; then
-shift
-all_flag_completion_names="$all_flag_completion_names --version "
-arg_flag_completion_names="$arg_flag_completion_names --version "
-multi_flags="$multi_flags  "
-declare _completions_for_version="__version__"
 while [[ "$#" != "0" ]]; do
 if [[ "$#" == "1" ]];  then
 all_completion_names=""
@@ -395,7 +309,7 @@ return
 fi
 done
 return
-elif [[ "$1" == "plan" ]]; then
+elif [[ "$1" == "retrieve_project_template" ]]; then
 shift
 if [[ "$#" == "1" ]];  then
 all_completion_names="__project_name__"
@@ -406,9 +320,11 @@ COMPREPLY=($(compgen -W "$all_completion_names" -- "$1"))
 return
 fi
 shift
-all_flag_completion_names="$all_flag_completion_names  "
-arg_flag_completion_names="$arg_flag_completion_names  "
+all_flag_completion_names="$all_flag_completion_names --file --target-model "
+arg_flag_completion_names="$arg_flag_completion_names --file --target-model "
 multi_flags="$multi_flags  "
+declare _completions_for_file="__file__"
+declare _completions_for_target_model="__target_model__"
 while [[ "$#" != "0" ]]; do
 if [[ "$#" == "1" ]];  then
 all_completion_names=""

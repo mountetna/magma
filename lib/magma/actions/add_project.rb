@@ -18,7 +18,7 @@ BEGIN
 END
 $$;
       SQL
-      setup_metis
+      setup_metis unless @action_params[:no_metis_bucket]
       super
     end
 

@@ -9,6 +9,8 @@ class Magma
 
       if !table_parent_link?
         @model.identifier(@action_params[:identifier].to_sym).save
+      else
+        @model.set_primary_key(:id)
       end
       project.models[@model.model_name] = @model
 

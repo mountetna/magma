@@ -3,6 +3,49 @@ require 'logger'
 require 'etna/command'
 
 class Magma
+  class RetrieveProjectTemplate < Etna::Command
+    string_flags << '--file'
+    string_flags << '--target-model'
+
+    def execute(project_name, target_model: 'project', file: "#{project_name}_models_#{target_model}_tree.csv")
+      unless File.exists?(file)
+        puts "File #{file} is being prepared from the #{project_name} project."
+        puts "Copying models descending from #{target_model}..."
+        prepare_template(file, project_name, target_model)
+        puts
+        puts "Done!  You can start editing the file #{file} now"
+      else
+        puts "File #{file} already exists!  Please remove or specify a different file name before running again."
+      end
+    end
+
+    def workflow
+      @workflow ||= Etna::Clients::Magma::AddProjectModelsWorkflow.new(magma_client: magma_client)
+    end
+
+    def magma_client
+      Etna::Clients::LocalMagmaClient.new
+    end
+
+    def prepare_template(file, project_name, target_model)
+      tf = Tempfile.new
+
+      begin
+        File.open(tf.path, 'wb') { |f| workflow.write_models_template_csv(project_name, target_model, io: f) }
+        FileUtils.cp(tf.path, file)
+      ensure
+        tf.close!
+      end
+    end
+
+    def setup(config)
+      super
+      Magma.instance.setup_db
+      Magma.instance.load_models
+      require_relative './server'
+    end
+  end
+
   class LoadProject < Etna::Command
     usage '[project_name, path/to/file.json] # Import attributes into database for given project name from JSON file'
 
@@ -66,46 +109,6 @@ class Magma
   end
 
   class Migrate < Etna::Command
-    string_flags << '--version'
-
-    def execute(version: nil)
-      Sequel.extension(:migration)
-      db = Magma.instance.db
-
-      project_path = Magma.instance.config(:project_path)
-      project_paths = project_path&.split(/\s+/) || []
-      project_paths = project_paths.select { |p| !p.nil? && !p.empty? }
-
-      project_paths.each do |project_dir|
-        table = "schema_info_#{project_dir.gsub(/[^\w]+/,'_').sub(/^_/,'').sub(/_$/,'')}"
-
-        unless ::File.exists?(File.join(project_dir, 'migrations'))
-          if Magma.instance.environment == :development || Magma.instance.environment == :test
-            puts "Project #{project_dir} is listed in your config.yml, but it does not exist in your magma directory.  Ignoring.."
-          else
-            raise "Project #{project_dir} does not exist in the magma app directory, perhaps it is not checked out."
-          end
-
-          next
-        end
-
-        if version
-          puts "Migrating to version #{version}"
-          Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table, target: version.to_i)
-        else
-          puts 'Migrating to latest'
-          Sequel::Migrator.run(db, File.join(project_dir, 'migrations'), table: table)
-        end
-      end
-    end
-
-    def setup(config)
-      super
-      Magma.instance.setup_db
-    end
-  end
-
-  class GlobalMigrate < Etna::Command
     usage "Run database wide migrations"
     string_flags << '--version'
 
@@ -125,41 +128,6 @@ class Magma
     def setup(config)
       super
       Magma.instance.setup_db
-    end
-  end
-
-  # When building migrations from scratch this command does not output
-  # an order that respects foreign key constraints. i.e. The order in which the
-  # migration creates tries to create the tables is out of whack and causes
-  # error messages that tables are required but do not exist. Most of the time
-  # this is not an issue (because we are only doing slight modifications), but
-  # when we do a new migration of an established database errors do arise.
-  # Presently we are manually reorgaizing the initial migration (putting the
-  # the table creation in the correct order), but we should add logic here so
-  # we do not have to in the future.
-  class Plan < Etna::Command
-    usage '[<project_name>] # Suggest a migration based on the current model attributes.'
-
-    def execute(project_name=nil)
-      if project_name
-        project = Magma.instance.get_project(project_name)
-        raise ArgumentError, "No such project #{project_name}!" unless project
-        projects = [ project ]
-      else
-        projects = Magma.instance.magma_projects.values
-      end
-      puts <<EOT
-Sequel.migration do
-  change do
-#{projects.map(&:migrations).flatten.join("\n")}
-  end
-end
-EOT
-    end
-
-    def setup(config)
-      super
-      Magma.instance.load_models(false)
     end
   end
 
@@ -253,48 +221,6 @@ EOT
           tags = {model_name: model_name.to_s, project_name: project_name.to_s}
           Yabeda.magma.data_rows.set(tags, model.count)
         end
-      end
-    end
-  end
-
-  class CreateDb < Etna::Command
-    usage '<project_name> # Attach an existing project to a magma instance, creating database and schema'
-
-    def execute(project_name)
-      @project_name = project_name
-      create_db if @no_db
-
-      create_schema unless db_namespace?
-
-      puts "Database is setup. Please run `bin/magma migrate #{@project_name}`."
-    end
-
-    def db_namespace?
-      Magma.instance.db[ "SELECT 1 FROM pg_namespace WHERE nspname='#{@project_name}'" ].count > 0
-    end
-
-    def create_schema
-      puts "Creating namespace (schema) #{@project_name} in database #{@db_config[:database]}"
-
-      Magma.instance.db.run "CREATE SCHEMA IF NOT EXISTS #{@project_name}"
-    end
-
-    def create_db
-      # Create the database only
-
-      puts "Creating database #{@db_config[:database]}"
-      %x{ PGPASSWORD=#{@db_config[:password]} createdb -w -U #{@db_config[:user]} #{@db_config[:database]} }
-
-      Magma.instance.setup_db
-    end
-
-    def setup(config)
-      super
-      @db_config = Magma.instance.config(:db)
-      begin
-        Magma.instance.setup_db
-      rescue Sequel::DatabaseConnectionError
-        @no_db = true
       end
     end
   end

@@ -25,29 +25,92 @@ require_relative '../lib/magma'
 
 Magma.instance.configure(YAML.load(File.read('config.yml')))
 
+# This is a bit of a hack because we don't yet fully support all attribute features in the csv, but the csv is also the
+# most reliable way to force migrations and project setup.  Furthermore, sequel requires object full reloads when performing
+# certain kinds of reflection + migrations during runtime, so we're forced to flush and reload a bunch all over the place.
+# This can get nicer with deeper plumbing of the way sequel is used in magma and improvements to the csv interface.
 def load_labors_project
   Magma.instance.db[:attributes].truncate
   Magma.instance.db[:models].truncate
 
+  # Remove existing labors schema, start scratch every time.
+  Magma.instance.db.run <<-SQL
+DO $$
+BEGIN
+    IF EXISTS(
+        SELECT schema_name
+          FROM information_schema.schemata
+          WHERE schema_name = 'labors'
+      )
+    THEN
+      EXECUTE 'DROP SCHEMA labors CASCADE';
+    END IF;
+END
+$$;
+  SQL
+
+  Magma.instance.setup_sequel
+  Magma.instance.setup_logger
+  Magma.instance.magma_projects.clear
+  Magma.instance.load_db_projects
+
+  magma_client = Etna::Clients::LocalMagmaClient.new
+
+  magma_client.update_model(Etna::Clients::Magma::UpdateModelRequest.new(
+    project_name: "labors",
+    actions: [Etna::Clients::Magma::AddProjectAction.new(no_metis_bucket: true)]))
+
+  # This initializes and migrates the schema.
+  workflow = Etna::Clients::Magma::AddProjectModelsWorkflow.new(magma_client: magma_client)
+  errors = []
+
+  changeset = File.open("./spec/fixtures/labors_models_project_tree.csv", 'r') do |f|
+    workflow.prepare_changeset_from_csv(io: f) do |err|
+      errors << err
+    end
+  end
+
+  raise "Failed to load labors project, found errors in input csv: #{errors.join('\n')}" unless errors.empty?
+  sync_workflow = workflow.plan_synchronization(changeset, "labors")
+  sync_workflow.update_block = Proc.new do |action|
+    puts "Executing #{action.action_name} on #{Etna::Clients::Magma::ModelSynchronizationWorkflow.models_affected_by(action)}..."
+    Object.class_eval { remove_const(:Labors) if Object.const_defined?(:Labors) }
+    Magma.instance.magma_projects.clear
+    Magma.instance.load_models(false)
+  end
+  sync_workflow.execute_planned!
+
+  Object.class_eval { remove_const(:Labors) if Object.const_defined?(:Labors) }
+  Magma.instance.magma_projects.clear
+  Magma.instance.load_models(false)
+
+  # This side loads some attributes, specifically the dictionary attribute, which is not currently supported
+  # via the csv api.
   YAML.load(File.read("./spec/fixtures/labors_model_attributes.yml")).each do |model_name, attributes|
-    Magma.instance.db[:models].insert(
+    Magma.instance.db[:models].where(
       project_name: "labors",
       model_name: model_name,
+    ).update(
       dictionary: attributes.delete("dictionary")
     )
 
     attributes.each do |attribute_name, options|
-      row = options.merge(
-        project_name: "labors",
-        model_name: model_name,
-        attribute_name: attribute_name
-      )
-
+      row = options
       row["column_name"] = attribute_name unless row["column_name"]
 
-      Magma.instance.db[:attributes].insert(row)
+      Magma.instance.db[:attributes].where(
+        project_name: "labors",
+        model_name: model_name,
+        attribute_name: attribute_name,
+      ).update(row)
     end
   end
+
+  Object.class_eval { remove_const(:Labors) if Object.const_defined?(:Labors) }
+  Magma.instance.magma_projects.clear
+  Magma.instance.load_models(false)
+
+  require_relative './labors/metrics/labor_metrics'
 end
 
 Magma.instance.setup_db
