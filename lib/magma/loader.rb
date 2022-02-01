@@ -449,16 +449,25 @@ class Magma
 
     def db_records_for_model_by_identifier(model)
       @all_model_records ||= {}
-      @all_model_records[model.model_name] ||= model.all.map do |record|
-        [record.identifier.to_s, record]
-      end.to_h
+      @all_model_records[model.model_name] ||= model.select_map(
+        [column_name(model, Magma::IdentifierAttribute),
+         column_name(model, Magma::ParentAttribute)]).map do |identifier, parent_id|
+          [identifier.to_s, parent_id]
+        end.to_h
+    end
+
+    def column_name(model, attribute_type)
+      model.attributes.values.select do |attribute|
+        attribute.is_a?(attribute_type)
+      end.first.column_name.to_sym
     end
 
     def db_record_identifiers_for_model_by_row_id(model)
       @all_parent_identifiers ||= {}
-      @all_parent_identifiers[model.model_name] ||= model.all.map do |record|
-        [record.id, record.identifier]
-      end.to_h
+      @all_parent_identifiers[model.model_name] ||= model.select_map(
+        [:id,
+         column_name(model, Magma::IdentifierAttribute)]
+      ).to_h
     end
 
     def parent_record_in_db(parent_model, parent_record_id)
@@ -471,11 +480,7 @@ class Magma
 
       return @parent_record_name_cache[model.model_name][record_name] unless @parent_record_name_cache[model.model_name][record_name].nil?
 
-      db_record = db_records_for_model_by_identifier(model)[record_name]
-
-      parent_record_id = db_record&.send("#{model.attributes.values.select { |a|
-        a.is_a?(Magma::ParentAttribute)
-      }.first.column_name}".to_sym)
+      parent_record_id = db_records_for_model_by_identifier(model)[record_name]
       
       @parent_record_name_cache[model.model_name][record_name] = db_record_identifiers_for_model_by_row_id(model.parent_model)[parent_record_id] if parent_record_in_db(model.parent_model, parent_record_id)
 
