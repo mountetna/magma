@@ -2492,7 +2492,7 @@ describe UpdateController do
         update({
           victim: {
             @john_doe.name => {
-              wound: ["::temp-1", "::temp-2"]
+              wound: ["::temp-1", "::temp-2", "::temp-3"]
             }
           },
           wound: {
@@ -2502,7 +2502,10 @@ describe UpdateController do
             "::temp-2" => {
               severity: 9,
               location: "finger"
-            }
+            },
+            "::temp-3" => {
+              received_date: '2000-02-01'
+            },
           }},
           :privileged_editor
         )
@@ -2510,15 +2513,20 @@ describe UpdateController do
         expect(last_response.status).to eq(200)
         new_wound_ids = json_body[:models][:victim][:documents][@john_doe.name.to_sym][:wound]
 
-        expect(Labors::Wound.count).to eq(8)
+        expect(Labors::Wound.count).to eq(9)
         wounds = Labors::Wound.where(id: new_wound_ids).all
         wound_1 = wounds.first
+        wound_3 = wounds[1]
         wound_2 = wounds.last
 
         expect(wound_1[:received_date]).not_to eq(nil)
+        expect(wound_3[:received_date]).not_to eq(nil)
         expect(
           wound_1[:received_date].iso8601
         ).not_to eq(iso_date_str('2000-01-01'))
+        expect(
+          wound_3[:received_date].iso8601
+        ).not_to eq(iso_date_str('2000-02-01'))
         expect(wound_2[:severity]).to eq(9)
       end
 
