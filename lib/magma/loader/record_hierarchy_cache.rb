@@ -66,8 +66,6 @@ class Magma
       path = has_path ? path_to_root : []
 
       @path_to_root[model][record_name] = path
-
-      path
     end
 
     private
@@ -90,8 +88,6 @@ class Magma
                                  record_entry_explicitly_disconnected_by_parent(entry, model, record_name)) unless entry.nil?
 
       @record_entry_disconnected_cache[model][record_name] = explicitly_disconnected
-
-      explicitly_disconnected
     end
 
     def record_entry_from_records(model, record_name)
@@ -115,8 +111,6 @@ class Magma
       explicitly_disconnected = !parent_entry[model]&.include?(record_name) if parent_entry
 
       @record_entry_disconnected_by_parent_cache[model][record_name] = explicitly_disconnected
-
-      explicitly_disconnected
     end
 
     def parent_record_name_from_records(model, record_name)
@@ -150,9 +144,7 @@ class Magma
 
       parent_record_id = db_records_for_model_by_identifier(model)[record_name]
 
-      @parent_record_name_cache[model][record_name] = db_record_identifiers_for_model_by_row_id(model.parent_model)[parent_record_id] if parent_record_in_db(model.parent_model, parent_record_id)
-
-      @parent_record_name_cache[model][record_name]
+      @parent_record_name_cache[model][record_name] = db_record_identifiers_for_model_by_row_id(model.parent_model)[parent_record_id]
     end
   end
 end
