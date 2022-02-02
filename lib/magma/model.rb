@@ -220,6 +220,18 @@ class Magma
           attr.is_a?(Magma::ShiftedDateTimeAttribute)
         end
       end
+
+      def column_name(attribute_type: nil, attribute_name: nil)
+        return nil if attribute_type.nil? && attribute_name.nil?
+
+        match = attribute_name && attributes.key?(attribute_name) ?
+          attributes[attribute_name] :
+          attributes.values.select do |attribute|
+            attribute.is_a?(attribute_type)
+          end.first
+
+        match&.column_name.to_sym
+      end
     end
 
     # record methods

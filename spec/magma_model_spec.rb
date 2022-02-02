@@ -56,4 +56,9 @@ describe Magma::Model do
       expect(Labors::Victim.path_to_date_shift_root).to eq([])
     end
   end
+
+  it 'can get column names' do
+    expect(Labors::Monster.column_name(attribute_type: Magma::IdentifierAttribute)).to eq(:name)
+    expect(Labors::Monster.column_name(attribute_name: :reference_monster)).to eq(:reference_monster_id)
+  end
 end

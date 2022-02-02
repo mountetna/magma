@@ -1,6 +1,7 @@
 require_relative './loader/temp_id'
 require_relative './loader/multi_update'
 require_relative './loader/record_entry'
+require_relative './loader/record_hierarchy_cache'
 
 class Magma
   class LoadFailed < Exception
@@ -322,58 +323,9 @@ class Magma
     # This is implemented in the loader because it 
     #   requires access to both the set of @records as well as the database.
     def path_to_date_shift_root(model, record_name)
-      @path_to_root ||= {}
-      @path_to_root[model.model_name] ||= {}
-
-      return @path_to_root[model.model_name][record_name] unless @path_to_root[model.model_name][record_name].nil?
-
-      # Check if there is some path to the date-shift-root model, across @records and
-      #   the database.
-      queue = model_path_to_date_shift_root(model).clone
-      has_path = !queue.empty?
-
-      # First model off the queue matches the record_name.
-      current_record_name = record_name
-      path_to_root = []
-
-      until queue.empty? || !has_path
-        model_to_check = queue.shift
-
-        path_to_root << current_record_name
-
-        # If the model is the date-shift-root and we have a record-name for it,
-        #   then a path must exist or will be created.
-        next if is_date_shift_root?(model_to_check) && !current_record_name.nil?
-
-        # If the user disconnects the record before we've found the date-shift-root
-        #   model, then they've broken the path.
-        begin
-          has_path = false
-          next
-        end if record_entry_explicitly_disconnected?(model_to_check, current_record_name) && !is_date_shift_root?(model_to_check)
-
-        # If parent exists in the @records, and will be created
-        parent_record_name = parent_record_name_from_records(model_to_check, current_record_name)
-
-        # If parent not found in @records AND there is not an explicit "disconnect" action, 
-        #   check the database for the EXISTING record and find its parent.
-        # If no existing record (current_record_name is a new record_entry), this should return nil and there is no path
-        parent_record_name = parent_record_name_from_db(model_to_check, current_record_name) if parent_record_name.nil?
-        
-        begin
-          current_record_name = parent_record_name
-          next
-        end unless parent_record_name.nil?
-
-        # If no parents have been found, the path doesn't exist or is broken
-        has_path = false
-      end
-
-      path = has_path ? path_to_root : []
+      @record_hierarchy_cache ||= Magma::RecordHierarchyCache.new(@records)
       
-      @path_to_root[model.model_name][record_name] = path
-
-      path
+      @record_hierarchy_cache.path_to_date_shift_root(model, record_name)
     end
     
     def is_connected_to_date_shift_root?(model, record_name)
@@ -381,111 +333,6 @@ class Magma
     end
 
     private
-
-    def is_date_shift_root?(model)
-      @is_date_shift_root ||= {}
-
-      return @is_date_shift_root[model.model_name] if @is_date_shift_root.key?(model.model_name)
-
-      @is_date_shift_root[model.model_name] = model.is_date_shift_root?
-
-      @is_date_shift_root[model.model_name]
-    end
-
-    def model_path_to_date_shift_root(model)
-      @paths_to_date_shift_root ||= {}
-
-      @paths_to_date_shift_root[model.model_name] ||= model.path_to_date_shift_root
-    end
-
-    def record_entry_explicitly_disconnected?(model, record_name)
-      @record_entry_disconnected_cache ||= {}
-      @record_entry_disconnected_cache[model.model_name] ||= {}
-
-      return @record_entry_disconnected_cache[model.model_name][record_name] unless @record_entry_disconnected_cache[model.model_name][record_name].nil?
-
-      entry = record_entry_from_records(model, record_name)
-
-      explicitly_disconnected = false
-      
-      explicitly_disconnected = (entry.explicitly_disconnected_from_parent?) ||
-        (!entry.explicitly_disconnected_from_parent? &&
-          record_entry_explicitly_disconnected_by_parent(entry, model, record_name)) unless entry.nil?
-
-      @record_entry_disconnected_cache[model.model_name][record_name] = explicitly_disconnected
-
-      explicitly_disconnected
-    end
-
-    def record_entry_from_records(model, record_name)
-      return @records[model][record_name] if @records[model][record_name]
-      
-      nil
-    end
-
-    def record_entry_explicitly_disconnected_by_parent(record_entry, model, record_name)
-      return false unless !record_entry.includes_parent_record?
-
-      @record_entry_disconnected_by_parent_cache ||= {}
-      @record_entry_disconnected_by_parent_cache[model.model_name] ||= {}
-
-      return @record_entry_disconnected_by_parent_cache[model.model_name][record_name] unless @record_entry_disconnected_by_parent_cache[model.model_name][record_name].nil?
-
-      explicitly_disconnected = false
-
-      parent_record_name = parent_record_name_from_db(model, record_name)
-      parent_entry = record_entry_from_records(model.parent_model, parent_record_name)
-
-      explicitly_disconnected = !parent_entry[model.model_name]&.include?(record_name) if parent_entry
-
-      @record_entry_disconnected_by_parent_cache[model.model_name][record_name] = explicitly_disconnected
-
-      explicitly_disconnected
-    end
-
-    def parent_record_name_from_records(model, record_name)
-      record_entry_from_records(model, record_name)&.parent_record_name
-    end
-
-    def db_records_for_model_by_identifier(model)
-      @all_model_records ||= {}
-      @all_model_records[model.model_name] ||= model.select_map(
-        [column_name(model, Magma::IdentifierAttribute),
-         column_name(model, Magma::ParentAttribute)]).map do |identifier, parent_id|
-          [identifier.to_s, parent_id]
-        end.to_h
-    end
-
-    def column_name(model, attribute_type)
-      model.attributes.values.select do |attribute|
-        attribute.is_a?(attribute_type)
-      end.first.column_name.to_sym
-    end
-
-    def db_record_identifiers_for_model_by_row_id(model)
-      @all_parent_identifiers ||= {}
-      @all_parent_identifiers[model.model_name] ||= model.select_map(
-        [:id,
-         column_name(model, Magma::IdentifierAttribute)]
-      ).to_h
-    end
-
-    def parent_record_in_db(parent_model, parent_record_id)
-      parent_record_id && db_record_identifiers_for_model_by_row_id(parent_model).key?(parent_record_id)
-    end
-
-    def parent_record_name_from_db(model, record_name)
-      @parent_record_name_cache ||= {}
-      @parent_record_name_cache[model.model_name] ||= {}
-
-      return @parent_record_name_cache[model.model_name][record_name] unless @parent_record_name_cache[model.model_name][record_name].nil?
-
-      parent_record_id = db_records_for_model_by_identifier(model)[record_name]
-      
-      @parent_record_name_cache[model.model_name][record_name] = db_record_identifiers_for_model_by_row_id(model.parent_model)[parent_record_id] if parent_record_in_db(model.parent_model, parent_record_id)
-
-      @parent_record_name_cache[model.model_name][record_name]
-    end
 
     def validate!
       complaints = []
