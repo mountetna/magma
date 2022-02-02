@@ -60,5 +60,9 @@ describe Magma::Model do
   it 'can get column names' do
     expect(Labors::Monster.column_name(attribute_type: Magma::IdentifierAttribute)).to eq(:name)
     expect(Labors::Monster.column_name(attribute_name: :reference_monster)).to eq(:reference_monster_id)
+
+    expect(Labors::Monster.column_name()).to eq(nil)
+    expect(Labors::Monster.column_name(attribute_name: :non_attribute)).to eq(nil)
+    expect(Labors::Monster.column_name(attribute_type: Magma::MatrixAttribute)).to eq(nil)
   end
 end
