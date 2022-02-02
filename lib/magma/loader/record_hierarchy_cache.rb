@@ -1,4 +1,4 @@
-require_relative './date_shift_cache'
+require_relative "./date_shift_cache"
 
 class Magma
   class RecordHierarchyCache
@@ -14,7 +14,7 @@ class Magma
 
       @date_shift_cache = Magma::DateShiftCache.new
     end
-    
+
     # This requires access to both the set of @records from the loader as well as the database.
     def path_to_date_shift_root(model, record_name)
       @path_to_root[model] ||= {}
@@ -49,11 +49,11 @@ class Magma
         # If parent exists in the @records, and will be created
         parent_record_name = parent_record_name_from_records(model_to_check, current_record_name)
 
-        # If parent not found in @records AND there is not an explicit "disconnect" action, 
+        # If parent not found in @records AND there is not an explicit "disconnect" action,
         #   check the database for the EXISTING record and find its parent.
         # If no existing record (current_record_name is a new record_entry), this should return nil and there is no path
         parent_record_name = parent_record_name_from_db(model_to_check, current_record_name) if parent_record_name.nil?
-        
+
         begin
           current_record_name = parent_record_name
           next
@@ -64,22 +64,10 @@ class Magma
       end
 
       path = has_path ? path_to_root : []
-      
+
       @path_to_root[model][record_name] = path
 
       path
-    end
-
-    def parent_record_name_from_db(model, record_name)
-      @parent_record_name_cache[model] ||= {}
-
-      return @parent_record_name_cache[model][record_name] unless @parent_record_name_cache[model][record_name].nil?
-
-      parent_record_id = db_records_for_model_by_identifier(model)[record_name]
-      
-      @parent_record_name_cache[model][record_name] = db_record_identifiers_for_model_by_row_id(model.parent_model)[parent_record_id] if parent_record_in_db(model.parent_model, parent_record_id)
-
-      @parent_record_name_cache[model][record_name]
     end
 
     private
@@ -96,10 +84,10 @@ class Magma
       entry = record_entry_from_records(model, record_name)
 
       explicitly_disconnected = false
-      
+
       explicitly_disconnected = (entry.explicitly_disconnected_from_parent?) ||
-        (!entry.explicitly_disconnected_from_parent? &&
-          record_entry_explicitly_disconnected_by_parent(entry, model, record_name)) unless entry.nil?
+                                (!entry.explicitly_disconnected_from_parent? &&
+                                 record_entry_explicitly_disconnected_by_parent(entry, model, record_name)) unless entry.nil?
 
       @record_entry_disconnected_cache[model][record_name] = explicitly_disconnected
 
@@ -108,7 +96,7 @@ class Magma
 
     def record_entry_from_records(model, record_name)
       return @records[model][record_name] if @records[model][record_name]
-      
+
       nil
     end
 
@@ -138,12 +126,13 @@ class Magma
     def db_records_for_model_by_identifier(model)
       @all_model_records[model] ||= model.select_map(
         [model.column_name(attribute_type: Magma::IdentifierAttribute),
-         model.column_name(attribute_type: Magma::ParentAttribute)]).map do |identifier, parent_id|
-          [identifier.to_s, parent_id]
-        end.to_h
+         model.column_name(attribute_type: Magma::ParentAttribute)]
+      ).map do |identifier, parent_id|
+        [identifier.to_s, parent_id]
+      end.to_h
     end
 
-    def db_record_identifiers_for_model_by_row_id(model) 
+    def db_record_identifiers_for_model_by_row_id(model)
       @all_parent_identifiers[model] ||= model.select_map(
         [:id,
          model.column_name(attribute_type: Magma::IdentifierAttribute)]
@@ -152,6 +141,18 @@ class Magma
 
     def parent_record_in_db(parent_model, parent_record_id)
       parent_record_id && db_record_identifiers_for_model_by_row_id(parent_model).key?(parent_record_id)
+    end
+
+    def parent_record_name_from_db(model, record_name)
+      @parent_record_name_cache[model] ||= {}
+
+      return @parent_record_name_cache[model][record_name] unless @parent_record_name_cache[model][record_name].nil?
+
+      parent_record_id = db_records_for_model_by_identifier(model)[record_name]
+
+      @parent_record_name_cache[model][record_name] = db_record_identifiers_for_model_by_row_id(model.parent_model)[parent_record_id] if parent_record_in_db(model.parent_model, parent_record_id)
+
+      @parent_record_name_cache[model][record_name]
     end
   end
 end
