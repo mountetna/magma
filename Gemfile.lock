@@ -1,7 +1,7 @@
 PATH
   remote: /etna
   specs:
-    etna (0.1.43)
+    etna (0.1.44)
       concurrent-ruby
       curb
       jwt
@@ -47,7 +47,7 @@ GEM
     i18n (1.8.10)
       concurrent-ruby (~> 1.0)
     json (2.5.1)
-    jwt (2.2.3)
+    jwt (2.3.0)
     method_source (1.0.0)
     mini_magick (4.11.0)
     minitest (5.14.4)
@@ -56,7 +56,7 @@ GEM
       connection_pool (~> 2.2)
     net-ssh (6.1.0)
     nio4r (2.5.7)
-    nokogiri (1.12.2-x86_64-linux)
+    nokogiri (1.12.5-x86_64-linux)
       racc (~> 1.4)
     pg (1.2.3)
     prometheus-client (2.1.0)
@@ -69,12 +69,12 @@ GEM
     public_suffix (4.0.6)
     puma (5.2.2)
       nio4r (~> 2.0)
-    racc (1.5.2)
+    racc (1.6.0)
     rack (2.2.3)
     rack-test (1.1.0)
       rack (>= 1.0, < 3)
     rexml (3.2.5)
-    rollbar (3.2.0)
+    rollbar (3.3.0)
     rspec (3.10.0)
       rspec-core (~> 3.10.0)
       rspec-expectations (~> 3.10.0)
