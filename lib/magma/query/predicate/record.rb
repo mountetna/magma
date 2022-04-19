@@ -99,7 +99,7 @@ class Magma
     private
 
     def attribute_name(argument)
-      @model.has_attribute?(argument) || argument == :id
+      @model.has_attribute?(argument) || argument == :id || argument == '::identifier'
     end
 
     def attribute_join
@@ -165,8 +165,15 @@ class Magma
       end
     end
 
-    def valid_attribute attribute_name
-      attribute_name == :id ? :id : @model.attributes[attribute_name.to_sym]
+    def valid_attribute(attribute_name)
+      case attribute_name
+      when :id
+        return :id
+      when '::identifier'
+        return @model.identity
+      else
+        return @model.attributes[attribute_name.to_sym]
+      end
     end
   end
 end
