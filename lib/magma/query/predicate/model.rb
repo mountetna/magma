@@ -67,7 +67,7 @@ class Magma
         child_extract(
           table.group_by do |row|
             row[identity]
-          end.first.last,
+          end.first&.last,
           identity
         )
       end

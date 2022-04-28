@@ -11,7 +11,9 @@ class Magma
       return [ foreign_id, nil ] if value.nil?
 
       if value.is_a? Magma::TempId
-        [ foreign_id, value.real_id ]
+        id = value.real_id
+        raise Magma::LoadFailed(["#{model_name}.#{attribute_name} value was not a valid #{link_model.model_name} identifier."]) if id.nil?
+        [ foreign_id, id ]
       elsif link_identity && loader.identifier_exists?(link_model, value)
         [ foreign_id, loader.identifier_id(link_model, value) ]
       end

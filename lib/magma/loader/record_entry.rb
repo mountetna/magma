@@ -125,13 +125,38 @@ class Magma
 
     def temp_entry
       # Replace the entry with the appropriate values for the column.
-      @record.map do |att_name,value|
+      errors = []
+
+      real_id = @loader.real_id(@model, @record_name)
+      if real_id.nil?
+        errors.push("#{@model.model_name} '#{@record_name}' has no backing identifier, could not be loaded.")
+      end
+
+      result = @record.map do |att_name,value|
         attribute = @model.attributes[att_name]
         next unless attribute.is_a?(Magma::ForeignKeyAttribute)
-        [ attribute.foreign_id, @loader.identifier_id(attribute.link_model, value).real_id ]
+
+        identifier = @loader.identifier_id(attribute.link_model, value)
+
+        if identifier.is_a?(Magma::TempId)
+          identifier = identifier.real_id
+        end
+
+        if identifier.nil?
+          errors.push("#{@model.model_name}.#{att_name} '#{value}' does not exist.")
+          next
+        end
+
+        [ attribute.foreign_id, identifier ]
       end.compact.to_h.merge(
-        real_id: @loader.real_id(@model, @record_name)
+        real_id: real_id
       )
+
+      unless errors.empty?
+        raise Magma::LoadFailed.new(errors)
+      end
+
+      result
     end
 
     def attribute_key

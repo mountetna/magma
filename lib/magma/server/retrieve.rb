@@ -101,6 +101,11 @@ class RetrieveController < Magma::Controller
   end
 
   def json_payload
+    project = Magma.instance.get_project(@project_name)
+    if project.nil?
+      return failure(404, "Project #{@project_name} does not exist.")
+    end
+
     if @model_name == 'all'
       Magma.instance.get_project(@project_name).models.each do |model_name, model|
         next if @attribute_names == 'identifier' && !model.has_identifier?
@@ -111,8 +116,10 @@ class RetrieveController < Magma::Controller
         )
       end
     else
+      model = Magma.instance.get_model(@project_name, @model_name)
+
       retrieve_model(
-        Magma.instance.get_model(@project_name, @model_name),
+        model,
         @record_names,
         @attribute_names,
         filter,

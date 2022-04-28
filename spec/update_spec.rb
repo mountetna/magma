@@ -171,6 +171,20 @@ describe UpdateController do
         expect(monster.labor).to eq(hydra)
       end
 
+      it 'provides a useful error message when updating with a non existent parent' do
+        monster = create(:monster, name: 'Lernean Hydra')
+        update(
+          monster: {
+            'Lernean Hydra': {
+              labor: 'The Lernean Hydra'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(422)
+        expect(json_body[:errors]).to eql(["monster.labor 'The Lernean Hydra' does not exist."])
+      end
+
       it 'updates a parent attribute for parent-collection' do
         lion = create(:labor, name: 'The Nemean Lion', year: '0002-01-01', project: @project)
         hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01')

@@ -11,6 +11,7 @@ class Magma
     end
 
     def real_id
+      return nil if record_entry.nil?
       record_entry.real_id
     end
   end
