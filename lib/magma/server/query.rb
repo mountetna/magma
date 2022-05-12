@@ -11,7 +11,7 @@ class QueryController < Magma::Controller
       when "::predicates"
         return success_json(Magma::Predicate)
       when "::model_names"
-        return success_json(Magma.instance.get_project(@project_name).models.keys)
+        return success_json(answer: Magma.instance.get_project(@project_name).models.keys, format: [ 'String' ])
       end
 
       question = Magma::Question.new(

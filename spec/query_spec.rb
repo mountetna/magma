@@ -85,7 +85,7 @@ describe QueryController do
     it 'returns a list of model names' do
       query('::model_names')
 
-      expect(json_body.map(&:to_sym)).to match_array(Magma.instance.get_project('labors').models.keys)
+      expect(json_body[:answer].map(&:to_sym)).to match_array(Magma.instance.get_project('labors').models.keys)
     end
   end
 
