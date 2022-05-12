@@ -1,7 +1,17 @@
 class Magma
   class StartPredicate < Magma::ModelPredicate
     def self.verbs
-      Magma::ModelPredicate.verbs
+      Magma::ModelPredicate.verbs.merge(@verbs)
+    end
+
+    verb '::attribute_names' do
+      child Array
+
+      extract do
+        @model.attributes.keys
+      end
+
+      format { [ 'String' ] }
     end
 
     def add_filters

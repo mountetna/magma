@@ -195,7 +195,7 @@ EOT
       end
 
       def verb *args, &block
-        verbs[args] = block
+        (@verbs ||= {})[args] = block
       end
 
       def match_verbs(query_args, predicate, is_conditional = false)
