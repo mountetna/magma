@@ -11,7 +11,9 @@ class QueryController < Magma::Controller
       when "::predicates"
         return success_json(Magma::Predicate)
       when "::model_names"
-        return success_json(answer: Magma.instance.get_project(@project_name).models.keys, type: 'Array', format: [ 'String' ])
+        project = Magma.instance.get_project(@project_name)
+        raise Etna::BadRequest, "No such project '#{@project_name}'" unless project
+        return success_json(answer: project.models.keys, type: 'Array', format: [ 'String' ])
       end
 
       question = Magma::Question.new(
