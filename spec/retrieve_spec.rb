@@ -139,6 +139,233 @@ describe RetrieveController do
     expect(last_response.status).to eq(422)
   end
 
+  context 'guests' do
+    it 'calls the retrieve endpoint and returns a template.' do
+      retrieve(
+        {
+          model_name: 'aspect',
+          record_names: [],
+          attribute_names: [],
+          project_name: 'labors'
+        },
+        :guest
+      )
+      expect(last_response.status).to eq(200)
+  
+      json_template = json_body[:models][:aspect][:template]
+  
+      # all attributes are present
+      expect(json_template[:attributes].keys).to eq(
+        Labors::Aspect.attributes.keys
+      )
+  
+      # attributes are well-formed
+      expect(json_template[:attributes].map{|att_name,att| att.keys.sort}).to all(include( :attribute_type, :display_name, :name, :hidden))
+  
+      # the identifier is reported
+      expect(json_template[:identifier]).to eq('aspect_id')
+  
+      # the name is reported
+      expect(json_template[:name]).to eq('aspect')
+  
+      # the parent model is reported
+      expect(json_template[:parent]).to eq('monster')
+  
+      # the dictionary model is reported
+      expect(json_template[:dictionary]).to eq(
+        dictionary_model: "Labors::Codex",
+        project_name: 'labors',
+        model_name: 'codex',
+        attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
+      )
+    end
+  
+    it 'optionally does not return a template' do
+      retrieve(
+        {
+          model_name: 'project',
+          record_names: 'all',
+          attribute_names: 'all',
+          project_name: 'labors',
+          hide_templates: true
+        },
+        :guest
+      )
+      expect(last_response.status).to eq(200)
+  
+      expect(json_body[:models][:project][:documents].size).to eq(1)
+      expect(json_body[:models][:project][:template]).to be_nil
+    end
+  
+    it 'complains with missing params.' do
+      retrieve(project_name: 'labors')
+      expect(last_response.status).to eq(422)
+    end
+  
+    it 'can get all models from the retrieve endpoint.' do
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'all',
+          record_names: [],
+          attribute_names: 'all'
+        },
+        :guest
+      )
+      expect(last_response).to(be_ok)
+    end
+
+    it 'retrieves file attributes with storage links' do
+      Timecop.freeze(DateTime.new(500))
+      labor = create(:labor, :lion, project: @project)
+      monster = create(:monster, :lion, stats: '{"filename": "stats.txt", "original_filename": ""}', labor: labor)
+
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'monster',
+          record_names: [ 'Nemean Lion' ],
+          attribute_names: [ 'stats' ]
+        },
+        :guest
+      )
+
+      expect(last_response.status).to eq(200)
+      uri = URI.parse(json_document(:monster, 'Nemean Lion')[:stats][:url])
+      params = Rack::Utils.parse_nested_query(uri.query)
+
+      expect(uri.host).to eq(Magma.instance.config(:storage)[:host])
+      expect(uri.path).to eq('/labors/download/magma/stats.txt')
+      expect(params['X-Etna-Id']).to eq('magma')
+      expect(params['X-Etna-Expiration']).to eq((Time.now + Magma.instance.config(:storage)[:download_expiration]).iso8601)
+
+      Timecop.return
+    end
+
+    it 'can retrieve a TSV of data from the endpoint' do
+      labor_list = create_list(:labor, 12, project: @project)
+      required_atts = ['name', 'completed', 'number']
+      retrieve(
+        {
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: required_atts,
+          format: 'tsv',
+          project_name: 'labors'
+        },
+        :guest
+      )
+      header, *table = CSV.parse(last_response.body, col_sep: "\t")
+
+      expect(header).to eq(required_atts)
+      expect(table).to match_array(labor_list.map{|l| [ l.name, l.completed.to_s, l.number.to_s ] })
+    end
+
+    it 'can use a filter' do
+      lion = create(:labor, :lion, project: @project)
+      hydra = create(:labor, :hydra, project: @project)
+      stables = create(:labor, :stables, project: @project)
+      retrieve(
+        {
+          project_name: 'labors',
+          model_name: 'labor',
+          record_names: 'all',
+          attribute_names: 'all',
+          filter: 'name~L'
+        },
+        :guest
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:models][:labor][:documents].count).to eq(2)
+    end
+
+    context 'restriction' do
+      it 'hides restricted records' do
+        labor = create(:labor, :lion, project: @project)
+        lion = create(:monster, :lion, labor: labor)
+        restricted_victim_list = create_list(:victim, 9, restricted: true, monster: lion)
+        unrestricted_victim_list = create_list(:victim, 9, monster: lion)
+  
+        retrieve(
+          {
+            project_name: 'labors',
+            model_name: 'victim',
+            record_names: 'all',
+            attribute_names: 'all'
+          },
+          :guest
+        )
+        expect(last_response.status).to eq(200)
+        expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
+      end
+  
+      it 'hides the children of restricted records' do
+        labor = create(:labor, :lion, project: @project)
+        labor2 = create(:labor, :hydra, project: @project)
+        lion = create(:monster, :lion, restricted: true, labor: labor)
+        hydra = create(:monster, :hydra, restricted: false, labor: labor2)
+        restricted_victim_list = create_list(:victim, 9, monster: lion)
+        unrestricted_victim_list = create_list(:victim, 9, monster: hydra)
+  
+        retrieve(
+          {
+            project_name: 'labors',
+            model_name: 'victim',
+            record_names: 'all',
+            attribute_names: 'all'
+          },
+          :guest
+        )
+        expect(json_body[:models][:victim][:documents].keys.sort).to eq(unrestricted_victim_list.map(&:identifier).map(&:to_sym))
+      end
+  
+      it 'conservatively hides if any ancestor is restricted' do
+        labor = create(:labor, :lion, project: @project)
+        labor2 = create(:labor, :hydra, project: @project)
+        lion = create(:monster, :lion, restricted: true, labor: labor)
+        hydra = create(:monster, :hydra, restricted: false, labor: labor2)
+  
+        # some of the victims are not restricted
+        restricted_victim_list = create_list(:victim, 3, monster: lion, restricted: true)
+        unrestricted_victim_list = create_list(:victim, 3, monster: lion, restricted: false)
+        unrestricted_victim_list2 = create_list(:victim, 3, monster: lion, restricted: nil)
+  
+        # some of the victims are not restricted
+        restricted_victim_list2 = create_list(:victim, 3, monster: hydra, restricted: true)
+        unrestricted_victim_list3 = create_list(:victim, 3, monster: hydra, restricted: false)
+        unrestricted_victim_list4 = create_list(:victim, 3, monster: hydra, restricted: nil)
+  
+        retrieve(
+          {
+            project_name: 'labors',
+            model_name: 'victim',
+            record_names: 'all',
+            attribute_names: 'all'
+          },
+          :guest
+        )
+        expect(json_body[:models][:victim][:documents].keys.sort).to match_array((unrestricted_victim_list3 + unrestricted_victim_list4).map(&:identifier).map(&:to_sym))
+      end
+  
+      it 'hides restricted attributes' do
+        victim_list = create_list(:victim, 9, country: 'thrace')
+  
+        retrieve(
+          {
+            project_name: 'labors',
+            model_name: 'victim',
+            record_names: 'all',
+            attribute_names: 'all'
+          },
+          :guest
+        )
+        countries = json_body[:models][:victim][:documents].values.map{|victim| victim[:country]}
+        expect(countries).to all(be_nil)
+      end
+    end
+  end
+
   context 'files' do
     it 'retrieves file attributes with storage links' do
       Timecop.freeze(DateTime.new(500))

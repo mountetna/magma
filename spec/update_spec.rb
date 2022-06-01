@@ -27,7 +27,7 @@ describe UpdateController do
     json_post(:update, {project_name: 'labors', revisions: revisions}.update(params))
   end
 
-  it 'fails for non-editors' do
+  it 'fails for non-editors (viewers)' do
     lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
     update(
       {
@@ -38,6 +38,21 @@ describe UpdateController do
         }
       },
       :viewer
+    )
+    expect(last_response.status).to eq(403)
+  end
+
+  it 'fails for non-editors (guests)' do
+    lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
+    update(
+      {
+        monster: {
+          'Nemean Lion': {
+            species: 'lion'
+          }
+        }
+      },
+      :guest
     )
     expect(last_response.status).to eq(403)
   end

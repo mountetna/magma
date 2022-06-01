@@ -75,6 +75,50 @@ describe QueryController do
     expect(last_response.status).to eq(501)
   end
 
+  context 'guests' do
+    it 'can post a basic query' do
+      labors = create_list(:labor, 3, project: @project)
+  
+      query(
+        [ 'labor', '::all', '::identifier' ],
+        :guest
+      )
+  
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last).sort).to eq(labors.map(&:identifier).sort)
+      expect(json_body[:format]).to eq(['labors::labor#name', 'labors::labor#name'])
+    end
+
+    it 'shows only disconnected records if asked' do
+      labors = create_list(:labor, 3, project: @project)
+      disconnected_labors = create_list(:labor, 3)
+
+      auth_header(:guest)
+      json_post(:query,
+        project_name: 'labors',
+        query: [ 'labor', '::all', '::identifier' ],
+        show_disconnected: true
+      )
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].map(&:last).sort).to match_array((disconnected_labors).map(&:identifier))
+    end
+
+    it 'allows filters' do
+      @hydra = create(:labor, :hydra, project: @project)
+      @stables = create(:labor, :stables, project: @project)
+
+      poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
+      poop = create(:prize, name: 'poop', labor: @stables)
+
+      query(['prize', [ 'worth', '::>=', 5 ], '::all', 'name'], :guest)
+
+      expect(last_response.status).to eq(200)
+      expect(json_body[:answer].first.last).to eq('poison')
+      expect(json_body[:format]).to eq([ 'labors::prize#id', 'labors::prize#name' ])
+    end
+  end
+
   context Magma::Question do
     it 'returns a list of predicate definitions' do
       query('::predicates')
