@@ -27,34 +27,21 @@ describe UpdateController do
     json_post(:update, {project_name: 'labors', revisions: revisions}.update(params))
   end
 
-  it 'fails for non-editors (viewers)' do
+  it 'fails for non-editors' do
     lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
-    update(
-      {
-        monster: {
-          'Nemean Lion': {
-            species: 'lion'
+    [:viewer, :guest].each do |role|
+      update(
+        {
+          monster: {
+            'Nemean Lion': {
+              species: 'lion'
+            }
           }
-        }
-      },
-      :viewer
-    )
-    expect(last_response.status).to eq(403)
-  end
-
-  it 'fails for non-editors (guests)' do
-    lion = create(:monster, name: 'Nemean Lion', species: 'hydra')
-    update(
-      {
-        monster: {
-          'Nemean Lion': {
-            species: 'lion'
-          }
-        }
-      },
-      :guest
-    )
-    expect(last_response.status).to eq(403)
+        },
+        role
+      )
+      expect(last_response.status).to eq(403)
+    end
   end
 
   it 'updates updated_at' do
