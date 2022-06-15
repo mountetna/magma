@@ -35,12 +35,27 @@ class Magma
       child TrueClass
 
       constraint do
+        require 'pry'
+        binding.pry
         attribute = valid_attribute(@arguments[1])
         case attribute
         when Magma::ForeignKeyAttribute
           not_null_constraint(attribute.foreign_id)
+        when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
+          # do nothing in this case, instead, we'll add a join on the
+          #   child table
         else
           not_null_constraint(attribute.column_name.to_sym)
+        end
+      end
+
+      join do
+        require 'pry'
+        binding.pry
+        attribute = valid_attribute(@arguments[1])
+        case attribute
+        when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
+          child_inner_join(attribute)
         end
       end
     end
@@ -100,6 +115,21 @@ class Magma
 
     def attribute_name(argument)
       @model.has_attribute?(argument) || argument == :id || argument == '::identifier'
+    end
+
+    def child_inner_join(child_attribute)
+      Magma::Join.new(
+        # left table
+        table_name,
+        alias_name,
+        attribute.foreign_id,
+
+        #right table
+        child_attribute.table_name,
+        child_attribute.alias_name,
+        :id,
+        inner_join: true
+      )
     end
 
     def attribute_join

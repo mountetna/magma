@@ -1197,6 +1197,37 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::labor#name', 'Numeric'])
     end
 
+    it 'supports ::count for collections' do
+      lion_monster = create(:monster, :lion, labor: @lion)
+      hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+      john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+      jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+
+      query(['monster', '::all', 'victim', '::count' ])
+
+      expect(json_body[:answer]).to eq([
+        [ 'Lernean Hydra', 0 ],
+        [ 'Nemean Lion', 2 ]
+      ])
+      expect(json_body[:format]).to eq(['labors::monster#name', 'Numeric'])
+    end
+
+    it 'supports ::count for collections with filter' do
+      lion_monster = create(:monster, :lion, labor: @lion)
+      hydra_monster = create(:monster, :hydra, labor: @hydra)
+
+      john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+      jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+
+      query(['monster', ['::has', 'victim'], '::count' ])
+      require 'pry'
+      binding.pry
+      expect(json_body[:answer]).to eq(1)
+      expect(json_body[:format]).to eq('Numeric')
+    end
+
+
     it 'supports ::count and ::any' do
       poison = create(:prize, labor: @hydra, name: 'poison', worth: 0)
       poop = create(:prize, labor: @stables, name: 'poop', worth: 4)
