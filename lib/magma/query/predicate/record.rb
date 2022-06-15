@@ -35,8 +35,6 @@ class Magma
       child TrueClass
 
       constraint do
-        require 'pry'
-        binding.pry
         attribute = valid_attribute(@arguments[1])
         case attribute
         when Magma::ForeignKeyAttribute
@@ -50,8 +48,6 @@ class Magma
       end
 
       join do
-        require 'pry'
-        binding.pry
         attribute = valid_attribute(@arguments[1])
         case attribute
         when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
@@ -118,16 +114,21 @@ class Magma
     end
 
     def child_inner_join(child_attribute)
+      # We don't have a predicate in this case
+      child_alias = 10.times.map{ (97+rand(26)).chr }.join.to_sym
+
       Magma::Join.new(
         # left table
         table_name,
         alias_name,
-        attribute.foreign_id,
+        :id,
 
         #right table
-        child_attribute.table_name,
-        child_attribute.alias_name,
-        :id,
+        child_attribute.link_model.table_name,
+        child_alias,
+        child_attribute.link_model.attributes.values.select do |a|
+          a.respond_to?(:link_model) ? a.link_model == @model : false
+        end.first.column_name.to_sym,
         inner_join: true
       )
     end

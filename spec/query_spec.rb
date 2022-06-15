@@ -1221,8 +1221,7 @@ describe QueryController do
       jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
 
       query(['monster', ['::has', 'victim'], '::count' ])
-      require 'pry'
-      binding.pry
+
       expect(json_body[:answer]).to eq(1)
       expect(json_body[:format]).to eq('Numeric')
     end
