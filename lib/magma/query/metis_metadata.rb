@@ -17,6 +17,10 @@ class MetisMetadata
     def to_json(options = {})
       @set[@file_path].to_json
     end
+
+    def to_s
+      @set[@file_path].to_s
+    end
   end
 
   def <<(file_path)
