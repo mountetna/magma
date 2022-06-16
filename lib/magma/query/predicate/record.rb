@@ -114,7 +114,7 @@ class Magma
     end
 
     def child_inner_join(child_attribute)
-      # We don't have a predicate in this case
+      # We don't have a predicate in this case, so generate a new alias
       child_alias = 10.times.map{ (97+rand(26)).chr }.join.to_sym
 
       Magma::Join.new(

@@ -1226,6 +1226,20 @@ describe QueryController do
       expect(json_body[:format]).to eq('Numeric')
     end
 
+    it 'supports ::count for collections with ::lacks filter' do
+      lion_monster = create(:monster, :lion, labor: @lion)
+      hydra_monster = create(:monster, :hydra, labor: @hydra)
+      stables = create(:monster, :stables, labor: @stables)
+
+      john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+      jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+
+      query(['monster', ['::lacks', 'victim'], '::count' ])
+
+      expect(json_body[:answer]).to eq(2)
+      expect(json_body[:format]).to eq('Numeric')
+    end
+
 
     it 'supports ::count and ::any' do
       poison = create(:prize, labor: @hydra, name: 'poison', worth: 0)
