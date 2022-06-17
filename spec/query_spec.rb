@@ -1229,7 +1229,7 @@ describe QueryController do
     it 'supports ::count for collections with ::lacks filter' do
       lion_monster = create(:monster, :lion, labor: @lion)
       hydra_monster = create(:monster, :hydra, labor: @hydra)
-      stables = create(:monster, :stables, labor: @stables)
+      hind = create(:monster, :hind, labor: @hind)
 
       john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
       jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')

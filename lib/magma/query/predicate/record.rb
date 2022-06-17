@@ -51,7 +51,7 @@ class Magma
         attribute = valid_attribute(@arguments[1])
         case attribute
         when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
-          child_inner_join(attribute)
+          inner_join_child(attribute)
         end
       end
     end
@@ -76,6 +76,11 @@ class Magma
             json_constraint(attribute.column_name.to_sym, "filename", "null"),
             null_constraint(attribute.column_name.to_sym),
           ])
+        when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
+          not_constraint(
+            :id,
+            lacks_child_subquery(attribute)
+          )
         else
           null_constraint(attribute.column_name.to_sym)
         end
@@ -113,10 +118,13 @@ class Magma
       @model.has_attribute?(argument) || argument == :id || argument == '::identifier'
     end
 
-    def child_inner_join(child_attribute)
-      # We don't have a predicate in this case, so generate a new alias
-      child_alias = 10.times.map{ (97+rand(26)).chr }.join.to_sym
-
+    def attribute_alias
+      # We don't have a predicates for collection-type attributes,
+      #   so we provide a convenience method to generate new aliases
+      10.times.map{ (97+rand(26)).chr }.join.to_sym
+    end
+    
+    def inner_join_child(attribute)
       Magma::Join.new(
         # left table
         table_name,
@@ -124,12 +132,29 @@ class Magma
         :id,
 
         #right table
-        child_attribute.link_model.table_name,
-        child_alias,
-        child_attribute.link_model.attributes.values.select do |a|
-          a.respond_to?(:link_model) ? a.link_model == @model : false
-        end.first.column_name.to_sym,
+        attribute.link_model.table_name,
+        attribute_alias,
+        collection_attribute_fk_column(attribute),
         inner_join: true
+      )
+    end
+
+    def collection_attribute_fk_column(attribute)
+      attribute.link_model.attributes.values.select do |a|
+        a.respond_to?(:link_model) ? a.link_model == @model : false
+      end.first.column_name.to_sym
+    end
+
+    def lacks_child_subquery(attribute)
+      attribute_model_alias = attribute_alias
+      fk_column = collection_attribute_fk_column(attribute)
+      attribute.link_model.select(
+        Sequel.as(
+          Sequel.qualify(attribute_model_alias, fk_column),
+          fk_column
+        )
+      ).from(
+        Sequel.as(attribute.link_model.table_name, attribute_model_alias)
       )
     end
 
