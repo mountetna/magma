@@ -1213,34 +1213,53 @@ describe QueryController do
       expect(json_body[:format]).to eq(['labors::monster#name', 'Numeric'])
     end
 
-    it 'supports ::count for collections with filter' do
-      lion_monster = create(:monster, :lion, labor: @lion)
-      hydra_monster = create(:monster, :hydra, labor: @hydra)
+    context '::count in filter' do
+      it 'works with ::has' do
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+  
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+  
+        query(['monster', ['::has', 'victim'], '::count' ])
+  
+        expect(json_body[:answer]).to eq(1)
+        expect(json_body[:format]).to eq('Numeric')
+      end
 
-      john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
-      jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+      it 'works with ::lacks when there are disconnected records' do
+        # This is important to test because any NULL fk records
+        #   will cause the subquery "not in" constraint to always
+        #   return [].
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+  
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
 
-      query(['monster', ['::has', 'victim'], '::count' ])
-
-      expect(json_body[:answer]).to eq(1)
-      expect(json_body[:format]).to eq('Numeric')
+        someone = create(:victim, name: 'Someone Unknown', country: 'MIA')
+  
+        query(['monster', ['::lacks', 'victim'], '::count' ])
+  
+        expect(json_body[:answer]).to eq(1)
+        expect(json_body[:format]).to eq('Numeric')
+      end
+  
+      it 'works with ::lacks' do
+        lion_monster = create(:monster, :lion, labor: @lion)
+        hydra_monster = create(:monster, :hydra, labor: @hydra)
+        hind = create(:monster, :hind, labor: @hind)
+  
+        john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
+        jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
+  
+        query(['monster', ['::lacks', 'victim'], '::count' ])
+  
+        expect(json_body[:answer]).to eq(2)
+        expect(json_body[:format]).to eq('Numeric')
+      end
     end
-
-    it 'supports ::count for collections with ::lacks filter' do
-      lion_monster = create(:monster, :lion, labor: @lion)
-      hydra_monster = create(:monster, :hydra, labor: @hydra)
-      hind = create(:monster, :hind, labor: @hind)
-
-      john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
-      jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
-
-      query(['monster', ['::lacks', 'victim'], '::count' ])
-
-      expect(json_body[:answer]).to eq(2)
-      expect(json_body[:format]).to eq('Numeric')
-    end
-
-
+    
     it 'supports ::count and ::any' do
       poison = create(:prize, labor: @hydra, name: 'poison', worth: 0)
       poop = create(:prize, labor: @stables, name: 'poop', worth: 4)

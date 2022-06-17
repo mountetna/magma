@@ -155,7 +155,15 @@ class Magma
         )
       ).from(
         Sequel.as(attribute.link_model.table_name, attribute_model_alias)
+      ).where(
+        Sequel.negate(
+          Sequel.qualify(attribute_model_alias, fk_column) => nil
+        )
       )
+      # This "Where" clause is important to apply because any NULL fk records
+      #   on the child table will cause the subquery result to include NULL,
+      #   which means the "NOT IN" constraint ambiguity causes the overall
+      #   query to return []. https://stackoverflow.com/q/1406215
     end
 
     def attribute_join
