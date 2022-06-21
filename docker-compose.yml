@@ -3,10 +3,9 @@ version: '3.4'
 
 x-base-etna-service:
   &base-etna-service # Base configuration used by most etna services.
-  image: etna-base-dev
+  image: etna-base
   volumes: &base-etna-service-volumes
     - .:/app:delegated
-    - magma-app-gems:/app/vendor/bundle:rw
     - magma-log-dir:/app/log:rw
     - magma-tmp-dir:/app/tmp:rw
     - magma-public-dir:/app/public:rw
