@@ -129,6 +129,23 @@ describe Magma::AddAttributeAction do
       end
     end
 
+    context "when attribute_group contains multiple values" do
+      let(:attribute_group) { attribute_groups.join(",")}
+      let(:action_errors) { action.validate; action.errors.map { |v| v[:message] }.first }
+
+      let(:attribute_groups) { ["a", "b", "c"] }
+      it "works" do
+        expect(action_errors).to be_nil
+      end
+
+      context "but one of the elements is non snake_case" do
+        let(:attribute_groups) { ["a", "b-!A.A", "c"] }
+        it "works" do
+          expect(action_errors).to eql("attribute_group must be snake_case with no spaces")
+        end
+      end
+    end
+
     context "when attribute_group is not a snake_case word" do
       let(:attribute_group) { @attribute_group }
 
