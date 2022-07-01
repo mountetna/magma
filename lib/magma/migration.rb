@@ -144,7 +144,7 @@ class Magma
     end
 
     def column_type_entry name, type
-      "set_column_type :#{name}, #{type}"
+      "set_column_type :#{name}, #{type.is_a?(Symbol) ? ":#{type}, using: '#{name}::#{type}'" : type}"
     end
 
     def column_entry name, type

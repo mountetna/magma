@@ -223,20 +223,39 @@ EOT
       Labors::Prize.attributes[:worth] = worth
     end
 
-    it 'changes column types' do
-      original_attribute = Labors::Prize.attributes.delete(:worth)
-      Labors::Prize.attributes[:worth] = Magma::Model.float(
-        :worth,
-        column_name: original_attribute.column_name
-      )
+    context 'changes column types' do
+      it 'for simple types' do
+        original_attribute = Labors::Prize.attributes.delete(:worth)
+        Labors::Prize.attributes[:worth] = Magma::Model.float(
+          :worth,
+          column_name: original_attribute.column_name
+        )
 
-      migration = Labors::Prize.migration
-      expect(migration.to_s).to eq <<EOT.chomp
+        migration = Labors::Prize.migration
+        expect(migration.to_s).to eq <<EOT.chomp
     alter_table(Sequel[:labors][:prizes]) do
       set_column_type :#{original_attribute.column_name}, Float
     end
 EOT
-      Labors::Prize.attributes[:worth] = original_attribute
+
+        Labors::Prize.attributes[:worth] = original_attribute
+      end
+
+      it 'for symbol types' do
+        original_attribute = Labors::Prize.attributes.delete(:worth)
+        Labors::Prize.attributes[:worth] = Magma::Model.image(
+          :worth,
+          column_name: original_attribute.column_name
+        )
+
+        migration = Labors::Prize.migration
+        expect(migration.to_s).to eq <<EOT.chomp
+    alter_table(Sequel[:labors][:prizes]) do
+      set_column_type :#{original_attribute.column_name}, :json, using: 'worth::json'
+    end
+EOT
+        Labors::Prize.attributes[:worth] = original_attribute
+      end
     end
   end
 end
