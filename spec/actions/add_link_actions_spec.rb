@@ -70,6 +70,29 @@ describe Magma::AddLinkAction do
         expect(model_b.attributes).to include(:link_to_a)
         expect(model_b.attributes[:link_to_a]).to be_a(Magma::CollectionAttribute)
       end
+
+      context "within the same model" do
+        before(:each) do
+          action_params[:links][1][:type] = 'collection'
+          action_params[:links][0][:attribute_name] = 'umbrella_record'
+          action_params[:links][1][:attribute_name] = 'associated_records'
+          action_params[:links][1][:model_name] = action_params[:links][0][:model_name]
+        end
+
+        it 'adds a new link attribute and returns no errors' do
+          unless action.perform
+            expect(action.errors).to be_empty
+          end
+          expect(action.errors).to be_empty
+
+          expect(model_a = Magma.instance.get_model(project_name, 'model_a')).to_not be_nil
+          expect(model_a.attributes).to include(:umbrella_record)
+          expect(model_a.attributes[:umbrella_record]).to be_a(Magma::LinkAttribute)
+
+          expect(model_a.attributes).to include(:associated_records)
+          expect(model_a.attributes[:associated_records]).to be_a(Magma::CollectionAttribute)
+        end
+      end
     end
   end
 
