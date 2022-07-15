@@ -353,6 +353,22 @@ describe RetrieveController do
       expect(project_doc).not_to be_nil
       expect(project_doc[:labor]).to eq([])
     end
+
+    xit 'retrieves collections internal to a single model' do
+      labors = create_list(:labor, 3, project: @project)
+
+      retrieve(
+        model_name: 'project',
+        record_names: [ @project.name ],
+        attribute_names: [ 'labor' ],
+        project_name: 'labors'
+      )
+
+      project_doc = json_body[:models][:project][:documents][@project.name.to_sym]
+
+      expect(project_doc).not_to be_nil
+      expect(project_doc[:labor]).to match_array(labors.map(&:name))
+    end
   end
 
   context 'tables' do
