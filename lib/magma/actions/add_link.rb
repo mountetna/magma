@@ -19,7 +19,7 @@ class Magma
       Magma.instance.get_project(@project_name)
     end
 
-    def two_links
+    def link_types_valid
       unless @action_params[:links].is_a?(Array)
         @errors << Magma::ActionError.new(
             message: 'links must be an array',
@@ -52,21 +52,23 @@ class Magma
         return
       end
 
-      @action_params[:links]
-    end
-
-    def link_types_valid
-      return unless two_links
-
-      unless two_links.all? { |v| ['collection', 'link'].include?(v[:type]) }
+      unless @action_params[:links].map{|v| v.slice(:model_name, :attribute_name)}.compact.length == 2
         @errors << Magma::ActionError.new(
-            message: 'links type must be either another link or a collection',
+            message: 'links entries must not collide',
             source: @action_params.slice(:action_name, :links)
         )
         return
       end
 
-      unless two_links.any? { |v| v[:type] == 'link' }
+      unless @action_params[:links].any? { |v| ['collection', 'child'].include?(v[:type]) }
+        @errors << Magma::ActionError.new(
+            message: 'links must include at least one collection/child type',
+            source: @action_params.slice(:action_name, :links)
+        )
+        return
+      end
+
+      unless @action_params[:links].any? { |v| v[:type] == 'link' }
         @errors << Magma::ActionError.new(
             message: 'links must include at least one link type',
             source: @action_params.slice(:action_name, :links)
@@ -89,19 +91,16 @@ class Magma
     end
 
     def make_actions
-      actions = [
+      [
         LinkAddAttributeAction.new(@project_name, @action_params[:links][0].slice(:model_name, :attribute_name, :type).update({
-          link_model_name: @action_params[:links][1][:model_name]
+          link_model_name: @action_params[:links][1][:model_name],
+          link_attribute_name: @action_params[:links][1][:attribute_name]
         })),
-      ]
-
-      unless @action_params[:links][0].slice(:model_name, :attribute_name) == @action_params[:links][1].slice(:model_name, :attribute_name)
-        actions << LinkAddAttributeAction.new(@project_name, @action_params[:links][1].slice(:model_name, :attribute_name, :type).update({
-            link_model_name: @action_params[:links][0][:model_name]
+        LinkAddAttributeAction.new(@project_name, @action_params[:links][1].slice(:model_name, :attribute_name, :type).update({
+          link_model_name: @action_params[:links][0][:model_name],
+          link_attribute_name: @action_params[:links][0][:attribute_name]
         }))
-      end
-
-      actions
+      ]
     end
   end
 end

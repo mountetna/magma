@@ -15,8 +15,17 @@ class Magma
       project.models[@model.model_name] = @model
 
       if has_parent?
-        @model.parent(@action_params[:parent_model_name].to_sym).save
-        parent_model.send(@action_params[:parent_link_type], @model.model_name).save
+        @model.parent(
+          @action_params[:parent_model_name].to_sym,
+          link_model_name: @action_params[:parent_model_name],
+          link_attribute_name: @model.model_name,
+        ).save
+        parent_model.send(
+          @action_params[:parent_link_type],
+          @model.model_name,
+          link_model_name: @model.model_name,
+          link_attribute_name: @action_params[:parent_model_name]
+        ).save
       end
 
       true
