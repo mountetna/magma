@@ -23,7 +23,8 @@ class Magma
       :read_only,
       :restricted,
       :unique,
-      :validation
+      :validation,
+      :link_attribute_name
     ]
 
     attr_reader :loader
@@ -31,7 +32,7 @@ class Magma
     class << self
       def options
         [:description, :display_name, :hidden, :attribute_group, :read_only, :unique, :index, :validation,
-:format_hint, :loader, :link_model_name, :restricted]
+:format_hint, :loader, :link_model_name, :restricted, :link_attribute_name]
       end
 
       def type_attributes
@@ -198,6 +199,8 @@ class Magma
     # auto_validations plugin.
     def validate
       super
+      require 'pry'
+      binding.pry
       validate_validation_json
       validate_attribute_name_format
       validate_type
