@@ -37,8 +37,7 @@ class Magma
       return unless attribute
       validation_attribute = attribute.dup
       validation_attribute.set(attribute_name: @action_params[:new_attribute_name])
-      require 'pry'
-      binding.pry
+
       return if validation_attribute.valid?
 
       validation_attribute.errors.full_messages.each do |error|

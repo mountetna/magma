@@ -32,7 +32,10 @@ class Magma
     private
 
     def after_magma_model_set
+      require 'pry'
       @magma_model.one_to_one(attribute_name.to_sym)
+    rescue  => e
+      binding.pry
     end
   end
 end

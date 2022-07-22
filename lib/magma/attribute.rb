@@ -199,8 +199,6 @@ class Magma
     # auto_validations plugin.
     def validate
       super
-      require 'pry'
-      binding.pry
       validate_validation_json
       validate_attribute_name_format
       validate_type

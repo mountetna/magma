@@ -8,7 +8,7 @@ describe Magma::AddLinkAction do
       action_name: "add_link",
       links: [
           { model_name: 'model_a', attribute_name: 'link_to_b', type: 'link' },
-          { model_name: 'model_b', attribute_name: 'link_to_a', type: 'link' },
+          { model_name: 'model_b', attribute_name: 'link_to_a', type: 'child' },
       ]
     }
   end
@@ -43,7 +43,7 @@ describe Magma::AddLinkAction do
 
         expect(model_a = Magma.instance.get_model(project_name, 'model_a')).to_not be_nil
         expect(model_a.attributes).to include(:link_to_b)
-        expect(model_a.attributes[:link_to_b]).to be_a(Magma::LinkAttribute)
+        expect(model_a.attributes[:link_to_b]).to be_a(Magma::ChildAttribute)
 
         expect(model_b = Magma.instance.get_model(project_name, 'model_b')).to_not be_nil
         expect(model_b.attributes).to include(:link_to_a)

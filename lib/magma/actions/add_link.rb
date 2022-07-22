@@ -1,7 +1,7 @@
 class Magma
   class AddLinkAction < ComposedAction
     # Normally, add attributes validate against type: link, but this containing action allows it through
-    # a special subclass.  Hiding it undernear the AddLinkAction namespace prevents it from being directly usable via
+    # a special subclass.  Hiding it underneath the AddLinkAction namespace prevents it from being directly usable via
     # model_update_actions.rb
     class LinkAddAttributeAction < AddAttributeAction
       def validate_not_link
