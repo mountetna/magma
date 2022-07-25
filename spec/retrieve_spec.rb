@@ -354,7 +354,7 @@ describe RetrieveController do
       expect(project_doc[:labor]).to eq([])
     end
 
-    it 'retrieves collections internal to a single model' do
+    it 'retrieves links and collections internal to a single model' do
       labor = create(:labor, :lion, project: @project)
       monsters = create_list(:monster, 3, labor: labor)
       monsters[1].update(
