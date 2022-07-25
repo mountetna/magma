@@ -107,6 +107,7 @@ class Magma
         attribute_name: attribute_name,
         model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
         link_model_name: self.is_a?(Magma::Link) ? link_model.model_name : nil,
+        link_attribute_name: self.is_a?(Magma::Link) ? link_attribute_name: nil,
         description: description,
         desc: description,
         display_name: display_name,

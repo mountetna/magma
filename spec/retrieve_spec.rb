@@ -91,6 +91,31 @@ describe RetrieveController do
         model_name: 'codex',
         attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
       )
+
+      monster_template = json_body[:models][:monster][:template]
+
+      expect(monster_template[:reference_monster][:link_attribute_name]).to eq("monster_group")
+      expect(monster_template[:monster_group][:link_attribute_name]).to eq("reference_monster")
+    end
+  end
+
+  it 'template includes link and reciprocal link attributes' do
+    [:viewer, :guest].each do |role|
+      retrieve(
+        {
+          model_name: 'monster',
+          record_names: [],
+          attribute_names: [],
+          project_name: 'labors'
+        },
+        role
+      )
+      expect(last_response.status).to eq(200)
+
+      monster_template = json_body[:models][:monster][:template]
+
+      expect(monster_template[:attributes][:reference_monster][:link_attribute_name]).to eq("monster_group")
+      expect(monster_template[:attributes][:monster_group][:link_attribute_name]).to eq("reference_monster")
     end
   end
 
