@@ -31,11 +31,13 @@ describe Magma::AddLinkAction do
           parent_link_type: 'collection'
         }).perform).to be_truthy
     end
+    AddLinkTestProject::ModelA.set_primary_key(:id)
+    AddLinkTestProject::ModelB.set_primary_key(:id)
   end
 
   describe '#perform' do
-    context "for two links" do
-      it 'adds a new link attribute and returns no errors' do
+    context "for child link" do
+      it 'adds attributes and returns no errors' do
         unless action.perform
           expect(action.errors).to be_empty
         end
@@ -43,11 +45,11 @@ describe Magma::AddLinkAction do
 
         expect(model_a = Magma.instance.get_model(project_name, 'model_a')).to_not be_nil
         expect(model_a.attributes).to include(:link_to_b)
-        expect(model_a.attributes[:link_to_b]).to be_a(Magma::ChildAttribute)
+        expect(model_a.attributes[:link_to_b]).to be_a(Magma::LinkAttribute)
 
         expect(model_b = Magma.instance.get_model(project_name, 'model_b')).to_not be_nil
         expect(model_b.attributes).to include(:link_to_a)
-        expect(model_b.attributes[:link_to_a]).to be_a(Magma::LinkAttribute)
+        expect(model_b.attributes[:link_to_a]).to be_a(Magma::ChildAttribute)
       end
     end
 
@@ -134,12 +136,23 @@ describe Magma::AddLinkAction do
 
     context "when the types are invalid" do
       before(:each) do
+        action_params[:links][1][:type] = 'sauce'
+      end
+
+      it 'captures an attribute error' do
+        expect(action.validate).to eq(false)
+        expect(action.errors.first[:message]).to eq("links must include at least one collection/child type")
+      end
+    end
+
+    context "when missing a link type" do
+      before(:each) do
         action_params[:links][0][:type] = 'sauce'
       end
 
       it 'captures an attribute error' do
         expect(action.validate).to eq(false)
-        expect(action.errors.first[:message]).to eq("links type must be either another link or a collection")
+        expect(action.errors.first[:message]).to eq("links must include at least one link type")
       end
     end
 

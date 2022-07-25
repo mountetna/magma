@@ -181,7 +181,7 @@ class Magma
           @child_predicate.alias_name,
           :id
         )
-      when Magma::TableAttribute, Magma::CollectionAttribute, Magma::ChildAttribute
+      when Magma::TableAttribute
         return Magma::Join.new(
           #left table
           table_name,
@@ -192,6 +192,18 @@ class Magma
           @child_predicate.table_name,
           @child_predicate.alias_name,
           attribute.self_id,
+        )
+      when Magma::CollectionAttribute, Magma::ChildAttribute
+        return Magma::Join.new(
+          #left table
+          table_name,
+          alias_name,
+          :id,
+
+          #right table
+          @child_predicate.table_name,
+          @child_predicate.alias_name,
+          attribute.foreign_id,
         )
       end
     end
