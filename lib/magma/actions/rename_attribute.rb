@@ -7,6 +7,8 @@ class Magma
       attribute.update(attribute_name: @action_params[:new_attribute_name])
       model.attributes[attribute.attribute_name.to_sym] = attribute
 
+      update_reciprocal(attribute) if is_link_type?(attribute)
+
       true
     end
 
@@ -57,6 +59,18 @@ class Magma
         @project_name,
         @action_params[:model_name]
       )
+    end
+
+    def is_link_type?(attribute)
+      [Magma::LinkAttribute, Magma::ChildAttribute, Magma::CollectionAttribute].include?(attribute.class) &&
+        attribute.link_model_name &&
+        attribute.link_attribute_name
+    end
+
+    def update_reciprocal(attribute)
+      reciprocal = attribute.link_model.attributes[attribute.link_attribute_name.to_sym]
+
+      reciprocal.update(link_attribute_name: attribute.attribute_name)
     end
   end
 end
