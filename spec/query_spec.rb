@@ -154,6 +154,23 @@ describe QueryController do
         end
       end
 
+      it 'allows filters on intra-model collections' do
+        monsters = create_list(:monster, 3, labor: @lion)
+        monsters[1].update(
+          reference_monster_id: monsters.first.id
+        )
+        monsters[2].update(
+          reference_monster_id: monsters.first.id
+        )
+
+        [:viewer, :guest].each do |role|
+          query(['monster', [ 'reference_monster', 'name', '::equals', monsters.first.name ], '::all', 'name'], role)
+
+          expect(last_response.status).to eq(200)
+          expect(json_body[:answer].map { |m| m.last }).to match_array([monsters[1].name, monsters[2].name])
+        end
+      end
+
       it 'combines filters' do
         poison = create(:prize, name: 'poison', worth: 5, labor: @hydra)
         poop = create(:prize, name: 'poop', labor: @stables)
@@ -750,13 +767,13 @@ describe QueryController do
         before(:each) do
           lion_monster = create(:monster, :lion, labor: @lion)
           hydra_monster = create(:monster, :hydra, labor: @hydra)
-  
+
           john_doe = create(:victim, name: 'John Doe', monster: lion_monster, weapon: 'sword')
           jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, weapon: 'spear')
-  
+
           susan_doe = create(:victim, name: 'Susan Doe', monster: hydra_monster, weapon: 'bow and arrow')
           shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra_monster, weapon: 'spear')
-  
+
           create(:wound, victim: john_doe, location: 'Arm', severity: 5)
           create(:wound, victim: john_doe, location: 'Leg', severity: 1)
           create(:wound, victim: jane_doe, location: 'Arm', severity: 2)
@@ -777,7 +794,7 @@ describe QueryController do
                   '::any'
                 ],
                 '::all', '::identifier'])
-  
+
           expect(json_body[:answer].map(&:last)).to eq([ "Lernean Hydra" ])
           expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
         end
@@ -793,7 +810,7 @@ describe QueryController do
               '::any'
             ],
             '::all', '::identifier'])
-  
+
           expect(json_body[:answer].map(&:last)).to eq([ ])
           expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
         end
@@ -808,7 +825,7 @@ describe QueryController do
               '::every'
             ],
             '::all', '::identifier'])
-  
+
           expect(json_body[:answer].map(&:last)).to eq([ ])
           expect(json_body[:format]).to eq([ 'labors::labor#name', 'labors::labor#name' ])
         end
@@ -1198,6 +1215,24 @@ describe QueryController do
     end
 
     it 'supports ::count for collections' do
+      monsters = create_list(:monster, 3, labor: @lion)
+      monsters[1].update(
+        reference_monster_id: monsters.first.id
+      )
+      monsters[2].update(
+        reference_monster_id: monsters.first.id
+      )
+
+      query(['monster', '::all', 'monster_group', '::count' ])
+
+      expect(json_body[:answer]).to match_array([
+        [ monsters[2].name, 0 ],
+        [ monsters[1].name, 0 ],
+        [ monsters[0].name, 2 ]
+      ])
+    end
+
+    it 'supports ::count for intra-model collections' do
       lion_monster = create(:monster, :lion, labor: @lion)
       hydra_monster = create(:monster, :hydra, labor: @hydra)
 
@@ -1217,12 +1252,12 @@ describe QueryController do
       it 'works with ::has' do
         lion_monster = create(:monster, :lion, labor: @lion)
         hydra_monster = create(:monster, :hydra, labor: @hydra)
-  
+
         john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
         jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
-  
+
         query(['monster', ['::has', 'victim'], '::count' ])
-  
+
         expect(json_body[:answer]).to eq(1)
         expect(json_body[:format]).to eq('Numeric')
       end
@@ -1233,33 +1268,33 @@ describe QueryController do
         #   return [].
         lion_monster = create(:monster, :lion, labor: @lion)
         hydra_monster = create(:monster, :hydra, labor: @hydra)
-  
+
         john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
         jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
 
         someone = create(:victim, name: 'Someone Unknown', country: 'MIA')
-  
+
         query(['monster', ['::lacks', 'victim'], '::count' ])
-  
+
         expect(json_body[:answer]).to eq(1)
         expect(json_body[:format]).to eq('Numeric')
       end
-  
+
       it 'works with ::lacks' do
         lion_monster = create(:monster, :lion, labor: @lion)
         hydra_monster = create(:monster, :hydra, labor: @hydra)
         hind = create(:monster, :hind, labor: @hind)
-  
+
         john_doe = create(:victim, name: 'John Doe', monster: lion_monster, country: 'Italy')
         jane_doe = create(:victim, name: 'Jane Doe', monster: lion_monster, country: 'Greece')
-  
+
         query(['monster', ['::lacks', 'victim'], '::count' ])
-  
+
         expect(json_body[:answer]).to eq(2)
         expect(json_body[:format]).to eq('Numeric')
       end
     end
-    
+
     it 'supports ::count and ::any' do
       poison = create(:prize, labor: @hydra, name: 'poison', worth: 0)
       poop = create(:prize, labor: @stables, name: 'poop', worth: 4)
@@ -1289,21 +1324,21 @@ describe QueryController do
         create(:characteristic, labor: @lion, name: "difficulty", value: "10" )
         create(:characteristic, labor: @hydra, name: "difficulty", value: "2" )
         create(:characteristic, labor: @stables, name: "difficulty", value: "5.1" )
-  
+
         create(:characteristic, labor: @lion, name: "stance", value: "wrestling2.0" )
         create(:characteristic, labor: @hydra, name: "stance", value: "hacking1.5" )
         create(:characteristic, labor: @stables, name: "stance", value: "shoveling:00123" )
-  
+
         create(:characteristic, labor: @lion, name: "weather", value: "sunny" )
         create(:characteristic, labor: @hydra, name: "weather", value: "overcast" )
-  
+
         query(
           [ 'characteristic', '::distinct', 'name' ]
         )
-  
+
         expect(json_body[:answer]).to match_array([ 'difficulty', 'stance', 'weather' ])
         expect(json_body[:format]).to eq(['labors::characteristic#name'])
-  
+
         query(
           [ 'characteristic', '::distinct', 'value' ]
         )
@@ -1311,42 +1346,42 @@ describe QueryController do
         expect(json_body[:answer]).to match_array(Labors::Characteristic.all.map { |c| c.value }.compact.uniq)
         expect(json_body[:format]).to eq(['labors::characteristic#value'])
       end
-  
+
       it 'with filters' do
         create(:characteristic, labor: @lion, name: "difficulty", value: "10" )
         create(:characteristic, labor: @hydra, name: "difficulty", value: "2" )
         create(:characteristic, labor: @stables, name: "difficulty", value: "5.1" )
-  
+
         create(:characteristic, labor: @lion, name: "stance", value: "wrestling2.0" )
         create(:characteristic, labor: @hydra, name: "stance", value: "hacking1.5" )
         create(:characteristic, labor: @stables, name: "stance", value: "shoveling:00123" )
-  
+
         create(:characteristic, labor: @lion, name: "weather", value: "sunny" )
         create(:characteristic, labor: @hydra, name: "weather", value: "overcast" )
-  
+
         query(
           [ 'characteristic', ['labor', 'name', '::equals', @stables.name ], '::distinct', 'name' ]
         )
-  
+
         expect(json_body[:answer]).to match_array([ 'difficulty', 'stance' ])
         expect(json_body[:format]).to eq(['labors::characteristic#name'])
-  
+
         query(
           [ 'characteristic', ['labor', 'name', '::equals', @stables.name ], '::distinct', 'value' ]
         )
-  
+
         expect(json_body[:answer]).to match_array(Labors::Characteristic.where(labor_id: @stables.id).all.map { |c| c.value }.compact.uniq)
         expect(json_body[:format]).to eq(['labors::characteristic#value'])
       end
-  
+
       it 'with null data' do
         create(:characteristic, labor: @lion, name: "difficulty", value: "10" )
         create(:characteristic, labor: @hydra, name: "difficulty" )
         create(:characteristic, labor: @stables, name: "difficulty", value: "5.1" )
-  
+
         create(:characteristic, labor: @lion, name: "weather" )
         create(:characteristic, labor: @hydra, name: "weather" )
-  
+
         query(
           [ 'characteristic', '::distinct', 'value' ]
         )
@@ -1360,7 +1395,7 @@ describe QueryController do
         poop = create(:prize, name: 'poop', labor: @stables, worth: 8)
         iou = create(:prize, labor: @stables, name: 'iou', worth: 4)
         skin = create(:prize, labor: @lion, name: 'skin')
-  
+
         query(
           [ 'prize', '::distinct', 'worth' ]
         )
@@ -1395,6 +1430,42 @@ describe QueryController do
 
       expect(json_body[:answer].first.last).to eq('poop')
       expect(json_body[:format]).to eq(['labors::prize#id', 'labors::prize#name'])
+    end
+
+    context 'for intra-model collections' do
+      before(:each) do
+        @monsters = create_list(:monster, 3, labor: @hydra)
+        @monsters[1].update(
+          reference_monster_id: @monsters.first.id
+        )
+        @monsters[2].update(
+          reference_monster_id: @monsters.first.id
+        )
+      end
+
+      it 'supports ::has' do
+        query(['monster', ['::has', 'reference_monster'], '::all', 'name'])
+
+        expect(json_body[:answer].count).to eq(2)
+        expect(json_body[:answer].map { |m| m.last }).to match_array([@monsters[1].name, @monsters[2].name])
+
+        query(['monster', ['::has', 'monster_group'], '::all', 'name'])
+
+        expect(json_body[:answer].count).to eq(1)
+        expect(json_body[:answer].first.last).to eq(@monsters[0].name)
+      end
+
+      it 'supports ::lacks' do
+        query(['monster', ['::lacks', 'reference_monster'], '::all', 'name'])
+
+        expect(json_body[:answer].count).to eq(1)
+        expect(json_body[:answer].first.last).to eq(@monsters[0].name)
+
+        query(['monster', ['::lacks', 'monster_group'], '::all', 'name'])
+
+        expect(json_body[:answer].count).to eq(2)
+        expect(json_body[:answer].map { |m| m.last }).to match_array([@monsters[1].name, @monsters[2].name])
+      end
     end
 
     it 'can retrieve metrics' do
@@ -1791,7 +1862,7 @@ describe QueryController do
           end,
           folders: []
         })
-  
+
         stub_request(:post, %r!https://metis.test/labors/find/magma!).
           to_return(status: 200, body: route_payload, headers: {'Content-Type': 'application/json'})
       end
@@ -1800,9 +1871,9 @@ describe QueryController do
         query(
           [ 'monster', '::all', 'stats', '::md5' ]
         )
-  
+
         expect(last_response.status).to eq(200)
-  
+
         expect(json_body[:answer].map(&:last).sort).to eq([
           'hashforhydra-stats.tsv', 'hashforlion-stats.tsv', 'hashforstables-stats.tsv'
         ])
@@ -1814,9 +1885,9 @@ describe QueryController do
           [ 'monster', '::all', 'stats', '::md5' ],
           format: 'tsv'
         )
-  
+
         expect(last_response.status).to eq(200)
-  
+
         header, *table = CSV.parse(last_response.body, col_sep: "\t")
 
         expect(header).to eq(["labors::monster#name", "labors::monster#stats"])
@@ -2611,7 +2682,7 @@ describe QueryController do
 
       susan_doe = create(:victim, name: 'Susan Doe', monster: hydra, weapon: 'crossbow')
       shawn_doe = create(:victim, name: 'Shawn Doe', monster: hydra, weapon: 'hands')
-      
+
       query_opts(
         ['project',
           ['name', '::equals', @project.name],
@@ -2626,7 +2697,7 @@ describe QueryController do
 
       header, *table = CSV.parse(last_response.body, col_sep: "\t")
       expect(header).to eq(["labors::project#name", "labors::victim#name", "labors::victim#weapon"])
-      
+
       data = table.first
 
       expect(data.first).to eq("The Twelve Labors of Hercules")
@@ -2764,7 +2835,7 @@ describe QueryController do
       belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
       cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
       apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
-      
+
       query_opts(
         [
           'labor',
@@ -2794,7 +2865,7 @@ describe QueryController do
       another_belt = create(:labor, name: 'Belt of Hippolyta 3', number: 29, contributions: matrix[0], project: @project)
       another_cattle = create(:labor, name: 'Cattle of Geryon 3', number: 30, contributions: matrix[1], project: @project)
       another_apples = create(:labor, name: 'Golden Apples of the Hesperides 3', number: 31, contributions: matrix[2], project: @project)
-      
+
       query_opts(
         [
           'labor',
@@ -2827,7 +2898,7 @@ describe QueryController do
       belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
       cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
       apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
-      
+
       query_opts(
         [
           'labor',
@@ -2856,7 +2927,7 @@ describe QueryController do
       belt = create(:labor, name: 'Belt of Hippolyta', number: 9, contributions: matrix[0], project: @project)
       cattle = create(:labor, name: 'Cattle of Geryon', number: 10, contributions: matrix[1], project: @project)
       apples = create(:labor, name: 'Golden Apples of the Hesperides', number: 11, contributions: matrix[2], project: @project)
-      
+
       query_opts(
         [
           'project',
