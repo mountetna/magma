@@ -91,11 +91,6 @@ describe RetrieveController do
         model_name: 'codex',
         attributes: {monster: 'monster', name: 'aspect', source: 'tome', value: 'lore'}
       )
-
-      monster_template = json_body[:models][:monster][:template]
-
-      expect(monster_template[:reference_monster][:link_attribute_name]).to eq("monster_group")
-      expect(monster_template[:monster_group][:link_attribute_name]).to eq("reference_monster")
     end
   end
 
