@@ -15,5 +15,7 @@ Sequel.migration do
     alter_table(:attributes) do
       drop_column :link_attribute_name
     end
+
+    Magma.instance.db.execute("DELETE FROM attributes WHERE attribute_name='panel_patients' and project_name='ipi' and model_name='patient'")
   end
 end
