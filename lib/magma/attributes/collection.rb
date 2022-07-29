@@ -37,9 +37,10 @@ class Magma
 
     def after_magma_model_set
       @magma_model.one_to_many(
-        attribute_name.to_sym,
-        class: @magma_model.project_model(attribute_name),
-        primary_key: :id
+        attribute_name.to_sym,        
+        class: @magma_model.project_model(link_model_name),
+        primary_key: :id,
+        key: "#{link_attribute_name}_id".to_sym
       )
     end
   end
