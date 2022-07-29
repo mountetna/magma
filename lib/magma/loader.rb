@@ -125,7 +125,7 @@ class Magma
         revisions,
         parent_attribute.link_model.model_name,
         child_record_name,
-        parent_model.model_name) ||
+        parent_attribute.link_attribute_name) ||
       explicit_link_revision_exists?(
         revisions,
         parent_model.model_name,
@@ -194,8 +194,8 @@ class Magma
 
         question = Magma::Question.new(@project_name, [
           child_model.model_name,
-          [parent_model.model_name, '::identifier', '::in', parent_record_names],
-            '::all', parent_model.model_name, '::identifier'
+          [attribute.link_attribute_name, '::identifier', '::in', parent_record_names],
+            '::all', attribute.link_attribute_name, '::identifier'
         ], user: @user)
 
         current_record_names = question.answer
@@ -208,7 +208,7 @@ class Magma
             child_record_name: child_record_name,
             parent_attribute: attribute)
          }.each do |child_record_name, parent_record_name|
-          yield [child_model, child_record_name, parent_model.model_name]
+          yield [child_model, child_record_name, attribute.link_attribute_name]
         end
       end
     end
@@ -236,7 +236,7 @@ class Magma
             next if link_identifier.nil?
             push_record(
               link_model, link_identifier,
-              model.model_name.to_sym => link_record_name,
+              attribute.link_attribute_name.to_sym => link_record_name,
               created_at: @now,
               updated_at: @now
             )
@@ -320,14 +320,14 @@ class Magma
       @records[model]
     end
 
-    # This is implemented in the loader because it 
+    # This is implemented in the loader because it
     #   requires access to both the set of @records as well as the database.
     def path_to_date_shift_root(model, record_name)
       @record_hierarchy_cache ||= Magma::RecordHierarchyCache.new(@records)
-      
+
       @record_hierarchy_cache.path_to_date_shift_root(model, record_name)
     end
-    
+
     def is_connected_to_date_shift_root?(model, record_name)
       !path_to_date_shift_root(model, record_name).empty?
     end

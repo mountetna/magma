@@ -524,11 +524,48 @@ describe UpdateController do
 
       it 'can add a collection within the same model and create new records' do
         hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
+        hind = create(:labor, name: 'The Ceryneian Hind', year: '0004-01-01', project: @project)
 
         hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+        hind_monster = create(:monster, name: 'Ceryneian Hind', labor: hind)
 
         expect(hydra_monster.monster_group).to eq([])
-        expect(Labors::Monster.count).to eq(1)
+        expect(Labors::Monster.count).to eq(2)
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              monster_group: ['Nemean Lion', 'Ceryneian Hind']
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(monster_group: [ 'Nemean Lion', 'Ceryneian Hind' ])
+
+        expect(json_document(:monster,'Nemean Lion')).to include(reference_monster: 'Lernean Hydra')
+        expect(json_document(:monster,'Ceryneian Hind')).to include(reference_monster: 'Lernean Hydra')
+
+        # the links are added in both directions
+        expect(Labors::Monster.count).to eq(3)
+        hydra_monster.refresh
+        hind_monster.refresh
+        lion_monster = Labors::Monster.where(name: 'Nemean Lion').first
+        expect(hydra_monster.monster_group).to match_array([lion_monster, hind_monster])
+        expect(lion_monster.reference_monster).to eq(hydra_monster)
+        expect(hind_monster.reference_monster).to eq(hydra_monster)
+      end
+
+      it 'can add a collection within the same model and implicitly remove records' do
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
+        hind = create(:labor, name: 'The Ceryneian Hind', year: '0004-01-01', project: @project)
+
+        hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+        hind_monster = create(:monster, name: 'Ceryneian Hind', labor: hind, reference_monster: hydra_monster)
+
+        expect(hydra_monster.monster_group).to match_array([hind_monster])
+        expect(hind_monster.reference_monster).to eq(hydra_monster)
+        expect(Labors::Monster.count).to eq(2)
 
         update(
           monster: {
@@ -542,13 +579,55 @@ describe UpdateController do
         expect(json_document(:monster,'Lernean Hydra')).to include(monster_group: [ 'Nemean Lion' ])
 
         expect(json_document(:monster,'Nemean Lion')).to include(reference_monster: 'Lernean Hydra')
+        expect(json_document(:monster,'Ceryneian Hind')).to include(reference_monster: nil)
 
         # the links are added in both directions
-        expect(Labors::Monster.count).to eq(2)
+        expect(Labors::Monster.count).to eq(3)
         hydra_monster.refresh
+        hind_monster.refresh
         lion_monster = Labors::Monster.where(name: 'Nemean Lion').first
-        expect(hydra_monster.monster_group).to match_array([lion_monster.name])
-        expect(lion_monster.reference_monster).to eq(hydra_monster.name)
+        expect(hydra_monster.monster_group).to match_array([lion_monster])
+        expect(lion_monster.reference_monster).to eq(hydra_monster)
+        expect(hind_monster.reference_monster).to eq(nil)
+      end
+
+      it 'can add a collection within the same model and explicitly update records' do
+        hydra = create(:labor, name: 'The Lernean Hydra', year: '0003-01-01', project: @project)
+        hind = create(:labor, name: 'The Ceryneian Hind', year: '0004-01-01', project: @project)
+
+        hydra_monster = create(:monster, name: 'Lernean Hydra', labor: hydra)
+        hind_monster = create(:monster, name: 'Ceryneian Hind', labor: hind, reference_monster: hydra_monster)
+
+        expect(hydra_monster.monster_group).to match_array([hind_monster])
+        expect(hind_monster.reference_monster).to eq(hydra_monster)
+        expect(Labors::Monster.count).to eq(2)
+
+        update(
+          monster: {
+            'Lernean Hydra': {
+              monster_group: ['Nemean Lion']
+            },
+            'Ceryneian Hind': {
+              reference_monster: 'Nemean Lion'
+            }
+          }
+        )
+
+        expect(last_response.status).to eq(200)
+        expect(json_document(:monster,'Lernean Hydra')).to include(monster_group: [ 'Nemean Lion' ])
+
+        expect(json_document(:monster,'Nemean Lion')).to include(reference_monster: 'Lernean Hydra', monster_group: ['Ceryneian Hind'])
+        expect(json_document(:monster,'Ceryneian Hind')).to include(reference_monster: 'Nemean Lion')
+
+        # the links are added in both directions
+        expect(Labors::Monster.count).to eq(3)
+        hydra_monster.refresh
+        hind_monster.refresh
+        lion_monster = Labors::Monster.where(name: 'Nemean Lion').first
+        expect(hydra_monster.monster_group).to match_array([lion_monster])
+        expect(lion_monster.reference_monster).to eq(hydra_monster)
+        expect(lion_monster.monster_group).to eq([hind_monster])
+        expect(hind_monster.reference_monster).to eq(lion_monster)
       end
     end
 

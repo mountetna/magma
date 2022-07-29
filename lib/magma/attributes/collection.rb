@@ -37,11 +37,31 @@ class Magma
 
     def after_magma_model_set
       @magma_model.one_to_many(
-        attribute_name.to_sym,        
+        attribute_name.to_sym,
         class: @magma_model.project_model(link_model_name),
         primary_key: :id,
-        key: "#{link_attribute_name}_id".to_sym
+        key: association_column_name
       )
+    end
+
+    private
+
+    def association_column_name
+      # Ideally we can grab the user-defined "column name" from the
+      #   link_attribute_name here. However, when the link is just being
+      #   added, the attribute may not exist in @magma_model.attributes
+      #   yet (race condition as to which attribute is added first).
+      # This is most evident during tests, when the labors model is being
+      #   loaded.
+      # So, when possible, we grab the foreign_id.
+      self.foreign_id
+    rescue NameError => e
+      # However, when links are being added and we need to create the
+      #   initial association, we'll assume `link_attribute_name`_id
+      #   is valid. This matches with how links are created
+      #   by the add_attribute action, which should be the only
+      #   case where this code block is hit...
+      "#{link_attribute_name}_id".to_sym
     end
   end
 end
