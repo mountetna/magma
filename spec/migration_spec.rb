@@ -11,6 +11,8 @@ describe Magma::Migration do
   context 'creation migrations' do
     after(:each) do
       Labors.send(:remove_const, :Olympian)
+      project = Magma.instance.get_project(:labors)
+      project.models.delete(:olympian)
     end
 
     it 'suggests a creation migration for identifiers' do
